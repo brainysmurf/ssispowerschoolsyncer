@@ -1,4 +1,5 @@
 from Students import Students
+from Families import Families
 from utils.Bulk import MoodleCSVFile
 from utils.Utilities import no_whitespace_all_lower, convert_short_long, Categories, department_heads, department_email_names
 from utils.FilesFolders import clear_folder
@@ -12,9 +13,14 @@ from utils.Formatter import Smartformatter
 
 from ModifyMoodleUsers import StudentModifier
 
+from utils.Database import DragonNetDBConnection
+
 from Constants import k_path_to_output, k_path_to_powerschool
 
 import subprocess
+
+class DragonNet(DragonNetDBConnection):
+    pass
 
 class InfiniteLoop(Exception):
     pass
@@ -29,12 +35,13 @@ class PowerSchoolIntegrator:
         print('------------------------------------------------------')
         print(datetime.datetime.today())
         self.students = Students()
-        self.build_student_courses()
-        self.build_teachers()
-        self.build_courses()
-        self.build_students()
+        #self.build_student_courses()
+        #self.build_teachers()
+        #self.build_courses()
+        #self.build_students()
+        self.build_families()
         #self.build_parents(students)
-        self.build_automagic_emails()
+        #self.build_automagic_emails()
 
         #self.build_student_list(students)
         #self.build_opening_table(students)
@@ -223,11 +230,47 @@ class PowerSchoolIntegrator:
                     if student.courses():
                         f.write("{num}\t{courses}\n".format(**d))
 
+    def build_families(self):
+
+        families = Families()
+        dragonnet = DragonNet()
+        
+        from utils.PHPMoodleLink import CallPHP
+        php = CallPHP()
+        
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            families.add(student)
+
+        for family_key in families.families:
+            family = families.families[family_key]
+            family.determine_idnumber()
+
+            if not dragonnet.does_user_exist(family.idnumber):
+                # create account
+                # associate children
+                # enrol into parent cohorts
+                # email parent
+
+                print("Create family account")
+                print(family.email, family.idnumber)
+                #php.create_account(family.email,
+                #                                   family.email,
+                #                 'Parent ',
+                #                 family.email,
+                #                 family.idnumber)
+
+                for child in family.children:
+                    print("Associating child:", child.username)
+                    #php.associate_child_to_parent(family.idnumber,
+                    #                              child.username) 
+
 
     def build_students(self, verify=False):
         """
         Go through each student and do what is necessary to actually sync powerschool data
         """
+        
         ## CLASSIC
 
         output_file = MoodleCSVFile(k_path_to_output + '/' + 'classic_users.txt')
@@ -525,12 +568,10 @@ class PowerSchoolIntegrator:
 
             # SETUP SPECIAL
             if student.is_korean:
-                if 'mommachen' in " ".join(student.parent_emails):
-                    print(student)
-                    input()
                 setup_postfix = "{path}/special/usebccparentsKOREAN{ext}".format(**d)
                 with open(setup_postfix, 'a') as f:
                     f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
+                    
             if student.is_chinese:
                 setup_postfix = "{path}/special/usebccparentsCHINESE{ext}".format(**d)
                 with open(setup_postfix, 'a') as f:

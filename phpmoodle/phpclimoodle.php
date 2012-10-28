@@ -113,12 +113,12 @@ class moodlephp
 
     private function associate_child_to_parent($args)
     {
-      $parent_username = $args[0];
+      $parent_idnumber = $args[0];
       $child_username = $args[1];
 
       try
 	{
-	  if( $parent = $this->getUserByUsername( $parent_username ) and $child = $this->getUserByUsername($child_username) )
+	  if( $parent = $this->getUserByIDNumber( $parent_idnumber ) and $child = $this->getUserByUsername($child_username) )
 	    {
 	      $context = get_context_instance( CONTEXT_USER , $child->id );
 	      role_assign( $this->PARENT_ROLE_ID, $parent->id, $context->id );

@@ -39,6 +39,9 @@ class CallPHP:
     def change_username(self, idnumber, new_name):
         return self.command('change_username', "{} {}".format(idnumber, new_name))
 
+    def associate_child_to_parent(self, idnumber, child_username):
+        return self.command('associate_child_to_parent', "{} {}".format(idnumber, child_username))
+
 class PowerSchoolIntegrator(CallPHP):
     def process_parent(self, username):
         """

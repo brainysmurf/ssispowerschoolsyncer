@@ -31,7 +31,18 @@ class DragonNetDBConnection(DBConnection):
         if self.on_server:
             super().__init__('moodle', 'ssissqlmoodle', 'moodle')
         else:
+            print("Reminder, we are not on the server so no sql will work!")
             self.db = None
+
+    def does_user_exist(self, idnumber):
+        """
+        We use the idnumber to ascertain if a student or parent account is there or not
+        """
+        result = self.sql( 'select * from ssismdl_user where idnumber = {}'.format(idnumber) )()
+        if len(result) == 0:
+            return False
+        else:
+            return True
 
     def prepare_id_username_map(self):
         self.id_username = {}

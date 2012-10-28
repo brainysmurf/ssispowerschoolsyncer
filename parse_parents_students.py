@@ -1,3 +1,33 @@
+
+from utils.DB import DragonNetDBConnection
+from utils.Formatter import Smartformatter
+
+class Update(DragonNetDBConnection):
+
+    def __init__(self):
+        self.sf = Smartformatter()
+        self.sf.define(user_table='ssismdl_user',
+                       _id='id')
+        super().__init__()
+
+    def change_idnumber(self, username, idnumber):
+        """
+        Change the user who lists themselves as having this email address to idnumber
+        """
+        self.sf.define(username=username, idnumber=idnumber)
+        possibles = self.sql( self.sf("select {_id} from {user_table} where username = '{username}'") )()
+        if len(possibles) > 1:
+            print("Already have a username by that email address")
+            return
+        elif len(possibles) == 0:
+            print("No user by that username!")
+            print(username)
+            return
+        self.sf.define(idnum=possibles[0][0])
+        print( self.sf("About to id #{idnum} in table {user_table}, setting its idnumber to {idnumber}") )
+        self.sql( self.sf("update {user_table} set idnumber = '{idnumber}' where id = {idnum}") )()
+
+
 class Child:
     def __init__(self, username, idnumber):
         self.username = username
@@ -46,6 +76,7 @@ class Family:
         newidnumber = "P:"
         newidnumber += ",".join([child.idnumber for child in self.children.children])
         print('\t-> ' + newidnumber)
+        self.newidnumber = newidnumber
         self.children.output()
     
 
@@ -53,6 +84,18 @@ class Families:
 
     def __init__(self):
         self.families = {}
+
+    def update_table(self):
+        updater = Update()
+        
+        for family in self.families:
+            family = self.families[family]
+            if not len(family.username) == 1:
+                print("More than one username under this dude")
+                print(family)
+                continue
+            family.output()
+            updater.change_idnumber(family.username[0], family.newidnumber)
 
     def add(self, username, lastlogin, idnumber, child, childidnumber):
         family_id = childidnumber[0:4]
@@ -85,7 +128,13 @@ class Families:
 def add(families, username, lastlogin, idnumber, child, childidnumber):
     families.add(username, lastlogin, idnumber, child, childidnumber)
 
-def parse(path):
+def parse():
+
+    import os
+    if os.path.exists('/home/lcssisadmin'):
+        path = '/home/lcssisadmin/student_parent_info.txt'
+    else:
+        path = '/Users/adammorris/student_parent_info.txt'
 
     raw = [r.strip('\n') for r in open(path).readlines() if r.strip('\n')]
     raw.pop(0)
@@ -105,7 +154,9 @@ def parse(path):
 
     families.output_doubles()
 
+    families.update_table()
+
 if __name__ == "__main__":
 
-    parse('/Users/adammorris/student_parent_info.txt')
+    parse()
     
