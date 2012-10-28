@@ -1,0 +1,341 @@
+ 36593	Choi, Jae Woong	10R	Jaewoong	Choi
+30262	Choi, Myung Jin	10R	David	Choi
+36053	Chung, Ye Rin	10R	Yerin	Chung
+30742	Hsu, Jui-Ho	10R	Harry	Hsu
+31983	Kim, Dong In	10R	Dongin	Kim
+32492	Kim, MinSeok	10R	Minseok	Kim
+35343	Kim, Yeagyeol	10R	Yeagyeol	Kim
+34312	Kristensen-Escribano, Maria Yasmin	10R	Yasmin	Kristensen
+33202	Lee, Young Kyung	10R	Joanne	Lee
+37334	Liu, Wei-Chi	10R	Eric	Liu
+32143	Lu, Melissa Kuei-Hsien	10R	Melissa	Lu
+30882	Lu, Min-Cheng	10R	Vincent	Lu
+32382	Oh, Hyerim	10R	HyeRim	Oh
+31832	Palokangas, Assi Christina	10R	Assi	Palokangas
+31553	Rohmer, Antoine Leo	10R	Antoine	Rohmer
+34762	Yang, Mi Rin	10R	MiRin	Yang
+33663	Yang, Yu-Chen	10R	Melody	Yang
+30563	Yeh, Jen Hao	10R	Tommy	Yeh
+32982	Yoon, Jee Hyun	10R	Jenny	Yoon
+36333	Yoon, Young Suk	10R	Youngsuk	Yoon
+40452	Aggarwal, Rishabh	10E	Rishabh	Aggarwal
+30192	Chakravarty, Arjo	10E	Arjo	Chakravarty
+36822	Chen, Yu	10E	Amy	Chen
+33002	Goh, Qianzhen	10E	Qianzhen	Goh
+34882	Hsu, Kung-Juei	10E	Kungjuei	Hsu
+30772	Hung, Tzu-Man	10E	Tzuman	Hung
+33122	Jokinen, Felipe Ignacio	10E	Felipe	Jokinen
+36522	Kim, Junseong	10E	Junseong	Kim
+36182	Ko, Sen Ip Lucy	10E	Lucy	Ko
+33042	Kwon, So Hee	10E	Sohee	Kwon
+40052	Lee, Juyoun	10E	Juyoun	Lee
+38852	Lee, Myungjin	10E	Myungjin	Lee
+30042	Mo, Akane	10E	Akane	Mo
+31362	Na, Huijin	10E	Huijin	Na
+33252	Nam, Suhyun	10E	Suhyun	Nam
+35812	Paladugu, Sreya	10E	Sreya	Paladugu
+30252	Sheshachala, Kushal Betgov	10E	Kushal	Sheshachala
+39672	Yang, Szu-Kai	10E	Szukai	Yang
+38592	Zhang, Junyi	10E	Junyi	Zhang
+31752	Sun, David Yujie	10L	David	Sun
+39932	Bang, Sungil	9R	Harry	Bang
+30842	Chang, Chih-Yuan	9R	Claire	Chang
+39082	Chang, Yu-Hsuan	9R	Winnie	Chang
+36942	Chen, Judy	9R	Judy	Chen
+34042	Cho, Amanda Anne	9R	Amanda	Cho
+34712	Choi, Ho Jun	9R	Daniel	Choi
+36352	Choi, Jeongjun	9R	Jeongjun	Choi
+31342	Cover, Magdalena Raven	9R	Alena	Cover
+34352	Eswaran, Shiva	9R	Shiva	Eswaran
+41012	Ha, Jaehee Gabrielle	9R	Gabby	Ha
+31462	Iguchi, Miho	9R	Miho	Iguchi
+34773	Jang, Na Young	9R	Nayoung	Jang
+33142	Ji, Yun Hee	9R	Yunhee	Ji
+35213	Jung, Seung Hye	9R	Seunghye	Jung
+36523	Kim, Doyun	9R	Doyun	Kim
+34552	Kim, Junhwan	9R	Junhwan	Kim
+35132	Kim, Younghoon	9R	Younghoon	Kim
+34562	Lee, Gayoung	9R	Gayoung	Lee
+40053	Lee, Sooho	9R	Sooho	Lee
+35682	Nitzsche, Lukas	9R	Lukas	Nitzsche
+36462	Park, Seongchang	9R	David	Park
+37262	Qu, Chong Zhang	9R	Chong	Qu
+31263	Shim, Jeonghwan	9R	Jeonghwan	Shim
+39933	Bang, Sungin	6L	Tommy	Bang
+33772	Chan, Paul Norman	6L	Paul	Chan
+40913	Cheon, Ho Chang	6L	Hochang	Cheon
+35302	Eom, Sunwoo	6L	Sunwoo	Eom
+33123	Jokinen, Sebastian Erik	6L	Seba	Jokinen
+33712	Kauri, Leevi Jouko Olavi	6L	Leevi	Kauri
+36253	Kim, Kwan Woo	6L	Kwanwoo	Kim
+30822	Kuo, Shu-Yu	6L	Judy	Kuo
+36112	Liu, Yu Ting	6L	Maggie	Liu
+30732	Lo, Ching Wen	6L	Jeannie	Lo
+32843	Mo, Jungin	6L	Jungin	Mo
+40242	Nahdi, Hassene	6L	Hassene	Nahdi
+33153	Ong, Cheow Foong	6L	Cheryl	Ong
+35632	Pham, Duc Hoang	6L	Ethan	Pham
+34602	Ryu, Seunghyeon	6L	Seunghyeon	Ryu
+39544	Seo, Chanjin	6L	Chanjin	Seo
+30142	Turja, Saara Elisa Katariina	6L	Saara	Turja
+37362	Wan, Andrew Jia Hua	6L	Andrew	Wan
+40002	Wu, Hung-Te	6L	Howard	Wu
+35782	Bernardo Nunes, Marlon	11R	Marlon	Bernardonunes
+35922	Chen, Chia-Chi	11R	Angel	Chen
+30812	Chen, Yang	11R	Dillenger	Chen
+33512	Chum, Zi Jian Clement	11R	Clement	Chum
+31742	Jang, SeRi	11R	Seri	Jang
+30583	Kim, Yongho	11R	Yongho	Kim
+35382	Kubo, Yukie	11R	Yukie	Kubo
+30382	Lai, Shuo-Feng Julian	11R	Julian	Lai
+30572	Lee, Hyun Seung	11R	Hyunseung	Lee
+39292	Lin, Kao-Yi	11R	Gabby	Lin
+30032	Ogasawara, Yuri	11R	Yuri	Ogasawara
+33212	Okeson, Todd Kevin	11R	Todd	Okeson
+35843	Penalosa, Belle Marie	11R	Belle	Penalosa
+33822	Sewell, Ashley	11R	Ashley	Sewell
+31472	Sorrentino, Elisabetta	11R	Elisabetta	Sorrentino
+36982	Thiel, Olivia Kehaulan	11R	Olivia	Thiel
+32883	Won, SuJeong	11R	SuJeong	Won
+31122	Chen, Shimmona	11N	Shimmona	Chen
+38862	Hoynala, Sallamari Annel	11N	Salla	Hoynala
+32672	Kang, YiSu	11N	Yisu	Kang
+35412	Karasawa, Yuki	11N	Yuki	Karasawa
+32262	Lee, Woo Jin	11N	Woojin	Lee
+40152	Lim, Eu Gene	11N	Eugene	Lim
+30352	Nedev, Nikola Borisov	11N	Nikola	Nedev
+35262	Park, So Yeon	11N	Soyeon	Park
+31202	Preston, Emma Catherine	11N	Emma	Preston
+35193	Seo, Seung Beom	11N	Seungbeom	Seo
+32162	Suh, JiHyung	11N	Jihyung	Suh
+36292	Tang, Yi Tan Richard	11N	Richard	Tang
+30212	Toyloy, Kevin	11N	Kevin	Toyloy
+30122	Warren, Hannah Jane Hurley	11N	Hannah	Warren
+30692	Wu, Man-Ping	11N	Man-ping	Wu
+30072	Yang, Yu	11N	Jenny	Yang
+39532	Fei, Fenglu	10SWA	Zoe	Fei
+39642	Shen, Sang Yu	10SWA	Sharon	Shen
+39212	Xie, HaoRan	10SWA	Valentine	Xie
+39202	Xu, YingJun	10SWA	Johnny	Xu
+39222	Xu, YunCheng	10SWA	Eric	Xu
+39232	Yang, ZiYue	10SWA	Ricardo	Yang
+31073	Bruderer, Sandra Feifei	9N	Sandra	Bruderer
+30712	Chang, Shu-Han	9N	Romayo	Chang
+39922	Choi, Sohyeon	9N	Sohyeon	Choi
+31232	Heo, Myeongmun	9N	Myeongmun	Heo
+40222	Jeoung, Eun Chae	9N	Joanne	Jeoung
+39872	Lee, Hui Min	9N	Huimin	Lee
+32105	Lee, Jiwon	9N	Jiwon	Lee
+31242	Lee, Ye Eun	9N	YeEun	Lee
+32522	Lindstrom, Ida Meri Marjatta	9N	Ida	Lindstrom
+32842	Mo, Jieun	9N	Jieun	Mo
+33152	Ong, Xuan Jie	9N	Daryl	Ong
+34582	Park, Sae Rin	9N	Saerin	Park
+35143	Park, Subin	9N	Subin	Park
+38922	Pettersson, Jan Charlie	9N	Charlie	Pettersson
+31203	Preston, John Patrick	9N	John	Preston
+33383	Tsuji, Mayumi	9N	Mayumi	Tsuji
+35072	Von Buren, Margaux Sophie	9N	Margaux	Vonburen
+39412	Wee, Solmi	9N	Solmi	Wee
+32882	Won, Dongyean	9N	Dennis	Won
+39262	Wu, Yun-Chen	9N	Yunchen	Wu
+30073	Yang, Lei	9N	Lei	Yang
+39673	Yang, Shih-Hung	9N	Shihhung	Yang
+40262	Yoon, Hyeji	9N	Hyeji	Yoon
+31192	Cho, Myeonggeun	10A	Myeonggeun	Cho
+38942	Garcia, Dillon Michael	10A	Dillon	Garcia
+31512	Jassner, Marc	10A	Marc	Jassner
+32922	Kim, Taehoon	10A	Taehoon	Kim
+31813	Ku, Dan Bi	10A	Danbi	Ku
+33062	Kwak, Yejun	10A	Yejun	Kwak
+30222	Lee, Jia Huah	10A	Jiahuah	Lee
+31802	Lee, Seunghyeon	10A	Seunghyeon	Lee
+40102	Lee, You Na	10A	Youna	Lee
+37292	Li, Winnie	10A	Winnie	Li
+36912	Lin, Tse Yu	10A	Jerry	Lin
+35052	Loebbert, Katharina	10A	Katharina	Loebbert
+31143	Ma, Angela Celine	10A	Angela	Ma
+30422	Moon, Hea Min	10A	Arika	Moon
+32392	Namkung, Won	10A	Won	Namkung
+33132	Paavola, Ira Aurora	10A	Ira	Paavola
+32482	Park, Haeun	10A	Haeun	Park
+39662	Rikkers, Sharon	10A	Sharon	Rikkers
+32223	Tai, Chih Ting	10A	Travi	Tai
+35722	Wang, Alexander	10A	Alex	Wang
+31952	Aaquist, Caroline	11E	Caroline	Aaquist
+37023	Ahn, Chi Hyun	11E	Harry	Ahn
+38692	Andrews, Nicholas Willia	11E	Nick	Andrews
+35912	Cheng, Yu-Hao	11E	Harry	Cheng
+33632	Frankova, Kristyna	11E	Kristyna	Frankova
+34972	Ko, Tae Young	11E	Elijah	Ko
+32092	Koh, Jia Xin	11E	Jiaxin	Koh
+33522	Kwon, Hee Jin	11E	Heejin	Kwon
+32892	Lee, Hae Yeon	11E	Haeyeon	Lee
+32742	Mertlik, Jan	11E	Jan	Mertlik
+31852	Mueller, Martin Dieter	11E	Martin	Mueller
+35522	Rabu, Theophile	11E	Theo	Rabu
+36893	Shen, Hsin Hui	11E	Melody	Shen
+37133	Smith, Jessica Sarah	11E	Jessie	Smith
+31622	Yu, Tsung-Hsun Emery	11E	Emery	Yu
+31602	Zoromski, Alejandra Mylen	11E	Ale	Zoromski
+30152	Alber, Steffen Richard	8R	Steffen	Alber
+35033	An, Tae Jun	8R	Taejun	An
+36943	Chen, Nana	8R	Nana	Chen
+30322	Choi, Heera	8R	Heera	Choi
+35852	Eberlein, Jonas Lennard	8R	Jonas	Eberlein
+39782	Fuetterer, Luise Dorothea	8R	Luise	Fuetterer
+39512	Kim, Hee Won	8R	Heewon	Kim
+34752	Kim, Jihong	8R	Brian	Kim
+31532	Klooss, Tom	8R	Tom	Klooss
+37112	Lee, Jinyoung	8R	Jin	Lee
+31772	Lee, Suyeon	8R	Suyeon	Lee
+35053	Loebbert, Felix	8R	Felix	Loebbert
+37193	Park, Ji Soo	8R	Erin	Park
+33722	Simpson-Treichel, Maddison	8R	Maddy	Treichel
+30923	Tan, Xian Hong Jeffrey	8R	Jeff	Tan
+30962	Wang, Jeffrey Tiger	8R	Jeffrey	Wang
+35533	Wintrich, Lisa Marie	8R	Lisa	Wintrich
+34763	Yang, Kwan Yeong	8R	Alice	Yang
+32412	Yu, Dongheon	8R	Dongheon	Yu
+39862	Berntsson, Oscar Karl Ivar	7L	Oscar	Berntsson
+31933	Chia, Wei Kit	7L	Sam	Chia
+31343	Cover, Celestia Martine	7L	Tia	Cover
+39332	Kim, Dongwook	7L	Dongwook	Kim
+40142	Kim, Geonho	7L	Alex	Kim
+35122	Kim, Han Seul	7L	Hanseul	Kim
+33473	Kim, Heeji	7L	Heeji	Kim
+38753	Kim, Jaehyung	7L	Justin	Kim
+32073	Kim, Pilsang	7L	Pilsang	Kim
+39752	Lau, Chi Lam	7L	Alice	Lau
+32893	Lee, Dong Hyun	7L	Donghyun	Lee
+36513	Lee, Hyewon	7L	Hyewon	Lee
+39982	Lee, Yeajin	7L	Gina	Lee
+30062	Lindved, Ida Sabine	7L	Sabine	Lindved
+40112	Ma, Seo Hee	7L	Seohee	Ma
+34662	Oh, William Wen	7L	William	Oh
+32292	Ryu, Su Hyun	7L	Suhyun	Ryu
+39543	Seo, Chanju	7L	Chanju	Seo
+34262	Smith, Cole Justin	7L	Cole	Smith
+34122	Stefureak Elder, Stefan Patric Nang	7L	Stefan	Elder
+30124	Warren, Emma Kathleen Hurley	7L	Emma	Warren
+34944	Wong, Zi Qin	7L	Ziqin	Wong
+36563	Yoon, Eunseok	7L	Eunseok	Yoon
+35034	An, Hye Jin	6E	Margaret	An
+36032	Bang, Jisu	6E	David	Bang
+39363	Chen, Andrew Michael	6E	Andrew	Chen
+33112	Chew, Sung Hung	6E	Derrick	Chew
+33513	Chum, Zi Kang Marcus	6E	Marcus	Chum
+37052	Dong, Amy	6E	Amy	Dong
+31463	Iguchi, Eri	6E	Eri	Iguchi
+39573	Jeong, Yuna	6E	Yuna	Jeong
+33242	Kim, Boyeong	6E	Boyeong	Kim
+40303	Kwon, Haiwon	6E	Haiwon	Kwon
+30383	Lai, Benjamin	6E	Benjamin	Lai
+39753	Lau, Chi Yang	6E	Tommy	Lau
+39873	Lee, Hui Hui	6E	Huihui	Lee
+34563	Lee, Jaehoon	6E	Jaehoon	Lee
+34052	Little, George Robert	6E	George	Little
+31142	Ma, Ivan Jeffrey	6E	Ivan	Ma
+31363	Na, Yejin	6E	Yejin	Na
+36972	Phillips, Hadiyah	6E	Hadiyah	Phillips
+31262	Shim, Jeonguk	6E	Jeonguk	Shim
+36132	Wang, Wei Yun Anna	6E	Anna	Wang
+38672	Baig, Arsalan	10N	Arsalan	Baig
+34722	Cho, Jeong Hee	10N	Jeonghee	Cho
+33762	Evans, Aric Jason Douglas	10N	Aric	Evans
+34232	Fowles, Rewa Margaret	10N	Rewa	Fowles
+37242	Heim, Larissa Sophie	10N	Larissa	Heim
+37232	Jin, Eva	10N	Eva	Jin
+32182	Jung, Da Woon	10N	Dawoon	Jung
+32932	Kim, Hyoseok	10N	Hyoseok	Kim
+38742	Kim, Kyung Yong	10N	Kyungyong	Kim
+31822	Kim, Minjeh	10N	Minjeh	Kim
+33343	Lau, Wei Yuan  Edwin	10N	Edwin	Lau
+36382	Liu, Ding Tao	10N	Danny	Liu
+35062	Micillo, Mario	10N	Mario	Micillo
+34402	Orencia, Julian Tristan	10N	Julian	Orencia
+31372	Pfeiffer, Larisa	10N	Larisa	Pfeiffer
+39162	Seo, Woowon	10N	Woowon	Seo
+32662	Seol, Younghoon	10N	James	Seol
+40542	Tan, Xiao	10N	Xiao	Tan
+33482	Yoon, Jiyeon	10N	Jiyeon	Yoon
+36862	Zheng, Ting-Yu	10N	Jack	Zheng
+33622	Chen, Tzu Hsuan	7E	Evian	Chen
+31882	Cho, Jaeho	7E	Jaeho	Cho
+36353	Choi, Eunsu	7E	Molly	Choi
+30342	Chua, Zhiheng	7E	Magnus	Chua
+30302	Huang, Robert Brian	7E	Robert	Huang
+40223	Jeoung, Su Hyun	7E	Jennifer	Jeoung
+34742	Kim, Jihun	7E	Jihun	Kim
+39812	Kim, Sae In	7E	Saein	Kim
+30584	Kim, Yong Bin	7E	Yongbin	Kim
+39072	Lee, Jonggeun	7E	Jonggeun	Lee
+32752	Lee, Kevin	7E	Kevin	Lee
+40382	Lee, Sungjae	7E	Jimmy	Lee
+32523	Lindstrom, Ella Tuuli Karoliina	7E	Ella	Lindstrom
+40602	Melicor, John Patrick Yo	7E	Patrick	Melicor
+37082	Naisara, Shadya Susan	7E	Shadya	Naisara
+37194	Park, Ji Young	7E	Angela	Park
+36612	Shin, Jinhyeop	7E	Jinhyeop	Shin
+40132	Shin, Jiwon	7E	Cindy	Shin
+34172	Skadsen, Kira Isabel	7E	Kira	Skadsen
+33362	Suzuki, Atsuhiro	7E	Atsuhiro - Atsu	Suzuki
+31712	Wang, Brandon	7E	Brandon	Wang
+30753	Wang, Hung-Chin	7E	Hungchin - Leo	Wang
+40263	Yoon, Hyewon	7E	Hyewon	Yoon
+33842	An, Seonghee	9A	Seonghee	An
+31843	Bernards, Martin Kairay	9A	Martin	Bernards
+33272	Chan, Olivia Harmony Yeong	9A	Olivia	Chan
+31162	Chen, Kuan-Pei	9A	Betty	Chen
+39882	Choi, Sung Jun	9A	Sungjun	Choi
+31053	Duval, Zachary James	9A	Zachary	Duval
+35303	Eom, Hyoin	9A	Hyoin	Eom
+30502	Jung, Han Gi	9A	Hangi	Jung
+31272	Kang, Kyung-Won	9A	Kyungwon	Kang
+32093	Koh, Jia Chen	9A	Jiachen	Koh
+32992	Kwon, Doeun	9A	Doeun	Kwon
+40302	Kwon, Haiyoung	9A	Haiyoung	Kwon
+32463	Lee, Jisoo	9A	Jisoo	Lee
+36512	Lee, Sungyong	9A	Sungyong	Lee
+36283	Lim, Siow Teng Rachel	9A	Rachel	Lim
+33133	Paavola, Iiris Sofiia Linnea	9A	Iiris	Paavola
+1208	Ren, Mei Hui	9A	Grace	Ren
+35463	Sim, Marcus Han Jie	9A	Marcus	Sim
+30752	Wang, Sui Yu	9A	Jenny	Wang
+31132	Warth, Ray	9A	Ray	Warth
+32782	Wolf, Saskia Maren	9A	Saskia	Wolf
+30623	Yu, Yeu-Shiun	9A	Victor	Yu
+30872	Chong, Sin Ren	6R	Sin Ren	Chong
+40202	Kil, Hyunjoo	6R	Jenny	Kil
+32082	Kim, Soyeon	6R	Elena	Kim
+32943	Kim, Yeowon	6R	Sally	Kim
+35572	Klaette, Anita Jiaqi	6R	Anita	Klaette
+36473	Park, Yoonho	6R	Harvey	Park
+30803	Shih, Yong-Cheng	6R	Andy	Shih
+32283	Sim, Kyu Beom	6R	Paul	Sim
+31273	Kang, Seung-Won	6A	Mike	Kang
+31692	An, Taeyeong	7R	Taeyeong	An
+31523	Buettner, Sascha	7R	Sascha	Buettner
+36622	Byun, Jiseob	7R	Jiseob	Byun
+39282	Choi, Youjung	7R	Youjung	Choi
+33442	Chuang, Shu Yu	7R	Judy	Chuang
+33582	Grossjohann, Will	7R	Will	Grossjohann
+33462	Han, Sang Heon	7R	Sangheon	Han
+34704	Han, Suyeon	7R	Suyeon	Han
+34884	Hsu, Kungheng	7R	Hogan	Hsu
+41213	Hwang, Inpyo	7R	Inpyo	Hwang
+32243	Jun, Soobin	7R	Soobin	Jun
+36453	Kim, Daehan	7R	Daehan	Kim
+32923	Kim, Yeji	7R	Yeji	Kim
+33063	Kwak, Nojun	7R	Nojun	Kwak
+37033	Lee, Nayeon	7R	Nayeon	Lee
+31452	Lin, Zhi Chong Chris	7R	Chris	Lin
+38842	Park, Ka-Young	7R	Kayoung	Park
+38932	Park, Sohyeon	7R	Sohyeon	Park
+31222	Park, Su Bin	7R	Subin	Park
+31542	Ramirez, Amanda	7R	Amanda	Ramirez
+32663	Seol, Sooyoung	7R	Sooyoung	Seol
+31753	Sun, Annie Yuxi	7R	Annie	Sun
+37173	Wang, Tzu-Yin	7R	Tzuyin	Wang
+36922	Wen, Kun Yuan	7R	Kerry	Wen
+
