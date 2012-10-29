@@ -234,8 +234,16 @@ class PowerSchoolIntegrator:
 
         families = Families()
         dragonnet = DragonNet()
+
+        email_content = """
+<p>Dear SSIS Parent,</p>
+
+<p>You are receiving this email because your child has recently enrolled into Suzhou Singapore International School (SSIS).</p>
+        """
         
         from utils.PHPMoodleLink import CallPHP
+        from utils.PythonMail import send_html_email
+        
         php = CallPHP()
         
         for student_key in self.students.get_student_keys():
@@ -244,7 +252,7 @@ class PowerSchoolIntegrator:
 
         for family_key in families.families:
             family = families.families[family_key]
-            family.determine_idnumber()
+            family.post_process()
 
             if not dragonnet.does_user_exist(family.idnumber):
                 # create account
@@ -260,11 +268,20 @@ class PowerSchoolIntegrator:
                 #                 family.email,
                 #                 family.idnumber)
 
-                for child in family.children:
+                print("Adding parent {} to parent cohort.".format(family.username))
+                #php.add_user_to_cohort(family.username, 'parentsALL')
+
+                for child in family.children.children:
                     print("Associating child:", child.username)
                     #php.associate_child_to_parent(family.idnumber,
                     #                              child.username) 
+                    if child.is_primary:
+                        print("Adding parent {} to cohort", 'parentsELEM'.format(family.username))
+                        #php.add_user_to_cohort(family.username, 'parentsELEM')
+                    if child.is_secondary:
+                        print("Adding parent {} to cohort", 'parentsSEC'.format(family.username))
 
+                send_html_email()
 
     def build_students(self, verify=False):
         """

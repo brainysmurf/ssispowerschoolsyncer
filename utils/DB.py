@@ -38,7 +38,7 @@ class DragonNetDBConnection(DBConnection):
         """
         We use the idnumber to ascertain if a student or parent account is there or not
         """
-        result = self.sql( 'select * from ssismdl_user where idnumber = {}'.format(idnumber) )()
+        result = self.sql( "select * from ssismdl_user where idnumber = '{}'".format(idnumber) )()
         if len(result) == 0:
             return False
         else:

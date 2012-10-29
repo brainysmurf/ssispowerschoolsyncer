@@ -129,7 +129,7 @@ class Maths_Club(DragonNetDBConnection):
         """
         Responsible for setting up date variables, self.date and self.custom_date
         """
-        if self.search_date == "next day":
+        if self.search_date == "same day":
             self.date = today()
         elif self.search_date == "next day":
             self.date = tomorrow()
@@ -276,6 +276,9 @@ class Maths_Club(DragonNetDBConnection):
 
         for item in self.final:
             self.html(self.derive_content(item))   # puts in the content
+
+        if not self.final:
+            self.html( "<p>No one has signed up for today</p>" )
 
         if self.final:
             self.html("{end_section_tag}")

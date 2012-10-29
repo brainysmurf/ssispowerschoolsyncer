@@ -10,24 +10,28 @@ class RelativeDateFieldUpdater(UpdateField):
         d = today()
         forward_delta = datetime.timedelta(days=forward_days)
         menu = []
+        every_seven_days = [i * 7 for i in range(1, 100)]
+
         for day in range(1, forward_delta.days+1):  # 1..7 by default
-            print(day)
             iter_date = d + datetime.timedelta(days=day)
             day_of_week = iter_date.strftime('%A')
+
+            if day in every_seven_days:
+                menu.append('----------')
+
             if not day_of_week in skip:
                 if day == 1:
                     day_of_week = "Tomorrow"
                 if day in range(7,14):
-                    if day == 7:
-                        menu.append('------')
                     day_of_week = "Next " + day_of_week
                 elif day in range(14,21):
-                    if day == 14:
-                        menu.append('------')
                     day_of_week = "Next next " + day_of_week
 
                 menu.append( "{} ({})".format(day_of_week, self.format_date(iter_date)) )
-                print(menu)
+
+            else:
+                if day in [7, 14]:
+                    menu.append('------')
 
         self.update_menu(menu)
 
