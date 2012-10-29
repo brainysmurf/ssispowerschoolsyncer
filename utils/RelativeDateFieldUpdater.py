@@ -20,12 +20,12 @@ class RelativeDateFieldUpdater(UpdateField):
                 menu.append('----------')
 
             if not day_of_week in skip:
+
                 if day == 1:
                     day_of_week = "Tomorrow"
-                if day in range(7,14):
-                    day_of_week = "Next " + day_of_week
-                elif day in range(14,21):
-                    day_of_week = "Next next " + day_of_week
+                else:
+                    # This will output however many 'next's I need, capitalized 
+                    day_of_week = ( "next " * int( day / 7 ) ).title() + day_of_week
 
                 menu.append( "{} ({})".format(day_of_week, self.format_date(iter_date)) )
 
