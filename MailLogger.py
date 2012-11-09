@@ -1,6 +1,7 @@
 
 import re
 import datetime
+import os
 
 class Result:
 
@@ -116,7 +117,7 @@ class Bounced(Today):
     def __init__(self, rows):
         super().__init__(rows)
         for row in self.rows:
-        self.rows = [r for r in self.rows if 'status=deferred' in r or 'status=bounced' in r]
+            self.rows = [r for r in self.rows if 'status=deferred' in r or 'status=bounced' in r]
         self.results = Results()
         for row in self.rows:
             self.results.add( re.findall(self.email_pattern, row) )
@@ -132,9 +133,15 @@ class MailLogReader(Bounced):
 
     def filter_bounces(self):
         return Bounced(self.raw)
-
+    
 if __name__ == "__main__":
 
-    mail = MailLogReader('../mail.log')
+    on_server = os.path.exists('/home/lcssisadmin')
+    if on_server:
+        path = '/var/log/mail.log'
+    else:
+        path = '../mail.log'
+
+    mail = MailLogReader(path)
     print( mail.filter_bounces() )
     

@@ -110,7 +110,7 @@ class StudentModifier(CallPHP):
             if test_run:
                   test('no_email', student)
             else:
-                  error = self.shell( sf('/bin/bash /home/lcssisadmin/ssispowerschoolsync/src/MakeNewStudentAccount.sh {num} {username} "{lastfirst}"') )
+                  error = self.shell( sf("/bin/bash /home/lcssisadmin/ssispowerschoolsync/src/MakeNewStudentAccount.sh {num} {username} '{lastfirst}'") )
                   print(error)
 
 

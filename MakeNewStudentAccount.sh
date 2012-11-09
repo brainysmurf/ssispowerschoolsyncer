@@ -1,8 +1,7 @@
 #!/bin/bash
 
-defaultpassword='changeme'
-newuserspath='/usr/sbin/newusers'
-new_student_log='/var/log/new_student_accounts.log'
+defaultpassword=changeme
+newuserspath=/usr/sbin/newusers
 
 echo
 echo "-------------------------"
