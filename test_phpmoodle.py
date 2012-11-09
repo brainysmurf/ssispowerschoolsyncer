@@ -8,4 +8,4 @@ if __name__ == "__main__":
 
     #print(psi.enrol_user_in_course('adammorris1996', 'TEST'))
 
-    print(psi.add_user_to_cohort('adammorris1996', 'students10'))
+    print(psi.add_user_to_group('32352', 'darkosaboMATST10'))

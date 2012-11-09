@@ -32,6 +32,10 @@ class CallPHP:
         self.sf(username=username, cohort_name=cohort_name)
         return self.command('add_user_to_cohort', self.sf("{username} '{cohort_name}'"))
 
+    def add_user_to_group(self, userid, group_name):
+        self.sf(userid=userid, group_name=group_name)
+        return self.command('add_user_to_group', self.sf("{userid} '{group_name}'"))
+
     def shell(self, command):
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
         return p.communicate()
@@ -49,3 +53,9 @@ class PowerSchoolIntegrator(CallPHP):
         """
         pass
 
+
+if __name__ == "__main__":
+
+    p = PowerSchoolIntegrator()
+
+    print(p.add_user_to_group('32352', 'darkosaboMATST10'))

@@ -35,7 +35,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
         self.agents = ['adammorris@ssis-suzhou.net']
         self.agent_map = {
-            'marktreichel@ssis-suzhou.net':['##teachnotices_ws##', '##teachnotices_elem##'],
+            'rebeccalouiseclentwo@ssis-suzhou.net':['##teachnotices_ws##', '##teachnotices_elem##'],
             'richardbruford@ssis-suzhou.net':['##teachnotices_ws##', '##teachnotices_sec##']
             }
 

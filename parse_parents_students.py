@@ -73,10 +73,7 @@ class Family:
 
     def output(self):
         print(self.family_id + " | " + str(len(self.username)) + " | " + ", ".join(self.username))
-        newidnumber = "P:"
-        _list = [child.idnumber for child in self.children.children]
-        _list.sort()
-        newidnumber += ",".join(_list)
+        newidnumber = self.family_id + 'P'
         print('\t-> ' + newidnumber)
         self.newidnumber = newidnumber
         self.children.output()

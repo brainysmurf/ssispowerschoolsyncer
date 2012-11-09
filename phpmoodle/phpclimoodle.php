@@ -5,6 +5,7 @@ define(CLI_SCRIPT,1);
 require_once( '../../config.php');
 require_once('../../cohort/lib.php');
 require_once('../../enrol/locallib.php');
+require_once('../../group/lib.php');
 
 class moodlephp
 {
@@ -134,6 +135,19 @@ class moodlephp
 	  var_dump($e);
 	  return "-1 Could not associate child".$child_username." to parent ".$parent_username;
 	}
+    }
+
+    private function add_user_to_group($args)
+    {
+      $user_idnum = $args[0];
+      $group_name = $args[1];
+
+      global $DB;
+
+      $user = $this->getUserByIDNumber($user_idnum);
+      $group = $DB->get_record('groups', array('name'=>$group_name), '*', MUST_EXIST);
+
+      groups_add_member($group, $user);
     }
 
     private function enrol_user_in_course($args)

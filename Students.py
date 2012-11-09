@@ -134,7 +134,7 @@ class Students:
         self.sync_others()
 
     def read_in_others(self):
-        self.read_in_preferred()
+        #self.read_in_preferred()
         self.read_in_courses()
         self.read_in_teachers()
         self.read_in_allocations()
@@ -156,7 +156,7 @@ class Students:
 
     def sync_others(self):
         """ Round robin """
-        self.sync_preferred()   # this one to get the names right
+        #self.sync_preferred()   # this one to get the names right
         self.sync_courses()     # this one for reference
         self.sync_teachers()    # this one to export teacher data
         self.sync_allocations() # copy to teachers
@@ -393,6 +393,7 @@ def check_is_in_preferred_list(this):
 if __name__ == "__main__":
 
     students = Students()
+    students.courses_output()
     #print("Here are the ones with ???:")
     #students.output_filter(check_is_in_preferred_list)
     #students.teachers_output()

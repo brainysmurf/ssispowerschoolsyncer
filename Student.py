@@ -182,6 +182,7 @@ class Student(Entry):
             if not course in self.courses():
                 with open(changed_courses, 'a') as f:
                     f.write("{} removed from course: {}\n".format(self.username, course))
+        
 
     def change_username(self, prev):
         changed_name = k_path_to_uploads + '/' + 'changed_names.txt'

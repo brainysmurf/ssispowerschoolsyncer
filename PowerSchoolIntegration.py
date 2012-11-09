@@ -35,13 +35,16 @@ class PowerSchoolIntegrator:
         print('------------------------------------------------------')
         print(datetime.datetime.today())
         self.students = Students()
-        #self.build_student_courses()
-        #self.build_teachers()
+        self.build_student_courses()
+        self.build_teachers()
         #self.build_courses()
         #self.build_students()
-        self.build_families()
+        #self.build_email_list()
+        #self.build_families()
         #self.build_parents(students)
-        #self.build_automagic_emails()
+        self.build_automagic_emails()
+        #self.build_profiles()
+        #self.assign_groups()
 
         #self.build_student_list(students)
         #self.build_opening_table(students)
@@ -50,6 +53,7 @@ class PowerSchoolIntegrator:
 
         #self.setup_idnumbers(students)
         print('------------------------------------------------------')
+
 
     def build_courses(self):
         """
@@ -283,10 +287,133 @@ class PowerSchoolIntegrator:
 
                 send_html_email()
 
+    def assign_groups(self):
+
+        from utils.PHPMoodleLink import CallPHP
+        php = CallPHP()
+        
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            for group in student.groups():
+                print(php.add_user_to_group(student.num, group))
+
+
+    def build_profiles(self):
+        """
+        Updates user profile fields
+        """
+
+        #TODO: Check for which day of the week it is ... only fun on Mondays.
+        
+        html_start = """
+<table style="width: 400px;" border="0" cellpadding="5" cellspacing="5" border="1">
+<tbody>"""
+        grade_row = """
+<tr>
+<td>{course_name} ({course_short})</td>
+<td><a href="{url}">View Feedback</a></td>
+</tr>"""
+        email_row = """
+<tr>
+<td>{teacher_name} ({course_short})</td>
+<td><a href="mailto:{teacher_email}">Email</a></td>
+</tr>"""
+
+        html_end = """</tbody>
+</table>"""
+        
+        database = DragonNetDBConnection()
+
+        
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            d = {}
+
+            grade_rows = []
+            email_rows = [
+                email_row.format(**dict(teacher_name="Homeroom Teacher",
+                                      teacher_email=student.username + 'HR@student.ssis-suzhou.net',
+                                      course_short = 'HROOM')),
+                email_row.format(**dict(teacher_name="All your teachers",
+                                      teacher_email=student.username + 'TEACHERS@student.ssis-suzhou.net', course_short='N/A'))
+                                      ]
+
+            
+
+            _id = database.sql("select id from ssismdl_user where idnumber = '{}'".format(student.num))()[0][0]
+            if not _id:
+                print("User with idnumber {} could not be found in the database: {}".format(student.idnum, student.username))
+                continue
+            courses = []
+            for course in student.courses():
+                if 'HROOM' in course:
+                    continue
+                query = database.sql("select id, fullname from ssismdl_course where shortname = '{}'".format(course))()
+                if not query:
+                    print("Course with shortname {} could not be found in the database".format(course))
+                    continue
+                course_id, course_fullname = query[0]
+
+                grade_url = "http://dragonnet.ssis-suzhou.net/course/user.php?mode=grade&id={}&user={}".format(course_id, _id)
+                d['course_name'] = course_fullname
+                d['course_short'] = course
+                d['url'] = grade_url
+                grade_rows.append( grade_row.format(**d) )
+
+            for teacher_key in self.students.get_teacher_keys():
+                teacher = self.students.get_teacher(teacher_key)
+                if teacher.username in student.get_teacher_names():
+                    for teacher_course in teacher.courses():
+                        if 'HROOM' in teacher_course:
+                            continue
+                        if teacher_course in student.courses():
+                            d['teacher_name'] = teacher.lastfirst.replace("'", '')
+                            d['teacher_email'] = teacher.username + '@ssis-suzhou.net'
+                            d['course_short'] = teacher_course
+                            email_rows.append( email_row.format(**d) )
+                            break
+
+            email_html = html_start
+            for row in email_rows:
+                email_html += row
+            email_html += html_end
+
+            grade_html = html_start
+            for row in grade_rows:
+                grade_html += row
+            grade_html += html_end
+
+            teacher_email_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 2 and userid = {}".format(_id))()
+            if not teacher_email_field_id:
+                database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 2, '{}', 0)".format(_id, email_html))()
+            else:
+                teacher_email_field_id = teacher_email_field_id[0][0]
+                database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(email_html, teacher_email_field_id))()
+
+            teacher_grade_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 3 and userid = {}".format(_id))()
+            if not teacher_grade_field_id:
+                database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 3, '{}', 0)".format(_id, grade_html))()
+            else:
+                teacher_grade_field_id = teacher_grade_field_id[0][0]
+                database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(grade_html, teacher_grade_field_id))()
+
+            #print(grade_html)
+            #print()
+            #print(email_html)
+                
+    def build_email_list(self):
+        with open(k_path_to_output + '/' + 'student_emails.txt', 'w') as f:
+            for student_key in self.students.get_student_keys():
+                student = self.students.get_student(student_key)
+                if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
+                    f.write(student.email + '\n')
+
+
     def build_students(self, verify=False):
         """
         Go through each student and do what is necessary to actually sync powerschool data
         """
+
         
         ## CLASSIC
 
@@ -325,7 +452,7 @@ class PowerSchoolIntegrator:
 
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            if student.homeroom in self.students.get_secondary_homerooms() and student.courses():
+            if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
                 # Compare to the original database
                 continue_until_no_errors = True
                 times_through = 0
@@ -538,18 +665,22 @@ class PowerSchoolIntegrator:
         clear_folder('{path}/special'.format(**d))
         clear_folder('{path}/departments'.format(**d))
 
-        setup_postfix = '{path}/parentsKOREAN{ext}'.format(**d)
+        setup_postfix = '{path}/special{ext}'.format(**d)
         with open(setup_postfix, 'w') as f:
+            f.write("usebccparentsALL: :include:{path}/special/usebccparentsALL{ext}\n".format(**d))
+        setup_postfix = '{path}/special{ext}'.format(**d)
+        with open(setup_postfix, 'a') as f:
+            f.write("usebccparentsSEC: :include:{path}/special/usebccparentsSEC{ext}\n".format(**d))
+        setup_postfix = '{path}/special{ext}'.format(**d)
+        with open(setup_postfix, 'a') as f:
+            f.write("usebccparentsELEM: :include:{path}/special/usebccparentsELEM{ext}\n".format(**d))
+
+        setup_postfix = '{path}/special{ext}'.format(**d)
+        with open(setup_postfix, 'a') as f:
             f.write("usebccparentsKOREAN: :include:{path}/special/usebccparentsKOREAN{ext}\n".format(**d))
-        setup_postfix = '{path}/special/usebccparentsKOREAN{ext}'.format(**d)
-        with open(setup_postfix, 'w') as f:
-            f.write('usebccparentsKOREANmanual')
-        setup_postfix = '{path}/parentsCHINESE{ext}'.format(**d)
-        with open(setup_postfix, 'w') as f:
+        setup_postfix = '{path}/special{ext}'.format(**d)
+        with open(setup_postfix, 'a') as f:
             f.write("usebccparentsCHINESE: :include:{path}/special/usebccparentsCHINESE{ext}\n".format(**d))
-        setup_postfix = '{path}/special/usebccparentsCHINESE{ext}'.format(**d)
-        with open(setup_postfix, 'w') as f:
-            f.write('usebccparentsCHINESEmanual')
 
         done_homerooms = []
         done_grades = []
@@ -584,6 +715,14 @@ class PowerSchoolIntegrator:
                 f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
 
             # SETUP SPECIAL
+            setup_postfix = "{path}/special/usebccparentsALL{ext}".format(**d)
+            with open(setup_postfix, 'a') as f:
+                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
+
+            setup_postfix = "{path}/special/usebccparentsELEM{ext}".format(**d)
+            with open(setup_postfix, 'a') as f:
+                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
+                
             if student.is_korean:
                 setup_postfix = "{path}/special/usebccparentsKOREAN{ext}".format(**d)
                 with open(setup_postfix, 'a') as f:
@@ -689,6 +828,14 @@ class PowerSchoolIntegrator:
                     added_teachers_hr[d['homeroom']].append(teacher)
 
             # SETUP SPECIAL
+            setup_postfix = "{path}/special/usebccparentsALL{ext}".format(**d)
+            with open(setup_postfix, 'a') as f:
+                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
+
+            setup_postfix = "{path}/special/usebccparentsSEC{ext}".format(**d)
+            with open(setup_postfix, 'a') as f:
+                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
+
             if student.is_korean:
                 setup_postfix = "{path}/special/usebccparentsKOREAN{ext}".format(**d)
                 with open(setup_postfix, 'a') as f:
@@ -706,6 +853,8 @@ class PowerSchoolIntegrator:
                     setup_postfix = '{path}/classes{ext}'.format(**d)
                     with open(setup_postfix, 'a') as f:
                         f.write("{group}: :include:{path}/classes/{group}{ext}\n".format(**d))
+                    with open(setup_postfix, 'a') as f:
+                        f.write("{group}PARENTS: :include:{path}/classes/{group}PARENTS{ext}\n".format(**d))
 
                 setup_postfix = '{path}/classes/{group}{ext}'.format(**d)
                 with open(setup_postfix, 'a') as f:
