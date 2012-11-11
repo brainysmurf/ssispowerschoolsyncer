@@ -35,10 +35,10 @@ class PowerSchoolIntegrator:
         print('------------------------------------------------------')
         print(datetime.datetime.today())
         self.students = Students()
-        self.build_student_courses()
+        #self.build_student_courses()
         self.build_teachers()
-        #self.build_courses()
-        #self.build_students()
+        self.build_courses()
+        self.build_students()
         #self.build_email_list()
         #self.build_families()
         #self.build_parents(students)
@@ -462,18 +462,26 @@ class PowerSchoolIntegrator:
                         server_information.check_student(student)
 
                     except NoStudentInMoodle:
-                        #error = True
+                        error = True
                         print("Student does not have an account:\n{}".format(student))
                         modify.new_student(student)
 
                     except StudentChangedName:
-                        #error = True
+                        error = True
                         print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
                         modify.change_name(student)
 
                     except NoEmailAddress:
                         error = True
                         modify.no_email(student)
+
+                    except NoParentAccount:
+                        error = True
+                        modify.new_parent(student)
+
+                    except ParentAccountNotAssociated:
+                        error = True
+                        modify.parent_account_not_associated(student)
 
                     continue_until_no_errors = error
                     times_through += 1

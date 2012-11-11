@@ -151,9 +151,9 @@ def parse():
     print()
     print()
 
-    families.output_doubles()
+    #families.output_doubles()
 
-    families.update_table()
+    #families.update_table()
 
 if __name__ == "__main__":
 

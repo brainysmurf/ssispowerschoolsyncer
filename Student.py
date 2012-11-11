@@ -13,6 +13,7 @@ class Student(Entry):
 
     def __init__(self, num, grade, homeroom, lastfirst, parent_emails, nationality):
         self.num = num
+        self.family_id = num[:4] + 'P'
         self.grade = grade
         self.is_secondary = grade >= 6
         self.is_elementary = grade <= 5

@@ -24,13 +24,13 @@ class CallPHP:
         self.sf(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber)
         return self.command('create_account', self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber}"))
 
-    def enrol_user_in_course(self, username, shortname, group):
-        self.sf(username=username, shortname=shortname, group=group)
-        return self.command('enrol_user_in_course', self.sf("{username} {shortname}"))
+    def enrol_user_in_course(self, idnumber, shortname, group):
+        self.sf(idnumber=idnumber, shortname=shortname, group=group)
+        return self.command('enrol_user_in_course', self.sf("{idnumber} {shortname}"))
 
-    def add_user_to_cohort(self, username, cohort_name):
-        self.sf(username=username, cohort_name=cohort_name)
-        return self.command('add_user_to_cohort', self.sf("{username} '{cohort_name}'"))
+    def add_user_to_cohort(self, useridnumber, cohort_name):
+        self.sf(useridnumber=useridnumber, cohort_name=cohort_name)
+        return self.command('add_user_to_cohort', self.sf("{useridnumber} '{cohort_name}'"))
 
     def add_user_to_group(self, userid, group_name):
         self.sf(userid=userid, group_name=group_name)
@@ -43,15 +43,10 @@ class CallPHP:
     def change_username(self, idnumber, new_name):
         return self.command('change_username', "{} {}".format(idnumber, new_name))
 
-    def associate_child_to_parent(self, idnumber, child_username):
-        return self.command('associate_child_to_parent', "{} {}".format(idnumber, child_username))
+    def associate_child_to_parent(self, idnumber, child_idnumber):
+        return self.command('associate_child_to_parent', "{} {}".format(idnumber, child_idnumber))
 
 class PowerSchoolIntegrator(CallPHP):
-    def process_parent(self, username):
-        """
-        Decides what to do with parent
-        """
-        pass
 
 
 if __name__ == "__main__":

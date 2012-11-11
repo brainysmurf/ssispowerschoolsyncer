@@ -13,6 +13,12 @@ class NoStudentInMoodle(Exception):
 class NoEmailAddress(Exception):
     pass
 
+class NoParentAccount(Exception):
+    pass
+
+class ParentAccountNotAssociated(Exception):
+    pass
+
 class DBConnection:
 
     def __init__(self, user, password, database):
@@ -101,14 +107,27 @@ class ServerInfo(DragonNetDBConnection):
 
     def __init__(self):
         super().__init__()
-        self._db = {}
+        self.students = {}
+        self.families = {}
         self._checked = []
         if self.on_server:
             get_students = self.sql('select id, idnumber, username from ssismdl_user where deleted = 0')()
             for item in get_students:
                 id, idnumber, username = item
                 if idnumber.isdigit():
-                    self._db[int(idnumber)] = username
+                    self.students[int(idnumber)] = username
+                elif idnumber.endswith('P'):
+                    self.families[idnumber] = []
+
+            get_families = self.sql("select usr.idnumber as parent, usr.id, child.username as child from ssismdl_user usr join ssismdl_role_assignments ra on ra.userid = usr.id join ssismdl_role role on role.id = ra.roleid join ssismdl_context ctx on ctx.id = ra.contextid and ctx.contextlevel = 30
+join ssismdl_user child on child.id = ctx.instanceid where role.shortname = 'parent' order by usr.idnumber")()
+            for family in get_families:
+                idnumber, _id, child = family
+                f = self.families.get(idnumer)
+                if not f:
+                    print("Something wrong with parent account")
+                    continue
+                f.append(child)
 
             get_groups = self.sql('select id, name from ssismdl_groups')()
             self._groups = {}
@@ -138,9 +157,9 @@ class ServerInfo(DragonNetDBConnection):
         username = student.username
 
         # Account-based checks
-        stu = self._db.get(int(idnumber))
+        stu = self.students.get(int(idnumber))
         if stu:
-            if not username == self._db[int(idnumber)]:
+            if not username == self.students[int(idnumber)]:
                 raise StudentChangedName
         else:
             raise NoStudentInMoodle
@@ -157,4 +176,9 @@ class ServerInfo(DragonNetDBConnection):
         if self.on_server and not os.path.exists('/home/{}'.format(username)):
             raise NoEmailAddress
 
-        
+        familyid = student.family_id
+        if not familyid in list(self.families.keys()):
+            raise NoParentAccount
+        else:
+            if not student.username in self.families[familyid]:
+                raise ParentAccountNotAssociated

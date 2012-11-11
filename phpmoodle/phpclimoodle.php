@@ -29,13 +29,13 @@ class moodlephp
 
     private function add_user_to_cohort($args) 
     {
-      $username = $args[0];
+      $idnumber = $args[0];
       $cohortName = $args[1];
 
       global $DB;
-      if( !$user = $this->getUserByUsername($username) )
+      if( !$user = $this->getUserByIDNumber($idnumber) )
 	{
-	  return "-1 Could not find user ".$username;
+	  return "-1 Could not find user ".$idnumber;
 	}
 
       if( $cohort = $DB->get_record_select( 'cohort', 'name = ?', array($cohortName) ) )
@@ -55,7 +55,7 @@ class moodlephp
 	}
      
       $r = cohort_add_member($cohortID, $userID);
-      echo "Added ".$username." to cohort ".$cohortName ;
+      echo "Added ".$idnumber." to cohort ".$cohortName ;
       return $r;
 
       global $DB;
@@ -73,7 +73,7 @@ class moodlephp
 
       if( $this->user_does_exist(array($username)) )
 	{
-	  return "0";
+	  return "0 This username is already taken: ".$username;
 	}
 
       global $DB, $CFG;
@@ -86,6 +86,7 @@ class moodlephp
 	  $user->firstname = trim($firstname);
 	  $user->lastname = trim($lastname);
 	  $user->idnumber = trim($idnumber);
+	  $user->maildigest = 1;  // All my users should use digest, for the love of god
 	  $user->city = 'Suzhou';
 	  $user->country = 'CN';
 
@@ -115,25 +116,25 @@ class moodlephp
     private function associate_child_to_parent($args)
     {
       $parent_idnumber = $args[0];
-      $child_username = $args[1];
+      $child_idnumber = $args[1];
 
       try
 	{
-	  if( $parent = $this->getUserByIDNumber( $parent_idnumber ) and $child = $this->getUserByUsername($child_username) )
+	  if( $parent = $this->getUserByIDNumber( $parent_idnumber ) and $child = $this->getUserByIDNumber($child_idnumber) )
 	    {
 	      $context = get_context_instance( CONTEXT_USER , $child->id );
 	      role_assign( $this->PARENT_ROLE_ID, $parent->id, $context->id );
 	    }
 	  else
 	    {
-	      return "-1 Could not find parent ".$parent_username;
+	      return "-1 Could not find parent ".$parent_idnumber;
 	    }
 	}
 
       catch( Exception $e ) 
 	{
 	  var_dump($e);
-	  return "-1 Could not associate child".$child_username." to parent ".$parent_username;
+	  return "-1 Could not associate child".$child_idnumber." to parent ".$parent_idnumber;
 	}
     }
 
@@ -152,15 +153,15 @@ class moodlephp
 
     private function enrol_user_in_course($args)
     {
-      $username = $args[0];
+      $useridnumber = $args[0];
       $short_name = $args[1];
       $group_name = $args[2];
 
       global $DB, $PAGE;
 
-      if( !$user = $this->getUserByUsername($username) )
+      if( !$user = $this->getUserByIDnumber($useridnumber) )
 	{
-	  return "-1 Could not find user".$username;
+	  return "-1 Could not find user".$useridnumber;
 	}
 
       $course = $DB->get_record('course', array('shortname'=>$short_name), '*');
@@ -190,14 +191,14 @@ class moodlephp
 	  $timeend = 0;
 
 	  $plugin->enrol_user($instance, $user->id, $this->STUDENT_ROLE_ID, $timestart, $timeend);
-	  echo "Enrolled ".$username." into class ".$short_name.".";
+	  echo "Enrolled ".$useridnumber." into class ".$short_name.".";
 	}
 
       $groups = $manager->get_all_groups();
       if( array_key_exists($group_name, $groups) )
         {
           $manager->add_user_to_group( $user, $groups[$group_name]->id );
-          echo "Added user ".$username." into group ".$group_name.".";
+          echo "Added user ".$useridnumber." into group ".$group_name.".";
         }
 
     }
