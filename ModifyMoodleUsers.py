@@ -61,7 +61,7 @@ class StudentModifier(CallPHP):
                   if test_run:
                         test('add_user_to_cohort', student, cohort)
                   else:
-                        error = self.add_user_to_cohort( student.username, cohort )
+                        error = self.add_user_to_cohort( student.idnumber, cohort )
                         print(error)
             for index in range(0, len(student.courses())):
                   course = student.courses()[index]
@@ -166,7 +166,7 @@ class StudentModifier(CallPHP):
                   if test_run:
                         test('enrol_user_in_course', student, course + ' ' + group + 'Parent ')
                   else:
-                        error = self.enrol_user_in_course( student.username, course, group, 'Parent' )
+                        error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
                         print(error)
             
 
