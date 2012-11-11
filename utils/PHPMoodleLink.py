@@ -24,9 +24,9 @@ class CallPHP:
         self.sf(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber)
         return self.command('create_account', self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber}"))
 
-    def enrol_user_in_course(self, idnumber, shortname, group):
-        self.sf(idnumber=idnumber, shortname=shortname, group=group)
-        return self.command('enrol_user_in_course', self.sf("{idnumber} {shortname}"))
+    def enrol_user_in_course(self, idnumber, shortname, group, role="Student"):
+        self.sf(idnumber=idnumber, shortname=shortname, group=group, role=role)
+        return self.command('enrol_user_in_course', self.sf("{idnumber} {shortname} {role}"))
 
     def add_user_to_cohort(self, useridnumber, cohort_name):
         self.sf(useridnumber=useridnumber, cohort_name=cohort_name)

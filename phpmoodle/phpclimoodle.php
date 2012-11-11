@@ -156,6 +156,17 @@ class moodlephp
       $useridnumber = $args[0];
       $short_name = $args[1];
       $group_name = $args[2];
+      $role = $args[3];
+
+      if ($role = 'Student') {
+	$roleid = $this->STUDENT_ROLE_ID;
+      }
+      else if( $role = 'Parent') {
+	$roleid = $this->PARENT_ROLE_ID;
+      }
+      else {
+	return "-1 No viable role ID was passed ".$role;
+      }
 
       global $DB, $PAGE;
 
@@ -190,7 +201,7 @@ class moodlephp
 	  $timestart = $today;
 	  $timeend = 0;
 
-	  $plugin->enrol_user($instance, $user->id, $this->STUDENT_ROLE_ID, $timestart, $timeend);
+	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
 	  echo "Enrolled ".$useridnumber." into class ".$short_name.".";
 	}
 

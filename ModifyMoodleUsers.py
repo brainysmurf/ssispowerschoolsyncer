@@ -159,13 +159,14 @@ class StudentModifier(CallPHP):
                   else:
                         error = self.add_user_to_cohort( student.family_id, cohort )
                         print(error)
+                        
             for index in range(0, len(student.courses())):
                   course = student.courses()[index]
                   group  = student.groups()[index]
                   if test_run:
-                        test('enrol_user_in_course', student, course + ' ' + group)
+                        test('enrol_user_in_course', student, course + ' ' + group + 'Parent ')
                   else:
-                        error = self.enrol_user_in_course( student.username, course, group )
+                        error = self.enrol_user_in_course( student.username, course, group, 'Parent' )
                         print(error)
             
 
