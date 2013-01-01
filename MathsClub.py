@@ -174,7 +174,7 @@ class Maths_Club(DragonNetDBConnection):
 
         # agents
         self.agents    = ['adammorris@ssis-suzhou.net',
-                          'ianfitzgerald@ssis-suzhou.net',
+                          'iainfitzgerald@ssis-suzhou.net',
                           'paulskadsen@ssis-suzhou.net',
                           'ronniefrisinger@ssis-suzhou.net',
                           'garypost@ssis-suzhou.net']

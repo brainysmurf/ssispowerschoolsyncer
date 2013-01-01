@@ -122,14 +122,25 @@ class Students:
         Reads in other information as well
         """
         for line in self.raw:
+
+            # This MUST sync with AutoSend
             stunum, homeroom, firstlast, parent_emails, nationality, _ = line.strip('\n').split('\t')
+
             try:
                 grade = self.convert_hr_to_grade(homeroom)
             except NoHomeroom:
                 # Do not enroll because a student's info is not live until they've been enrolled in a homeroom
                 self.document_error('student_no_homeroom', "{}: {}\n".format(stunum, firstlast))
                 continue
-            self.add(stunum, grade, homeroom, firstlast, re.split('[;,]', parent_emails), nationality)
+
+            # This SHOULD PROBABLY sync with AutoSend, with above
+            self.add(stunum,
+                grade,
+                homeroom,
+                firstlast,
+                re.split('[;,]', parent_emails),
+                nationality)
+
         self.read_in_others()
         self.sync_others()
 
@@ -357,6 +368,17 @@ class Students:
     def get_student(self, student_id):
         return self.student_info_controller.get(student_id)
 
+    def get_students_by_family_id(self, family_id):
+        info = self.student_info_controller
+        return [info.get_student(student_key) for student_key in info.get_student_keys()
+                if info.get_student(student_key).family_id == family_id]
+
+    def get_family_emails(self, family_id):
+        emails = []
+        for student in self.get_students_by_family_id(family_id):
+            emails.extend( student.parent_emails )
+        return set(emails)
+
     def get_student_keys(self, secondary=True):
         """
         Default right now is for secondary only because that was a previous assumption
@@ -393,7 +415,12 @@ def check_is_in_preferred_list(this):
 if __name__ == "__main__":
 
     students = Students()
-    students.courses_output()
+    for student_key in students.get_student_keys():
+        student = students.get_student(student_key)
+        if student.has_preferred_name:
+            print(student.first, student.last)
+            print(student.preferred_first)
+    #students.courses_output()
     #print("Here are the ones with ???:")
     #students.output_filter(check_is_in_preferred_list)
     #students.teachers_output()

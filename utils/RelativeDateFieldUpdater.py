@@ -27,8 +27,8 @@ class RelativeDateFieldUpdater(UpdateField):
                     # This will output however many 'next's I need, capitalized 
                     day_of_week = ( self.next_text() * int( day / 7 ) ).title() + day_of_week
 
-                d = {'day_of_week':day_of_week, 'date':self.format_date(iter_date)}
-                menu.append( self.output().format(**d) )
+                dictionary = {'day_of_week':day_of_week, 'date':self.format_date(iter_date)}
+                menu.append( self.output().format(**dictionary) )
 
         self.update_menu(menu)
 

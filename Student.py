@@ -9,6 +9,17 @@ from Errors import DocumentErrors
 from Constants import k_path_to_uploads, k_path_to_errors
 import os
 
+class Object:
+    """
+    Very general object, kwarg arguments are just set to itself, useful for simple data manipulation
+    And makes code readable
+    """
+    def __init__(self, **kwargs):
+        if not kwargs:
+            return
+        for key in kwargs.keys():
+            setattr(self, key, kwargs[key])
+
 class Student(Entry):
 
     def __init__(self, num, grade, homeroom, lastfirst, parent_emails, nationality):
@@ -19,14 +30,15 @@ class Student(Entry):
         self.is_elementary = grade <= 5
         self.is_student = True
         self.lastfirst = lastfirst
+        
         self.determine_first_and_last()
+        self.determine_preferred_name()  # this is derived from preferred.txt
+
         self.nationality = nationality
         self.is_korean = self.nationality == "Korea"
         self.is_chinese = self.nationality in ["China", "Hong Kong", "Taiwan", "Malaysia", "Singapore"]
         self.homeroom = homeroom
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
-        self.has_preferred_name = False
-        self.determine_preferred_name()
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
         self.email = self.email.lower()
@@ -37,6 +49,7 @@ class Student(Entry):
         elif self.is_elementary:
             self._cohorts = ['studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
         self._groups = []
+        self._groups_courses = {}
         self._teachers = {}
 
     def other_defaults(self):
@@ -53,8 +66,34 @@ class Student(Entry):
 
     def determine_preferred_name(self):
         """
-        
         """
+        self.has_preferred_name = False
+        if not hasattr(self, 'preferred_names_from_file'):
+            # read in the information the first time
+            self.preferred_names_from_file = {}
+            with open('/home/lcssisadmin/ssispowerschoolsync/src/preferred_names.txt') as _f:
+                for line in [l.strip('\n') for l in _f.readlines() if l.strip('\n')]:
+                    split = line.split('\t')
+                    if not len(split) == 5:
+                        continue
+                    stu_num = split[0]
+                    preferred_first = split[3]
+                    preferred_last = split[4]
+                    if stu_num and preferred_first:
+                        self.preferred_names_from_file[stu_num] = Object(firstname=preferred_first, lastname=preferred_last)
+        just_alpha = lambda s: re.sub(r'[^a-z]', '', s.lower())
+        is_different = lambda num: just_alpha(self.first) != just_alpha(self.preferred_names_from_file[num].firstname)
+        register_preferred_name = lambda num: num in self.preferred_names_from_file and is_different(num)
+
+        if register_preferred_name(self.num):
+            this = self.preferred_names_from_file[self.num]
+            self.preferred_first = this.firstname
+            self.preferred_last = this.lastname
+            self.has_preferred_name = True
+        else:
+            self.preferred_first = ""
+            self.preferred_last = ""
+
         if self.has_preferred_name:
             format_string = "{preferred_first} {preferred_last}"
         else:
@@ -77,7 +116,7 @@ class Student(Entry):
     def update_courses(self, course_obj, teacher_obj):
         self._courses.append(course_obj.moodle_short)
         d = {'username':teacher_obj.username,'name':course_obj.moodle_short}
-        self.update_groups("{username}{name}".format(**d) )
+        self.update_groups(course_obj.moodle_short, "{username}{name}".format(**d) )
 
     def courses(self):
         return self._courses
@@ -88,7 +127,7 @@ class Student(Entry):
     def groups(self):
         return self._groups
 
-    def update_groups(self, group):
+    def update_groups(self, shortcode, group):
         """
         Processes the group information, as necessary
         """
@@ -105,6 +144,7 @@ class Student(Entry):
         
         if group and not group in self._groups:
             self._groups.append(group)
+            self._groups_courses[shortcode] = group
 
     def update_teachers(self, course, teacher):
         if teacher and course not in self._teachers:

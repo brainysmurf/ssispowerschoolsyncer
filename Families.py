@@ -4,21 +4,13 @@ from utils.Formatter import Smartformatter
 class Update(DragonNetDBConnection):
     pass
 
-class Child:
-    def __init__(self, student):
-        self.username = student.username
-        self.idnumber = student.num
-
-    def output(self):
-        print('\t' + self.username + '\t' + self.idnumber)
-
 class Children:
 
     def __init__(self):
         self.children = []
 
     def add(self, student):
-        self.children.append( Child(student) )
+        self.children.append( student )
 
     def count(self):
         return len(self.children)
@@ -27,13 +19,33 @@ class Children:
         for child in self.children:
             child.output()
 
+    def __str__(self):
+        return ", ".join([child for child in self.children])
+
+    def __iter__(self):
+        self.iter_item = 0
+        return self
+
+    def __next__(self):
+        if self.iter_item < len(self.children):
+            item = self.iter_item
+            self.iter_item += 1
+            return self.children[item]
+        else:
+            raise StopIteration
+
 class Family:
 
     def __init__(self, family_id):
         self.family_id = family_id
         self.username = ""
         self.emails = []
+        self.parent_account_id = family_id + 'P'
         self.children = Children()
+
+    def __str__(self):
+        return "Family\n:Family ID: {}, Username: {}\nChildren:\n{}".format(self.family_id,
+                                                                  self.username, ", ".join([str(student) for student in self.children]))
 
     def add(self, student):
         self.add_child(student)
@@ -56,19 +68,26 @@ class Family:
         self.children.output()
 
     def post_process(self):
+        """
+        Returns True if post_process was successful
+        """
         update = Update()
         
-        self.idnumber = "P:"
-        self.idnumber += ",".join([child.idnumber for child in self.children.children])
         if self.emails:
-            self.email = self.emails[0]
+            # Use the second email, dammit, because that's usually the mother
+            if len(self.emails) > 1:
+                self.email = self.emails[1]
+            else:
+                self.email = self.emails[0]
         else:
             self.email = None
-        print(self.idnumber)
-        result = update.sql("select username from ssismdl_user where idnumber = '{}'".format(self.idnumber))()
-        print(result)
-        self.username = result[0]
-
+        id_number = self.family_id + 'P'
+        result = update.sql("select username from ssismdl_user where idnumber = '{}'".format(id_number))()
+        if result:
+            self.username = result[0]
+        else:
+            self.username = self.email
+            
 class Families:
 
     def __init__(self):
@@ -97,3 +116,6 @@ class Families:
         for family in self.families.keys():
             if len(self.families[family].username) > 1:
                 self.families[family].output()
+
+    def __str__(self):
+        return "\n".join(str([family for family in self.families]))

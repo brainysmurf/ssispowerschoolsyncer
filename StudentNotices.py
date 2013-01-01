@@ -102,7 +102,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
             'title': self.get_subject(just_date=True),   # remove the 'Student Notices for' part
             'author': 35,  # peter fowles
             'content': self.get_html().replace("'", replace_apostrophes).replace('\n', ''),   # escape apostrophes for bash
-            'date': self.date.strftime('%y-%m-%d 7:30:00'),
+            'date': self.date.strftime('%y-%m-%d 7:00:00'),
             'blog': "sites.ssis-suzhou.net/secondarystudentannouncements"
             }
         command = """/usr/bin/wp post create --path=/var/www/wordpress --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --blog={blog}""".format(**d)

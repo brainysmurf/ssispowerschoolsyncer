@@ -10,7 +10,7 @@ class Schedule(Entry):
 
     def __init__(self, course_number, teacher, studentID):
         self.course_number = course_number
-        self.course_teacher = course_name
+        self.course_teacher = teacher
         self.studentID = studentID
         self._students = []
 

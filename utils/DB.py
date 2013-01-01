@@ -19,6 +19,9 @@ class NoParentAccount(Exception):
 class ParentAccountNotAssociated(Exception):
     pass
 
+class MustExit(Exception):
+    pass
+
 class DBConnection:
 
     def __init__(self, user, password, database):
@@ -43,12 +46,10 @@ class DragonNetDBConnection(DBConnection):
     def does_user_exist(self, idnumber):
         """
         We use the idnumber to ascertain if a student or parent account is there or not
+        True if user exists, False if not
         """
-        result = self.sql( "select * from ssismdl_user where idnumber = '{}'".format(idnumber) )()
-        if len(result) == 0:
-            return False
-        else:
-            return True
+        result = self.sql( "select username from ssismdl_user where idnumber = '{}'".format(idnumber) )()
+        return result
 
     def prepare_id_username_map(self):
         self.id_username = {}
@@ -119,13 +120,18 @@ class ServerInfo(DragonNetDBConnection):
                 elif idnumber.endswith('P'):
                     self.families[idnumber] = []
 
-            get_families = self.sql("select usr.idnumber as parent, usr.id, child.username as child from ssismdl_user usr join ssismdl_role_assignments ra on ra.userid = usr.id join ssismdl_role role on role.id = ra.roleid join ssismdl_context ctx on ctx.id = ra.contextid and ctx.contextlevel = 30
-join ssismdl_user child on child.id = ctx.instanceid where role.shortname = 'parent' order by usr.idnumber")()
+            get_families = self.sql("select usr.idnumber as parent, usr.id, child.username as child from ssismdl_user usr join ssismdl_role_assignments ra on ra.userid = usr.id join ssismdl_role role on role.id = ra.roleid join ssismdl_context ctx on ctx.id = ra.contextid and ctx.contextlevel = 30 join ssismdl_user child on child.id = ctx.instanceid where role.shortname = 'parent' order by usr.idnumber")()
             for family in get_families:
                 idnumber, _id, child = family
-                f = self.families.get(idnumer)
-                if not f:
-                    print("Something wrong with parent account")
+                if not idnumber:
+                    # Many accounts don't have idnumber... exclude teachers
+                    continue
+                f = self.families.get(idnumber)
+                if f == None:
+                    print(idnumber)
+                    print(f)
+                    print(family)
+                    input("Something wrong with parent account")
                     continue
                 f.append(child)
 
@@ -152,16 +158,21 @@ join ssismdl_user child on child.id = ctx.instanceid where role.shortname = 'par
     def check_student(self, student):
         """
         Raises errors describing what has happened, if anything
+        Does not handle infinite loops though
         """
         idnumber = student.num
         username = student.username
 
         # Account-based checks
-        stu = self.students.get(int(idnumber))
-        if stu:
+        if self.students.get(int(idnumber)):
             if not username == self.students[int(idnumber)]:
                 raise StudentChangedName
+            else:
+                pass # we're good
         else:
+            # don't let it repeat, if error occurs, not my problem
+            self.students[int(idnumber)] = username
+            # raise error, again, if this interrupts the flow, not this class' problem
             raise NoStudentInMoodle
 
         # Account-information checks

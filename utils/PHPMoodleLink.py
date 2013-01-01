@@ -16,7 +16,9 @@ class CallPHP:
         if self.on_server:
             p = subprocess.Popen( cmd,
                               shell=True, stdout=subprocess.PIPE, cwd="/var/www/moodle/admin/cli")
-            return p.communicate()
+            result = p.communicate()
+            print(result)
+            return result
         else:
             print(cmd)
 
@@ -26,7 +28,7 @@ class CallPHP:
 
     def enrol_user_in_course(self, idnumber, shortname, group, role="Student"):
         self.sf(idnumber=idnumber, shortname=shortname, group=group, role=role)
-        return self.command('enrol_user_in_course', self.sf("{idnumber} {shortname} {role}"))
+        return self.command('enrol_user_in_course', self.sf("{idnumber} {shortname} {group} {role}"))
 
     def add_user_to_cohort(self, useridnumber, cohort_name):
         self.sf(useridnumber=useridnumber, cohort_name=cohort_name)
@@ -47,7 +49,7 @@ class CallPHP:
         return self.command('associate_child_to_parent', "{} {}".format(idnumber, child_idnumber))
 
 class PowerSchoolIntegrator(CallPHP):
-
+    pass
 
 if __name__ == "__main__":
 

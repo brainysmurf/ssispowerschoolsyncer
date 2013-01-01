@@ -31,10 +31,13 @@ changed_name_html = """
 </html>
 """
 
-test_run = True
+test_run = False
 
 def test(id, student, extra):
       sf = Smartformatter()
+      if isinstance(student, str):
+            print(student, extra)
+            return
       sf.take_dict(student)
       sf.define(extra=extra)
       print (
@@ -61,7 +64,7 @@ class StudentModifier(CallPHP):
                   if test_run:
                         test('add_user_to_cohort', student, cohort)
                   else:
-                        error = self.add_user_to_cohort( student.idnumber, cohort )
+                        error = self.add_user_to_cohort( student.num, cohort )
                         print(error)
             for index in range(0, len(student.courses())):
                   course = student.courses()[index]
@@ -69,7 +72,7 @@ class StudentModifier(CallPHP):
                   if test_run:
                         test('enrol_user_in_course', student, course + ' ' + group)
                   else:
-                        error = self.enrol_user_in_course( student.idnumber, course, group )
+                        error = self.enrol_user_in_course( student.num, course, group )
                         print(error)
 
             sender = '"DragonNet Admin" <lcssisadmin@student.ssis-suzhou.net>'
@@ -91,7 +94,7 @@ class StudentModifier(CallPHP):
                   send_html_email(sender, recipient,
                             sf("New Student in Homeroom {homeroom}, {lastfirst}"),
                             html,
-                            ccwho.extend( [t+"@ssis-suzhou.net" for t in student.get_teacher_names()] ),
+                            cc_who.extend( [t+"@ssis-suzhou.net" for t in student.get_teacher_names()] ),
                             bccwho="lcssisadmin@student.ssis-suzhou.net")
 
       def change_name(self, student):
@@ -114,12 +117,13 @@ class StudentModifier(CallPHP):
             sf = Smartformatter()
             sf.take_dict(student)
             if test_run:
-                  test('no_email', student)
+                  test('no_email', student, '')
             else:
                   error = self.shell( sf("/bin/bash /home/lcssisadmin/ssispowerschoolsync/src/MakeNewStudentAccount.sh {num} {username} '{lastfirst}'") )
                   print(error)
 
       def new_parent(self, student):
+            test_run = True
             emails = student.parent_emails
             if len(emails) == 1:
                   parent_email = emails[0]
@@ -137,25 +141,27 @@ class StudentModifier(CallPHP):
 
 
       def parent_account_not_associated(self, student):
+            test_run = True
             if test_run:
                   test('parent_account_not_associated', student, student.family_id)
+                  return
             else:
                   error = self.associate_child_to_parent( student.family_id, student.username )
                   print(error)
 
-            corhorts = ['parentsALL']
+            cohorts = ['parentsALL']
             if student.is_secondary:
                   cohorts.append('parentsSEC')
             if student.is_elementary:
                   cohorts.append('parentsELEM')
             if student.is_korean:
                   cohorts.append('parentsKOREAN')
-            if studnet.is_chinese:
+            if student.is_chinese:
                   cohorts.append('parentsCHINESE')
             
             for cohort in cohorts:
                   if test_run:
-                        test('add_user_to_cohort', student, cohort)
+                        test('add_user_to_cohort', student.family_id, cohort)
                   else:
                         error = self.add_user_to_cohort( student.family_id, cohort )
                         print(error)
@@ -164,7 +170,7 @@ class StudentModifier(CallPHP):
                   course = student.courses()[index]
                   group  = student.groups()[index]
                   if test_run:
-                        test('enrol_user_in_course', student, course + ' ' + group + 'Parent ')
+                        test('enrol_user_in_course', student, course + ' ' + group + ' NOT the student, but the parent {}'.format(student.family_id))
                   else:
                         error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
                         print(error)

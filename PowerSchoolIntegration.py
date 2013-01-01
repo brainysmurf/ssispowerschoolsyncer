@@ -4,7 +4,7 @@ from utils.Bulk import MoodleCSVFile
 from utils.Utilities import no_whitespace_all_lower, convert_short_long, Categories, department_heads, department_email_names
 from utils.FilesFolders import clear_folder
 from utils.DB import ServerInfo
-from utils.DB import NoStudentInMoodle, StudentChangedName, NoEmailAddress
+from utils.DB import NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, ParentAccountNotAssociated, MustExit
 from ReadFiles import SimpleReader
 import re
 import datetime
@@ -19,6 +19,11 @@ from Constants import k_path_to_output, k_path_to_powerschool
 
 import subprocess
 
+from utils.PHPMoodleLink import CallPHP
+from utils.Email import Email
+from utils.Email import read_in_templates
+
+
 class DragonNet(DragonNetDBConnection):
     pass
 
@@ -31,13 +36,25 @@ class PowerSchoolIntegrator:
     """
 
     def __init__(self):
+        """
+        
+        """
+        # if exists, move the php admin tool to to the right place
+        
         self.run_newaliases = False
         print('------------------------------------------------------')
         print(datetime.datetime.today())
+
+        import os
+        php_src = 'phpmoodle/phpclimoodle.php'
+        if os.path.exists(php_src):
+            os.rename(php_src, '/var/www/moodle/admin/cli/phpclimoodle.php')
+            print("Moved php file that was at {} to the correct location in moodle's document root.".format(php_src))
+
         self.students = Students()
         #self.build_student_courses()
-        self.build_teachers()
-        self.build_courses()
+        #self.build_teachers()
+        #self.build_courses()
         self.build_students()
         #self.build_email_list()
         #self.build_families()
@@ -165,6 +182,7 @@ class PowerSchoolIntegrator:
         """
         MUST IMPLEMENT AS CREATING A DATABASE
         """
+        database = DragonNetDBConnection()
 
         output_file = MoodleCSVFile(k_path_to_output + '/' + 'moodle_parents.txt')
         output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
@@ -172,31 +190,29 @@ class PowerSchoolIntegrator:
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
 
-            parent_emails = student.parent_emails
-            if not parent_emails:
-                self.students.document_error('student_no_parent_email', student)
+            parent_account = database.sql("select username, email from ssismdl_user where idnumber = '{}'".format(student.family_id))()
+            if not parent_account:
                 continue
-            parent_email = parent_emails[0]
-            if not parent_email:
-                self.students.document_error('student_no_parent_email', student)
-                continue
+            parent_username, parent_email = parent_account[0]
 
             if student.courses():
                 row = output_file.factory()
-                row.build_username(parent_email)
+                row.build_username(parent_username)
                 row.build_firstname('Parent of ')
                 row.build_lastname(student.first + student.last)
                 row.build_password('changeme')
                 row.build_email(parent_email)
                 row.build_course_(student.courses())
                 row.build_group_(student.groups())
-                cohorts = ['parentsALL']
+                cohorts = []
                 if student.is_secondary:
-                    cohorts.append('parentsSEC')
+                    cohorts.append('studentsSEC')
                 elif student.is_primary:
-                    cohorts.append('parentsELEM')
-                if student.is_korean:
-                    cohorts.append('parentsKOREAN')
+                    cohorts.append('studentsELEM')
+                    #if student.is_korean:
+                    #cohorts.append('studentsKOREAN')
+                    #if student.is_chinese:
+                    #cohorts.append('studentsCHINESE')
                 row.build_cohort_(cohorts)
                 row.build_type_(["1" for c in student.courses()])
                 output_file.add_row(row)
@@ -234,22 +250,69 @@ class PowerSchoolIntegrator:
                     if student.courses():
                         f.write("{num}\t{courses}\n".format(**d))
 
+    def new_parent(self, family):
+        """
+        Associate student with parent
+        Enrol parent as parent into child's courses
+        Enrol parent into parent cohorts
+        Email the parent
+        """
+        
+        print("Create family account for \n{}".format(family))
+        input()
+        php = CallPHP()
+
+        parent_email_templates = read_in_templates('/home/lcssisadmin/ssispowerschoolsync/templates/')
+        # TODO: parent_account_not_activated yet
+        # TODO: child_email_templates  = read_in_templates('../emails/child_....')
+        
+        php.create_account(family.email,
+                                family.email,
+                                 'Parent ',
+                                 family.email,
+                                 family.parent_account_id)
+
+        print("Adding parent {} to parent cohort.".format(family.parent_account_id))
+        php.add_user_to_cohort(family.parent_account_id, 'parentsALL')
+
+        for child in family.children.children:
+            print("Associating child:", child.username)
+            php.associate_child_to_parent(family.parent_account_id,
+                                                  child.num)
+            if child.is_elementary:
+                print("Adding parent {} to cohort 'parentsELEM'".format(family.parent_account_id))
+                php.add_user_to_cohort(family.parent_account_id, 'parentsELEM')
+            if child.is_secondary:
+                print("Adding parent {} to cohort 'parentsSEC'".format(family.parent_account_id))
+                php.add_user_to_cohort(family.parent_account_id, 'parentsSEC')
+
+            for course in child.courses():
+                group = child._groups_courses[course]
+                php.enrol_user_in_course(family.parent_account_id, course, group, 'Parent')
+                        
+        email = Email()
+        email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
+        email.use_templates(parent_email_templates)
+        email.make_subject("Your SSIS DragonNet Parent Account")
+        for family_email in family.emails:
+            email.add_to(family_email)
+        for student in family.children:
+            if student.is_korean:
+                email.add_language('kor')
+            if student.is_chinese:
+                email.add_language('chi')
+        email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
+        email.define_field('username', family.email)
+        email.define_field('salutation', 'Dear Parent')
+        email.send()
+        input('KEEP GOING?')
+        
+
     def build_families(self):
 
         families = Families()
         dragonnet = DragonNet()
-
-        email_content = """
-<p>Dear SSIS Parent,</p>
-
-<p>You are receiving this email because your child has recently enrolled into Suzhou Singapore International School (SSIS).</p>
-        """
-        
-        from utils.PHPMoodleLink import CallPHP
-        from utils.PythonMail import send_html_email
-        
-        php = CallPHP()
-        
+                
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             families.add(student)
@@ -257,38 +320,11 @@ class PowerSchoolIntegrator:
         for family_key in families.families:
             family = families.families[family_key]
             family.post_process()
-
-            if not dragonnet.does_user_exist(family.idnumber):
-                # create account
-                # associate children
-                # enrol into parent cohorts
-                # email parent
-
-                print("Create family account")
-                print(family.email, family.idnumber)
-                #php.create_account(family.email,
-                #                                   family.email,
-                #                 'Parent ',
-                #                 family.email,
-                #                 family.idnumber)
-
-                print("Adding parent {} to parent cohort.".format(family.username))
-                #php.add_user_to_cohort(family.username, 'parentsALL')
-
-                for child in family.children.children:
-                    print("Associating child:", child.username)
-                    #php.associate_child_to_parent(family.idnumber,
-                    #                              child.username) 
-                    if child.is_primary:
-                        print("Adding parent {} to cohort", 'parentsELEM'.format(family.username))
-                        #php.add_user_to_cohort(family.username, 'parentsELEM')
-                    if child.is_secondary:
-                        print("Adding parent {} to cohort", 'parentsSEC'.format(family.username))
-
-                send_html_email()
+            if not dragonnet.does_user_exist(family.parent_account_id):
+                # Enrol, associate, send email
+                self.new_parent(family)
 
     def assign_groups(self):
-
         from utils.PHPMoodleLink import CallPHP
         php = CallPHP()
         
@@ -323,13 +359,23 @@ class PowerSchoolIntegrator:
 </table>"""
         
         database = DragonNetDBConnection()
-
         
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
+            
             d = {}
 
-            grade_rows = []
+            _id = database.sql("select id from ssismdl_user where idnumber = '{}'".format(student.num))()[0][0]
+
+            # First do some basic stuff
+            database.sql("update ssismdl_user set homeroom = {} where id = {}".format(student.homeroom, _id))()
+            database.sql("update ssismdl_user set preferred_name = '{}' where id = {}".format(student.preferred_name, _id))()
+            
+
+            grade_rows = [ grade_row.format(**dict(course_name="Forums",
+                                                   course_short="All Classes",
+                                                   url="http://dragonnet.ssis-suzhou.net/mod/forum/user.php?id={}".format(_id))) ]
+
             email_rows = [
                 email_row.format(**dict(teacher_name="Homeroom Teacher",
                                       teacher_email=student.username + 'HR@student.ssis-suzhou.net',
@@ -340,7 +386,6 @@ class PowerSchoolIntegrator:
 
             
 
-            _id = database.sql("select id from ssismdl_user where idnumber = '{}'".format(student.num))()[0][0]
             if not _id:
                 print("User with idnumber {} could not be found in the database: {}".format(student.idnum, student.username))
                 continue
@@ -446,47 +491,50 @@ class PowerSchoolIntegrator:
         modify = StudentModifier()
 
         output_file = MoodleCSVFile(k_path_to_output + '/' + 'moodle_users.txt')
-        output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email',
-                                   'profile_field_contacts', 'course_', 'group_', 'cohort_', 'type_'])
+        output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
         verify and print("Verifying...")
 
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
-                # Compare to the original database
+                
                 continue_until_no_errors = True
                 times_through = 0
                 while continue_until_no_errors:
-                    error = False
                     try:
+                        # Compares to the actual database, raises errors if there is anything different than what is expected
                         server_information.check_student(student)
 
                     except NoStudentInMoodle:
-                        error = True
-                        print("Student does not have an account:\n{}".format(student))
+                        print("Student does not have a Moodle account:\n{}".format(student))
                         modify.new_student(student)
 
-                    except StudentChangedName:
-                        error = True
-                        print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
-                        modify.change_name(student)
-
                     except NoEmailAddress:
-                        error = True
                         modify.no_email(student)
 
+                    except StudentChangedName:
+                        print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
+                        #modify.change_name(student)
+
                     except NoParentAccount:
-                        error = True
                         modify.new_parent(student)
-
+                        continue_until_no_errors = False
+                    
                     except ParentAccountNotAssociated:
-                        error = True
                         modify.parent_account_not_associated(student)
+                        continue_until_no_errors = False
 
-                    continue_until_no_errors = error
+                    except MustExit:
+                        continue_until_no_errors = False
+
+                    else:
+                        # executed when no errors are raised
+                        continue_until_no_errors = False
+
                     times_through += 1
-                    if times_through > 100:
-                        raise InfiniteLoop
+                    if times_through > 10:
+                        print("Infinite Loop detected when processing student\n{}".format(student))
+                        continue_until_no_errors = False
 
 
                 # Make the output file
@@ -498,7 +546,6 @@ class PowerSchoolIntegrator:
                 row.build_password('changeme')
                 row.build_email(student.email)
 
-                row.build_profile_field_contacts(student.profile_field_contacts)
                 row.build_course_(student.courses())
                 row.build_group_(student.groups())
                 row.build_cohort_(student.cohorts())
@@ -935,7 +982,6 @@ class PowerSchoolIntegrator:
         result.sort()
         result2.sort(key=lambda x:x[0])
         indexes.sort()
-
         with open(k_path_to_output + '/' + 'student_list_sorted_by_first.txt', 'w') as _file:
             _file.write("\n".join(result))
 

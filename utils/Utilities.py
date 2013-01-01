@@ -64,6 +64,7 @@ depart_dict = {
 	'des': 'departDESIGN',
 	'tem': 'departDESIGN',
 	'ted': 'departDESIGN',
+	'gra': 'departDESIGN',
 	'tok':'departTOK',
 	'ibt':'departTOK',
 	'std':'departTOK',
@@ -192,20 +193,11 @@ def map_codes(short, grade, higher_lower):
 		
 		'BIOHONSH1112': 'SCBIOSH1112'   # Biology honors
 
+						 #'DESIG9': 'GRAPHICDESIGN9',
+						 #'DESIG10': 'GRAPHICDESIGN10'   TECOM10, TECOM9 deleted, TECOMSH1112 becomes TECOM1112CLARK, TEFOO9 TEFOO10 have been killed, TEMAT10 & 9 have been killed, TEFOOHS1 has been killed (and probably never ran)
 		
 		
-		
-		# Design is a bitch
-
-		#MYP Computer Design (9-10).  Teacher = Julian Manders-Jones
-		#MYP Food Design A (9-10).  Teacher = Gabriel Evans
-		#MYP Food Design B (9-10).  Teacher = Susan Ferguson.
-		#MYP Graphic Design (9-10).  Teacher = Joanne Rodriguez
-		#MYP Material Design A (9-10).  Teacher = Patric Elder
-		#MYP Material Design B (9-10).  Teacher = 
-		#IBD Computer Science SL.  Teacher = Brent Clark
-		#IBD Computer Science HL.  Teacher = Julian Manders-Jones
-		#IBD Design Technology.  Teacher - Gabriel Evans.
+		# 
 
 	}.get(short)
 

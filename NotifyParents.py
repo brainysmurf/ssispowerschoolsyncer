@@ -1,4 +1,4 @@
-from utils.PythonMail import send_html_email
+from utils.Email import Email
 
 body_html = """
 <p>Dear Parent,</p>
@@ -33,7 +33,6 @@ Your password is:
 """
 
 if __name__ == "__main__":
-
 
     parents = open('/var/www/moodle/admin/cli/new_parents.txt').readlines()
 

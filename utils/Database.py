@@ -351,6 +351,17 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
 
             if items:
                 self.html("{end_section_tag}")
+
+        header = False
+        for key in self.final.keys():
+            for item in self.final[key]:
+                if item['attachment']:
+                    if not header:
+                        self.header = "Attachments"
+                        self.html("{header_pre_tag}{header}{colon}{header_post_tag}")
+                        header = True
+                    self.html(item['attachment'])
+
                 
     def email_to_agents(self):
         """

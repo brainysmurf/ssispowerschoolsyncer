@@ -6,6 +6,7 @@ require_once( '../../config.php');
 require_once('../../cohort/lib.php');
 require_once('../../enrol/locallib.php');
 require_once('../../group/lib.php');
+require_once('../../lib/grouplib.php');
 
 class moodlephp
 {
@@ -30,15 +31,15 @@ class moodlephp
     private function add_user_to_cohort($args) 
     {
       $idnumber = $args[0];
-      $cohortName = $args[1];
+      $cohortidnumber = $args[1];
 
       global $DB;
       if( !$user = $this->getUserByIDNumber($idnumber) )
 	{
-	  return "-1 Could not find user ".$idnumber;
+	  return "-1 Could not find user ".$idnumber." while adding cohort ".$cohortidnumber;
 	}
 
-      if( $cohort = $DB->get_record_select( 'cohort', 'name = ?', array($cohortName) ) )
+      if( $cohort = $DB->get_record_select( 'cohort', 'idnumber = ?', array($cohortidnumber) ) )
 	{
 	  $cohortID= $cohort->id;
 	  $userID = $user->id;
@@ -55,7 +56,7 @@ class moodlephp
 	}
      
       $r = cohort_add_member($cohortID, $userID);
-      echo "Added ".$idnumber." to cohort ".$cohortName ;
+      echo "Added ".$idnumber." to cohort ".$cohortidnumber ;
       return $r;
 
       global $DB;
@@ -63,7 +64,6 @@ class moodlephp
 
     private function create_account( $args )
     {
-      var_dump($args);
       $username = $args[0];
       $email = $args[1];
       $firstname = $args[2];
@@ -127,7 +127,7 @@ class moodlephp
 	    }
 	  else
 	    {
-	      return "-1 Could not find parent ".$parent_idnumber;
+	      return "-1 Either could not find parent ".$parent_idnumber." or couldn't find child ".$child_idnumber;
 	    }
 	}
 
@@ -157,14 +157,18 @@ class moodlephp
       $short_name = $args[1];
       $group_name = $args[2];
       $role = $args[3];
+      echo $role;
 
-      if ($role = 'Student') {
+      switch ($role) {
+      case "Student":
+	echo "Enrolling as student";
 	$roleid = $this->STUDENT_ROLE_ID;
-      }
-      else if( $role = 'Parent') {
+	break;
+      case "Parent":
+	echo "Enrolling as parent";
 	$roleid = $this->PARENT_ROLE_ID;
-      }
-      else {
+	break;
+      default :
 	return "-1 No viable role ID was passed ".$role;
       }
 
@@ -172,11 +176,15 @@ class moodlephp
 
       if( !$user = $this->getUserByIDnumber($useridnumber) )
 	{
-	  return "-1 Could not find user".$useridnumber;
+	  return "-1 Could not find user ".$useridnumer." when enrolling in course".$short_name;
 	}
 
-      $course = $DB->get_record('course', array('shortname'=>$short_name), '*');
-      $context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST);
+      if( !$course = $DB->get_record('course', array('shortname'=>$short_name), '*') ) {
+	return "-1 Course does not exist!... ".$short_name;
+      }
+      if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
+	return "-1 Could not get context for course ".$short_name." with ID ".$course->id;
+      }
       $manager = new course_enrolment_manager($PAGE, $course);
 
       if( !is_enrolled($context, $user->id) )
@@ -202,15 +210,25 @@ class moodlephp
 	  $timeend = 0;
 
 	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
-	  echo "Enrolled ".$useridnumber." into class ".$short_name.".";
+	  echo "Enrolled ".$useridnumber." into class ".$short_name." as a ".$roleid.".";
 	}
 
-      $groups = $manager->get_all_groups();
-      if( array_key_exists($group_name, $groups) )
+      if( $group = groups_get_group_by_name($course->id, $group_name) )
         {
-          $manager->add_user_to_group( $user, $groups[$group_name]->id );
-          echo "Added user ".$useridnumber." into group ".$group_name.".";
+	  var_dump($group);
+          //$manager->add_user_to_group( $user, $group_name );
+	  if( groups_add_member($group, $user) ) {
+	    echo "Added user ".$useridnumber." into group ".$group_name.".";
+	  }
+	  else {
+	    echo "-1 Couldn't add user ".$useridnumber." to group ".$group_name;
+	  }
         }
+      else
+	{
+	  var_dump($groups);
+	  echo "Could not find group? ".$group_name;
+	}
 
     }
 
