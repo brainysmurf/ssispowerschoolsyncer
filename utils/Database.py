@@ -93,19 +93,14 @@ class DatabaseObject:
         Comparison using datetime objects is done, conversion needed
         """
         start_compare, end_compare = self.date_objects()
-        if not end_compare:
-            # If not defined, then we assume it's for one day only, and therefore end_compare should equal start_compare
-            end_compare = start_compare
-
+        # Get the obvious cases done first
         if not start_compare:
-            return False
-        
-        # Now that we have the convertion from string to datetime object done,
-        # We can do the actual comparison
-        # First line manually coerces 'date' object to datetime
-        result = to_compare_date >= start_compare and to_compare_date <= end_compare
-        print(result)
-        return result
+            return False        
+        # If end_compare is not defined, then we assume it's for one day only, and therefore end_compare should equal start_compare
+        if not end_compare:
+            end_compare = start_compare
+        # Do the actual comparison
+        return to_compare_date >= start_compare and to_compare_date <= end_compare
 
     def __str__(self):
         return ", ".join( ["{}: {}".format(key, self.__dict__[key]) for key in self.__dict__ if self.__dict__[key] and not key.startswith('_') ] )
