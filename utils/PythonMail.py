@@ -81,8 +81,9 @@ def send_html_email(fromwho, towho, subject, html, ccwho=[], bccwho=[]):
     """
     if not on_server:
         print("Email to be sent to {} with subject {}".format(towho, subject))
+        print(html)
         return
-    
+     
     # Create message container - the correct MIME type is multipart/alternative.
     msg = MIMEMultipart('alternative')
     msg['Subject'] = subject

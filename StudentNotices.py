@@ -1,6 +1,27 @@
-from utils.Database import ExtendMoodleDatabaseToAutoEmailer
+#!/usr/local/bin/python3
+    
+if __name__ == "__main__":
+    import sys
+    import os
+    path = os.path.realpath(__file__)
+    src_path = None
+    while not path == '/':
+        path = os.path.split(path)[0]
+        print(path)
+        if not '__init__.py' in os.listdir(path):
+            src_path = path
+            break
+    if src_path == None:
+        raise ImportError("Could not set up!")
+    else:
+        sys.path.insert(0, src_path)
+from utils import *
+
+from utils.Database import ExtendMoodleDatabaseToAutoEmailer, SampleDatabaseObjects, DatabaseObject
 from utils.PythonMail import send_html_email
 from utils.Dates import custom_strftime
+from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
+
 
 verbose = False
 catch_wrong = True
@@ -8,6 +29,35 @@ catch_wrong = True
 class Nothing(Exception): pass
 
 k_record_id = 2
+
+class SNRDFU(RelativeDateFieldUpdater):
+    pass
+
+class Samples(SampleDatabaseObjects):
+    def __init__(self):
+        super().__init__()
+        self.add( DatabaseObject(user='Adam',
+                                 content='hello',
+                                 startdate='Tomorrow (Jan 2nd, 2013)',
+                                 enddate='Wedsday (Jan 3rd 2013)',
+                                 section='##secstunot_all##',
+                                 attachment=''
+            ))
+        self.add( DatabaseObject(user='Yuri',
+                                 content='Hello my man',
+                                 startdate='Thursday (Jan 3rd, 2013)',
+                                 enddate='',
+                                 section='##secstunot_ms##',
+                                 attachment=''
+            ))
+        self.add( DatabaseObject(user='Anonymous',
+                                 content='Wow',
+                                 startdate='Friday (Jan 4th 2013)',
+                                 enddate='Friday (Jan 4th 2013)',
+                                 section='##secstunot_hs##',
+                                 attachment=''
+            ))
+
 
 class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     """
@@ -18,8 +68,13 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         """
         Called by init
         """
-        self.fields = ['date', 'attachment', 'content', 'timesrepeat', 'section']
+        self.fields = ['startdate', 'enddate', 'attachment', 'content', 'timesrepeat', 'section']
         self.unique = lambda x: x['content']
+
+        if self.dry_run:
+            self.samples = Samples()
+        else:
+            self.samples = None
 
         self.tags = ['##secstunot_all##', '##secstunot_hs##', '##secstunot_ms##']
         self.tag_map = {'##secstunot_all##':'All Secondary',
@@ -48,9 +103,6 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.repeating_events_db_path = '/home/lcssisadmin/database_email/studentnotices'
 
     def format_for_email(self):
-        verbose and print("Inside formatting!")
-        if not self.final: raise Nothing
-        verbose and print(self.final)
         self.colon = ':'
 
         # Body of the notices
@@ -61,7 +113,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.html("{first_p_block}", format=False)
         for tag in self.tags:
             self.header = self.tag_map.get(tag, "NO HEADER")
-            items = self.final.get(tag, [])
+            items = self.database_objects.get_items_by_tag(tag)
             if not items:
                 self.tag_not_found(tag)
             else:
@@ -76,14 +128,13 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
         # Attachments of the notices
         header = False
-        for key in self.final.keys():
-            for item in self.final[key]:
-                if item['attachment']:
-                    if not header:
-                        self.header = "Attachments"
-                        self.html("{header_pre_tag}{header}{colon}{header_post_tag}")
-                        header = True
-                    self.html(item['attachment'])
+        for item in self.database_objects:
+            if item.attachment:
+                if not header:
+                    self.header = "Attachments"
+                    self.html("{header_pre_tag}{header}{colon}{header_post_tag}")
+                    header = True
+                self.html(item.attachment)
 
         self.html("{end_html_tag}")
 
@@ -113,6 +164,8 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         """
         Uses 'institution' field, if available, otherwise uses the default name defined in user's profile
         """
+        if self.dry_run:
+            return ""
         name_info = 'institution, firstname, lastname'
         name = self.sql('select {} from ssismdl_user where id = {}'.format(name_info, userid))()[0]
         user_defined, firstname, lastname = name
@@ -129,6 +182,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
             return self.subject_output[20:]
         else:
             return self.subject_output
+        
 
     def get_html(self, first_p_block=""):
         d = {

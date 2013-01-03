@@ -1,5 +1,28 @@
+#!/usr/local/bin/python3
+    
+if __name__ == "__main__":
+    import sys
+    import os
+    path = os.path.realpath(__file__)
+    src_path = None
+    while not path == '/':
+        path = os.path.split(path)[0]
+        print(path)
+        if not '__init__.py' in os.listdir(path):
+            src_path = path
+            break
+    if src_path == None:
+        raise ImportError("Could not set up!")
+    else:
+        sys.path.insert(0, src_path)
+from utils import *
+
 import datetime
-import postgresql
+try:
+    import postgresql
+    dry_run = False
+except:
+    dry_run = True
 from utils.Dates import date_to_database_timestamp, today, tomorrow, yesterday
 from utils.PythonMail import send_html_email
 from utils.DB import DragonNetDBConnection
@@ -19,54 +42,142 @@ def suffix(d):
 def custom_strftime(format, t):
     return t.strftime(format).replace('{S}', str(t.day) + suffix(t.day))
 
-class RepeatingEvents:
+class DatabaseObject:
     """
-    Feature that can be enabled or disabled, fails silently
-    Provides a shelve
-    Keys are dates
-    Values consist of list items, which are repeating events
+    Represents an item in the database
     """
-    def __init__(self, path, unique):
+    months = {'jan':1, 'feb':2, 'mar':3, 'apr':4, 'may':5, 'jun':6, 'june':6, 'jul':7, 'july':7, 'aug':8, 'sep':9, 'sept':9, 'oct':10, 'nov':11, 'dec':12}
+    
+    def __init__(self, **kwargs):
+        for field in kwargs.keys():
+            self.define(field, kwargs[field])
+
+    def define(self, field, value):
+        setattr(self, field, value)
+
+    def date_objects(self):
         """
-        unique: function that returns the part of the item that identifies the item as unique
+        Returns the startdate and enddate as a datetime objects
+        None means we don't have them
+        Processing only happens once, results are stored as private internal objects
+        You can reset it if you need to by setting _date_objects to None
         """
-        self.unique = unique
-        if not path:
-            # if no path passed, don't enable
-            self.db = {}
-            self.inactive = True
-            self.debug = True
-        else:
-            self.inactive = False
-            self.debug = False
-            self.path = path
-            self.db = shelve.open(self.path, writeback=True)
+        if hasattr(self, '_date_objects') and not self._date_objects == None:
+            return self._date_objects
+        
+        if not hasattr(self, 'startdate') or not hasattr(self, 'enddate'):
+            return (None, None)
 
-    def convert_key(self, key):
-        return key.strftime('%d-%m-%y')
+        date_objects = []   # Dates to compare to, needed because strings need to be converted into datetime objects
+        
+        for this_date in (re.search(r'\((.*)\)$', self.startdate).group(1), re.search(r'\((.*)\)$', self.enddate).group(1) if self.enddate else None):
+            if not this_date:
+                date_objects.append( None )
+            else:
+                split = this_date.split(' ')
+                start_month = self.months.get(split[0].lower())
+                start_day   = int(re.sub(r'[^0-9]', '', split[1]))
+                start_year  = int(split[2])
+                date_objects.append( datetime.date(start_year, start_month, start_day) )
 
-    def get(self, key, default=[]):
-        if self.inactive: return default
-        return self.db.get(self.convert_key(key), default)
+        if not date_objects:
+            date_objects = (None, None)
+        self._date_objects = date_objects   # stores this for later so we don't have to process it all over again
+        return self._date_objects
 
-    def add(self, key, value):
-        if self.debug:
-            print("Attempting to add {} to key {} to\n{}".format(value, key, self._db))
-            return
-        if self.inactive: return  # fail silently
-        key = self.convert_key(key)
-        if not key in list(self.db.keys()):
-            self.db[key] = []
-        existing_values = [self.unique(item) for item in self.db[key] if item]
-        if not self.unique(value) in existing_values:
-            self.db[key].append(value)
-        else:
-            print("Notice: Did not add {} to repeating events.".format(self.unique(value)))
 
-    def __del__(self):
-        self.db.close()
+    def date_within(self, to_compare_date):
+        """
+        Given a datetime object date, determines if this object matches the date expected,
+        that is, the date of this object falls within the passed date
+        Comparison using datetime objects is done, conversion needed
+        """
+        start_compare, end_compare = self.date_objects()
+        if not end_compare:
+            # If not defined, then we assume it's for one day only, and therefore end_compare should equal start_compare
+            end_compare = start_compare
 
-class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
+        if not start_compare:
+            return False
+        
+        # Now that we have the convertion from string to datetime object done,
+        # We can do the actual comparison
+        # First line manually coerces 'date' object to datetime
+        result = to_compare_date >= start_compare and to_compare_date <= end_compare
+        print(result)
+        return result
+
+    def __str__(self):
+        return ", ".join( ["{}: {}".format(key, self.__dict__[key]) for key in self.__dict__ if self.__dict__[key] and not key.startswith('_') ] )
+
+class DatabaseObjects(DragonNetDBConnection):
+    """
+    Defines the objects for use by the application
+    """
+    def __init__(self, database_name=None):
+        """
+        database_name is the database we are using
+        If defined, it will use custom sql to get the information we need, and then put it into objects the application can use
+        """
+        super().__init__()
+        self._db = []
+        if database_name:
+            # TODO: Verify database_name
+            sql = """select dc.recordid, usr.firstname, usr.lastname, usr.institution, df.name, cd.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id""".format(database_name)
+            # Unpack the sql results into useable objects.
+            # NOTE: This essentially converts multiple rows into a pivot table
+            # With a better sql query we could could simply this, but
+            # making the pivot table in python isn't hard... plus easier to maintain
+            sql_result = self.sql(sql)
+            unique_records = []
+            for row in sql_result:
+                recordid = row[0]
+                if not recordid in unique_records:
+                    unique_records.append( recordid )
+            # Now go through each unique record
+            for unique_record in unique_records:
+                records = [row for row in sql_result if row[0] == unique_record]
+                if not records or len(records == 0):
+                    print("Shouldn't get here!")    
+                # Got the records with a single unique ID, now pack them in
+                new_object = DatabaseObject()
+                new_object.define(user_first_name = records[0][1])
+                new_object.define(user_lastname = records[0][2])
+                for row in records:
+                    field = row[3]
+                    value = row[4]
+                    new_object.define(field=value)
+                # Okay, we got everything, so now place it into our internal object
+                self.add(new_object)
+                
+
+    def add(self, obj):
+        self._db.append(obj)
+
+    def items_within_date(self, date):
+        return (item for item in self._db if item.date_within(date))
+
+    def get_items_by_tag(self, tag):
+        return (item for item in self if hasattr(item, 'tag') and item.tag == tag)
+
+    def __iter__(self):
+        self._iter_index = 0
+        return self
+
+    def __next__(self):
+        which = self._iter_index
+        self._iter_index += 1
+        if which >= len(self._db):
+            raise StopIteration
+        return self._db[which]
+
+    def __str__(self):
+        return "\n/---- Database Objects ----\n" + "\n".join(["| {}".format(str(item)) for item in self]) + "\n\--------------------------\n"
+
+class SampleDatabaseObjects(DatabaseObjects):
+    pass
+
+class ExtendMoodleDatabaseToAutoEmailer:
     """
     Converts a database on moodle into a useable system that emails users
     """
@@ -80,13 +191,18 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
            ... and then adding any entries with any that share the same recordid
         """
         super().__init__()
+
+        import argparse
+        parser = argparse.ArgumentParser(description="Integrates Moodle Database with emailing system")
+        parser.add_argument('-t' '--test', action="store_true", dest="dry_run")    
+        args = parser.parse_args()
+        self.dry_run = args.dry_run
+        
         d = {'table':table}
 
         self.name = self.__class__.__name__.replace("_", " ")
         self.define()
         self.setup_date()
-
-        self.repeatingevents = RepeatingEvents(self.repeating_events_db_path, self.unique)
 
         self.priority_one_users = []
         for user_id in self.priority_ids:
@@ -98,20 +214,50 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
         day   = self.date.day
         year  = self.date.year
 
-        self.found = []
         d['date_to_check'] = date_to_database_timestamp(year=year, month=month, day=day)
-        for tag in self.tags:
-            d['tag'] = tag
-            potential_rows = self.sql("select recordid from {table} where content = '{date_to_check}'".format(**d))()
-            for row in potential_rows:
-                d['recordid'] = row[0]
-                match = self.sql("select * from {table} where recordid = {recordid} and content like '%{tag}%'".format(**d))()
-                if match:
-                    matched = self.sql("select * from {table} where recordid = {recordid}".format(**d))()
-                    matched.sort(key=lambda x:x[0])
-                    self.found.append( matched )
-        self.verbose and input(self.found)
-        self.reconstruct_found()
+        self.process()
+
+    def process(self):
+        """
+        Finds the objects (using raw_data method) and writes them to self.database_objects,
+        and then processes them accordingly. Can be overridden if necessary, but must define self.database_objects
+        """
+        items = self.raw_data()
+        self.database_objects = DatabaseObjects()
+        for item in items.items_within_date(self.date):
+            self.database_objects.add(item)
+            self.determine_priority(item)
+            self.determine_tag(item)
+        print(self.database_objects)
+        
+        # code to be replaced
+        #for tag in self.tags:
+        #    d['tag'] = tag
+        #    potential_rows = self.sql("select recordid from {table} where content = '{date_to_check}'".format(**d))()
+        #    for row in potential_rows:
+        #        d['recordid'] = row[0]
+        #        match = self.sql("select * from {table} where recordid = {recordid} and content like '%{tag}%'".format(**d))()
+        #        if match:
+        #            matched = self.sql("select * from {table} where recordid = {recordid}".format(**d))()
+        #            matched.sort(key=lambda x:x[0])
+        #            self.found.append( matched )
+        #self.verbose and input(self.found)
+        #self.reconstruct_found()
+
+        
+
+    def raw_data(self):
+        """
+        Returns a generator object that represents the potential rows in the database
+        If we are doing a dry-run then return a testing sample
+        """
+        if self.dry_run:
+            if hasattr(self, 'samples'):
+                return self.samples
+            else:
+                raise NotImplemented("Dry run detected, by samples not created!")
+        else:
+            return DatabaseObjects('select dc.recordid, usr.firstname, usr.lastname, usr.institution, df.name, cd.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id'.format())
 
     def setup_date(self):
         """
@@ -142,12 +288,6 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
         # fields has to be typed in the order in which it appears
         # when sorted in ascending order by recordid on the backend
 
-        # tags
-        self.tags   = []
-        # these are the tags that are manually put into fields on the front end
-        # recommended that you use <span style="display:none"></span> to hide the actual tag from users
-        # this class finds them using "content like '%tag%'" sql query
-
         # tag_map
         self.tag_map = {}
         # convert the tags to user-friendly version
@@ -156,14 +296,6 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
         self.search_date = "next day"
         # one of three values "next day", "same day", or "day before" which determines how self.date is set up
         # "day before" is useful mostly for testing
-
-        # repeatingevents
-        self.repeating_events_db_path = ''
-        # to enable repeatingevents, just add the path here
-
-        # Which field defines the unique one, used by repeatingevents
-        self.unique = lambda x: x
-        # often it'll be something like lambda x: x['content']
 
         # agentmap
         self.agent_map = {}
@@ -184,17 +316,33 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
         self.colon             = ":"
         # These values work well for self.format_for_email's default behavior
 
+    def determine_tag(self, the_item):
+        """
+        Processes a database item and assigns it a tag
+        Useful in cases where things are organized by tags
+        """
+        the_item.tag = the_item.section
 
     def determine_priority(self, the_item):
         """
-        Puts any user who prioritized number 1
+        Puts any user who prioritized number starts at 1
+        If not any priority user, starts at value of 10
+        Then, calculates priority based on how far away we are from having been published
         """
         self.verbose and print(the_item)
-        user = the_item['user']
+        user = the_item.user
+        first_published, _ = the_item.date_objects()
         if user in self.priority_one_users:
-            the_item['priority'] = 1    # one digit for highest priority
+            priority = 1    # one digit for highest priority
         else:
-            the_item['priority'] = 10   # two digits for lower priority
+            priority = 10   # two digits for lower priority
+
+        days_since = (datetime.date(self.date.year, self.date.month, self.date.day) - first_published).days   # substraction of two datetime object results in datetime object, which has 'days'
+        if days_since < 0:
+            raise NotImplmented('Huh? This was first published sometime in the future? Should not happen!')
+        priority += days_since * 100
+        self.verbose and print(priority)
+        the_item.priority = priority
 
     def reconstruct_found(self):
         """
@@ -284,12 +432,15 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
         """
         Pulls in name info from user's profile
         """
-        name_info = 'firstname, lastname'
-        name = self.sql('select {} from ssismdl_user where id = {}'.format(name_info, userid))()[0]
-        firstname, lastname = name
-        name = "({} {})".format(firstname, lastname)
-        self.verbose and print("Name: {}".format(name))
-        return name
+        if self.dry_run:
+            return ""
+        else:
+            name_info = 'firstname, lastname'
+            name = self.sql('select {} from ssismdl_user where id = {}'.format(name_info, userid))()[0]
+            firstname, lastname = name
+            name = "({} {})".format(firstname, lastname)
+            self.verbose and print("Name: {}".format(name))
+            return name
 
     def tag_not_found(self, tag):
         """
@@ -312,12 +463,12 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
         Removes the tailing </p> (which the front end always puts)
         Adds user info, and recloses it
         """
-        content = item['content']
-        user = item['user']
+        content = item.content
+        user = item.user
         if content.endswith('</p>'):
-            return self.list(content[:-4] + " " + user + "</p>")
+            return self.list(content[:-4] + " (" + user + ")</p>")
         else:
-            return self.list(content + user + "</p>")
+            return self.list(content + " (" + user + ")</p>")
 
     def format_for_email(self, tags=[]):
         """
@@ -339,7 +490,7 @@ class ExtendMoodleDatabaseToAutoEmailer(DragonNetDBConnection):
 
         for tag in tags:
             self.header = self.tag_map.get(tag, "NO HEADER")
-            items = self.final.get(tag, [])
+            items = self.database_objects.get_items_by_tag(tag)
             if not items:
                 self.tag_not_found(tag)
             else:
