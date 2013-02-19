@@ -1,12 +1,27 @@
-from utils.Database import ExtendMoodleDatabaseToAutoEmailer
-from utils.PythonMail import send_html_email
+#!/usr/local/bin/python3
+    
+if __name__ == "__main__":
+    import sys
+    import os
+    path = os.path.realpath(__file__)
+    src_path = None
+    while not path == '/':
+        path = os.path.split(path)[0]
+        print(path)
+        if not '__init__.py' in os.listdir(path):
+            src_path = path
+            break
+    if src_path == None:
+        raise ImportError("Could not set up!")
+    else:
+        sys.path.insert(0, src_path)
+from utils import *
+from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
-
-catch_wrong = True
+from notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
 
 class Nothing(Exception): pass
 
-k_record_id = 2
 
 # Following gives me 1st, 2nd, 3rd, 4th, etc
 def suffix(d):
@@ -20,37 +35,25 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
     Converts a database on moodle into a useable system that emails users
     """
 
-    verbose = False
+    def __init__(self):
+        super().__init__('Teacher Notices Database')
 
     def define(self):
         """
         Called by init
         """
-        self.fields = ['date', 'content', 'attachment', 'timesrepeat', 'section']
-        self.tags = ['##teachnotices_ws##', '##teachnotices_elem##', '##teachnotices_sec##']
-        self.tag_map = {'##teachnotices_ws##':'Whole School',
-                       '##teachnotices_elem##': 'Elementary Teacher Notice',
-                       '##teachnotices_sec##': 'Secondary'}
-        
+        super().define()
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
         self.agents = ['adammorris@ssis-suzhou.net']
         self.agent_map = {
-            'rebeccalouiseclentwo@ssis-suzhou.net':['##teachnotices_ws##', '##teachnotices_elem##'],
-            'richardbruford@ssis-suzhou.net':['##teachnotices_ws##', '##teachnotices_sec##']
+            'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
+            'richardbruford@ssis-suzhou.net':['Whole School', 'Secondary']
             }
-
         self.search_date = "same day"
-
-        self.start_html_tag    = "<html>"
-        self.end_html_tag      = "</html>"
-        self.header_pre_tag    = "<p><b>"
-        self.header_post_tag   = "</b></p>"
-        self.begin_section_tag = "<ul>"
-        self.end_section_tag   = "</ul>" # extra br for formatting
-        self.colon             = ":"
+        self.content_field = 'Full Content'
+        self.attachment_field = 'Attached Content'
+        self.section_field = 'School Section'
         self.priority_ids      = [32]
-        self.unique            = lambda x: x['content']
-        self.repeating_events_db_path = '/home/lcssisadmin/database_email/teachernotices'
 
     def post_to_wordpress(self):
         """ Teacher notices doesn't have a wordpress site ...  yet? """
@@ -68,15 +71,20 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
             }
         return self.html_output.format(**d)
 
-    def tag_not_found(self, tag):
+    def section_not_found(self, tag):
         """ What to do? """
         pass
 
+    def samples(self):
+        return teacher_notices_samples
+
+    def section_samples(self):
+        return teacher_notices_tag_samples
 
 
 if __name__ == "__main__":
     try:
-        notices = Teacher_Notices('ssismdl_data_content')
+        notices = Teacher_Notices()
         notices.email_to_agents()
     except Nothing:
         print("No matching entries found")

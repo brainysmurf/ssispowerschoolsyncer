@@ -13,7 +13,7 @@ from utils.Formatter import Smartformatter
 
 from ModifyMoodleUsers import StudentModifier
 
-from utils.Database import DragonNetDBConnection
+from utils.DB import DragonNetDBConnection
 
 from Constants import k_path_to_output, k_path_to_powerschool
 
@@ -52,18 +52,17 @@ class PowerSchoolIntegrator:
             print("Moved php file that was at {} to the correct location in moodle's document root.".format(php_src))
 
         self.students = Students()
-        #self.build_student_courses()
+        self.build_student_courses()
         #self.build_teachers()
-        #self.build_courses()
+        self.build_courses()
         self.build_students()
-        #self.build_email_list()
-        #self.build_families()
-        #self.build_parents(students)
+        self.build_email_list()
+        self.build_families()
+        self.build_parents()
         self.build_automagic_emails()
-        #self.build_profiles()
+        self.build_profiles()
         #self.assign_groups()
-
-        #self.build_student_list(students)
+        #self.build_student_list()
         #self.build_opening_table(students)
         #self.create_simple_accounts()
         #self.compile_student_parent_emails(students)
@@ -86,6 +85,7 @@ class PowerSchoolIntegrator:
         with open(k_path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
             f.write('fullname,shortname,category,summary,groupmode\n')
             for line in raw:
+                print(line)
                 orig_short, orig_long, _ = line.strip('\n').split('\t')
                 short, long = convert_short_long(orig_short, orig_long)
                 courses[short] = long
@@ -209,6 +209,7 @@ class PowerSchoolIntegrator:
                     cohorts.append('studentsSEC')
                 elif student.is_primary:
                     cohorts.append('studentsELEM')
+                    #TODO: Make the below retroactive
                     #if student.is_korean:
                     #cohorts.append('studentsKOREAN')
                     #if student.is_chinese:
@@ -257,14 +258,10 @@ class PowerSchoolIntegrator:
         Enrol parent into parent cohorts
         Email the parent
         """
-        
         print("Create family account for \n{}".format(family))
-        input()
         php = CallPHP()
 
-        parent_email_templates = read_in_templates('/home/lcssisadmin/ssispowerschoolsync/templates/')
-        # TODO: parent_account_not_activated yet
-        # TODO: child_email_templates  = read_in_templates('../emails/child_....')
+        parent_email_templates = read_in_templates('/home/lcssisadmin/ssispowerschoolsync/templates/parent_new_account')
         
         php.create_account(family.email,
                                 family.email,
@@ -289,7 +286,7 @@ class PowerSchoolIntegrator:
             for course in child.courses():
                 group = child._groups_courses[course]
                 php.enrol_user_in_course(family.parent_account_id, course, group, 'Parent')
-                        
+
         email = Email()
         email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
         email.use_templates(parent_email_templates)
@@ -305,14 +302,13 @@ class PowerSchoolIntegrator:
         email.define_field('username', family.email)
         email.define_field('salutation', 'Dear Parent')
         email.send()
-        input('KEEP GOING?')
         
 
     def build_families(self):
 
         families = Families()
         dragonnet = DragonNet()
-                
+
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             families.add(student)
@@ -341,6 +337,9 @@ class PowerSchoolIntegrator:
 
         #TODO: Check for which day of the week it is ... only fun on Mondays.
         
+        #if not datetime.datetime.today().strftime('%a').lower() == 'm':
+        #    return
+
         html_start = """
 <table style="width: 400px;" border="0" cellpadding="5" cellspacing="5" border="1">
 <tbody>"""
@@ -360,17 +359,20 @@ class PowerSchoolIntegrator:
         
         database = DragonNetDBConnection()
         
-        for student_key in self.students.get_student_keys():
+        for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
             
             d = {}
 
-            _id = database.sql("select id from ssismdl_user where idnumber = '{}'".format(student.num))()[0][0]
-
-            # First do some basic stuff
-            database.sql("update ssismdl_user set homeroom = {} where id = {}".format(student.homeroom, _id))()
-            database.sql("update ssismdl_user set preferred_name = '{}' where id = {}".format(student.preferred_name, _id))()
+            try:
+                _id = database.sql("select id from ssismdl_user where idnumber = '{}'".format(student.num))()[0][0]
+            except IndexError:
+                # They don't have an account yet?
+                continue
             
+            # TODO: Make preferred names and homeroom user_profile fields work
+            #database.sql("update xxxx set homeroom = '{}' where id = {}".format(student.homeroom, _id))()
+            #database.sql("update xxxx set preferred_name = '{}' where id = {}".format(student.preferred_name, _id))()
 
             grade_rows = [ grade_row.format(**dict(course_name="Forums",
                                                    course_short="All Classes",
@@ -445,14 +447,13 @@ class PowerSchoolIntegrator:
             #print(grade_html)
             #print()
             #print(email_html)
-                
+
     def build_email_list(self):
         with open(k_path_to_output + '/' + 'student_emails.txt', 'w') as f:
-            for student_key in self.students.get_student_keys():
+            for student_key in self.students.get_student_keys(secondary=True):
                 student = self.students.get_student(student_key)
                 if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
                     f.write(student.email + '\n')
-
 
     def build_students(self, verify=False):
         """
@@ -494,10 +495,14 @@ class PowerSchoolIntegrator:
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
         verify and print("Verifying...")
 
+        secondary_homerooms = self.students.get_secondary_homerooms()
+        elementary_homerooms = self.students.get_elementary_homerooms()
+
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
-                
+
+            # First handle secondary students
+            if student.homeroom in secondary_homerooms and student.courses() and int(student.num) > 30000:                
                 continue_until_no_errors = True
                 times_through = 0
                 while continue_until_no_errors:
@@ -516,12 +521,13 @@ class PowerSchoolIntegrator:
                         print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
                         #modify.change_name(student)
 
+                    # THESE ARE CURRENTLY DONE IN BUILD FAMILIES
                     except NoParentAccount:
-                        modify.new_parent(student)
+                        #modify.new_parent(student)
                         continue_until_no_errors = False
                     
                     except ParentAccountNotAssociated:
-                        modify.parent_account_not_associated(student)
+                        #modify.parent_account_not_associated(student)
                         continue_until_no_errors = False
 
                     except MustExit:
@@ -554,44 +560,69 @@ class PowerSchoolIntegrator:
                     if len(student.groups()) != len(student.courses()):
                         self.students.document_error('verification_failed', student)
                 output_file.add_row(row)
+
+            # Now process elementary
+            # At the moment, elementary kids don't have dragonnet accounts nor do they have any email
+            # Parents only need to have an account is all, and done.
+            if student.homeroom in elementary_homerooms and int(student.num) > 30000:
+                continue_until_no_errors = True
+                times_through = 0
+                while continue_until_no_errors:
+                    try:
+                        server_information.check_student(student)
+                    except NoParentAccount:
+                        modify.new_parent(student)
+                        continue_until_no_errors = False
+                    except MustExit:
+                        continue_until_no_errors = False
+                    else:
+                        # executed when no errors are raised
+                        continue_until_no_errors = False
+                    times_through += 1
+                    if times_through > 10:
+                        print("Infinite Loop detected when processing student\n{}".format(student))
+                        continue_until_no_errors = False
+            
+            
         output_file.output()
 
-        with open(k_path_to_output + '/' + 'email_users.txt', 'w') as f:
-            for student_key in self.students.get_student_keys():
-                student = self.students.get_student(student_key)
-                if student.homeroom in self.students.get_secondary_homerooms():
-                    d = student.__dict__.copy()
-                    d['sep'] = ':'
-                    d['newline'] = '\n'
-                    d['tab'] = '\t'
-                    d['password'] = 'changeme'
-                    f.write("{preferred_name}{newline}".format(**d))
-                    f.write("{username}{sep}{password}{sep}{sep}{sep}{num}{sep}/home/{username}{sep}/bin/bash{newline}".format(**d))
+        # THIS WHOLE BLOCK ISN'T REALLY NEEDED ANYMORE
+        #with open(k_path_to_output + '/' + 'email_users.txt', 'w') as f:
+        #    for student_key in self.students.get_student_keys():
+        #        student = self.students.get_student(student_key)
+        #        if student.homeroom in self.students.get_secondary_homerooms():
+        #            d = student.__dict__.copy()
+        #            d['sep'] = ':'
+        #            d['newline'] = '\n'
+        #            d['tab'] = '\t'
+        #            d['password'] = 'changeme'
+        #            f.write("{preferred_name}{newline}".format(**d))
+        #            f.write("{username}{sep}{password}{sep}{sep}{sep}{num}{sep}/home/{username}{sep}/bin/bash{newline}".format(**d))
 
-        clear_folder(k_path_to_output + '/' + 'homerooms')
-        for student_key in self.students.get_student_keys():
-            student = self.students.get_student(student_key)
-            if student.homeroom in self.students.get_secondary_homerooms():
-                    with open(k_path_to_output + '/' + 'homerooms/homeroom{}.txt'.format(student.homeroom), 'a') as f:
-                        d = student.__dict__.copy()
-                        d['sep'] = ':'
-                        d['newline'] = '\n'
-                        d['tab'] = '\t'
-                        d['message'] = "These are your credentials for ALL your DragonNet accounts and email. You are expected to use these accounts responsibly. DO NOT SHARE."
-                        f.write("{username}{newline}".format(**d))
+        #clear_folder(k_path_to_output + '/' + 'homerooms')
+        #for student_key in self.students.get_student_keys():
+        #    student = self.students.get_student(student_key)
+        #    if student.homeroom in self.students.get_secondary_homerooms():
+        #            with open(k_path_to_output + '/' + 'homerooms/homeroom{}.txt'.format(student.homeroom), 'a') as f:
+        #                d = student.__dict__.copy()
+        #                d['sep'] = ':'
+        #                d['newline'] = '\n'
+        #                d['tab'] = '\t'
+        #                d['message'] = "These are your credentials for ALL your DragonNet accounts and email. You are expected to use these accounts responsibly. DO NOT SHARE."
+        #                f.write("{username}{newline}".format(**d))
 
-        clear_folder(k_path_to_output + '/' + 'parents')
-        for student_key in self.students.get_student_keys():
-            student = self.students.get_student(student_key)
-            if student.homeroom in self.students.get_secondary_homerooms():
-                    with open(k_path_to_output + '/' + 'parents/homeroom{}.txt'.format(student.homeroom), 'a') as f:
-                        d = student.__dict__.copy()
-                        d['sep'] = ':'
-                        d['newline'] = '\n'
-                        d['tab'] = '\t'
-                        d['parent_emails'] = '\n'.join([s for s in student.parent_emails if s])
-                        d['message'] = "These are your credentials for ALL your DragonNet accounts and email. You are expected to use these accounts responsibly. DO NOT SHARE."
-                        f.write("{parent_emails}{newline}".format(**d))
+        #clear_folder(k_path_to_output + '/' + 'parents')
+        #for student_key in self.students.get_student_keys():
+        #    student = self.students.get_student(student_key)
+        #    if student.homeroom in self.students.get_secondary_homerooms():
+        #            with open(k_path_to_output + '/' + 'parents/homeroom{}.txt'.format(student.homeroom), 'a') as f:
+        #                d = student.__dict__.copy()
+        #                d['sep'] = ':'
+        #                d['newline'] = '\n'
+        #                d['tab'] = '\t'
+        #                d['parent_emails'] = '\n'.join([s for s in student.parent_emails if s])
+        #                d['message'] = "These are your credentials for ALL your DragonNet accounts and email. You are expected to use these accounts responsibly. DO NOT SHARE."
+        #                f.write("{parent_emails}{newline}".format(**d))
 
 
     def build_emails_for_powerschool(self):
@@ -604,17 +635,6 @@ class PowerSchoolIntegrator:
                 d['tab'] = "\t"
                 d['newline'] = "\n"
                 output.write("{num}{tab}{lastfirst}{tab}{email}{newline}".format(**d))
-
-
-    def build_emails(self):
-
-        with open(k_path_to_output + '/' + 'email_output.txt', 'w') as output:
-            for student_key in self.students.student_info_controller.keys():
-                student = self.students.student_info_controller.get(student_key)
-                d = student.__dict__.copy()
-                d['tab'] = "\t"
-                d['newline'] = "\n"
-                output.write("{num}{tab}{grade}{tab}{lastfirst}{tab}{homeroom}{tab}{email}{newline}".format(**d))
 
     def list_courses(self):
         the_courses = []
@@ -960,8 +980,10 @@ class PowerSchoolIntegrator:
 
         from utils.DB import DragonNetDBConnection as DNET
         dn = DNET()
+        # id_map is needed because I need to know the id in the database
         id_map = dn.prepare_id_username_map()
 
+        # result is the necessary format to update reset passwords in Moodle
         result = []
         result2 = []
         indexes = []
@@ -977,7 +999,12 @@ class PowerSchoolIntegrator:
             index = f('{first} {last}')[:2]
             if not index in indexes:
                 indexes.append(index)
-            result2.append( (index, f('<a href="http://dragonnet.ssis-suzhou.net/user/profile.php?id=2{idnum}">{first} {last}</a> ({username} {homeroom} {num})<br />')) )
+
+            result2.append(
+                (index,
+                 f('<a href="http://dragonnet.ssis-suzhou.net/user/profile.php?id={idnum}">{first} {last}</a> ({username} {homeroom} {num})<br />')) )
+
+        # Here is where I want to 
 
         result.sort()
         result2.sort(key=lambda x:x[0])

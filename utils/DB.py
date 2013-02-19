@@ -79,6 +79,29 @@ class DragonNetDBConnection(DBConnection):
         return self.id_username
 
 
+class FieldObject(DragonNetDBConnection):
+    """
+
+    """
+
+    def __init__(self, database_name, field_name, samples=None):
+        super().__init__()
+        self.use_samples = samples
+        if not self.use_samples:
+            self.database_name = database_name
+            self.database_id = self.sql("select id from ssismdl_data where name = '{}'".format(self.database_name))()[0][0]
+            self.field_name = field_name
+
+    def all_values(self):
+        if self.use_samples:
+            return self.use_samples
+        values = self.sql("select param1 from ssismdl_data_fields where name = '{}' and dataid = {}".format(self.field_name, self.database_id))()[0][0]
+        values = values.split('\r\n')
+        return values
+
+    def default_value(self):
+        return self.all_values()[0]
+
 class UpdateField(DragonNetDBConnection):
     """
     Class that is used to update a field in a database module
@@ -87,12 +110,15 @@ class UpdateField(DragonNetDBConnection):
     def __init__(self, database_name, field_name):
         super().__init__()
         self.field_name = field_name
-        self.target = self.sql(
+        try:
+            self.target = self.sql(
             "select ssismdl_data_fields.id from ssismdl_data join ssismdl_data_fields on (ssismdl_data.name = '{}' and ssismdl_data.id = ssismdl_data_fields.dataid and ssismdl_data_fields.name = '{}')"
             .format(database_name, field_name)
             )
+        except:
+            self.target_id = 0
+            return
         self.target_id = self.target()[0][0]
-        print(self.target_id)
 
     def update_menu(self, value):
         """
@@ -101,8 +127,10 @@ class UpdateField(DragonNetDBConnection):
         if isinstance(value, list):
             value = "\r\n".join(value)
         command = "update ssismdl_data_fields set param1 = '{}' where id = {}".format(value, self.target_id)
-        self.sql(command)()
-        
+        try:
+            self.sql(command)()
+        except:
+            print("I was unable to issue the following sql command: {}".format(command))
 
 class ServerInfo(DragonNetDBConnection):
 
@@ -163,33 +191,35 @@ class ServerInfo(DragonNetDBConnection):
         idnumber = student.num
         username = student.username
 
-        # Account-based checks
-        if self.students.get(int(idnumber)):
-            if not username == self.students[int(idnumber)]:
-                raise StudentChangedName
+        if student.is_secondary:
+            # Account-based checks
+            if self.students.get(int(idnumber)):
+                if not username == self.students[int(idnumber)]:
+                    raise StudentChangedName
+                else:
+                    pass # we're good
             else:
-                pass # we're good
-        else:
-            # don't let it repeat, if error occurs, not my problem
-            self.students[int(idnumber)] = username
-            # raise error, again, if this interrupts the flow, not this class' problem
-            raise NoStudentInMoodle
+                # don't let it repeat, if error occurs, not my problem
+                self.students[int(idnumber)] = username
+                # raise error, again, if this interrupts the flow, not this class' problem
+                raise NoStudentInMoodle
 
-        # Account-information checks
-        for group in student.groups():
-            members = self._group_members.get(group)
-            if members:
-                if not student.username in members:
-                    print("This student {} is not in group {}".format(student.lastfirst, group))
-            else:
-                print("This group doesn't exist at all: {}".format(group))
+            # Account-information checks
+            for group in student.groups():
+                members = self._group_members.get(group)
+                if members:
+                    if not student.username in members:
+                        print("This student {} is not in group {}".format(student.lastfirst, group))
+                else:
+                    print("This group doesn't exist at all: {}".format(group))
 
-        if self.on_server and not os.path.exists('/home/{}'.format(username)):
-            raise NoEmailAddress
+            if self.on_server and not os.path.exists('/home/{}'.format(username)):
+                raise NoEmailAddress
 
         familyid = student.family_id
         if not familyid in list(self.families.keys()):
             raise NoParentAccount
         else:
-            if not student.username in self.families[familyid]:
-                raise ParentAccountNotAssociated
+            if student.is_secondary:
+                if not student.username in self.families[familyid]:
+                    raise ParentAccountNotAssociated

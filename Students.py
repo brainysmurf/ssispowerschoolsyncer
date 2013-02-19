@@ -26,6 +26,7 @@ class UnknownGrade(BasicException): pass
 class NoHomeroom(BasicException): pass
 
 def put_in_order(what):
+    result = 0 # elementary don't have LEARN
     trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7}
     if '6' in what:
         result = 100 + trans[re.sub('[0-9]', '', what)]
@@ -63,6 +64,7 @@ class Students:
         self.read_in()
         self._homerooms = None
         self._secondary_homerooms = None
+        self._elementary_homerooms = None
         self.get_homerooms()
         self.get_secondary_homerooms()
 
@@ -97,6 +99,16 @@ class Students:
         self._secondary_homerooms.sort(key=put_in_order)
         return self._secondary_homerooms
 
+    def get_elementary_homerooms(self):
+        if not self._elementary_homerooms:
+            self._elementary_homerooms = []
+            for student_key in self.get_elementary_student_keys():
+                student = self.get_student(student_key)
+                if student.is_elementary:
+                    if not student.homeroom in self._elementary_homerooms:
+                        self._elementary_homerooms.append(student.homeroom)
+        return self._elementary_homerooms
+    
     def get_all_groups(self):
         list_of_groups = []
         for key in self.get_student_keys():
@@ -125,7 +137,7 @@ class Students:
 
             # This MUST sync with AutoSend
             stunum, homeroom, firstlast, parent_emails, nationality, _ = line.strip('\n').split('\t')
-
+       
             try:
                 grade = self.convert_hr_to_grade(homeroom)
             except NoHomeroom:
@@ -379,9 +391,9 @@ class Students:
             emails.extend( student.parent_emails )
         return set(emails)
 
-    def get_student_keys(self, secondary=True):
+    def get_student_keys(self, secondary=False):
         """
-        Default right now is for secondary only because that was a previous assumption
+        Returns all of them.
         """
         if secondary:
             return [s for s in list(self.student_info_controller.keys()) if self.student_info_controller.get(s).is_secondary]

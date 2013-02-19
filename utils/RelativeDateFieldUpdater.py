@@ -7,7 +7,7 @@ class RelativeDateFieldUpdater(UpdateField):
     def update_menu_relative_dates(self,
                                    forward_days=7,
                                    skip=['Saturday', 'Sunday']):
-        d = today()
+        d = self.first()
         forward_delta = datetime.timedelta(days=forward_days)
         menu = []
         every_seven_days = [i * 7 for i in range(1, 100)]
@@ -16,22 +16,18 @@ class RelativeDateFieldUpdater(UpdateField):
             iter_date = d + datetime.timedelta(days=day)
             day_of_week = iter_date.strftime('%A')
 
-            if day in every_seven_days:
-                menu.append('----------')
-
             if not day_of_week in skip:
-
-                if day == 1:
-                    day_of_week = self.tomorrow_text()
-                else:
-                    # This will output however many 'next's I need, capitalized 
-                    day_of_week = ( self.next_text() * int( day / 7 ) ).title() + day_of_week
-
                 dictionary = {'day_of_week':day_of_week, 'date':self.format_date(iter_date)}
                 menu.append( self.output().format(**dictionary) )
 
         self.update_menu(menu)
 
+    def first(self):
+        """
+        Return the first date to start with, default is today
+        """
+        return today()
+        
     def output(self):
         return "{day_of_week} ({date})"
 
