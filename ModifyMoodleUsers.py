@@ -79,6 +79,10 @@ class StudentModifier(CallPHP):
             sf = Smartformatter()
             sf.take_dict(student)
             recipient = student.get_homeroom_teacher()
+            if recipient:
+                  recipient += "@ssis-suzhou.net"
+            else:
+                  recipient = 'adammorris@ssis-suzhou.net'
             cc_who = []
             if student.grade in [11, 12]:
                   cc_who.append('santinagambrill@ssis-suzhou.net')
@@ -87,7 +91,6 @@ class StudentModifier(CallPHP):
                   cc_who.append('aubreycurran@ssis-suzhou.net')
             sf(homeroomteacher=recipient)
             html = sf(new_student_html)
-            recipient += "@ssis-suzhou.net"
             if test_run:
                   test('send_html_email', student, recipient)
             else:
