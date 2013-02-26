@@ -260,7 +260,7 @@ class Students:
         pass
 
     def read_in_schedule(self):
-        schedule = SimpleReader(k_path_to_powerschool + '/' + 'ssis_studentscheduledumpsec')
+        schedule = SimpleReader(k_path_to_powerschool + '/' + 'ssis_studentscheduledumpsecnew')
         raw = schedule.raw()
         self.schedule = {}
         for line in raw:
