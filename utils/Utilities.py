@@ -390,7 +390,6 @@ if __name__ == "__main__":
 	catch = []
 	for course in courses:
 		short, long = convert_short_long(course, "")
-		print(short)
 		catch.append(course)
 
 	print()
