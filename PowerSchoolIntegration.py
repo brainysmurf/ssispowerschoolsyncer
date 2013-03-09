@@ -869,7 +869,7 @@ class PowerSchoolIntegrator:
             setup_postfix = '{path}/grades/teachers{grade}{ext}'.format(**d)
             with open(setup_postfix, 'a') as f:
                 for teacher in student.get_teacher_names():
-                    if not teacher in added_teachers_grade[d['grade']]:
+                    if teacher and not teacher in added_teachers_grade[d['grade']]:
                         f.write(teacher + '@ssis-suzhou.net\n')
                         added_teachers_grade[d['grade']].append(teacher)
 
