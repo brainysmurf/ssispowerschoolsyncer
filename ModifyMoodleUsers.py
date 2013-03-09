@@ -97,8 +97,8 @@ class StudentModifier(CallPHP):
                   send_html_email(sender, recipient,
                             sf("New Student in Homeroom {homeroom}, {lastfirst}"),
                             html,
-                            cc_who.extend( [t+"@ssis-suzhou.net" for t in student.get_teacher_names()] ),
-                            bccwho="lcssisadmin@student.ssis-suzhou.net")
+                            cc_who,
+                            bccwho=["lcssisadmin@student.ssis-suzhou.net", 'geoffreyderry@ssis-suzhou.net', 'brentclark@ssis-suzhou.net')
 
       def change_name(self, student):
             if test_run:
