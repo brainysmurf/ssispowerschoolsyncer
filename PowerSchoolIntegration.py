@@ -53,7 +53,7 @@ class PowerSchoolIntegrator:
 
         self.students = Students()
         self.build_student_courses()
-        #self.build_teachers()
+        self.build_teachers()
         self.build_courses()
         self.build_students()
         self.build_email_list()
@@ -899,7 +899,7 @@ class PowerSchoolIntegrator:
             setup_postfix = '{path}/homerooms/teachers{homeroom}{ext}'.format(**d)
             with open(setup_postfix, 'a') as f:
                 teacher = student.get_homeroom_teacher()
-                if not teacher in added_teachers_hr[d['homeroom']]:
+                if teacher and not teacher in added_teachers_hr[d['homeroom']]:
                     f.write(teacher + '@ssis-suzhou.net\n')
                     added_teachers_hr[d['homeroom']].append(teacher)
 
@@ -956,7 +956,7 @@ class PowerSchoolIntegrator:
                     depart_dict[d_email_name] = []
                     for head in heads:
                         depart_dict[d_email_name].append(head + "@ssis-suzhou.net")
-                if not teacher.email in depart_dict[d_email_name]:
+                if teacher and not teacher.email in depart_dict[d_email_name]:
                     depart_dict[d_email_name].append(teacher.email)
 
         for department in list(depart_dict.keys()):
