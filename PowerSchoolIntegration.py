@@ -898,6 +898,7 @@ class PowerSchoolIntegrator:
 
             setup_postfix = '{path}/homerooms/teachers{homeroom}{ext}'.format(**d)
             with open(setup_postfix, 'a') as f:
+                teacher = student.get_homeroom_teacher()
                 if not teacher in added_teachers_hr[d['homeroom']]:
                     f.write(teacher + '@ssis-suzhou.net\n')
                     added_teachers_hr[d['homeroom']].append(teacher)
