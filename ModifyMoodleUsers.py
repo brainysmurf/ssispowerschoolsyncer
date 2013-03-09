@@ -10,6 +10,9 @@ new_student_html = """
 <li><strong>Username: {username}</strong></li>
 <li><strong>Password: changeme</strong></li>
 </ul></blockquote>
+<p>Here is their email address:</p><blockquote><ul>
+<li><strong>Email: {username}@student.ssis-suzhou.net</strong></li>
+</ul></blockquote>
 <p>Perhaps one of the first things the buddy can do is take him or her through logging into DragonNet and Student Email and changing the passwords.</p>
 <p><em>Reminder: They should be encouraged to use the same password for both accounts. Although the same username is the same, changing the password on DragonNet does not change the Student Email password, and vice versa.</em></p>
 <p>Dear Subject Teachers:</p>
