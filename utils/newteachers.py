@@ -7,11 +7,14 @@ list_of_new_usernames = ['samnjoanne@cafes.net', 'alfonsomatthew@gmail.com', 'fr
 from Bulk import MoodleCSVFile
 
 output_file = MoodleCSVFile('/tmp/newteachers.txt')
-output_file.build_headers(['username', 'cohort_'])
+output_file.build_headers(['username', 'password', 'firstname', 'lastname', 'cohort_'])
 
 for new_username in list_of_new_usernames:
     row = output_file.factory()
     row.build_username(new_username)
+    row.build_password('changeme')
+    row.build_firstname('firstname')
+    row.build_lastname('lastname')
     row.build_cohort_(['teachersALL'])
     row.build_cohort_(['teachersSEC'])
     output_file.add_row(row)
