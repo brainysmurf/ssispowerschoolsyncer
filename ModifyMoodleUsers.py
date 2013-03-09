@@ -101,7 +101,7 @@ class StudentModifier(CallPHP):
                             sf("New Student in Homeroom {homeroom}, {lastfirst}"),
                             html,
                             cc_who,
-                            bccwho=["lcssisadmin@student.ssis-suzhou.net", 'geoffreyderry@ssis-suzhou.net', 'brentclark@ssis-suzhou.net')
+                            bccwho=["lcssisadmin@student.ssis-suzhou.net", 'geoffreyderry@ssis-suzhou.net', 'brentclark@ssis-suzhou.net'])
 
       def change_name(self, student):
             if test_run:
