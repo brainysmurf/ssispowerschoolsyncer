@@ -136,7 +136,12 @@ class Students:
         for line in self.raw:
 
             # This MUST sync with AutoSend
-            stunum, homeroom, firstlast, parent_emails, nationality, _ = line.strip('\n').split('\t')
+            try:
+                stunum, homeroom, firstlast, parent_emails, nationality, _ = line.strip('\n').split('\t')
+            except:
+                print(line)
+                print("Possibly a student info field has a return character in it")
+                continue
        
             try:
                 grade = self.convert_hr_to_grade(homeroom)
@@ -246,6 +251,7 @@ class Students:
                 lastfirst, email, title, schoolid, status, _ = line.strip('\n').split('\t')
             except ValueError:
                 print("This teacher wasn't added to database: {}".format(line))
+                continue
             if lastfirst in self.exclude_these_teachers_manually:
                 continue
             if 1 == int(status):
