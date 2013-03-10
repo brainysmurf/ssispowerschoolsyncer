@@ -162,8 +162,7 @@ class Student(Entry):
         l = []
         for this in self._teachers.keys():
             l.append( self._teachers[this] )
-        if not l:
-            input("Why doesn't {} have any teachers?".format(self.username))
+        print(l)
         return l
 
     def determine_first_and_last(self):
