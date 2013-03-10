@@ -23,6 +23,23 @@ from utils.PHPMoodleLink import CallPHP
 from utils.Email import Email
 from utils.Email import read_in_templates
 
+class autosend_file_parser(object):
+    """
+    Class reads in things saved from autosend
+    """
+    def __init__(self):
+        pass
+    
+    def __call__(self, line, expected_length):
+        _tuple = line.strip('\n').split('\t')
+        if len(_tuple) != expected_length:
+            lastone = _tuple[-1]
+            if not lastone:
+                return _tuple[:-1]
+            else:
+                raise ValueError
+        else:
+            return _tuple
 
 class DragonNet(DragonNetDBConnection):
     pass
@@ -527,9 +544,10 @@ class PowerSchoolIntegrator:
                         continue_until_no_errors = False
 
                     except StudentChangedName:
-                        print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
-                        continue_until_no_erors = False
-                        #modify.change_name(student)
+                        print("Student has had his or her account name changed.\n" +
+                              "We will continue using the available one as defined by DragonNet:\n{}, {}".format(
+                                  student.num, student.username)
+                            )
 
                     except MustExit:
                         continue_until_no_errors = False
