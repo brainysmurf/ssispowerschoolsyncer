@@ -197,9 +197,7 @@ class ServerInfo(DragonNetDBConnection):
                 if not username == self.students[int(idnumber)]:
                     # Use the one that we know from DragonNet
                     # This error will not happen again
-                    print(self.students[int(idnumber)])
                     student.username = self.students[int(idnumber)]
-                    print(student.username)
                     raise StudentChangedName
                 else:
                     pass # we're good
