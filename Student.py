@@ -162,7 +162,6 @@ class Student(Entry):
         l = []
         for this in self._teachers.keys():
             l.append( self._teachers[this] )
-        print(l)
         return l
 
     def determine_first_and_last(self):
