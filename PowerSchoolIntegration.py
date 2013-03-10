@@ -517,10 +517,6 @@ class PowerSchoolIntegrator:
                     except NoEmailAddress:
                         modify.no_email(student)
 
-                    except StudentChangedName:
-                        print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
-                        #modify.change_name(student)
-
                     # THESE ARE CURRENTLY DONE IN BUILD FAMILIES
                     except NoParentAccount:
                         #modify.new_parent(student)
@@ -529,6 +525,11 @@ class PowerSchoolIntegrator:
                     except ParentAccountNotAssociated:
                         #modify.parent_account_not_associated(student)
                         continue_until_no_errors = False
+
+                    except StudentChangedName:
+                        print("Student has had his or her account name changed: {}, {}".format(student.num, student.username))
+                        continue_until_no_erors = False
+                        #modify.change_name(student)
 
                     except MustExit:
                         continue_until_no_errors = False
