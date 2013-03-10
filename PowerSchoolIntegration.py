@@ -102,7 +102,6 @@ class PowerSchoolIntegrator:
         with open(k_path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
             f.write('fullname,shortname,category,summary,groupmode\n')
             for line in raw:
-                print(line)
                 orig_short, orig_long, _ = line.strip('\n').split('\t')
                 short, long = convert_short_long(orig_short, orig_long)
                 courses[short] = long
