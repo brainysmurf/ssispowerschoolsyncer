@@ -250,8 +250,11 @@ class Students:
             try:
                 lastfirst, email, title, schoolid, status = line.strip('\n').split('\t')
             except ValueError:
-                print("This teacher wasn't added to database: {}".format(line))
-                continue
+                try:
+                    lastfirst, email, title, schoolid, status, _ = line.strip('\n').split('\t')
+                except ValueError:
+                    print("This teacher wasn't added to database: {}".format(line))
+                    continue
             if lastfirst in self.exclude_these_teachers_manually:
                 continue
             if 1 == int(status):
