@@ -248,10 +248,10 @@ class Students:
         raw = teachers.raw()
         for line in raw:
             try:
-                lastfirst, email, title, schoolid, status = line.strip('\n').split('\t')
+                lastfirst, email, title, schoolid, status, _ = line.strip('\n').split('\t')
             except ValueError:
                 try:
-                    lastfirst, email, title, schoolid, status, _ = line.strip('\n').split('\t')
+                    lastfirst, email, title, schoolid, status = line.strip('\n').split('\t')
                 except ValueError:
                     print("This teacher wasn't added to database: {}".format(line))
                     continue
