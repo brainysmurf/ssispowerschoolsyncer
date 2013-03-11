@@ -183,9 +183,6 @@ class ServerInfo(DragonNetDBConnection):
                     self._group_members[groupname] = []
                 self._group_members[groupname].append(username)
 
-        print("hello")
-        import pdb; pdb.set_trace()
-
     def check_student(self, student):
         """
         Raises errors describing what has happened, if anything
@@ -194,7 +191,7 @@ class ServerInfo(DragonNetDBConnection):
         idnumber = student.num
         username = student.username
 
-        if student.idnumber in ['43462', '43463', '43922', '43933', '43932', '43782']:
+        if student.num in ['43462', '43463', '43922', '43933', '43932', '43782']:
             import pdb; pdb.set_trace()
         if student.is_secondary:
             # Account-based checks
