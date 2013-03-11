@@ -95,6 +95,10 @@ def send_html_email(fromwho, towho, subject, html, ccwho=[], bccwho=[]):
     msg['From'] = fromwho
     if isinstance(towho, list):
         msg['To'] = ", ".join(towho)
+    if isinstance(ccwho, list):
+        msg['CC'] = ", ".join(ccwho)
+    if isinstance(bccwho, list):
+        msg['BCC'] = ", ".join(bccwho)
     else:
         msg['To'] = towho
     if ccwho:
