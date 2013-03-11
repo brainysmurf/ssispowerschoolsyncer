@@ -30,7 +30,7 @@ class Student(Entry):
         self.is_elementary = grade <= 5
         self.is_student = True
         self.lastfirst = lastfirst
-        
+
         self.determine_first_and_last()
         self.determine_preferred_name()  # this is derived from preferred.txt
 
