@@ -517,7 +517,7 @@ class PowerSchoolIntegrator:
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
 
-            if student.idnumber in ['43462', '43463', '43922', '43933', '43932', '43782']:
+            if student.num in ['43462', '43463', '43922', '43933', '43932', '43782']:
                 import pdb; pdb.set_trace()
 
             # First handle secondary students
