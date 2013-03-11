@@ -95,14 +95,16 @@ def send_html_email(fromwho, towho, subject, html, ccwho=[], bccwho=[]):
     msg['From'] = fromwho
     if isinstance(towho, list):
         msg['To'] = ", ".join(towho)
+    else:
+        msg['To'] = towho
     if isinstance(ccwho, list):
         msg['CC'] = ", ".join(ccwho)
+    else:
+        msg['CC'] = ccwho
     if isinstance(bccwho, list):
         msg['BCC'] = ", ".join(bccwho)
     else:
-        msg['To'] = towho
-    if ccwho:
-        msg['CC'] = ccwho
+        msg['BCC'] = bccwho
     tolist = []
     if isinstance(towho, list):
         tolist.extend(towho)
