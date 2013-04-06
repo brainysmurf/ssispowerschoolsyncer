@@ -45,6 +45,7 @@ class Controller():
     def add(self, *args, **kwargs):
         key = str(args[0])
         self._db[key] = self.klass(*args, **kwargs)
+        return self._db[key]
 
     def update(self, id, key, value):
         """

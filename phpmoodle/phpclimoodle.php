@@ -62,14 +62,13 @@ class moodlephp
       global $DB;
     }
 
-    private function create_account( $args )
+    private function create_account( $args ) 
     {
       $username = $args[0];
       $email = $args[1];
       $firstname = $args[2];
       $lastname = $args[3];
       $idnumber = $args[4];
-      
 
       if( $this->user_does_exist(array($username)) )
 	{
@@ -80,19 +79,7 @@ class moodlephp
 
       try
 	{
-	  $user = create_user_record( $username, "changeme" );
-
-	  $user->email = trim($email);
-	  $user->firstname = trim($firstname);
-	  $user->lastname = trim($lastname);
-	  $user->idnumber = trim($idnumber);
-	  $user->maildigest = 1;  // All my users should use digest, for the love of god
-	  $user->city = 'Suzhou';
-	  $user->country = 'CN';
-
-	  $DB->update_record( 'user' , $user );
-
-	  return "0";
+	  $user = create_user_record( $username, "changeme" );  // changeme forces password reset 
 	}
 
       catch( Exception $e )
@@ -101,7 +88,17 @@ class moodlephp
 	  return "-1 Could not create account for ".$username;
         }
 
-      return $user->id;
+      $user->email = trim($email);
+      $user->firstname = trim($firstname);
+      $user->lastname = trim($lastname);
+      $user->idnumber = trim($idnumber);
+      $user->maildigest = 1;  // All my users should use digest, for the love of god
+      $user->city = 'Suzhou';
+      $user->country = 'CN';
+
+      $DB->update_record( 'user' , $user );
+
+      return "0";
     }
 
     private function user_does_exist($args)
@@ -136,6 +133,8 @@ class moodlephp
 	  var_dump($e);
 	  return "-1 Could not associate child".$child_idnumber." to parent ".$parent_idnumber;
 	}
+
+      return "0";
     }
 
     private function add_user_to_group($args)
@@ -151,21 +150,37 @@ class moodlephp
       groups_add_member($group, $user);
     }
 
+    private function create_group_for_course($args)
+    {
+      $short_name = $args[0];
+      $group_name = $args[1];
+      if( !$course = $DB->get_record('course', array('shortname'=>$short_name), '*') ) {
+	return "-1 Course does not exist!... ".$short_name;
+      }
+
+      $group_data = new stdClass;
+      $group_data->courseid = $course->id;
+      $group_data->name = $group_name;
+
+      if (groups_create_group($group_data)) {
+	echo "PHP says Created group ".$group_name;
+      } else {
+	return "-1 Cannot create group, OH NO!";
+      }
+    }
+
     private function enrol_user_in_course($args)
     {
       $useridnumber = $args[0];
       $short_name = $args[1];
       $group_name = $args[2];
       $role = $args[3];
-      echo $role;
 
       switch ($role) {
       case "Student":
-	echo "Enrolling as student";
 	$roleid = $this->STUDENT_ROLE_ID;
 	break;
       case "Parent":
-	echo "Enrolling as parent";
 	$roleid = $this->PARENT_ROLE_ID;
 	break;
       default :
@@ -176,7 +191,7 @@ class moodlephp
 
       if( !$user = $this->getUserByIDnumber($useridnumber) )
 	{
-	  return "-1 Could not find user ".$useridnumer." when enrolling in course".$short_name;
+	  return "-1 Could not find user ".$useridnumber." when enrolling in course".$short_name;
 	}
 
       if( !$course = $DB->get_record('course', array('shortname'=>$short_name), '*') ) {
@@ -210,26 +225,36 @@ class moodlephp
 	  $timeend = 0;
 
 	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
-	  echo "Enrolled ".$useridnumber." into class ".$short_name." as a ".$roleid.".";
+	  echo "PHP says Enrolled ".$useridnumber." into class ".$short_name." as a ".$roleid.".";
 	}
 
-      if( $group = groups_get_group_by_name($course->id, $group_name) )
-        {
-	  var_dump($group);
-          //$manager->add_user_to_group( $user, $group_name );
-	  if( groups_add_member($group, $user) ) {
-	    echo "Added user ".$useridnumber." into group ".$group_name.".";
-	  }
-	  else {
-	    echo "-1 Couldn't add user ".$useridnumber." to group ".$group_name;
-	  }
-        }
-      else
+      if( !$group = groups_get_group_by_name($course->id, $group_name) )
 	{
-	  var_dump($groups);
-	  echo "Could not find group? ".$group_name;
-	}
+	  //create the group first
+          $group_data = new stdClass;
+          $group_data->courseid = $course->id;
+          $group_data->name = $group_name;
 
+          if (groups_create_group($group_data)) {
+    	    echo "PHP says Created group ".$group_name;
+          } else {
+	    return "-1 Cannot create group, OH NO!";
+          }
+	  
+	} else {
+	// group should be there now
+	  if (!$group = groups_get_group_by_name($course->id, $group_name) )
+	    {
+	      //probably won't happen, but I wouldn't want to debug if it did
+	      return "-1 Created group but can't fetch it from database... hmmm...";
+	     }
+       } 
+        
+       if( groups_add_member($group, $user) ) {
+         echo "PHP says Added (or was already a member) user ".$useridnumber." into group ".$group_name." for course ".$short_name.".";
+       } else {
+         echo "-1 Couldn't add user ".$useridnumber." to group ".$group_name;
+       }
     }
 
     private function change_username($args)

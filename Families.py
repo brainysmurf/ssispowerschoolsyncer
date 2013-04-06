@@ -38,6 +38,7 @@ class Family:
 
     def __init__(self, family_id):
         self.family_id = family_id
+        self.idnumber = self.family_id + 'P'
         self.username = ""
         self.emails = []
         self.parent_account_id = family_id + 'P'
@@ -84,7 +85,7 @@ class Family:
         id_number = self.family_id + 'P'
         result = update.sql("select username from ssismdl_user where idnumber = '{}'".format(id_number))()
         if result:
-            self.username = result[0]
+            self.username = result[0][0]
         else:
             self.username = self.email
             

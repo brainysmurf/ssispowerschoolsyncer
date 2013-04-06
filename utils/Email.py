@@ -12,7 +12,7 @@ except ImportError:
     # If html2text isn't available (boo) use a simple html tag extractor using a (very basic) regular expression
     # Better yet, install html2text (http://www.aaronsw.com/2002/html2text/)
     import re
-    def html2text_function(self):
+    def html2text_function(html):
         return re.sub(r'<.*?>', '', html)
     class html2text:
         html2text = html2text_function
@@ -197,6 +197,10 @@ class Email:
     def define_field(self, key, value):
         self.fields[key] = value
 
+    def define_fields(self, dictionary):
+        for key, value in dictionary.items():
+            self.define_field(key, value)
+
     def send(self):
         template = self.get_template()
         if not template:
@@ -236,7 +240,13 @@ class Email:
         # Need to remove unicode characters so that the string converts correctly
         #regexp = re.compile('[^\x09\x0A\x0D\x20-\x7F]')
         #msg_as_string = regexp.sub('', msg.as_string())
-        s = smtplib.SMTP('localhost')
+        try:
+            s = smtplib.SMTP('localhost')
+        except smtplib.socket.error:
+            #TODO: Email admin when in production
+            print("SMTLib report socket error, did not send email from {} to {}".format(self.from_who, [r.email for r in self.recipients]))
+            self.sent = False
+            return
         s.sendmail(_email.parseaddr(self.from_who)[1], [r.email for r in self.recipients], msg.as_string())
         s.quit()
         self.sent = True

@@ -23,6 +23,9 @@ class Smartformatter:
     def sep(self, sep):
         self.sep = sep
 
+    def items(self):
+        return [item for item in self.__dict__.items() if not item[0].startswith('_')]
+
     def __str__(self):
         if self._args:
             return self.sep.join(self._args).format(**self.__dict__)

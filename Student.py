@@ -22,7 +22,7 @@ class Object:
 
 class Student(Entry):
 
-    def __init__(self, num, grade, homeroom, lastfirst, parent_emails, nationality):
+    def __init__(self, num, grade, homeroom, lastfirst, parent_emails, entry_date, nationality, user_data = {}):
         self.num = num
         self.family_id = num[:4] + 'P'
         self.grade = grade
@@ -30,9 +30,10 @@ class Student(Entry):
         self.is_elementary = grade <= 5
         self.is_student = True
         self.lastfirst = lastfirst
+        self.user_data = user_data
 
         self.determine_first_and_last()
-        self.determine_preferred_name()  # this is derived from preferred.txt
+        #self.determine_preferred_name()  # this is derived from preferred.txt
 
         self.nationality = nationality
         self.is_korean = self.nationality == "Korea"
@@ -101,9 +102,24 @@ class Student(Entry):
         self.preferred_name = format_string.format(**self.__dict__)
 
     def determine_username(self):
-        self.username = no_whitespace_all_lower(self.first + self.last)[:20]
-        self.username += str(get_year_of_graduation(self.grade))
-        
+        """
+        Determines usernames for already existing students
+        and new ones alike
+        """
+        username_already_exists = self.user_data.get(self.num)
+        if username_already_exists:
+            self.username = username_already_exists
+        else:
+            taken_usernames = [item[1] for item in self.user_data.items()]
+            first_half = no_whitespace_all_lower(self.first + self.last)[:20]
+            second_half = str(get_year_of_graduation(self.grade))
+            self.username = first_half + second_half
+            times_through = 1
+            while self.username in taken_usernames:
+                print("Looking for a new name for student:\n{}".format(self.username))
+                self.username = first_half + ('_' * times_through) + second_half
+                input(self.username)
+
     def update(self, key, value):
         self.key = value
 
@@ -114,6 +130,7 @@ class Student(Entry):
         self.determine_username()
 
     def update_courses(self, course_obj, teacher_obj):
+        # Sometimes PowerSchool's AutoSend has two course entries in order to take care of the scheduling (or something)
         self._courses.append(course_obj.moodle_short)
         d = {'username':teacher_obj.username,'name':course_obj.moodle_short}
         self.update_groups(course_obj.moodle_short, "{username}{name}".format(**d) )
@@ -142,7 +159,7 @@ class Student(Entry):
                 f.write("You need to delete group {}.\n".format(group))
             group = newgroup
         
-        if group and not group in self._groups:
+        if group:
             self._groups.append(group)
             self._groups_courses[shortcode] = group
 
@@ -154,6 +171,12 @@ class Student(Entry):
 
     def teachers(self):
         return self._teachers
+
+    def get_teachers_as_list(self):
+        """
+        Called when I don't care about what courses they are in
+        """
+        return [item[1] for item in self.teachers().items()]
 
     def get_teacher_names(self):
         """

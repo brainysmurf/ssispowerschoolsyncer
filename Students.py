@@ -3,6 +3,7 @@ Holds all information about a particular student
 Reads in from Powerschool file
 """
 
+from utils.AutoSendFile import File
 from ReadFiles import SimpleReader
 from Exceptions import BasicException
 from Controller import Controller, NoSuchStudent
@@ -12,6 +13,8 @@ from Course import Course
 from Teacher import Teacher
 from Schedule import Schedule
 from Allocation import Allocation
+
+import datetime
 
 from utils.Utilities import convert_short_long, determine_password
 from utils.FilesFolders import clear_folder
@@ -48,25 +51,29 @@ class Students:
 
     exclude_these_teachers_manually = ['Sections, Dead', 'User, Drews Test']
 
-    def __init__(self):
+    def __init__(self, settings, user_data = {}, verbose=True):
         """
         Does the work of reading in basic information from file, creates native Python structures
         StudentNumber\tHomeroom\tLastFirst\tguardianemails
         """
+        self.settings = settings
+        self.verbose = self.settings.verbose
         self.errors = DocumentErrors(k_path_to_errors)
-        self.student_info_file = SimpleReader(k_path_to_powerschool + '/' + 'ssis_studentinfodumpall')
-        self.raw = self.student_info_file.raw()
+        self.student_info_file = File(k_path_to_powerschool + '/' + 'ssis_studentinfodumpall')
+        self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student)
         self.course_info_controller = Controller(Course)
         self.teacher_info_controller = Controller(Teacher)
         self.schedule_info_controller = Controller(Schedule)
         self.allocation_info_controller = Controller(Allocation)
+        self.user_data = user_data
         self.read_in()
         self._homerooms = None
         self._secondary_homerooms = None
         self._elementary_homerooms = None
         self.get_homerooms()
         self.get_secondary_homerooms()
+
 
     def document_error(self, kind, content):
         self.errors.document_errors(kind, content)
@@ -137,10 +144,10 @@ class Students:
 
             # This MUST sync with AutoSend
             try:
-                stunum, homeroom, firstlast, parent_emails, nationality, _ = line.strip('\n').split('\t')
-            except:
+                stunum, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
+            except ValueError:
                 print(line)
-                print("Possibly a student info field has a return character in it")
+                print("Possibly this line had even number of tabs??")
                 continue
        
             try:
@@ -151,22 +158,27 @@ class Students:
                 continue
 
             # This SHOULD PROBABLY sync with AutoSend, with above
-            self.add(stunum,
+            new_student = self.add(stunum,
                 grade,
                 homeroom,
                 firstlast,
                 re.split('[;,]', parent_emails),
-                nationality)
+                datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
+                nationality,
+                user_data=self.user_data)
+            
 
         self.read_in_others()
         self.sync_others()
 
     def read_in_others(self):
         #self.read_in_preferred()
-        self.read_in_courses()
-        self.read_in_teachers()
-        self.read_in_allocations()
-        self.read_in_schedule()
+        if self.settings.courses:
+            self.read_in_courses()
+            self.read_in_schedule()
+        if self.settings.teachers:
+            self.read_in_teachers()
+            self.read_in_allocations()
 
     def read_in_preferred(self):
         self.preferred_temp = {}
@@ -185,10 +197,12 @@ class Students:
     def sync_others(self):
         """ Round robin """
         #self.sync_preferred()   # this one to get the names right
-        self.sync_courses()     # this one for reference
-        self.sync_teachers()    # this one to export teacher data
-        self.sync_allocations() # copy to teachers
-        self.sync_schedule()    # this one to export student data
+        if self.settings.courses:
+            self.sync_courses()     # this one for reference
+            self.sync_schedule()    # this one to export student data
+        if self.settings.teachers:
+            self.sync_teachers()    # this one to export teacher data
+            self.sync_allocations() # copy to teachers
         self.sync_profile_fields()
 
     def sync_preferred(self):
@@ -204,10 +218,11 @@ class Students:
                 pass
 
     def read_in_courses(self):
-        courses = SimpleReader(k_path_to_powerschool + '/' + 'ssis_courseinfosec')
-        raw = courses.raw()
+        self.verbose and print("Reading in raw course information in secondary")
+        courses = File(k_path_to_powerschool + '/' + 'ssis_courseinfosec')
+        raw = courses.content()
         for line in raw:
-            course_number, full_name, _ = line.split('\t')
+            course_number, full_name = line.split('\t')
             moodle_short, moodle_long = convert_short_long(course_number, full_name)
             self.add_course(course_number, full_name, moodle_short, moodle_long)
             
@@ -218,46 +233,57 @@ class Students:
         pass
 
     def read_in_allocations(self):
-        allocations = SimpleReader(k_path_to_powerschool + '/' + 'ssis_teacherallocationsec')
-        raw = allocations.raw()
+        self.verbose and print("Setting up allocation table by reading in raw teacher allocations for secondary")
+        allocations = File(k_path_to_powerschool + '/' + 'ssis_teacherallocationsec')
+        raw = allocations.content()
         self.allocation_table = {}
         for line in raw:
             line = line.strip().strip('\n')
-            try:
-                course_number, course_name, teacher_name, termID = line.strip('\n').split('\t')
-            except ValueError:
-                print("What is this?")
-                input(line.split('\t'))
-                continue
+            course_number, course_name, teacher_name, termID = line.strip('\n').split('\t')
             if course_number not in self.allocation_table:
                 self.allocation_table[course_number] = []
+            teacher = self.teacher_info_controller.get(teacher_name)
+            if not teacher:
+                self.verbose and print("No teacher by this name?: {}".format(teacher_name))
+                continue
             self.allocation_table[course_number].append(self.teacher_info_controller.get(teacher_name))
             
     def sync_allocations(self):
+        self.verbose and print("Syncing teachers")
         for allocation in self.allocation_table.keys():
             for teacher in self.allocation_table[allocation]:
-                if not teacher: continue
+                if not teacher: 
+                    self.verbose and print("no teacher?")
+                    self.verbose and print(allocation)
+                    self.verbose and input(self.allocation_table[allocation])
+                    continue
                 teacher = self.teacher_info_controller.get(teacher.lastfirst)
                 course = self.course_info_controller.get(allocation)
                 if course and teacher:
+                    self.verbose and print("Syncing teacher {} with course {}".format(teacher, course))
                     course.update_teachers(teacher)
                     teacher.update_courses(course)
 
     def read_in_teachers(self):
-        teachers = SimpleReader(k_path_to_powerschool + '/' + 'ssis_teacherinfodumpall')
-        raw = teachers.raw()
+        self.verbose and print("Reading in teacher info for both schools")
+        teachers = File(k_path_to_powerschool + '/' + 'ssis_teacherinfodumpall')
+        raw = teachers.content()
         for line in raw:
             try:
-                lastfirst, email, title, schoolid, status, _ = line.strip('\n').split('\t')
+                lastfirst, email, title, schoolid, status = line.strip('\n').split('\t')
             except ValueError:
+                # PowerSchool data sometimes has so little that it gives us two consecutive rows of blanks... how annoying
                 try:
-                    lastfirst, email, title, schoolid, status = line.strip('\n').split('\t')
+                    lastfirst, schoolid, status = line.strip('\n').split('\t')
                 except ValueError:
-                    print("This teacher wasn't added to database: {}".format(line))
+                    self.verbose and print("This teacher wasn't added to database: {}".format(line))
                     continue
+                email = ''
+                title = ''
             if lastfirst in self.exclude_these_teachers_manually:
                 continue
             if 1 == int(status):
+                self.verbose and print("Adding teacher! {}".format(lastfirst))
                 self.add_teacher(lastfirst, email, title, schoolid)
             else:
                 pass # teachers with status of not 1 are no longer here
@@ -269,12 +295,13 @@ class Students:
         pass
 
     def read_in_schedule(self):
-        schedule = SimpleReader(k_path_to_powerschool + '/' + 'ssis_studentscheduledumpsecnew')
-        raw = schedule.raw()
+        self.verbose and print("Reading in schedule information from secondary")
+        schedule = File(k_path_to_powerschool + '/' + 'ssis_studentscheduledumpsecnew')
+        raw = schedule.content()
         self.schedule = {}
         for line in raw:
             line = line.strip('\n').split('\t')
-            course_number, section_details, termID, teacher, student, studentID, _ = line
+            course_number, section_details, termID, teacher, student, studentID = line
             if not course_number in self.schedule:
                 self.schedule[course_number] = []
             self.schedule[course_number].append((teacher, studentID))
@@ -283,6 +310,7 @@ class Students:
         """
         Put courses and teachers into student data, so they can be exported
         """
+        self.verbose and print("Syncing schedule information")
         for key in self.schedule.keys():
             for row in self.schedule[key]:
                 teacher_lastfirst, studentID = row
@@ -290,11 +318,14 @@ class Students:
                 teacher = self.teacher_info_controller.get(teacher_lastfirst)
                 student = self.student_info_controller.get(studentID)
                 if not student:
+                    self.verbose and input("sync_scheule problem: {}".format(row))
                     self.document_error("sync_schedule", row)
                     continue
                 if teacher and student:
+                    self.verbose and print("Syncing teacher {} with student {}".format(teacher, student))
                     teacher.update_students(student)
                 if student and course and teacher:
+                    self.verbose and print("Syncing student {} with teacher {} with course {}".format(student, teacher, course))
                     student.update_teachers(course, teacher)
                     student.update_courses(course, teacher)
 
@@ -346,7 +377,7 @@ class Students:
         """
         Takes data and sends it on to controller
         """
-        self.student_info_controller.add(*args, **kwargs)
+        return self.student_info_controller.add(*args, **kwargs)
 
     def add_course(self, *args, **kwargs):
         self.course_info_controller.add(*args, **kwargs)
