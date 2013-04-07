@@ -22,6 +22,7 @@ class Teacher(Entry):
         if not self.email:
             self.email = "{}@ssis-suzhou.net".format(re.sub(r'[^a-z]', '', "{}{}".format(self.first, self.last).lower()))
         self.preferred_name = self.first + " " + self.last
+        self.profile_bool_details = title
         if email:
             self.username = no_whitespace_all_lower(self.email.split('@')[0])
         else:
@@ -34,8 +35,10 @@ class Teacher(Entry):
         self.is_secondary = False
         if schoolid == str(PRIMARYSCHOOLID):
             self.is_primary = True
+            self.profile_bool_iselemteacher = True
         if schoolid == str(SECONDARYSCHOOLID):
             self.is_secondary = True
+            self.profile_bool_issecteacher = True
 
     def update_courses(self, course_obj):
         if course_obj not in self._courses:

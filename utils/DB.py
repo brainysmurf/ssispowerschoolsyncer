@@ -32,11 +32,92 @@ class MustExit(Exception):
     pass
 
 class DBConnection:
+    """
+    Glue code between me and the database
+    """
 
-    def __init__(self, user, password, database):
+    def __init__(self, user, password, database, verbose=False):
         d = {'user':user, 'password':password, 'database':database}
+        self.last_call = None
+        self._database = database
+        self.verbose = verbose
+        input(self.verbose)
         self.db = postgresql.open('pq://{user}:{password}@localhost/{database}'.format(**d))
-        self.sql = self.db.prepare
+
+    def sql(self, *args, **kwargs):
+        if self.verbose:
+            print_db = self._database
+            if not self.last_call:
+                self.last_call = 'prepared'
+            print('Database ' + print_db + ' ' +  self.last_call)
+            print('\t', *args)
+            if kwargs:
+                print('\t', kwargs.items())
+        self.last_call = None
+        return self.db.prepare(*args, **kwargs)
+
+    def call_sql(self, *args, **kwargs):
+        self.last_call = 'calling' if self.verbose else None
+        return self.sql(*args, **kwargs)()
+
+    def call_sql_only_one(self, *args, **kwargs):
+        self.last_call = 'calling only one' if self.verbose else None
+        result = self.call_sql(*args, **kwargs)
+        if result:
+            return result[0][0]
+        else:
+            return None
+
+    def call_sql_first_row(self, *args, **kwargs):
+        self.last_call = 'calling first row' if self.verbose else None
+        result = self.call_sql(*args, **kwargs)
+        if result:
+            return result[0]
+        else:
+            return ()
+
+    def test_table(self, table_name, **where):
+        where_items = where.items()
+        where_phrase = " AND ".join(["where {} = '{}'".format(w[0], w[1]) for w in where_items])
+        result = self.sql("select * from {} {}".format(table_name, where_phrase))()
+        if result:
+            return True
+        else:
+            return False
+
+    def insert_table(self, table_name, **kwargs):
+        #TODO: Handle case where there is an apostrophe
+        columns_values = kwargs.items()
+        columns_phrase = ", ".join([c[0] for c in columns_values])
+        values_phrase = "'" + "', '".join([c[1] for c in columns_values]) + "'"
+        self.sql("insert into temp_{} ({}) values ({})".format(table_name, columns_phrase, values_phrase))()
+
+    def update_table(self, table_name, where={}, **kwargs):
+        set_phrase = ",".join(["{}='{}'".format(c[0], c[1]) for c in kwargs.items()])
+        where_items = where.items()
+        where_phrase = " AND ".join(["where {} = '{}'".format(w[0], w[1]) for w in where_items])
+        self.sql('update {} set {} where {}'.format(table_name, set_phrase, where_phrase))()
+
+    def update_or_insert(self, table_name, where={}, **kwargs):
+        """
+        If info already exists according to where_phrase, update it
+        otherwise, insert it
+        """
+        if where=={}:
+            return False
+        if not self.test_table(table_name, **where):
+            self.insert_table(table_name, where=where)
+        else:
+            self.update_table(table_name, where=where, **kwargs)
+
+    def get_table(self, table_name, **where):
+        where_items = where.items()
+        where_phrase = " AND ".join(["where {} = '{}'".format(w[0], w[1]) for w in where_items])
+        result = self.sql("select * from {} {}".format(table_name, where_phrase))()
+        if result:
+            return result
+        else:
+            return ()
 
     def __del__(self):
         if self.db:
@@ -44,13 +125,8 @@ class DBConnection:
 
 class DragonNetDBConnection(DBConnection):
 
-    def __init__(self):
-        self.on_server = True
-        if self.on_server:
-            super().__init__('moodle', 'ssissqlmoodle', 'moodle')
-        else:
-            print("Reminder, we are not on the server so no sql will work!")
-            self.db = None
+    def __init__(self, verbose=False):
+        super().__init__('moodle', 'ssissqlmoodle', 'moodle', verbose=verbose)
 
     def create_temp_storage(self, table_name, *args):
         if not self.exists_temp_storage(table_name):
@@ -136,10 +212,10 @@ class DragonNetDBConnection(DBConnection):
 
     def get_student_info(self):
         self.verbose and print("Reading in usernames that are already taken")
-        get_users = self.sql('select idnumber, username from ssismdl_user')()
+        get_users = self.sql('select idnumber, username, id from ssismdl_user')()
         user_data = {}
-        for idnumber, username in get_users:
-            user_data[idnumber] = username
+        for idnumber, username, _id in get_users:
+            user_data[idnumber] = (username, _id)
         return user_data
 
     def get_parent_child_associations(self):
@@ -416,6 +492,34 @@ class ServerInfo(DragonNetDBConnection):
                 else:
                     pass # ok
 
+class ProfileUpdater(DragonNetDBConnection):
+
+    def update_profile_fields_for_user(user):
+        """
+        Takes any variables in user that begins with "profile_extra"
+        and adds them to the right database area so that it registers in DragonNet
+        Boolean only, if you need text areas use one of the randome ID things
+        """
+        
+        for key, value in [item for itme in luser.__dict__.items() if item[0].startswith('profile_extra_')]:
+             results = self.get_table('ssismdl_user_profile_field',
+                               shortname = key)
+             if not results:
+                #TODO: Inform admin that you need to create it
+                #TODO? Create it for them???
+                continue
+
+             fieldid = results[0][0]
+
+             if hasattr(user, 'database_id') and user.database_id:
+                 where = {'userid':user.database_id, 'fieldid':fieldid}
+                 self.update_or_insert('ssismdl_user_profile_data',
+                                      where=where,
+                                      userid=user.database_id,
+                                      fieldid=fieldid,
+                                      data='1',
+                                      dataformat='0')
+                
 
 if __name__ == "__main__":
 

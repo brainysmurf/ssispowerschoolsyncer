@@ -230,6 +230,9 @@ and set permissions accordingly.".format(php_src))
             row.build_type_(['2' for c in teacher.courses()])
             output_file.add_row(row)
 
+            # Update profile fields
+            
+
         self.verbose and print("DragonNet 2 enrollment file now available in output folder")
         output_file.output()
 
@@ -360,39 +363,39 @@ and set permissions accordingly.".format(php_src))
 
         # TODO: Email the admin any leftover items
         leftover = self.server_information.dump_temp_storage('to_be_informed', clear=True)
-                
-def build_profiles(self):
+
+    def build_profiles(self):
         """
         Updates user profile fields
         """
-
+        self.verbose and print("Building profiles")
         #TODO: Check for which day of the week it is ... only fun on Mondays.
-        
+
         #if not datetime.datetime.today().strftime('%a').lower() == 'm':
         #    return
 
         html_start = """
-<table style="width: 400px;" border="0" cellpadding="5" cellspacing="5" border="1">
-<tbody>"""
+    <table style="width: 400px;" border="0" cellpadding="5" cellspacing="5" border="1">
+    <tbody>"""
         grade_row = """
-<tr>
-<td>{course_name} ({course_short})</td>
-<td><a href="{url}">View Feedback</a></td>
-</tr>"""
+    <tr>
+    <td>{course_name} ({course_short})</td>
+    <td><a href="{url}">View Feedback</a></td>
+    </tr>"""
         email_row = """
-<tr>
-<td>{teacher_name} ({course_short})</td>
-<td><a href="mailto:{teacher_email}">Email</a></td>
-</tr>"""
+    <tr>
+    <td>{teacher_name} ({course_short})</td>
+    <td><a href="mailto:{teacher_email}">Email</a></td>
+    </tr>"""
 
         html_end = """</tbody>
-</table>"""
-        
-        database = DragonNetDBConnection()
-        
+    </table>"""
+
+        database = DragonNetDBConnection(verbose=self.verbose)
+
         for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
-            
+
             d = {}
 
             try:
@@ -400,27 +403,27 @@ def build_profiles(self):
             except IndexError:
                 # They don't have an account yet?
                 continue
-            
+
             # TODO: Make preferred names and homeroom user_profile fields work
             #database.sql("update xxxx set homeroom = '{}' where id = {}".format(student.homeroom, _id))()
             #database.sql("update xxxx set preferred_name = '{}' where id = {}".format(student.preferred_name, _id))()
 
             grade_rows = [ grade_row.format(**dict(course_name="Forums",
-                                                   course_short="All Classes",
-                                                   url="http://dragonnet.ssis-suzhou.net/mod/forum/user.php?id={}".format(_id))) ]
+                                                       course_short="All Classes",
+                                                       url="http://dragonnet.ssis-suzhou.net/mod/forum/user.php?id={}".format(_id))) ]
 
             email_rows = [
-                email_row.format(**dict(teacher_name="Homeroom Teacher",
-                                      teacher_email=student.username + 'HR@student.ssis-suzhou.net',
-                                      course_short = 'HROOM')),
-                email_row.format(**dict(teacher_name="All your teachers",
-                                      teacher_email=student.username + 'TEACHERS@student.ssis-suzhou.net', course_short='N/A'))
-                                      ]
+                    email_row.format(**dict(teacher_name="Homeroom Teacher",
+                                          teacher_email=student.username + 'HR@student.ssis-suzhou.net',
+                                          course_short = 'HROOM')),
+                    email_row.format(**dict(teacher_name="All your teachers",
+                                          teacher_email=student.username + 'TEACHERS@student.ssis-suzhou.net', course_short='N/A'))
+                                          ]
 
-            
+
 
             if not _id:
-                print("User with idnumber {} could not be found in the database: {}".format(student.idnum, student.username))
+                print("User with idnumber {} could not be found in the database, cannot put in profile: {}".format(student.idnum, student.username))
                 continue
             courses = []
             for course in student.courses():
@@ -428,8 +431,8 @@ def build_profiles(self):
                     continue
                 query = database.sql("select id, fullname from ssismdl_course where shortname = '{}'".format(course))()
                 if not query:
-                    print("Course with shortname {} could not be found in the database".format(course))
-                    continue
+                     print("Course with shortname {} could not be found in the database".format(course))
+                     continue
                 course_id, course_fullname = query[0]
 
                 grade_url = "http://dragonnet.ssis-suzhou.net/course/user.php?mode=grade&id={}&user={}".format(course_id, _id)
@@ -438,45 +441,79 @@ def build_profiles(self):
                 d['url'] = grade_url
                 grade_rows.append( grade_row.format(**d) )
 
-            for teacher_key in self.students.get_teacher_keys():
-                teacher = self.students.get_teacher(teacher_key)
-                if teacher.username in student.get_teacher_names():
-                    for teacher_course in teacher.courses():
-                        if 'HROOM' in teacher_course:
-                            continue
-                        if teacher_course in student.courses():
-                            d['teacher_name'] = teacher.lastfirst.replace("'", '')
-                            d['teacher_email'] = teacher.username + '@ssis-suzhou.net'
-                            d['course_short'] = teacher_course
-                            email_rows.append( email_row.format(**d) )
-                            break
+                for teacher_key in self.students.get_teacher_keys():
+                    teacher = self.students.get_teacher(teacher_key)
+                    if teacher.username in student.get_teacher_names():
+                        for teacher_course in teacher.courses():
+                            if 'HROOM' in teacher_course:
+                                continue
+                            if teacher_course in student.courses():
+                                d['teacher_name'] = teacher.lastfirst.replace("'", '')
+                                d['teacher_email'] = teacher.username + '@ssis-suzhou.net'
+                                d['course_short'] = teacher_course
+                                email_rows.append( email_row.format(**d) )
+                                break
 
-            email_html = html_start
-            for row in email_rows:
-                email_html += row
-            email_html += html_end
+                email_html = html_start
+                for row in email_rows:
+                    email_html += row
+                email_html += html_end
 
-            grade_html = html_start
-            for row in grade_rows:
-                grade_html += row
-            grade_html += html_end
+                grade_html = html_start
+                for row in grade_rows:
+                    grade_html += row
+                grade_html += html_end
 
-            teacher_email_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 2 and userid = {}".format(_id))()
-            if not teacher_email_field_id:
-                database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 2, '{}', 0)".format(_id, email_html))()
-            else:
-                teacher_email_field_id = teacher_email_field_id[0][0]
-                database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(email_html, teacher_email_field_id))()
+                teacher_email_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 2 and userid = {}".format(_id))()
+                if not teacher_email_field_id:
+                    database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 2, '{}', 0)".format(
+                        _id, email_html))()
+                else:
+                    teacher_email_field_id = teacher_email_field_id[0][0]
+                    database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(
+                        email_html, teacher_email_field_id))()
 
-            teacher_grade_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 3 and userid = {}".format(_id))()
-            if not teacher_grade_field_id:
-                database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 3, '{}', 0)".format(_id, grade_html))()
-            else:
-                teacher_grade_field_id = teacher_grade_field_id[0][0]
-                database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(grade_html, teacher_grade_field_id))()
+                teacher_grade_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 3 and userid = {}".format(_id))()
+                if not teacher_grade_field_id:
+                    database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 3, '{}', 0)".format(
+                        _id, grade_html))()
+                else:
+                    teacher_grade_field_id = teacher_grade_field_id[0][0]
+                    database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(
+                        grade_html, teacher_grade_field_id))()
 
-            #print(grade_html)
-            #print()
+            for existing_profile_field, value in student.get_existing_profile_fields():
+                sf = Smartformatter()
+                sf.define(existing_profile_field=existing_profile_field,
+                          userid=student.database_id,
+                          value=value)
+                self.verbose and print(sf("Existing profile field: {existing_profile_field}"))
+                # Just use database directly instead of checking to see if already there
+                # (Below we have to check first)
+                database.sql(sf("update ssismdl_user set {existing_profile_field} = '{value}' where id = {userid}"))()
+                
+            for extra_profile_field, value in student.get_extra_profile_fields():
+                sf = Smartformatter(value=int(value),
+                                    userid=student.database_id,
+                                    extra_profile_field=extra_profile_field)
+                fieldid = database.sql(sf("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
+                if not fieldid:
+                    self.verbose and print(sf("You need to manually add the {extra_profile_field} field!"))
+                    continue
+                fieldid = fieldid[0][0]
+                sf.define(fieldid=fieldid)
+                there_already = database.sql(sf("select data from ssismdl_user_info_data where fieldid = {fieldid} and userid = {userid}"))()
+                if there_already:
+                    if not there_already[0][0] == str(int(value)):
+                        # only call update if it's different
+                        database.sql(sf("update ssismdl_user_info_data set data = {value} where fieldid = {fieldid} and userid = {userid}"))()
+                    else:
+                        self.verbose and print(sf("No change in {extra_profile_field}, so didn't call the database"))
+                else:
+                    database.sql(sf("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({userid}, {fieldid}, {value}, 0)"))()
+
+                #print(grade_html)
+                #print()
             #print(email_html)
 
     def build_email_list(self):
@@ -594,7 +631,6 @@ def build_profiles(self):
                             self.server_information.init_users_and_groups()
                         
                     except ParentNotInGroup:
-                        input()
                         self.verbose and print("Parent is not enrolled in at least one group: {}".format(student.family_id))
                         modify.enrol_parent_into_courses(student)
                         if self.dry_run:

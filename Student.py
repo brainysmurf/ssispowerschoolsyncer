@@ -26,11 +26,18 @@ class Student(Entry):
         self.num = num
         self.family_id = num[:4] + 'P'
         self.grade = grade
+        self.profile_extra_isstudent = True
         self.is_secondary = grade >= 6
+        self.profile_extra_issecstudent = self.is_secondary
         self.is_elementary = grade <= 5
+        self.profile_extra_iselemstudent = self.is_elementary
         self.is_student = True
+        self.profile_extra_isstudent = self.is_student
         self.lastfirst = lastfirst
         self.user_data = user_data
+        self.database_id = user_data.get(self.num)
+        if self.database_id:
+            self.database_id = self.database_id[1]
 
         self.determine_first_and_last()
         #self.determine_preferred_name()  # this is derived from preferred.txt
@@ -38,7 +45,10 @@ class Student(Entry):
         self.nationality = nationality
         self.is_korean = self.nationality == "Korea"
         self.is_chinese = self.nationality in ["China", "Hong Kong", "Taiwan", "Malaysia", "Singapore"]
+        self.profile_extra_iskorean = self.is_korean
+        self.profile_extra_ischinese = self.is_chinese
         self.homeroom = homeroom
+        self.profile_existing_icq = "Homeroom {}".format(self.homeroom)   # This is actually details that go on front page
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
@@ -47,11 +57,26 @@ class Student(Entry):
         self._courses = []
         if self.is_secondary:
             self._cohorts = ['studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
+            self.profile_extra_issecstudent = True
+        if self.grade in range(6, 8):
+            self.profile_extra_ismsstudent = True
+            self.profile_existing_department = 'msstudent'
+        if self.grade in range(9, 12):
+            self.profile_extra_ishsstudent = True
+            self.profile_existing_department = 'hsstudent'
         elif self.is_elementary:
             self._cohorts = ['studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
+            self.profile_extra_iselemstudent = True
+            self.profile_existing_department = 'elemstudent'
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}
+
+    def get_existing_profile_fields(self):
+        return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
+
+    def get_extra_profile_fields(self):
+        return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
 
     def other_defaults(self):
         #TODO: Delete this is_in_preferred later
@@ -108,9 +133,10 @@ class Student(Entry):
         """
         username_already_exists = self.user_data.get(self.num)
         if username_already_exists:
+            username_already_exists = username_already_exists[0]
             self.username = username_already_exists
         else:
-            taken_usernames = [item[1] for item in self.user_data.items()]
+            taken_usernames = [item[1][0] for item in self.user_data.items()]
             first_half = no_whitespace_all_lower(self.first + self.last)[:20]
             second_half = str(get_year_of_graduation(self.grade))
             self.username = first_half + second_half

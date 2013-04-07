@@ -2,9 +2,10 @@ class Smartformatter:
     """
     
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, _verbose=False, **kwargs):
         self.sep = ""
         self._args = None
+        self._verbose = _verbose
         self.define(*args, **kwargs)
 
     def define(self, *args, **kwargs):
@@ -34,4 +35,7 @@ class Smartformatter:
 
     def __call__(self, *args, **kwargs):
         self.define(*args, **kwargs)
-        return str(self)
+        result = str(self)
+        if self._verbose:
+            print(result)
+        return result
