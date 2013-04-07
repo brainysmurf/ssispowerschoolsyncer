@@ -72,7 +72,7 @@ def send_unicode_aware_html_email(fromwho, towho, subject, html, ccwho=[], bccwh
     s.quit()
     
 
-def send_html_email(fromwho, towho, subject, html, ccwho=[], bccwho=[]):
+def send_html_email(fromwho, towho, subject, html, ccwho=[], bccwho=[], domain='localhost'):
     """
     Sends an html-compatible email
     towho can be list or just string
@@ -140,7 +140,7 @@ def send_html_email(fromwho, towho, subject, html, ccwho=[], bccwho=[]):
     regexp = re.compile('[^\x09\x0A\x0D\x20-\x7F]')
     msg_as_string = regexp.sub('', msg.as_string())
     #print(msg_as_string)
-    s = smtplib.SMTP('localhost')
+    s = smtplib.SMTP(domain)
     s.sendmail(sender, tolist, msg_as_string)
     s.quit()
 
