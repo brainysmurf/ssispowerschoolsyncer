@@ -27,11 +27,11 @@ from utils.Email import read_in_templates
 
 from utils.ArgsParser import HoldPassedArugments
 
-def handle_new_student(idnumber, comment, family, student):
+def handle_new_student(idnumber, comment, family, student, server='localhost'):
     for idnumber, comment in results:
         if 'newstudent' == comment:
             self.verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(child))
-            inform_new_student(family, student)
+            inform_new_student(family, student, server)
 
 class DragonNet(DragonNetDBConnection):
     pass
@@ -81,6 +81,12 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         if 'DEFAULTS' in self.config.sections():
             for key in self.config['DEFAULTS']:
                 setattr(self, key, self.config.getboolean('DEFAULTS', key))
+
+        self.email_server = None
+        if self.config.has_section("EMAIL"):
+            self.email_server = self.config['EMAIL'].get('domain')
+        if not self.email_server:
+            self.email_server = 'localhost'
 
         print('------------------------------------------------------')
         print(datetime.datetime.today())
@@ -333,11 +339,11 @@ and set permissions accordingly.".format(php_src))
                 for idnumber, comment in results:
                     if 'newparent' == comment:
                         self.verbose and print("This family is a new family and is being informed of their account:\n{}".format(family))
-                        inform_new_parent(family)
+                        inform_new_parent(family, server=self.email_server)
                     else:
                         if 'not_logged_in_yet' == comment:
                             self.verbose and print("This family has had an account for a period of time and needs to be reminded of their account\n{}".format(family))
-                            reinform_parent(family)
+                            reinform_parent(family, server=self.email_server)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = family.idnumber)
 

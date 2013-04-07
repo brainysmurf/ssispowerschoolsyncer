@@ -41,7 +41,6 @@ class DBConnection:
         self.last_call = None
         self._database = database
         self.verbose = verbose
-        input(self.verbose)
         self.db = postgresql.open('pq://{user}:{password}@localhost/{database}'.format(**d))
 
     def sql(self, *args, **kwargs):
@@ -205,7 +204,7 @@ class DragonNetDBConnection(DBConnection):
     def user_is_new(self, idnumber):
         result = self.sql( "select lastlogin, lastaccess from ssismdl_user where idnumber = '{}'".format(idnumber) )()
         if not result:
-            input("Didn't find anything in the database: {}".format(idnumber))
+            self.verbose and print("Didn't find anything in the database: {}".format(idnumber))
             return False
         lastlogin, lastaccess = result[0]
         return int(lastlogin) == 0 and int(lastaccess) == 0
@@ -358,7 +357,7 @@ class ServerInfo(DragonNetDBConnection):
             f = self.families.get(idnumber)
             if f == None:
                 #TODO: Implement as some email feature
-                input("Something wrong with parent account")
+                self.verbose and print("Something wrong with parent account:\n{}".format(family))
                 continue
             f.append(child)
 
