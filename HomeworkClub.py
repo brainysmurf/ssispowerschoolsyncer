@@ -302,13 +302,13 @@ class Homework_Club(DragonNetDBConnection):
         if self.agents:
             self.verbose and print("Sending {} to {}".format(self.name, self.agents))
             self.format_for_email()
-            send_html_email(self.sender, self.agents, self.get_subject(), self.get_html())
+            send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(), domain='student.ssis-suzhou.net')
         if self.agent_map:
             for agent in self.agent_map.keys():
                 tags = self.agent_map[agent]
                 self.format_for_email(tags)
                 self.verbose and print("Sending {} to {}".format(self.name, agent))
-                send_html_email(self.sender, agent, self.get_subject(), self.get_html())
+                send_html_email(self.sender, agent, self.get_subject(), self.get_html(), domain='student.ssis-suzhou.net')
 
     def post_to_wordpress(self, blog, hour):
         """
