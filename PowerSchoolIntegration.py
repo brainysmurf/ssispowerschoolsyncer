@@ -91,8 +91,8 @@ class PowerSchoolIntegrator(HoldPassedArugments):
                                              moodle_accounts=self.config.has_section('MOODLE'))
 
         php_src = 'phpmoodle/phpclimoodle.php'
-        mv_to_path = self.config['MOODLE']['path_to_cli']
-        if os.path.exists(php_src) and os.path.exists(mv_to_path):
+        mv_to_path = self.config['MOODLE'].get('path_to_cli')
+        if os.path.exists(php_src) and mv_to_path and os.path.exists(mv_to_path):
             import shutil
             mv_to_full_path = mv_to_path + '/phpclimoodle.php'
             try:
@@ -105,8 +105,7 @@ and set permissions accordingly.".format(php_src))
             except:  #TODO: Use the right exceptions
                 print("Could not copy php file, NOT exiting")
         else:
-            print("Could NOT move php file required for moodle syncing... are your settings correct and does the user have permissions to write to that directory? ...exiting")
-            exit()
+            print("Warning, did NOT move php file required for moodle syncing... are your settings correct and does the user have permissions?")
 
         self.students = Students(self.arguments,
                                  user_data=self.server_information.get_student_info(),
