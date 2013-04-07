@@ -836,15 +836,13 @@ and set permissions accordingly.".format(php_src))
 
 
     def build_automagic_emails(self):
-        try:
-            path = '/home/lcssisadmin'
-            self.on_server = os.path.exists(path)
-            path = '/etc/postfix/aliases'
-        except OSError:
-            self.on_server = False
-            
-        if not self.on_server:
+        path = None
+        if self.config.has_section("EMAIL"):
+            path = self.config("EMAIL").get("aliases_path")            
+        if not path:
             path = '../postfix'
+
+        #TODO: Use smartformatter for this crap!
         d = {'path':path}
         d['ext'] = '.txt'
 
@@ -1101,11 +1099,16 @@ and set permissions accordingly.".format(php_src))
                 f.write( "\n".join(depart_dict[department]) )
 
         # run newaliases command on exit if we're on the server
-        if self.on_server:
+        newaliases_path = False
+        if self.config.has_section('EMAIL'):
+            newaliases_path = self.config['EMAIL'].get('newaliases_path')
+        if newaliases_path:
             self.verbose and print("Running newaliases")
-            p = subprocess.Popen('/usr/bin/newaliases', shell=True)
+            p = subprocess.Popen(newaliases_path, shell=True)
             print(p.communicate())
-
+        else:
+            print("warning: newaliases not run!")
+        #TODO: If received error, should email admin
 
 
     def build_student_list(self):
