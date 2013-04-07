@@ -55,7 +55,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
                        'jihyungsuh13@student.ssis-suzhou.net',
                        'danbiku14@student.ssis-suzhou.net',
                        'myungjinlee14@student.ssis-suzhou.net']
-
+        #self.agents = 'adammorris@ssis-suzhou.net'
         self.agent_map = {}
 
         self.search_date = "next day"
@@ -81,7 +81,8 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
                 print("NOT sending email... but this is what would have been sent:")
                 self.print_email(self.agents)
             else:
-                send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(first_p_block=message_to_staff))
+                send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(first_p_block=message_to_staff),
+                                domain='student.ssis-suzhou.net')
         if self.agent_map:
             raise NotImplemented
 

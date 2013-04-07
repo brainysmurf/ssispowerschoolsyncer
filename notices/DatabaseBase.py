@@ -330,7 +330,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
             if self.no_emails:
                 self.print_email(self.agents)
             else:
-                send_html_email(self.sender, self.agents, self.get_subject(), self.get_html())
+                send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(),
+                                domain='student.ssis-suzhou.net')
         if self.agent_map:
             for agent in self.agent_map.keys():
                 sections = self.agent_map[agent]
