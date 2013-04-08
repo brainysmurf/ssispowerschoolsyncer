@@ -13,7 +13,7 @@ SECONDARYSCHOOLID = 112
 
 class Teacher(Entry):
 
-    def __init__(self, lastfirst, email, title, schoolid):
+    def __init__(self, lastfirst, email, title, schoolid, **kwargs):
         self.lastfirst = lastfirst
         self.email = email if email.strip() else None
         self.last, self.first = self.lastfirst.split(',')

@@ -9,7 +9,7 @@ from Entry import Entry
 
 class Course(Entry):
 
-    def __init__(self, course_number, course_name, moodle_short, moodle_long):
+    def __init__(self, course_number, course_name, moodle_short, moodle_long, **kwargs):
         self.course_number = course_number
         self.course_name = course_name
         self.moodle_short = moodle_short
