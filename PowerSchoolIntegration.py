@@ -91,9 +91,11 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         print('------------------------------------------------------')
         print(datetime.datetime.today())
 
+        email_account_check = self.config.has_section('EMAIL') and self.config['EMAIL'].get('account_check')
+        moodle_account_check = self.config.has_section('MOODLE')
         self.server_information = ServerInfo(verbose=self.verbose,
                                              dry_run=self.dry_run,
-                                             email_accounts=self.config.has_section('EMAIL'),
+                                             email_accounts=email_account_check,
                                              moodle_accounts=self.config.has_section('MOODLE'))
 
         php_src = 'phpmoodle/phpclimoodle.php'
@@ -517,10 +519,6 @@ and set permissions accordingly.".format(php_src))
                 else:
                     database.sql(sf("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({userid}, {fieldid}, {value}, 0)"))()
 
-                #print(grade_html)
-                #print()
-            #print(email_html)
-
     def build_email_list(self):
         with open(k_path_to_output + '/' + 'student_emails.txt', 'w') as f:
             for student_key in self.students.get_student_keys(secondary=True):
@@ -706,8 +704,12 @@ and set permissions accordingly.".format(php_src))
                     if times_through > 10:
                         print("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
-            
-            
+
+            if student.num.startswith('4409'):
+                output = input if self.verbose else print
+                output(student)
+
+
         output_file.output()
 
         # THIS WHOLE BLOCK ISN'T REALLY NEEDED ANYMORE

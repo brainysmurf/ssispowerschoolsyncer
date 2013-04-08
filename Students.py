@@ -19,7 +19,7 @@ import datetime
 from utils.Utilities import convert_short_long, determine_password
 from utils.FilesFolders import clear_folder
 from utils.Utilities import course_reference
-from Constants import k_homerooms, k_path_to_databases, k_path_to_output, k_path_to_errors, k_path_to_powerschool, k_path_to_uploads
+from Constants import k_homerooms, k_path_to_databases, k_path_to_output, k_path_to_errors, k_path_to_uploads
 from Errors import DocumentErrors
 
 import re
@@ -51,7 +51,9 @@ class Students:
 
     exclude_these_teachers_manually = ['Sections, Dead', 'User, Drews Test']
 
-    def __init__(self, settings, user_data = {}, verbose=True):
+    def __init__(self, settings, user_data = {},
+                 path_to_powerschool='../powerschool',
+                 verbose=True):
         """
         Does the work of reading in basic information from file, creates native Python structures
         StudentNumber\tHomeroom\tLastFirst\tguardianemails
@@ -59,7 +61,8 @@ class Students:
         self.settings = settings
         self.verbose = self.settings.verbose
         self.errors = DocumentErrors(k_path_to_errors)
-        self.student_info_file = File(k_path_to_powerschool + '/' + 'ssis_studentinfodumpall')
+        self.path_to_powerschool = path_to_powerschool
+        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfodumpall')
         self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student)
         self.course_info_controller = Controller(Course)
@@ -219,7 +222,7 @@ class Students:
 
     def read_in_courses(self):
         self.verbose and print("Reading in raw course information in secondary")
-        courses = File(k_path_to_powerschool + '/' + 'ssis_courseinfosec')
+        courses = File(self.path_to_powerschool + '/' + 'ssis_courseinfosec')
         raw = courses.content()
         for line in raw:
             course_number, full_name = line.split('\t')
@@ -234,7 +237,7 @@ class Students:
 
     def read_in_allocations(self):
         self.verbose and print("Setting up allocation table by reading in raw teacher allocations for secondary")
-        allocations = File(k_path_to_powerschool + '/' + 'ssis_teacherallocationsec')
+        allocations = File(self.path_to_powerschool + '/' + 'ssis_teacherallocationsec')
         raw = allocations.content()
         self.allocation_table = {}
         for line in raw:
@@ -266,7 +269,7 @@ class Students:
 
     def read_in_teachers(self):
         self.verbose and print("Reading in teacher info for both schools")
-        teachers = File(k_path_to_powerschool + '/' + 'ssis_teacherinfodumpall')
+        teachers = File(self.path_to_powerschool + '/' + 'ssis_teacherinfodumpall')
         raw = teachers.content()
         for line in raw:
             try:
@@ -296,7 +299,7 @@ class Students:
 
     def read_in_schedule(self):
         self.verbose and print("Reading in schedule information from secondary")
-        schedule = File(k_path_to_powerschool + '/' + 'ssis_studentscheduledumpsecnew')
+        schedule = File(self.path_to_powerschool + '/' + 'ssis_studentscheduledumpsecnew')
         raw = schedule.content()
         self.schedule = {}
         for line in raw:

@@ -463,8 +463,10 @@ class ServerInfo(DragonNetDBConnection):
                     
 
             if self.email_accounts and not os.path.exists('/home/{}'.format(username)):  #TODO: use path provided in settings
-                self.verbose and print("Raising NoEmailAddress")
-                raise NoEmailAddress
+                input(self.email_accounts)
+                if self.email_accounts: 
+                    self.verbose and print("Raising NoEmailAddress")
+                    raise NoEmailAddress
 
         familyid = student.family_id
         if not familyid in list(self.families.keys()):
