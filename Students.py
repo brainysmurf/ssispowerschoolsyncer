@@ -70,10 +70,10 @@ class Students:
         self.student_info_controller = Controller(Student,
                                                   path_to_errors=path_to_errors,
                                                   path_to_output=path_to_output)
-        self.course_info_controller = Controller(Course, path_to_errors=path_to_errors)
-        self.teacher_info_controller = Controller(Teacher, path_to_errors=path_to_errors)
-        self.schedule_info_controller = Controller(Schedule, path_to_errors=path_to_errors)
-        self.allocation_info_controller = Controller(Allocation, path_to_errors=path_to_errors)
+        self.course_info_controller = Controller(Course)
+        self.teacher_info_controller = Controller(Teacher)
+        self.schedule_info_controller = Controller(Schedule)
+        self.allocation_info_controller = Controller(Allocation)
         self.user_data = user_data
         self.read_in()
         self._homerooms = None
