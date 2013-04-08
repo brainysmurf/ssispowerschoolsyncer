@@ -115,7 +115,10 @@ and set permissions accordingly.".format(php_src))
         else:
             print("Warning, did NOT move php file required for moodle syncing... are your settings correct and does the user have permissions?")
 
+        auto_send_dump_path = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section("POWERSCHOOL") else None
+
         self.students = Students(self.arguments,
+                                 path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else '../powerschool',
                                  user_data=self.server_information.get_student_info(),
                                  verbose=self.verbose)
 
