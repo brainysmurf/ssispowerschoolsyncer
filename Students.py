@@ -186,7 +186,7 @@ class Students:
             self.read_in_schedule()
         if self.settings.teachers:
             self.read_in_teachers()
-            self.read_in_allocations()
+            #self.read_in_allocations()
 
     def read_in_preferred(self):
         self.preferred_temp = {}
