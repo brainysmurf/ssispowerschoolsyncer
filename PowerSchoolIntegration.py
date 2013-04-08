@@ -17,7 +17,7 @@ from ModifyMoodleUsers import StudentModifier
 
 from utils.DB import DragonNetDBConnection
 
-from Constants import k_path_to_output, k_path_to_powerschool
+from Constants import k_path_to_output
 
 import subprocess
 
@@ -153,7 +153,7 @@ and set permissions accordingly.".format(php_src))
         of those that actually have enrollments rather than through powerschool file
         ############
         """
-        source = File(k_path_to_powerschool + '/' + 'ssis_courseinfosec')
+        source = File(self.path_to_powerschool + '/' + 'ssis_courseinfosec')
         raw = source.content()
         courses = {}
         summaries = {}
