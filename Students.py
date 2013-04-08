@@ -19,7 +19,6 @@ import datetime
 from utils.Utilities import convert_short_long, determine_password
 from utils.FilesFolders import clear_folder
 from utils.Utilities import course_reference
-from Constants import k_homerooms, k_path_to_databases, k_path_to_output, k_path_to_errors, k_path_to_uploads
 from Errors import DocumentErrors
 
 import re
@@ -54,6 +53,7 @@ class Students:
     def __init__(self, settings, user_data = {},
                  path_to_powerschool='../powerschool',
                  path_to_errors = '../errors',
+                 path_to_output = '../output',
                  verbose=True):
         """
         Does the work of reading in basic information from file, creates native Python structures
@@ -61,15 +61,19 @@ class Students:
         """
         self.settings = settings
         self.verbose = self.settings.verbose
-        self.errors = DocumentErrors(k_path_to_errors)
+        self.errors = DocumentErrors(path_to_errors)
         self.path_to_powerschool = path_to_powerschool
+        self.path_to_errors = path_to_errors
+        self.path_to_output = path_to_output
         self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfodumpall')
         self.raw = self.student_info_file.content()
-        self.student_info_controller = Controller(Student, path_to_errors)
-        self.course_info_controller = Controller(Course, path_to_errors)
-        self.teacher_info_controller = Controller(Teacher, path_to_errors)
-        self.schedule_info_controller = Controller(Schedule, path_to_errors)
-        self.allocation_info_controller = Controller(Allocation, path_to_errors)
+        self.student_info_controller = Controller(Student,
+                                                  path_to_errors=path_to_errors,
+                                                  path_to_output=path_to_output)
+        self.course_info_controller = Controller(Course, path_to_errors=path_to_errors)
+        self.teacher_info_controller = Controller(Teacher, path_to_errors=path_to_errors)
+        self.schedule_info_controller = Controller(Schedule, path_to_errors=path_to_errors)
+        self.allocation_info_controller = Controller(Allocation, path_to_errors=path_to_errors)
         self.user_data = user_data
         self.read_in()
         self._homerooms = None

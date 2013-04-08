@@ -6,7 +6,6 @@ from utils.Dates import get_year_of_graduation
 from utils.Utilities import no_whitespace_all_lower, determine_password
 from Entry import Entry
 from Errors import DocumentErrors
-from Constants import k_path_to_uploads, k_path_to_errors
 import os
 
 class Object:
@@ -14,7 +13,7 @@ class Object:
     Very general object, kwarg arguments are just set to itself, useful for simple data manipulation
     And makes code readable
     """
-    def __init__(self, **kwargs):
+    def __init__(self, *args,**kwargs):
         if not kwargs:
             return
         for key in kwargs.keys():
@@ -22,7 +21,12 @@ class Object:
 
 class Student(Entry):
 
-    def __init__(self, num, grade, homeroom, lastfirst, parent_emails, entry_date, nationality, user_data = {}):
+    def __init__(self, num, grade, homeroom, lastfirst, parent_emails, entry_date, nationality,
+                 user_data = {},
+                 path_to_errors='../errors',
+                 path_to_output='../output'):
+        self.path_to_errors = path_to_errors
+        self.path_to_output = path_to_output
         self.num = num
         self.family_id = num[:4] + 'P'
         self.grade = grade
@@ -181,7 +185,7 @@ class Student(Entry):
         if group.endswith('1112'):
             newgroup = group[:-4]
             newgroup += str(self.grade)
-            with open(k_path_to_errors + '/' + 'deletethesegroups.txt', 'a') as f:
+            with open(self.path_to_errors + '/' + 'deletethesegroups.txt', 'a') as f:
                 f.write("You need to delete group {}.\n".format(group))
             group = newgroup
         
@@ -236,7 +240,9 @@ class Student(Entry):
         return True
 
     def database_new(self, student):
-        new_students = k_path_to_uploads + '/' + 'added_students.txt'
+        #TODO: Depreciate
+        pass
+        new_students = self.path_to_uploads + '/' + 'added_students.txt'
         if not os.path.exists(new_students):
             pass
         with open(new_students, 'a') as f:
@@ -254,14 +260,18 @@ class Student(Entry):
         pass
         
     def change_lastfirst(self, prev):
-        last_first = k_path_to_uploads + '/' + 'changedlastfirst.txt'
+        #TODO: Depreciate
+        pass
+        last_first = self.path_to_uploads + '/' + 'changedlastfirst.txt'
         if not os.path.exists(last_first):
             pass
         with open(last_first, 'a') as f:
             f.write("Changed name from {} to {}\n".format(prev.lastfirst, self.lastfirst))
 
     def change_courses(self, prev):
-        changed_courses = k_path_to_uploads + '/' + 'delete_user_from_course.txt'
+        #TODO: Depreciate
+        pass
+        changed_courses = self.path_to_uploads + '/' + 'delete_user_from_course.txt'
         prev_courses = prev.courses()
         for course in self.courses():
             if not course in prev_courses:
@@ -275,7 +285,9 @@ class Student(Entry):
         
 
     def change_username(self, prev):
-        changed_name = k_path_to_uploads + '/' + 'changed_names.txt'
+        #TODO: Depreciate
+        pass
+        changed_name = self.path_to_uploads + '/' + 'changed_names.txt'
         if not os.path.exists(changed_name):
             with open(changed_name, 'w') as f:
                 f.write('username,firstname,lastname,oldusername\n')

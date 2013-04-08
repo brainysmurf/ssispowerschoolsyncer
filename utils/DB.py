@@ -1,7 +1,7 @@
 try:
     import postgresql
-except ImportError:
-    pass
+except:
+    pass # Allow things to break later
 import os
 
 class StudentChangedName(Exception):

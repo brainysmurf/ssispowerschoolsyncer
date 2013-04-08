@@ -86,8 +86,6 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         if not self.email_server:
             self.email_server = 'localhost'
 
-        self.path_to_output 
-
         print('------------------------------------------------------')
         print(datetime.datetime.today())
 
@@ -99,7 +97,7 @@ class PowerSchoolIntegrator(HoldPassedArugments):
                                              moodle_accounts=self.config.has_section('MOODLE'))
 
         php_src = 'phpmoodle/phpclimoodle.php'
-        mv_to_path = self.config['MOODLE'].get('path_to_cli')
+        mv_to_path = self.config['MOODLE'].get('path_to_cli') if self.config.has_section("MOODLE") else ""
         if os.path.exists(php_src) and mv_to_path and os.path.exists(mv_to_path):
             import shutil
             mv_to_full_path = mv_to_path + '/phpclimoodle.php'

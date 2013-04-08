@@ -8,7 +8,6 @@ import os
 
 class NoSuchStudent(BasicException): pass
 class CannotPassMeNone(BasicException): pass
-from Constants import k_path_to_errors, k_path_to_uploads
 from utils.FilesFolders import clear_folder
 from Errors import DocumentErrors
 
@@ -17,7 +16,11 @@ class Controller():
     A generic controller class for a dictionary of dictionary of objects
     """
 
-    def __init__(self, klass, path_to_errors='../errors'):
+    def __init__(self, klass,
+                 path_to_errors='../errors',
+                 path_to_output='../output'):
+        self.path_to_errors = path_to_errors
+        self.path_to_output = path_to_output
         self._db = {}
         self.klass = klass
         self.errors = DocumentErrors(path_to_errors)
@@ -44,7 +47,10 @@ class Controller():
 
     def add(self, *args, **kwargs):
         key = str(args[0])
-        self._db[key] = self.klass(*args, **kwargs)
+        self._db[key] = self.klass(*args,
+                                   path_to_errors=self.path_to_errors,
+                                   path_to_output=self.path_to_output,
+                                   **kwargs)
         return self._db[key]
 
     def update(self, id, key, value):
