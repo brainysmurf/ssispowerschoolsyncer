@@ -17,10 +17,10 @@ class Controller():
     A generic controller class for a dictionary of dictionary of objects
     """
 
-    def __init__(self, klass):
+    def __init__(self, klass, path_to_errors='../errors'):
         self._db = {}
         self.klass = klass
-        self.errors = DocumentErrors(k_path_to_errors)
+        self.errors = DocumentErrors(path_to_errors)
 
     def document_error(self, kind, content):
         self.errors.document_errors(kind, content)

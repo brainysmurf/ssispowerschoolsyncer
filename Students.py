@@ -53,6 +53,7 @@ class Students:
 
     def __init__(self, settings, user_data = {},
                  path_to_powerschool='../powerschool',
+                 path_to_errors = '../errors',
                  verbose=True):
         """
         Does the work of reading in basic information from file, creates native Python structures
@@ -64,11 +65,11 @@ class Students:
         self.path_to_powerschool = path_to_powerschool
         self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfodumpall')
         self.raw = self.student_info_file.content()
-        self.student_info_controller = Controller(Student)
-        self.course_info_controller = Controller(Course)
-        self.teacher_info_controller = Controller(Teacher)
-        self.schedule_info_controller = Controller(Schedule)
-        self.allocation_info_controller = Controller(Allocation)
+        self.student_info_controller = Controller(Student, path_to_errors)
+        self.course_info_controller = Controller(Course, path_to_errors)
+        self.teacher_info_controller = Controller(Teacher, path_to_errors)
+        self.schedule_info_controller = Controller(Schedule, path_to_errors)
+        self.allocation_info_controller = Controller(Allocation, path_to_errors)
         self.user_data = user_data
         self.read_in()
         self._homerooms = None

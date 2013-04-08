@@ -117,8 +117,10 @@ and set permissions accordingly.".format(php_src))
 
         self.path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else '../powerschool'
         self.path_to_output = self.config['FILES'].get('path_to_output') if self.config.has_section('OUTPUT') else '../output'
+        self.path_to_errors = self.config['FILES'].get('path_to_errors') if self.config.has_section('OUTPUT') else '../errors'
         self.students = Students(self.arguments,
                                  path_to_powerschool=self.path_to_powerschool,
+                                 path_to_errors=self.path_to_errors,
                                  user_data=self.server_information.get_student_info(),
                                  verbose=self.verbose)
 
