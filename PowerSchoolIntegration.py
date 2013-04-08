@@ -17,8 +17,6 @@ from ModifyMoodleUsers import StudentModifier
 
 from utils.DB import DragonNetDBConnection
 
-from Constants import k_path_to_output
-
 import subprocess
 
 from utils.PHPMoodleLink import CallPHP
@@ -88,6 +86,8 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         if not self.email_server:
             self.email_server = 'localhost'
 
+        self.path_to_output 
+
         print('------------------------------------------------------')
         print(datetime.datetime.today())
 
@@ -115,10 +115,10 @@ and set permissions accordingly.".format(php_src))
         else:
             print("Warning, did NOT move php file required for moodle syncing... are your settings correct and does the user have permissions?")
 
-        auto_send_dump_path = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section("POWERSCHOOL") else None
-
+        self.path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else '../powerschool'
+        self.path_to_output = self.config['FILES'].get('path_to_output') if self.config.has_section('OUTPUT') else '../output'
         self.students = Students(self.arguments,
-                                 path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else '../powerschool',
+                                 path_to_powerschool=self.path_to_powerschool,
                                  user_data=self.server_information.get_student_info(),
                                  verbose=self.verbose)
 
@@ -161,7 +161,7 @@ and set permissions accordingly.".format(php_src))
         courses = {}
         summaries = {}
         self.verbose and print("Create the moodle_courses file and put it in output folder")
-        with open(k_path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
+        with open(self.path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
             f.write('fullname,shortname,category,summary,groupmode\n')
             self.verbose and print("Go through the file with course information, set up summaries and other info")
             for line in raw:
@@ -186,7 +186,7 @@ and set permissions accordingly.".format(php_src))
 
     def build_teachers(self):
         self.verbose and print("Building teachers")
-        output_file = MoodleCSVFile(k_path_to_output + '/' + 'teachers_moodle_file.txt')
+        output_file = MoodleCSVFile(self.path_to_output + '/' + 'teachers_moodle_file.txt')
         output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'maildigest', 'course_', 'cohort_', 'type_'])
 
         # First do heads of department
@@ -252,7 +252,7 @@ and set permissions accordingly.".format(php_src))
         """
         database = DragonNetDBConnection()
 
-        output_file = MoodleCSVFile(k_path_to_output + '/' + 'moodle_parents.txt')
+        output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_parents.txt')
         output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
 
         for student_key in self.students.get_student_keys():
@@ -291,14 +291,14 @@ and set permissions accordingly.".format(php_src))
 
 
     def build_opening_table(self):
-        open(k_path_to_output + '/' + 'table.txt', 'w').close()
+        open(self.path_to_output + '/' + 'table.txt', 'w').close()
         for course_key in self.students.get_course_keys():
             course = self.students.get_course(course_key)
             teachers = course.teachers()
             table = """<table border="1" cellpadding="10" cellspacing="10" align="center" style="width: 300px;"><caption>Teacher Contact Information</caption>
     <tbody>{inside}</tbody></table>"""
             inside = """<tr><td>{username}@ssis-suzhou.net</td></tr>"""
-            with open(k_path_to_output + "/" + "table.txt", 'a') as f:
+            with open(self.path_to_output + "/" + "table.txt", 'a') as f:
                 f.write(course.moodle_short + '\n')
                 body = ""
                 for teacher in teachers:
@@ -311,7 +311,7 @@ and set permissions accordingly.".format(php_src))
 
     def build_student_courses(self):
         self.verbose and print("Now build the student_courses file in the output folder")
-        with open(k_path_to_output + '/' + 'student_courses', 'w') as f:
+        with open(self.path_to_output + '/' + 'student_courses', 'w') as f:
             for student_key in self.students.get_student_keys():
                 student = self.students.get_student(student_key)
                 self.verbose and print("Student course info for {}".format(student))
@@ -523,7 +523,7 @@ and set permissions accordingly.".format(php_src))
                     database.sql(sf("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({userid}, {fieldid}, {value}, 0)"))()
 
     def build_email_list(self):
-        with open(k_path_to_output + '/' + 'student_emails.txt', 'w') as f:
+        with open(self.path_to_output + '/' + 'student_emails.txt', 'w') as f:
             for student_key in self.students.get_student_keys(secondary=True):
                 student = self.students.get_student(student_key)
                 if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
@@ -541,7 +541,7 @@ and set permissions accordingly.".format(php_src))
                                  email_accounts=self.config.has_section('EMAIL'),
                                  moodle_accounts=self.config.has_section('MOODLE'))
 
-        output_file = MoodleCSVFile(k_path_to_output + '/' + 'moodle_users.txt')
+        output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_users.txt')
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
         verify and print("Verifying...")
 
@@ -712,51 +712,11 @@ and set permissions accordingly.".format(php_src))
                 output = input if self.verbose else print
                 output(student)
 
-
         output_file.output()
-
-        # THIS WHOLE BLOCK ISN'T REALLY NEEDED ANYMORE
-        #with open(k_path_to_output + '/' + 'email_users.txt', 'w') as f:
-        #    for student_key in self.students.get_student_keys():
-        #        student = self.students.get_student(student_key)
-        #        if student.homeroom in self.students.get_secondary_homerooms():
-        #            d = student.__dict__.copy()
-        #            d['sep'] = ':'
-        #            d['newline'] = '\n'
-        #            d['tab'] = '\t'
-        #            d['password'] = 'changeme'
-        #            f.write("{preferred_name}{newline}".format(**d))
-        #            f.write("{username}{sep}{password}{sep}{sep}{sep}{num}{sep}/home/{username}{sep}/bin/bash{newline}".format(**d))
-
-        #clear_folder(k_path_to_output + '/' + 'homerooms')
-        #for student_key in self.students.get_student_keys():
-        #    student = self.students.get_student(student_key)
-        #    if student.homeroom in self.students.get_secondary_homerooms():
-        #            with open(k_path_to_output + '/' + 'homerooms/homeroom{}.txt'.format(student.homeroom), 'a') as f:
-        #                d = student.__dict__.copy()
-        #                d['sep'] = ':'
-        #                d['newline'] = '\n'
-        #                d['tab'] = '\t'
-        #                d['message'] = "These are your credentials for ALL your DragonNet accounts and email. You are expected to use these accounts responsibly. DO NOT SHARE."
-        #                f.write("{username}{newline}".format(**d))
-
-        #clear_folder(k_path_to_output + '/' + 'parents')
-        #for student_key in self.students.get_student_keys():
-        #    student = self.students.get_student(student_key)
-        #    if student.homeroom in self.students.get_secondary_homerooms():
-        #            with open(k_path_to_output + '/' + 'parents/homeroom{}.txt'.format(student.homeroom), 'a') as f:
-        #                d = student.__dict__.copy()
-        #                d['sep'] = ':'
-        #                d['newline'] = '\n'
-        #                d['tab'] = '\t'
-        #                d['parent_emails'] = '\n'.join([s for s in student.parent_emails if s])
-        #                d['message'] = "These are your credentials for ALL your DragonNet accounts and email. You are expected to use these accounts responsibly. DO NOT SHARE."
-        #                f.write("{parent_emails}{newline}".format(**d))
-
 
     def build_emails_for_powerschool(self):
 
-        with open(k_path_to_output + '/' + 'powerschool_email_output.txt', 'w') as output:
+        with open(self.path_to_output + '/' + 'powerschool_email_output.txt', 'w') as output:
             output.write('Student_Number\tLastFirst\tLTIS_AS_email\n')
             for student_key in self.students.student_info_controller.keys():
                 student = self.students.student_info_controller.get(student_key)
@@ -771,7 +731,7 @@ and set permissions accordingly.".format(php_src))
             course = self.students.get_course(course_key)
             the_courses.append(course.moodle_short)
         the_courses.sort()
-        with open(k_path_to_output + '/' + 'list_of_courses.txt', 'w') as f:
+        with open(self.path_to_output + '/' + 'list_of_courses.txt', 'w') as f:
             [f.write("{}\n".format(c)) for c in the_courses]
 
     def create_simple_accounts(self):
@@ -779,7 +739,7 @@ and set permissions accordingly.".format(php_src))
 
         l = ["Bjoerkgaard, Maria", "Fowles, Rewa Margaret", "Liu, Wei-Chi", "Mo, Akane", "Paavola, Ira Aurora", "Roem, Yasmin Andinasari", "Yang, Szu-Kai", "Zheng, Ting-Yu"]
         courses = "TEDESSH1112"
-        with open(k_path_to_output + '/' + 'simple_users.txt', 'w') as f:
+        with open(self.path_to_output + '/' + 'simple_users.txt', 'w') as f:
             f.write("username,firstname,lastname,password,email,course1\n")
             for student in l:
                 last, first = student.split(', ')
@@ -796,9 +756,9 @@ and set permissions accordingly.".format(php_src))
                if not group in list_of_groups:
                    list_of_groups.append(group)
 
-       students_where = k_path_to_output + '/' + 'studentsbyclasses'
+       students_where = self.path_to_output + '/' + 'studentsbyclasses'
        clear_folder(students_where)
-       parents_where = k_path_to_output + '/' + 'parentsbyclasses'
+       parents_where = self.path_to_output + '/' + 'parentsbyclasses'
        clear_folder(parents_where)
        for group in list_of_groups:
            teacher = re.sub(r'[^a-z]', '', group)
@@ -1149,10 +1109,10 @@ and set permissions accordingly.".format(php_src))
         result.sort()
         result2.sort(key=lambda x:x[0])
         indexes.sort()
-        with open(k_path_to_output + '/' + 'student_list_sorted_by_first.txt', 'w') as _file:
+        with open(self.path_to_output + '/' + 'student_list_sorted_by_first.txt', 'w') as _file:
             _file.write("\n".join(result))
 
-        with open(k_path_to_output + '/' + 'lookup/student_list_for_lookup.txt', 'w') as _file:
+        with open(self.path_to_output + '/' + 'lookup/student_list_for_lookup.txt', 'w') as _file:
             _file.write('Here are some shortcuts to the areas:<br/>')
             for index in indexes:
                 _file.write('<a href="#{}">{}</a>, '.format(index, index))
