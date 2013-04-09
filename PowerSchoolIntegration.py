@@ -25,10 +25,10 @@ from utils.Email import read_in_templates
 
 from utils.ArgsParser import HoldPassedArugments
 
-def handle_new_student(results, family, student, server='localhost'):
+def handle_new_student(results, family, student, server='localhost', verbose=False):
     for idnumber, comment in results:
         if 'newstudent' == comment:
-            self.verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(child))
+            verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(child))
             inform_new_student(family, student, server)
 
 class DragonNet(DragonNetDBConnection):
@@ -356,7 +356,7 @@ and set permissions accordingly.".format(php_src))
                 results = self.server_information.get_temp_storage('to_be_informed',
                                                                    idnumber = child.num)
                 if results:
-                    handle_new_student(results, family, student)
+                    handle_new_student(results, family, student, verbose=self.verbose)
                     self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = child.num)
 
@@ -367,7 +367,7 @@ and set permissions accordingly.".format(php_src))
             results = self.server_information.get_temp_storage('to_be_informed',
                                                                idnumber = student.num)
             if results:
-                handle_new_student(results, family, student)
+                handle_new_student(results, family, student, verbose=self.verbose)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = student.num)
 
