@@ -356,7 +356,7 @@ and set permissions accordingly.".format(php_src))
                 results = self.server_information.get_temp_storage('to_be_informed',
                                                                    idnumber = child.num)
                 if results:
-                    handle_new_student(results, comment, family, student)
+                    handle_new_student(results, family, student)
                     self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = child.num)
 
@@ -367,7 +367,7 @@ and set permissions accordingly.".format(php_src))
             results = self.server_information.get_temp_storage('to_be_informed',
                                                                idnumber = student.num)
             if results:
-                handle_new_student(results, comment, family, student)
+                handle_new_student(results, family, student)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = student.num)
 
