@@ -2,7 +2,7 @@ from utils.PHPMoodleLink import CallPHP
 from utils.Formatter import Smartformatter
 from utils.PythonMail import send_html_email
 
-def test(id, student, extra, role):
+def test(id, student, extra):
       sf = Smartformatter()
       if isinstance(student, str):
             print(student, extra)
