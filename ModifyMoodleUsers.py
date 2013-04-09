@@ -2,7 +2,7 @@ from utils.PHPMoodleLink import CallPHP
 from utils.Formatter import Smartformatter
 from utils.PythonMail import send_html_email
 
-def test(id, student, extra):
+def test(id, student, extra, role):
       sf = Smartformatter()
       if isinstance(student, str):
             print(student, extra)
@@ -30,7 +30,7 @@ class StudentModifier(CallPHP):
                   course = student.courses()[index]
                   group  = student.groups()[index]
                   if self.dry_run:
-                        test('enrol_user_in_course', student, course + ' ' + group, 'Parent')
+                        test('enrol_user_in_course', student, course + ' ' + group)
                   else:
                         error = self.enrol_user_in_course( student.num, course, group, 'Student' )
                         if error and error[0] == '-':
@@ -43,7 +43,7 @@ class StudentModifier(CallPHP):
                   course = student.courses()[index]
                   group  = student.groups()[index]
                   if self.dry_run:
-                        test('enrol_user_in_course', student, course + ' ' + group, 'Parent')
+                        test('enrol_user_in_course', student, course + ' ' + group)
                   else:
                         error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
                         if error and error[0] == '-':
@@ -171,7 +171,7 @@ class StudentModifier(CallPHP):
                   course = student.courses()[index]
                   group  = student.groups()[index]
                   if self.dry_run:
-                        test('enrol_user_in_course', student, course + ' ' + group + ' NOT the student, but the parent {}'.format(student.family_id))
+                        test('enrol_user_in_course', student, course + ' ' + group + ' NOT the student, but the parent {}, '.format(student.family_id), 'Parent')
                   else:
                         error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
                         if error and error[0] == '-':
