@@ -25,7 +25,7 @@ from utils.Email import read_in_templates
 
 from utils.ArgsParser import HoldPassedArugments
 
-def handle_new_student(idnumber, comment, family, student, server='localhost'):
+def handle_new_student(results, family, student, server='localhost'):
     for idnumber, comment in results:
         if 'newstudent' == comment:
             self.verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(child))
@@ -356,7 +356,7 @@ and set permissions accordingly.".format(php_src))
                 results = self.server_information.get_temp_storage('to_be_informed',
                                                                    idnumber = child.num)
                 if results:
-                    handle_new_student(idnumber, comment, family, student)
+                    handle_new_student(results, comment, family, student)
                     self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = child.num)
 
@@ -367,7 +367,7 @@ and set permissions accordingly.".format(php_src))
             results = self.server_information.get_temp_storage('to_be_informed',
                                                                idnumber = student.num)
             if results:
-                handle_new_student(idnumber, comment, family, student)
+                handle_new_student(results, comment, family, student)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = student.num)
 
@@ -707,10 +707,6 @@ and set permissions accordingly.".format(php_src))
                     if times_through > 10:
                         print("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
-
-            if student.num.startswith('4409'):
-                output = input if self.verbose else print
-                output(student)
 
         output_file.output()
 
