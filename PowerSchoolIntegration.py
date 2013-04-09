@@ -28,7 +28,7 @@ from utils.ArgsParser import HoldPassedArugments
 def handle_new_student(results, family, student, server='localhost', verbose=False):
     for idnumber, comment in results:
         if 'newstudent' == comment:
-            verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(child))
+            verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(student))
             inform_new_student(family, student, server)
 
 class DragonNet(DragonNetDBConnection):
