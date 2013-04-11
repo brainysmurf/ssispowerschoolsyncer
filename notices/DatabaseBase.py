@@ -24,6 +24,7 @@ except:
     dry_run = True
 from utils.Dates import today, tomorrow, yesterday
 from utils.PythonMail import send_html_email
+from utils.Email import Email
 from utils.DB import FieldObject
 from Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
@@ -340,7 +341,13 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 if self.no_emails:
                     self.print_email(agent)
                 else:
-                    send_html_email(self.sender, agent, self.get_subject(), self.get_html())
+                    email = Email()
+                    email.define_sender(self.sender)
+                    email.add_to(agent)
+                    email.define_subject(self.subject())
+                    email.define_content(self.get_html())
+                    email.send()
+                    #send_html_email(self.sender, agent, self.get_subject(), self.get_html())
 
     def post_to_wordpress(self, blog, hour):
         """

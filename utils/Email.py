@@ -165,6 +165,13 @@ class Email:
     def make_subject(self, sbjct):
         self.subject = sbjct
 
+    def define_content(self, html):
+        """
+        Use for simple cases
+        """
+        self.html_template(html, lang="en")
+        self.add_language("en")
+
     def html_template(self, html, lang="en"):
         self.htmls[lang] = html
 
