@@ -47,7 +47,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
     Converts a database on moodle into a useable system that emails users
     """
 
-    def __init__(self, database_name):
+    def __init__(self, database_name, server='localhost'):
         """
         Populate self.found with legitimate entries
         Works by looking for target date on the backend, and then finding all entries with matching dates...
@@ -63,12 +63,14 @@ class ExtendMoodleDatabaseToAutoEmailer:
         parser.add_argument('-s', '--use_samples', action="store_true", help="Use included samples")
         parser.add_argument('-v', '--verbose', action="store_true", help="Tell you what I'm doing")
         parser.add_argument('-d', '--passed_date', help="DD-MM-YYYY format")
+        parser.add_argument('-m', '--smtp', action="store_const", help="Which smtp server to use")
         args = parser.parse_args()
         self.use_samples = args.use_samples
         self.no_emails = args.no_emails
         self.verbose = args.verbose
         self.passed_date = args.passed_date
         self.no_wordpress = args.no_wordpress
+        self.server = args.smtp if hasattr(args, 'smtp') else 'localhost'
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         self.start_html_tag    = "<html>"
@@ -341,7 +343,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 if self.no_emails:
                     self.print_email(agent)
                 else:
-                    email = Email()
+                    email = Email(self.server)
                     email.define_sender(self.sender)
                     email.add_to(agent)
                     email.define_subject(self.subject())
