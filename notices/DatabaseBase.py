@@ -346,7 +346,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
                     email = Email(self.server)
                     email.define_sender(self.sender)
                     email.add_to(agent)
-                    email.define_subject(self.subject())
+                    email.define_subject(self.get_subject())
                     email.define_content(self.get_html())
                     email.send()
                     #send_html_email(self.sender, agent, self.get_subject(), self.get_html())

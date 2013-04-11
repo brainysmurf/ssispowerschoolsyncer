@@ -165,6 +165,9 @@ class Email:
     def make_subject(self, sbjct):
         self.subject = sbjct
 
+    def define_subject(self, sbjct):
+        self.make_subject(sbjct)
+
     def define_content(self, html):
         """
         Use for simple cases
