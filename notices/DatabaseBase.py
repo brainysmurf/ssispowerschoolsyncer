@@ -63,7 +63,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         parser.add_argument('-s', '--use_samples', action="store_true", help="Use included samples")
         parser.add_argument('-v', '--verbose', action="store_true", help="Tell you what I'm doing")
         parser.add_argument('-d', '--passed_date', help="DD-MM-YYYY format")
-        parser.add_argument('--smtp', action="store_const", help="Which smtp server to use")
+        parser.add_argument('--smtp', help="Which smtp server to use")
         args = parser.parse_args()
         self.use_samples = args.use_samples
         self.no_emails = args.no_emails
