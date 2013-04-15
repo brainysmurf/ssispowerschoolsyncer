@@ -41,9 +41,9 @@ class Recipient:
 
     def __init__(self, email="", name="", lang="en", **kwargs):
         if not email or not '@' in email:
-            return
+            self.email = ""
+            email = "noemailprovided@example.org"
         if not name:
-            name = False
             self.name = email[:email.index('@')]
         else:
             self.name = name
@@ -77,6 +77,9 @@ class Recipient:
     def __call__(self):
         return self.envelope
 
+    def __repr__(self):
+        return "{}: {}".format(self.name, self.email)
+
 class RecipientList:
 
     def __init__(self):
@@ -92,10 +95,10 @@ class RecipientList:
         """
         Adds recipients, won't add if email address is already present 
         """
-        if hasattr(item, 'email') and item.email not in [i.email for i in self.lst]:
+        if item.email and item.email not in [i.email for i in self.lst]:
             self.lst.append(item)
         else:
-            print("WARN: Recipient not added because a recipient with that email address already exists: ", item.email)
+            print("WARN: Recipient not added because a recipient with that email address already exists: {}", item)
 
     def factory(self, email="", name="", **kwargs):
         return Recipient(email, name, **kwargs)
