@@ -117,6 +117,7 @@ class Access:
         return reset_list
 
     def reset_email_only(self, who):
+        return # this is now broken
         careful = open('/etc/passwd').readlines()
         path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
         for line in careful:
