@@ -595,7 +595,7 @@ and set permissions accordingly.".format(php_src))
                             times_through = 11
                             # or just manually update the database, right?
                         else:
-                            self.server_information.init_user_and_groups()                            
+                            self.server_information.init_users_and_groups()                            
                         
                     except StudentNotInGroup:
                         self.verbose and print("Student not enrolled in at least one of the required groups")
@@ -708,6 +708,10 @@ and set permissions accordingly.".format(php_src))
                         print("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
 
+            if student.num == '42112':
+                print(student)
+                print(student.groups())
+                input()
         output_file.output()
 
     def build_emails_for_powerschool(self):
