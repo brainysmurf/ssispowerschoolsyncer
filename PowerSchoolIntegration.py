@@ -372,7 +372,8 @@ and set permissions accordingly.".format(php_src))
                                                            idnumber = student.num)
 
         # TODO: Email the admin any leftover items
-        leftover = self.server_information.dump_temp_storage('to_be_informed', clear=True)
+        #leftover = self.server_information.dump_temp_storage('to_be_informed', clear=True)
+        print("You may want to inspect to_be_informed now")
 
     def build_profiles(self):
         """
