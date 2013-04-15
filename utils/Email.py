@@ -92,7 +92,7 @@ class RecipientList:
         """
         Adds recipients, won't add if email address is already present 
         """
-        if item.email not in [i.email for i in self.lst]:
+        if hasattr(item, 'email') and item.email not in [i.email for i in self.lst]:
             self.lst.append(item)
         else:
             print("WARN: Recipient not added because a recipient with that email address already exists: ", item.email)
