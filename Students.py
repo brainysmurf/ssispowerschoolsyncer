@@ -186,7 +186,7 @@ class Students:
             self.read_in_schedule()
         if self.settings.teachers:
             self.read_in_teachers()
-            #self.read_in_allocations()
+            self.read_in_allocations()
 
     def read_in_preferred(self):
         self.preferred_temp = {}
@@ -210,7 +210,7 @@ class Students:
             self.sync_schedule()    # this one to export student data
         if self.settings.teachers:
             self.sync_teachers()    # this one to export teacher data
-            #self.sync_allocations() # copy to teachers
+            self.sync_allocations() # copy to teachers
         self.sync_profile_fields()
 
     def sync_preferred(self):
