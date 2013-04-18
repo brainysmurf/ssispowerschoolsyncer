@@ -474,12 +474,23 @@ def check_is_in_preferred_list(this):
 
 if __name__ == "__main__":
 
-    students = Students()
+    class Settings:
+        def __init__(self):
+            self.students = True
+            self.courses = True
+            self.teachers = True
+            self.automagic_emails = False
+            self.verbose = False
+
+
+    students = Students(Settings())
+    from utils.Formatter import Smartformatter
     for student_key in students.get_student_keys():
         student = students.get_student(student_key)
-        if student.has_preferred_name:
-            print(student.first, student.last)
-            print(student.preferred_first)
+        sf = Smartformatter()
+        sf.take_dict(student)
+        if student.homeroom == '8A':
+            print(sf('{first}, {last}, {email}'))
     #students.courses_output()
     #print("Here are the ones with ???:")
     #students.output_filter(check_is_in_preferred_list)
