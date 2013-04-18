@@ -67,6 +67,7 @@ class PowerSchoolIntegrator(HoldPassedArugments):
             # Set up dependencies
             self.arguments.courses = True
             self.arguments.teachers = True
+            self.arguments.students = True
         self.verbose = self.arguments.verbose
         self.dry_run = self.arguments.dry_run
 
@@ -94,7 +95,7 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         self.server_information = ServerInfo(verbose=self.verbose,
                                              dry_run=self.dry_run,
                                              email_accounts=email_account_check,
-                                             moodle_accounts=self.config.has_section('MOODLE'))
+                                             moodle_accounts=moodle_account_check)
 
         php_src = 'phpmoodle/phpclimoodle.php'
         mv_to_path = self.config['MOODLE'].get('path_to_cli') if self.config.has_section("MOODLE") else ""
@@ -119,7 +120,7 @@ and set permissions accordingly.".format(php_src))
         self.students = Students(self.arguments,
                                  path_to_powerschool=self.path_to_powerschool,
                                  path_to_errors=self.path_to_errors,
-                                 user_data=self.server_information.get_student_info(),
+                                 user_data=self.server_information.get_student_info() if moodle_account_check else {},
                                  verbose=self.verbose)
 
         if self.arguments.teachers:
@@ -535,10 +536,12 @@ and set permissions accordingly.".format(php_src))
         Go through each student and do what is necessary to actually sync powerschool data
         """
         self.verbose and print("Building csv file for moodle")
+        path_to_cli = self.config['MOODLE'].get('path_to_cli') if self.config.has_section('MOODLE') else None
+        path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
         modify = StudentModifier(dry_run=self.dry_run,
                                  verbose =self.verbose,
-                                 path_to_cli=self.config['MOODLE']['path_to_cli'],
-                                 path_to_php=self.config['PHP']['php_path'],
+                                 path_to_cli=path_to_cli,
+                                 path_to_php=path_to_php,
                                  email_accounts=self.config.has_section('EMAIL'),
                                  moodle_accounts=self.config.has_section('MOODLE'))
 
@@ -709,10 +712,11 @@ and set permissions accordingly.".format(php_src))
                         print("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
 
-            if student.num == '42112':
-                print(student)
-                print(student.groups())
-                input()
+            #if student.num == '42112':
+            #TODO: Set up so that --stop_at_student=x can be here
+            #    print(student)
+            #    print(student.groups())
+            #    input()
         output_file.output()
 
     def build_emails_for_powerschool(self):
@@ -1040,8 +1044,10 @@ and set permissions accordingly.".format(php_src))
         depart_dict = {}
         for teacher_key in self.students.get_teacher_keys():
             teacher = self.students.get_teacher(teacher_key)
+            print(teacher)
             departments = teacher.get_departments()
             for department in departments:
+                input("Looking at dept {}".format(department))
                 d_email_name = department_email_names.get(department)
                 if not d_email_name:
                     continue
