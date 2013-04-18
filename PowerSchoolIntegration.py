@@ -1044,10 +1044,8 @@ and set permissions accordingly.".format(php_src))
         depart_dict = {}
         for teacher_key in self.students.get_teacher_keys():
             teacher = self.students.get_teacher(teacher_key)
-            print(teacher)
             departments = teacher.get_departments()
             for department in departments:
-                input("Looking at dept {}".format(department))
                 d_email_name = department_email_names.get(department)
                 if not d_email_name:
                     continue
