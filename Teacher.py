@@ -66,8 +66,7 @@ class Teacher(Entry):
         return l
 
     def get_departments(self):
-        if not self._departments:
-            self._departments = derive_departments([c for c in self.courses()])
+        self._departments = derive_departments([c for c in self.courses()])
         return self._departments
 
     def __repr__(self):
