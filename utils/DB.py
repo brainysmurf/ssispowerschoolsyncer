@@ -4,6 +4,13 @@ except:
     pass # Allow things to break later
 import os
 
+class NotActuallyPG:
+    def __init__(self):
+        pass
+
+    def __call__(self):
+        return []
+
 class StudentChangedName(Exception):
     pass
 
@@ -44,6 +51,8 @@ class DBConnection:
         self.db = postgresql.open('pq://{user}:{password}@localhost/{database}'.format(**d))
 
     def sql(self, *args, **kwargs):
+        if not self.db:
+            return NotActuallyPG()
         if self.verbose:
             print_db = self._database
             if not self.last_call:
@@ -314,8 +323,8 @@ class ServerInfo(DragonNetDBConnection):
         self.dry_run = dry_run
         self.email_accounts = email_accounts
         self.moodle_accounts = moodle_accounts
-        super().__init__()
         if self.moodle_accounts:
+            super().__init__()
             self.init_users_and_groups()
 
             # We'll need course information when enrolling into groups
@@ -325,6 +334,8 @@ class ServerInfo(DragonNetDBConnection):
             for item in get_courses:
                 courseid, shortname = item
                 self.courses[shortname] = courseid
+        else:
+            self.db = None
 
     def init_users_and_groups(self):
         """
@@ -397,6 +408,8 @@ class ServerInfo(DragonNetDBConnection):
         Raises errors describing what has happened, if anything
         Does not handle infinite loops though
         """
+        if not self.db:
+            return
         idnumber = student.num
         username = student.username
         self.verbose and print("Checking current server information for student:\n{}".format(student))
@@ -461,7 +474,6 @@ class ServerInfo(DragonNetDBConnection):
                 # Yuck
                 # TODO: Unenroll students from courses in teaching & learning they don't need to be in anymore
                     
-
             if self.email_accounts and not os.path.exists('/home/{}'.format(username)):  #TODO: use path provided in settings
                 input(self.email_accounts)
                 if self.email_accounts: 
