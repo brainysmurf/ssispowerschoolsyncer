@@ -804,7 +804,7 @@ and set permissions accordingly.".format(php_src))
     def build_automagic_emails(self):
         path = None
         if self.config.has_section("EMAIL"):
-            path = self.config[("EMAIL"].get("aliases_path")            
+            path = self.config["EMAIL"].get("aliases_path")            
         if not path:
             path = '../postfix'
 
