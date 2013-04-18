@@ -1049,8 +1049,10 @@ and set permissions accordingly.".format(php_src))
                     heads = department_heads.get(department, [])  # returns a list
                     depart_dict[d_email_name] = []
                     for head in heads:
+                        self.verbose and print("Adding {} (the head) into department {}".format(head, d_email_name))
                         depart_dict[d_email_name].append(head + "@ssis-suzhou.net")
                 if teacher and not teacher.email in depart_dict[d_email_name]:
+                    self.verbose and print("Adding {} into department {}".format(teacher, d_email_name))
                     depart_dict[d_email_name].append(teacher.email)
 
         for department in list(depart_dict.keys()):
