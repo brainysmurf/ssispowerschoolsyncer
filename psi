@@ -57,7 +57,8 @@ class PowerSchoolIntegrator(HoldPassedArugments):
                          'students', 'email_list', 'families', 'parents',
                          'automagic_emails', 'profiles', 'input_okay',
                          inspect_student=False,
-                         settings_file='../settings.ini')
+                         settings_path='../settings.ini',
+                         output_path='..')
         import configparser
         self.config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
         if not self.config.read(self.arguments.settings_file):
@@ -116,9 +117,9 @@ and set permissions accordingly.".format(php_src))
         else:
             print("Warning, did NOT move php file required for moodle syncing... are your settings correct and does the user have permissions?")
 
-        self.path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else '../powerschool'
-        self.path_to_output = self.config['FILES'].get('path_to_output') if self.config.has_section('OUTPUT') else '../output'
-        self.path_to_errors = self.config['FILES'].get('path_to_errors') if self.config.has_section('OUTPUT') else '../errors'
+        self.path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else self.arguments.output_path + '../powerschool'
+        self.path_to_output = self.config['FILES'].get('path_to_output') if self.config.has_section('OUTPUT') else self.arguments.output_path + '/output'
+        self.path_to_errors = self.config['FILES'].get('path_to_errors') if self.config.has_section('OUTPUT') else self.arguments.output_path + '/errors'
         self.students = Students(self.arguments,
                                  path_to_powerschool=self.path_to_powerschool,
                                  path_to_errors=self.path_to_errors,
@@ -798,7 +799,7 @@ and set permissions accordingly.".format(php_src))
               f.write('\n')
 
     def setup_idnumbers(self):
-        with open('../output/idnumbers.txt', 'w') as f:
+        with open(self.arguments.output_path + '/output/idnumbers.txt', 'w') as f:
             f.write("username,idnumber,firstname,lastname,password,email\n")
             for student_key in self.students.get_student_keys():
                 student = self.students.get_student(student_key)
@@ -811,7 +812,7 @@ and set permissions accordingly.".format(php_src))
         if self.config.has_section("EMAIL"):
             path = self.config["EMAIL"].get("aliases_path")            
         if not path:
-            path = '../postfix'
+            path = self.arguments.output_path + '/postfix'
 
         #TODO: Use smartformatter for this crap!
         d = {'path':path}
