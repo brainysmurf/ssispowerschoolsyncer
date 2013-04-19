@@ -94,11 +94,11 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         print(datetime.datetime.today())
 
         email_account_check = self.config.has_section('EMAIL') and self.config['EMAIL'].get('account_check')
-        moodle_account_check = self.config.has_section('MOODLE') and self.config['MOODLE'].get('sync')
+        moodle_account_check = self.config.has_section('MOODLE') and self.config['MOODLE']
         self.server_information = ServerInfo(verbose=self.verbose,
                                              dry_run=self.dry_run,
                                              email_accounts=email_account_check,
-                                             moodle_accounts=moodle_account_check)
+                                             moodle_accounts=moodle_account_check and self.config['MOODLE'].get('sync'))
 
         php_src = 'phpmoodle/phpclimoodle.php'
         mv_to_path = self.config['MOODLE'].get('path_to_cli') if self.config.has_section("MOODLE") else ""
