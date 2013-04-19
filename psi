@@ -94,7 +94,7 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         print(datetime.datetime.today())
 
         email_account_check = self.config.has_section('EMAIL') and self.config['EMAIL'].get('account_check')
-        moodle_account_check = self.config.has_section('MOODLE')
+        moodle_account_check = self.config.has_section('MOODLE') and self.config['MOODLE'].get('sync')
         self.server_information = ServerInfo(verbose=self.verbose,
                                              dry_run=self.dry_run,
                                              email_accounts=email_account_check,
