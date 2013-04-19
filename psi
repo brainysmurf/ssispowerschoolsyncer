@@ -58,7 +58,6 @@ class PowerSchoolIntegrator(HoldPassedArugments):
                          'automagic_emails', 'profiles', 'input_okay',
                          inspect_student=False,
                          settings_file='../settings.ini')
-        input(self.arguments)
         import configparser
         self.config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
         if not self.config.read(self.arguments.settings_file):
@@ -78,15 +77,11 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         self.verbose = self.arguments.verbose
         self.dry_run = self.arguments.dry_run
 
-        # read in settings.ini file
-        if not os.path.exists('../settings.ini'):
-            #TODO: Actually write a sample one.... or something
-            print("You need to give settings!")
-            exit()
-        
         if 'DEFAULTS' in self.config.sections():
             for key in self.config['DEFAULTS']:
                 setattr(self, key, self.config.getboolean('DEFAULTS', key))
+
+        self.verbose and print(self.arguments)
 
         self.email_server = None
         if self.config.has_section("EMAIL"):

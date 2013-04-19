@@ -1,6 +1,10 @@
 class HoldPassedArugments:
     """
-    Class that uses the argsparse module and puts data into the passed object
+    Class that uses the argsparse module in the way I want it to
+    Two hyphens means it's a switch with default of False
+    One hyphen means it's a string parameter
+    Switches are passed by arguments
+    Strings are passed by keywords
     """
 
     def __init__(self, *switches, **strings):
