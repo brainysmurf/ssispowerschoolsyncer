@@ -57,7 +57,7 @@ class PowerSchoolIntegrator(HoldPassedArugments):
                          'students', 'email_list', 'families', 'parents',
                          'automagic_emails', 'profiles', 'input_okay',
                          inspect_student=False,
-                         settings_path='../settings.ini',
+                         settings_file='../settings.ini',
                          output_path='..')
         import configparser
         self.config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
