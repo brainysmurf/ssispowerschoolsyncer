@@ -4,6 +4,8 @@ except:
     pass # Allow things to break later
 import os
 
+from utils.Formatter import Smartformatter
+
 class NotActuallyPG:
     def __init__(self):
         pass
@@ -43,12 +45,13 @@ class DBConnection:
     Glue code between me and the database
     """
 
-    def __init__(self, user, password, database, verbose=False):
-        d = {'user':user, 'password':password, 'database':database}
+    def __init__(self, user, password, server, database, verbose=False):
+        sf = Smartformatter(user=user, password=password, server=server, database=database)
         self.last_call = None
         self._database = database
         self.verbose = verbose
-        self.db = postgresql.open('pq://{user}:{password}@localhost/{database}'.format(**d))
+        self.verbose and input(sf("About to connect to {server}"))
+        self.db = postgresql.open(sf('pq://{user}:{password}@{server}/{database}'))
 
     def sql(self, *args, **kwargs):
         if not self.db:
@@ -133,8 +136,8 @@ class DBConnection:
 
 class DragonNetDBConnection(DBConnection):
 
-    def __init__(self, verbose=False):
-        super().__init__('moodle', 'ssissqlmoodle', 'moodle', verbose=verbose)
+    def __init__(self, server, verbose=False):
+        super().__init__('moodle', 'ssissqlmoodle', server, 'moodle', verbose=verbose)
 
     def create_temp_storage(self, table_name, *args):
         if not self.exists_temp_storage(table_name):
@@ -318,13 +321,17 @@ class ServerInfo(DragonNetDBConnection):
     def __init__(self, verbose=True,
                  dry_run=True,
                  email_accounts=False,
-                 moodle_accounts=False):
+                 moodle_accounts={}):
+        """
+        moodle_account should be config info
+        """
         self.verbose = verbose
         self.dry_run = dry_run
         self.email_accounts = email_accounts
         self.moodle_accounts = moodle_accounts
         if self.moodle_accounts:
-            super().__init__()
+            self.server = moodle_accounts.get('host')
+            super().__init__(self.server)
             self.init_users_and_groups()
 
             # We'll need course information when enrolling into groups
