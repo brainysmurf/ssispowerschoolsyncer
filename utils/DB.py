@@ -325,13 +325,12 @@ class ServerInfo(DragonNetDBConnection):
         """
         moodle_account should be config info
         """
-        self.verbose = verbose
         self.dry_run = dry_run
         self.email_accounts = email_accounts
         self.moodle_accounts = moodle_accounts
         if self.moodle_accounts:
             self.server = moodle_accounts.get('host')
-            super().__init__(self.server)
+            super().__init__(self.server, verbose=verbose)
             self.init_users_and_groups()
 
             # We'll need course information when enrolling into groups
