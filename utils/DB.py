@@ -50,7 +50,7 @@ class DBConnection:
         self.last_call = None
         self._database = database
         self.verbose = verbose
-        self.verbose and input(sf("About to connect to {server}"))
+        self.verbose and print(sf("About to connect to {server}"))
         self.db = postgresql.open(sf('pq://{user}:{password}@{server}/{database}'))
 
     def sql(self, *args, **kwargs):
@@ -136,8 +136,8 @@ class DBConnection:
 
 class DragonNetDBConnection(DBConnection):
 
-    def __init__(self, server, verbose=False):
-        super().__init__('moodle', 'ssissqlmoodle', server, 'moodle', verbose=verbose)
+    def __init__(self, user, password, server, database, verbose=False):
+        super().__init__(user, password, server, database, verbose=verbose)
 
     def create_temp_storage(self, table_name, *args):
         if not self.exists_temp_storage(table_name):
@@ -320,17 +320,22 @@ class ServerInfo(DragonNetDBConnection):
 
     def __init__(self, verbose=True,
                  dry_run=True,
-                 email_accounts=False,
-                 moodle_accounts={}):
+                 email_config=None,
+                 moodle_config=None):
         """
         moodle_account should be config info
         """
         self.dry_run = dry_run
-        self.email_accounts = email_accounts
-        self.moodle_accounts = moodle_accounts
-        if self.moodle_accounts:
-            self.server = moodle_accounts.get('host')
-            super().__init__(self.server, verbose=verbose)
+        self.email_config = email_config
+        self.moodle_config = moodle_config
+        if self.moodle_config:
+
+            user = moodle_config.get('database_user')
+            password = moodle_config.get('database_password')
+            database = moodle_config.get('database_name')
+            self.server = moodle_config.get('host')
+
+            super().__init__(user, password, self.server, database, verbose=verbose)
             self.init_users_and_groups()
 
             # We'll need course information when enrolling into groups
@@ -421,7 +426,7 @@ class ServerInfo(DragonNetDBConnection):
         self.verbose and print("Checking current server information for student:\n{}".format(student))
         if student.is_secondary:
             # Account-based checks
-            if self.moodle_accounts:
+            if self.moodle_config:
                 if self.students.get(idnumber):
                     if not username == self.students[idnumber]:
                         # Use the one that we know from DragonNet
@@ -480,11 +485,11 @@ class ServerInfo(DragonNetDBConnection):
                 # Yuck
                 # TODO: Unenroll students from courses in teaching & learning they don't need to be in anymore
                     
-            if self.email_accounts and not os.path.exists('/home/{}'.format(username)):  #TODO: use path provided in settings
-                input(self.email_accounts)
-                if self.email_accounts: 
-                    self.verbose and print("Raising NoEmailAddress")
-                    raise NoEmailAddress
+            if self.email_config:  #TODO: use path provided in settings
+                if self.email_config.get('check_accounts') and self.email_config.get('accounts_path'):
+                    if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
+                        self.verbose and print("Raising NoEmailAddress")
+                        raise NoEmailAddress
 
         familyid = student.family_id
         if not familyid in list(self.families.keys()):

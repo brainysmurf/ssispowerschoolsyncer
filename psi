@@ -93,15 +93,15 @@ class PowerSchoolIntegrator(HoldPassedArugments):
         print('------------------------------------------------------')
         print(datetime.datetime.today())
 
-        email_account_check = self.config.has_section('EMAIL') and self.config['EMAIL'].get('account_check')
-        moodle_account_check = self.config.has_section('MOODLE')
+        have_email_section = self.config.has_section('EMAIL')
+        have_moodle_section = self.config.has_section('MOODLE')
         self.server_information = ServerInfo(verbose=self.verbose,
                                              dry_run=self.dry_run,
-                                             email_accounts=email_account_check,
-                                             moodle_accounts=moodle_account_check and self.config['MOODLE'])
+                                             email_config=self.config['EMAIL'] if have_email_section else None,
+                                             moodle_config=self.config['MOODLE'] if have_moodle_section else None)
 
-        php_src = 'phpmoodle/phpclimoodle.php'
-        mv_to_path = self.config['MOODLE'].get('path_to_cli') if self.config.has_section("MOODLE") else ""
+        php_src = 'phpmoodle/phpclimoodle.php'   #TODO: Must figure out full path to myself, right?
+        mv_to_path = self.config['MOODLE'].get('path_to_cli') if have_moodle_section else ""
         if os.path.exists(php_src) and mv_to_path and os.path.exists(mv_to_path):
             import shutil
             mv_to_full_path = mv_to_path + '/phpclimoodle.php'
@@ -113,9 +113,12 @@ class PowerSchoolIntegrator(HoldPassedArugments):
                 print("Copied php file that was at {} to the correct location in moodle's document root \
 and set permissions accordingly.".format(php_src))
             except:  #TODO: Use the right exceptions
-                print("Could not copy php file, NOT exiting")
+                print("Copying php file failed, do we have the right permissions?")
         else:
-            print("Warning, did NOT move php file required for moodle syncing... are your settings correct and does the user have permissions?")
+            print("WARNING:")
+            print("php_src: {}, mv_to_path: {}".format(php_src, mv_to_path))
+            print("Couldn't attempt the copy php file, settings printed above")
+            print("END WARNING")
 
         self.path_to_powerschool = self.config['POWERSCHOOL'].get('auto_send_dump_path') if self.config.has_section('POWERSCHOOL') else self.arguments.output_path + '/powerschool'
         self.path_to_output = self.config['FILES'].get('path_to_output') if self.config.has_section('OUTPUT') else self.arguments.output_path + '/output'
@@ -123,7 +126,7 @@ and set permissions accordingly.".format(php_src))
         self.students = Students(self.arguments,
                                  path_to_powerschool=self.path_to_powerschool,
                                  path_to_errors=self.path_to_errors,
-                                 user_data=self.server_information.get_student_info() if moodle_account_check else {},
+                                 user_data=self.server_information.get_student_info(),
                                  verbose=self.verbose)
 
         if self.arguments.teachers:
