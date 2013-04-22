@@ -268,8 +268,8 @@ class FieldObject(DragonNetDBConnection):
 
     """
 
-    def __init__(self, database_name, field_name, samples=None):
-        super().__init__()
+    def __init__(self, user, password, server, database, database_name, field_name, samples=None):
+        super().__init__(user, password, server, database)
         self.use_samples = samples
         if not self.use_samples:
             self.database_name = database_name
@@ -291,8 +291,8 @@ class UpdateField(DragonNetDBConnection):
     Class that is used to update a field in a database module
     """
 
-    def __init__(self, database_name, field_name):
-        super().__init__()
+    def __init__(self, user, password, server, database, database_name, field_name):
+        super().__init__(user, password, server, database)
         self.field_name = field_name
         try:
             self.target = self.sql(

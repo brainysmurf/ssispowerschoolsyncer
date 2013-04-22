@@ -129,7 +129,7 @@ class DatabaseObjects(DragonNetDBConnection):
     """
     Defines the objects for use by the application
     """
-    def __init__(self, database_name=None, samples=None, verbose=False):
+    def __init__(self, user, password, server, database, database_name=None, samples=None, verbose=False):
         """
         database_name is the database we are using
         If defined, it will use custom sql to get the information we need, and then put it into objects the application can use
@@ -138,7 +138,7 @@ class DatabaseObjects(DragonNetDBConnection):
         Sets up the model accordingly. The sql is in the same place as the code that unpacks the sql
         and puts the resulting infomation into python objects. This is a good way to do it.
         """
-        super().__init__()
+        super().__init__(user, password, server, database)
         self.samples = samples
         self.database_name = database_name
         self.verbose = verbose

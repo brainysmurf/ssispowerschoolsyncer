@@ -60,16 +60,24 @@ class ExtendMoodleDatabaseToAutoEmailer:
         parser = argparse.ArgumentParser(description="Integrates Moodle Database with emailing system")
         parser.add_argument('-e', '--no_emails', action="store_true", help="Do NOT send emails")
         parser.add_argument('-w', '--no_wordpress', action="store_true", help="Do NOT post to wordpress")
-        parser.add_argument('-s', '--use_samples', action="store_true", help="Use included samples")
+        parser.add_argument('-x', '--use_samples', action="store_true", help="Use included samples")
         parser.add_argument('-v', '--verbose', action="store_true", help="Tell you what I'm doing")
         parser.add_argument('-d', '--passed_date', help="DD-MM-YYYY format")
-        parser.add_argument('--smtp', help="Which smtp server to use")
+        parser.add_argument('-s', '--smtp', action="store", help="Which smtp server to use")
+        parser.add_argument('-u', '--user', action="store", help="username for database")
+        parser.add_argument('-b', '--database', action="store", help="database name")
+        parser.add_argument('-p', '--password', action="store", help="password, insecure if sent in the command line")
+        
         args = parser.parse_args()
         self.use_samples = args.use_samples
         self.no_emails = args.no_emails
         self.verbose = args.verbose
         self.passed_date = args.passed_date
         self.no_wordpress = args.no_wordpress
+        self.smtp = args.smtp
+        self.user = args.user
+        self.database = args.database
+        self.password = args.password
         self.server = args.smtp if hasattr(args, 'smtp') else 'localhost'
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
@@ -96,18 +104,34 @@ class ExtendMoodleDatabaseToAutoEmailer:
         if self.section_field:
             if self.use_samples:
                 # Testing/Debugging use
-                self.section_field_object = FieldObject(self.database_name, self.section_field,
+                self.section_field_object = FieldObject(self.user,
+                                                        self.password,
+                                                        self.server,
+                                                        self.database,
+                                                        self.database_name, self.section_field,
                                         samples=self.section_samples())
             else:
                 # Production use
-                self.section_field_object = FieldObject(self.database_name, self.section_field)
+                self.section_field_object = FieldObject(self.user,
+                                                        self.password,
+                    self.server,
+                    self.database,
+                    self.database_name, self.section_field)
             self.section_field_default_value = self.section_field_object.default_value()
         else:
             self.section_field_object = None
             self.section_field_default_value = None
         
-        self.start_date_field = StartDateField(self.database_name, 'Start Date')
-        self.end_date_field   = EndDateField(self.database_name, 'End Date')
+        self.start_date_field = StartDateField(self.user,
+                                               self.password,
+            self.server,
+            self.database,
+            self.database_name, 'Start Date')
+        self.end_date_field   = EndDateField(self.user,
+                                             self.password,
+            self.server,
+            self.database,
+            self.database_name, 'End Date')
         self.process()
         self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
         self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
@@ -118,7 +142,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         and then processes them accordingly. Can be overridden if necessary, but must define self.database_objects
         """
         items = self.raw_data()
-        self.database_objects = DatabaseObjects()
+        self.database_objects = DatabaseObjects(self.user, self.password, self.server, self.database)
         self.verbose and print(self.database_objects)
         for item in items.items_within_date(self.date):
             self.verbose and print("Item here:")
@@ -139,7 +163,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             return DatabaseObjects(self.database_name, samples=self.samples(), verbose=self.verbose)
         else:
             # Production use
-            return DatabaseObjects(self.database_name, verbose=self.verbose)
+            return DatabaseObjects(self.user, self.password, self.server, self.database, self.database_name, verbose=self.verbose)
 
     def setup_date(self):
         """
