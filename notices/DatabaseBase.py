@@ -47,7 +47,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
     Converts a database on moodle into a useable system that emails users
     """
 
-    def __init__(self, database_name, server='localhost'):
+    def __init__(self, database_name, server='dragonnet.ssis-suzhou.net'):
         """
         Populate self.found with legitimate entries
         Works by looking for target date on the backend, and then finding all entries with matching dates...
