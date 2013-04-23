@@ -534,7 +534,7 @@ and set permissions accordingly.".format(php_src))
         with open(self.path_to_output + '/' + 'student_emails.txt', 'w') as f:
             for student_key in self.students.get_student_keys(secondary=True):
                 student = self.students.get_student(student_key)
-                if student.homeroom in self.students.get_secondary_homerooms() and student.courses() and int(student.num) > 30000:
+                if student.is_secondary:
                     f.write(student.email + '\n')
 
     def build_students(self, verify=False):
@@ -1004,6 +1004,10 @@ and set permissions accordingly.".format(php_src))
                 if teacher and not teacher in added_teachers_hr[d['homeroom']]:
                     f.write(teacher + '@ssis-suzhou.net\n')
                     added_teachers_hr[d['homeroom']].append(teacher)
+                for teacher in student.get_teachers_as_list():
+                    if teacher and not teacher in added_teachers_hr[d['homeroom']]:
+                        f.write(teacher + '@ssis-suzhou.net\n')
+                        added_teachers_hr[d['homeroom']].append(teacher)
 
             # SETUP SPECIAL
             setup_postfix = "{path}/special/usebccparentsALL{ext}".format(**d)
