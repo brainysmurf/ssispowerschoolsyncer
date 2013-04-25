@@ -39,8 +39,7 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
     Converts a database on moodle into a useable system that emails users
     """
     def __init__(self):
-        super().__init__('Secondary Notices Database')
-        self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'
+        super().__init__('Golden Chair')
 
     def define(self):
         """
@@ -112,8 +111,7 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
 
 if __name__ == "__main__":
     try:
-        notices = Student_Notices()
+        notices = Golden_Chair()
         notices.email_to_agents()
-        notices.post_to_wordpress('secondarystudentannouncements', '7:00')
     except Nothing:
         print("No matching entries found")
