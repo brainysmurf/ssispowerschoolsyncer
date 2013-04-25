@@ -203,7 +203,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 if not records or len(records) == 0:
                     continue
                 # Put the shared info into one place for convenience
-                shared_info = records[0][:5]
+                shared_info = records[0][:7]
                 # Got the records with a single unique ID, now pack them in
                 new_object = DatabaseObject()
                 new_object.define(user_id = shared_info[1])
