@@ -67,6 +67,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         parser.add_argument('-u', '--user', action="store", help="username for database")
         parser.add_argument('-b', '--database', action="store", help="database name")
         parser.add_argument('-p', '--password', action="store", help="password, insecure if sent in the command line")
+        parser.add_argument('-m', '--domain', action="store", help="the domain of the server that hosts our moodle database")
         
         args = parser.parse_args()
         self.use_samples = args.use_samples
@@ -78,7 +79,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.user = args.user
         self.database = args.database
         self.password = args.password
-        self.server = args.smtp if hasattr(args, 'smtp') else 'localhost'
+        self.server = args.domain if args.domain else 'localhost'
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         self.start_html_tag    = "<html>"
