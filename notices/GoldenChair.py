@@ -18,7 +18,7 @@ if __name__ == "__main__":
 from utils import *
 
 from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
-from Model import DatabaseObject
+from Model import DatabaseObject, DatabaseObjects
 from utils.PythonMail import send_html_email
 from utils.Dates import custom_strftime
 from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
