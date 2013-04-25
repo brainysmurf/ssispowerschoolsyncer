@@ -43,7 +43,7 @@ class DatabaseObject:
         if isinstance(start, datetime.date):
             start = datetime.datetime.combine(start, datetime.time())
         if isinstance(end, datetime.date):
-            end = datetime.datetime.combine(start, datetime.time(hour=23, minute=59, second=59))
+            end = datetime.datetime.combine(end, datetime.time(hour=23, minute=59, second=59))
         print(start)
         print(end)
         input(self.time_created)
