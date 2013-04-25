@@ -53,7 +53,7 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
         self.agents = 'adammorris@ssis-suzhou.net'
         self.agent_map = {}
 
-        #self.search_date = "next day"
+        self.search_date = "same day"
 
         #self.content_field = 'Full Content'
         #self.attachment_field = 'Attached Content'
