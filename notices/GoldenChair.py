@@ -73,7 +73,7 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
         items = self.raw_data()
         self.database_objects = DatabaseObjects(self.user, self.password, self.server, self.database)
         self.verbose and print(self.database_objects)
-        for item in items.time_created_happened_between(self.date - datetime.timedelta(days=7), self.date):
+        for item in items.time_created_happened_between(self.date - datetime.timedelta(days=5), self.date):
             self.database_objects.add(item)
             self.verbose and print(item)
         self.verbose and print(self.database_objects)
