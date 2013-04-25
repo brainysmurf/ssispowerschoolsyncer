@@ -64,7 +64,7 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
     def derive_content(self, item):
         sf = Smartformatter()
         sf.take_dict(item)
-        return self.list(sf('{user_first_name} {user_last_name} nominated {student_name}'))
+        return self.list(sf('{user_first_name} {user_last_name} nominated {student_name} for <strong>{reason}</strong>'))
         
     def process(self):
         """
