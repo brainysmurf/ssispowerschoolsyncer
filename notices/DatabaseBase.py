@@ -306,7 +306,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         for section in sections_to_use:
             self.verbose and print("In section {}".format(section))
             # Set my header so I can format with it
-            self.header = section
+            self.header = section if section else self.__class__.__name__.replace("_", ' ')
             # Get the right items, depending on what the value of section is
             if section is None:
                 items = self.database_objects.get_all_items()
