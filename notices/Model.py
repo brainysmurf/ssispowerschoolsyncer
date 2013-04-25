@@ -236,7 +236,10 @@ class DatabaseObjects(DragonNetDBConnection):
         return (item for item in self._db if item.time_created_within_start_end(start, end))
 
     def sort(self, lst):
-        lst.sort(key = lambda x: x.priority)
+        try:
+            lst.sort(key = lambda x: x.priority)
+        except AttributeError:
+            pass
         return lst
 
     def get_items_by_section(self, section):
