@@ -24,6 +24,7 @@ from utils.Dates import custom_strftime
 from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 from notices.Samples import student_notices_samples, student_notices_tag_samples
 import datetime
+from utils.Formatter import Smartformatter
 
 verbose = False
 catch_wrong = True
@@ -60,6 +61,11 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
 
         #self.priority_ids = [32]
 
+    def derive_content(self, item):
+        sf = Smartformatter()
+        sf.take_dict(item)
+        return self.list(sf('{user_first_name} {user_last_name} nominated {student_name}'))
+        
     def process(self):
         """
         Overrides inherited method
