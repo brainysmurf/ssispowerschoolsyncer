@@ -34,7 +34,7 @@ class DatabaseObject:
         for field in kwargs.keys():
             setattr(self, field.replace(' ', '_').lower(), kwargs[field])
 
-    def time_created_within_delta(self, start, end):
+    def time_created_within_start_end(self, start, end):
         """
         Returns boolean whether timecreated falls within start and end
         Converts start and end to datetime objects if needed, and when it does so
@@ -44,7 +44,7 @@ class DatabaseObject:
             start = datetime.datetime.combine(start, datetime.time())
         if isinstance(end, datetime.date):
             end = datetime.datetime.combine(start, datetime.time(hour=23, minute=59, second=59))
-        return self.timecreated >= start and self.timecreated <= end
+        return self.time_created >= start and self.timecreated <= end
 
     def time_modified_within_start_end(self, start, end):
         """
