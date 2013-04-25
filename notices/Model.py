@@ -1,6 +1,6 @@
 from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 from utils.DB import DragonNetDBConnection
-from utils.Dates import today, tomorrow, yesterday
+from utils.Dates import today, tomorrow, yesterday, timestamp_to_python_date
 import datetime
 import re
 
@@ -34,6 +34,30 @@ class DatabaseObject:
         for field in kwargs.keys():
             setattr(self, field.replace(' ', '_').lower(), kwargs[field])
 
+    def time_created_within_delta(self, start, end):
+        """
+        Returns boolean whether timecreated falls within start and end
+        Converts start and end to datetime objects if needed, and when it does so
+        it uses the extreme boundaries (start time is midnight, end time is one second before midnight)
+        """
+        if isinstance(start, datetime.date):
+            start = datetime.datetime.combine(start, datetime.time())
+        if isinstance(end, datetime.date):
+            end = datetime.datetime.combine(start, datetime.time(hour=23, minute=59, second=59))
+        return self.timecreated >= start and self.timecreated <= end
+
+    def time_modified_within_start_end(self, start, end):
+        """
+        Returns boolean whether timecreated falls within start and end
+        Converts start and end to datetime objects if needed, and when it does so
+        it uses the extreme boundaries (start time is midnight, end time is one second before midnight)
+        """
+        if isinstance(start, datetime.date):
+            start = datetime.datetime.combine(start, datetime.time())
+        if isinstance(end, datetime.date):
+            end = datetime.datetime.combine(end, datetime.time(hour=23, minute=59, second=59))
+        return self.time_modified >= start and self.timecreated <= end
+
     def date_objects(self):
         """
         Returns the startdate and enddate as a datetime objects
@@ -52,7 +76,9 @@ class DatabaseObject:
 
         date_objects = []   # Dates to compare to, needed because strings need to be converted into datetime objects
 
-        for this_date in (re.search(r'\((.*)\)$', self.start_date).group(1), re.search(r'\((.*)\)$', self.end_date).group(1) if self.end_date else None):
+        for this_date in (re.search(r'\((.*)\)$',
+                                    self.start_date).group(1),
+                                    re.search(r'\((.*)\)$', self.end_date).group(1) if self.end_date else None):
             if not this_date:
                 date_objects.append( None )
             else:
@@ -73,7 +99,6 @@ class DatabaseObject:
             date_objects = (None, None)
         self._date_objects = date_objects   # stores this for later so we don't have to process it all over again
         return self._date_objects
-
 
     def date_within(self, to_compare_date):
         """
@@ -156,7 +181,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 # Since it's "flat", we then have to unpack to put all the items with the same recordid into the same object
                 # I choose to do that with python below rather than the sql itself, which is possible (this is known as making a pivot table)
                 # But doing it in python is better because we don't have to worry about whether it's mysql or postgres or what
-                sql = """select dc.recordid, usr.id, usr.firstname, usr.lastname, usr.institution, df.name, dc.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id""".format(database_id)
+                sql = """select dc.recordid, usr.id, usr.firstname, usr.lastname, usr.institution, dr.timecreated, dr.timemodified, df.name, dc.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id""".format(database_id)
                 sql_result = self.sql(sql)()
             # Unpack the sql results into useable objects.
             # NOTE: This essentially converts multiple rows into a pivot table
@@ -185,13 +210,16 @@ class DatabaseObjects(DragonNetDBConnection):
                 new_object.define(user_first_name = shared_info[2])
                 new_object.define(user_last_name = shared_info[3])
                 new_object.define(user_preferred = shared_info[4])
+                new_object.define(time_created = timestamp_to_python_date(shared_info[5]))
+                new_object.define(time_modified = timestamp_to_python_date(shared_info[6]))
                 if new_object.user_preferred:
                     new_object.user = new_object.user_preferred
                 else:
                     new_object.user = "{} {}".format(new_object.user_first_name, new_object.user_last_name)
                 for row in records:
-                    field = row[5]
-                    value = row[6]
+                    # Put non-unique information in one by one
+                    field = row[7]
+                    value = row[8]
                     new_object.define(field, value)
                 # Okay, we got everything, so now place it into our internal object
                 self.add(new_object)
@@ -202,6 +230,9 @@ class DatabaseObjects(DragonNetDBConnection):
 
     def items_within_date(self, date):
         return (item for item in self._db if item.date_within(date))
+
+    def time_created_happened_between(self, start, end):
+        return (item for item in self._db if item.time_created_within_start_end(start, end))
 
     def sort(self, lst):
         lst.sort(key = lambda x: x.priority)

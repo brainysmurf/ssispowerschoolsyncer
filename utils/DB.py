@@ -300,14 +300,20 @@ class UpdateField(DragonNetDBConnection):
             .format(database_name, field_name)
             )
         except:
-            self.target_id = 0
+            self.target_id = None
             return
-        self.target_id = self.target()[0][0]
+
+        try:
+            self.target_id = self.target()[0][0]
+        except:
+            self.target_id = None
 
     def update_menu(self, value):
         """
         
         """
+        if self.target_id is None:
+            return
         if isinstance(value, list):
             value = "\r\n".join(value)
         command = "update ssismdl_data_fields set param1 = '{}' where id = {}".format(value, self.target_id)

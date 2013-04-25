@@ -18,6 +18,9 @@ def date_to_database_timestamp(year=None, month=None, day=None):
     """
     return int((datetime.datetime(year=year, month=month, day=day, hour=12) - datetime.datetime(1970, 1, 1)) / datetime.timedelta(seconds=1))
 
+def timestamp_to_python_date(timestamp):
+    return datetime.datetime.fromtimestamp(timestamp)
+
 def today():
     return datetime.date.today()
 
