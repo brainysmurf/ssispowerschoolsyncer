@@ -44,12 +44,7 @@ class DatabaseObject:
             start = datetime.datetime.combine(start, datetime.time())
         if isinstance(end, datetime.date):
             end = datetime.datetime.combine(end, datetime.time(hour=23, minute=59, second=59))
-        print(start)
-        print(end)
-        print(self.time_created)
-        result = self.time_created >= start and self.time_created <= end
-        input(result)
-        return result
+        return self.time_created >= start and self.time_created <= end
 
     def time_modified_within_start_end(self, start, end):
         """
