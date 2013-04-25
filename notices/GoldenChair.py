@@ -72,6 +72,11 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
             self.verbose and print(item)
         self.verbose and print(self.database_objects)
 
+    def sort(self, lst):
+        """ overrides inherited method"""
+        #lst.sort(key = lambda x: x.priority)  sort by alpha?
+        return lst
+
     def samples(self):
         return student_notices_samples
 
