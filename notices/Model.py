@@ -48,7 +48,7 @@ class DatabaseObject:
         print(end)
         print(self.time_created)
         result = self.time_created >= start and self.time_created <= end
-        self.verbose and input(result)
+        input(result)
         return result
 
     def time_modified_within_start_end(self, start, end):
