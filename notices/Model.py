@@ -229,6 +229,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 
 
     def add(self, obj):
+        self.verbose and print("adding object: {}".format(obj))
         self._db.append(obj)
 
     def items_within_date(self, date):
