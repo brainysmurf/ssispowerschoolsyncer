@@ -21,10 +21,11 @@ from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 from Model import DatabaseObject, DatabaseObjects
 from utils.PythonMail import send_html_email
 from utils.Dates import custom_strftime
-from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
+from utils.DB import UpdateField
 from notices.Samples import student_notices_samples, student_notices_tag_samples
 import datetime
 from utils.Formatter import Smartformatter
+from Students import Students
 
 verbose = False
 catch_wrong = True
@@ -32,9 +33,6 @@ catch_wrong = True
 class Nothing(Exception): pass
 
 k_record_id = 2
-
-class SNRDFU(RelativeDateFieldUpdater):
-    pass
 
 class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
     """
