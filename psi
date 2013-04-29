@@ -55,7 +55,7 @@ class PowerSchoolIntegrator(HoldPassedArugments):
 
         super().__init__('verbose', 'dry_run', 'teachers', 'courses',
                          'students', 'email_list', 'families', 'parents',
-                         'automagic_emails', 'profiles', 'input_okay',
+                         'automagic_emails', 'profiles', 'input_okay', 'updaters',
                          inspect_student=False,
                          settings_file='../settings.ini',
                          output_path='..')
@@ -82,8 +82,6 @@ class PowerSchoolIntegrator(HoldPassedArugments):
             for key in self.config['DEFAULTS']:
                 setattr(self, key, self.config.getboolean('DEFAULTS', key))
 
-        self.verbose and print(self.arguments)
-
         self.email_server = None
         if self.config.has_section("EMAIL"):
             self.email_server = self.config['EMAIL'].get('domain')
@@ -92,6 +90,11 @@ class PowerSchoolIntegrator(HoldPassedArugments):
 
         print('------------------------------------------------------')
         print(datetime.datetime.today())
+        if self.verbose:
+            print("Arguments passed in:")
+            print(self.arguments)
+            print("Verbosity is {}".format(self.verbose))
+            print("Dry run is {}".format(self.dry_run))
 
         have_email_section = self.config.has_section('EMAIL')
         have_moodle_section = self.config.has_section('MOODLE')
@@ -146,6 +149,8 @@ and set permissions accordingly.".format(php_src))
             self.build_automagic_emails()
         if self.arguments.profiles:
             self.build_profiles()
+        if self.arguments.updaters:
+            self.build_updates()
         #self.assign_groups()
         #self.build_student_list()
         #self.build_opening_table(students)
@@ -329,7 +334,7 @@ and set permissions accordingly.".format(php_src))
                         f.write("{num}\t{username}\t{courses}\n".format(**d))
 
     def build_families(self):
-        """
+        """server_information
         Loops through the students as a family, which is perfect spot to do informing
         This is because we have all the emails in one place
         And can tell them all sort of things
@@ -363,7 +368,7 @@ and set permissions accordingly.".format(php_src))
                 results = self.server_information.get_temp_storage('to_be_informed',
                                                                    idnumber = child.num)
                 if results:
-                    handle_new_student(results, family, child, verbose=self.verbose)
+                    handle_new_student(results, family, child, server=self.email_server, verbose=self.verbose)
                     self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = child.num)
 
@@ -374,13 +379,41 @@ and set permissions accordingly.".format(php_src))
             results = self.server_information.get_temp_storage('to_be_informed',
                                                                idnumber = student.num)
             if results:
-                handle_new_student(results, family, student, verbose=self.verbose)
+                handle_new_student(results, family, student, server=self.email_server, verbose=self.verbose)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = student.num)
 
         # TODO: Email the admin any leftover items
         #leftover = self.server_information.dump_temp_storage('to_be_informed', clear=True)
         print("You may want to inspect to_be_informed now")
+
+    def build_updates(self):
+        self.verbose and print("Building updates")
+        section = self.config['MOODLE']
+        user = section.get('database_user')
+        password = section.get('password')
+        host = section.get('host')
+        database_name = section.get('database_name')
+        
+        from utils.DB import UpdateField
+        homework_club_updater = UpdateField(user, password, host, database_name, 'Homework Detention Database', 'Student')
+        homework_club_list = []
+        #golden_chair_updater = UpdateField(self.database_user, self.database_password, self.host, self.database_name, 'Homework Club', 'Student')
+        golden_chair_list = []
+        
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            if student.grade >= 6 and student.grade <= 8:
+                homework_club_list.append(student)
+            if student.is_elementary:
+                golden_chair_list.append(student)
+
+        homework_club_list.sort(key=lambda s: s.last)
+        golden_chair_list.sort(key=lambda s: s.homeroom)
+
+        self.verbose and print("Updating homework club")
+        homework_club_updater.update_menu( ["{} ({} {})".format(student.full_name, student.homeroom, student.num) for student in homework_club_list] )
+        #golden_chair_updater.update_menu(golden_chair_list)
 
     def build_profiles(self):
         """
@@ -409,7 +442,16 @@ and set permissions accordingly.".format(php_src))
         html_end = """</tbody>
     </table>"""
 
-        database = DragonNetDBConnection(verbose=self.verbose)
+        if not self.config.has_section('MOODLE'):
+            print("No moodle config available, cannot build profiles")
+            return
+
+        moodle = self.config['MOODLE']
+        host = moodle.get('host')
+        user = moodle.get('database_user')
+        password = moodle.get('password')
+        database_name = moodle.get('database_name')
+        database = DragonNetDBConnection(user, password, host, database_name, verbose=self.verbose)
 
         for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
@@ -516,7 +558,7 @@ and set permissions accordingly.".format(php_src))
                                     extra_profile_field=extra_profile_field)
                 fieldid = database.sql(sf("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not fieldid:
-                    self.verbose and print(sf("You need to manually add the {extra_profile_field} field!"))
+                    print(sf("You need to manually add the {extra_profile_field} field!"))
                     continue
                 fieldid = fieldid[0][0]
                 sf.define(fieldid=fieldid)
