@@ -52,7 +52,7 @@ class Student(Entry):
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
         self.homeroom = homeroom
-        self.profile_existing_icq = "Homeroom {}".format(self.homeroom)   # This is actually details that go on front page
+        self.profile_existing_institution = "Homeroom {}".format(self.homeroom)   # This is actually details that go on front page
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
@@ -64,14 +64,14 @@ class Student(Entry):
             self.profile_extra_issecstudent = True
         if self.grade in range(6, 8):
             self.profile_extra_ismsstudent = True
-            self.profile_existing_department = 'msstudent'
+            self.profile_existing_department = 'HOME4MS'
         if self.grade in range(9, 12):
             self.profile_extra_ishsstudent = True
-            self.profile_existing_department = 'hsstudent'
+            self.profile_existing_department = 'HOME4HS'
         elif self.is_elementary:
             self._cohorts = ['studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
-            self.profile_existing_department = 'elemstudent'
+            self.profile_existing_department = 'HOME4ES'
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}
@@ -226,6 +226,7 @@ class Student(Entry):
         self.first = " ".join(split[1:])
         self.last = self.last.strip()
         self.first = self.first.replace(',', ' ').strip().replace('  ', ' ')
+        self.full_name = "{} {}".format(self.first, self.last)
 
     def compare_num(self, num):
         return self.num == str(num)
