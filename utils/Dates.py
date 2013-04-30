@@ -17,7 +17,6 @@ def num_years(begin, end=None):
     return (end - begin).days / 365.25
 
 def get_years_since_enrolled(enrolment_date):
-    print(enrolment_date)
     return num_years(enrolment_date)
 
 def get_this_academic_year():
