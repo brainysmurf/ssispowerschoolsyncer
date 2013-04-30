@@ -65,7 +65,7 @@ class Students:
         self.path_to_powerschool = path_to_powerschool
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
-        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfodumpall')
+        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfo_v2')
         self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student,
                                                   path_to_errors=path_to_errors,
