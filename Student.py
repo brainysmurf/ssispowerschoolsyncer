@@ -29,6 +29,7 @@ class Student(Entry):
         self.path_to_output = path_to_output
         self.num = num
         self.entry_date = entry_date
+        self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
         self.grade = grade
         self.profile_extra_isstudent = True
