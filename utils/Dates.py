@@ -1,5 +1,25 @@
 import datetime
 
+def yearsago(years, from_date=None):
+    if from_date is None:
+        from_date = datetime.datetime.now()
+    try:
+        return from_date.replace(year=from_date.year - years)
+    except:
+        # Must be 2/29!
+        assert from_date.month == 2 and from_date.day == 29 # can be removed
+        return from_date.replace(month=2, day=28,
+                                 year=from_date.year-years)
+
+def num_years(begin, end=None):
+    if end is None:
+        end = datetime.datetime.now()
+    return (end - begin).days / 365.25
+
+def get_years_since_enrolled(enrolment_date):
+    print(enrolment_date)
+    return num_years(enrolment_date)
+
 def get_this_academic_year():
     now = datetime.date.today()
     year, month = int(str(now.year)[2:]), now.month
