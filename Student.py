@@ -2,7 +2,7 @@
 Every student represents a student
 """
 import re
-from utils.Dates import get_year_of_graduation
+from utils.Dates import get_year_of_graduation, get_years_since_enrolled
 from utils.Utilities import no_whitespace_all_lower, determine_password
 from Entry import Entry
 from Errors import DocumentErrors
@@ -28,6 +28,7 @@ class Student(Entry):
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
         self.num = num
+        self.entry_date = entry_date
         self.family_id = num[:4] + 'P'
         self.grade = grade
         self.profile_extra_isstudent = True
@@ -148,7 +149,6 @@ class Student(Entry):
             while self.username in taken_usernames:
                 print("Looking for a new name for student:\n{}".format(self.username))
                 self.username = first_half + ('_' * times_through) + second_half
-                input(self.username)
 
     def update(self, key, value):
         self.key = value
