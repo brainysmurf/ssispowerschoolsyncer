@@ -1,4 +1,5 @@
 from Students import Students
+from utils.Dates import get_years_since_enrolled
 
 class Breakdown:
     """ Represents a unit """
@@ -35,6 +36,16 @@ class Breakdown:
             self.number_other += 1
         self.total += 1
 
+import datetime
+
+class GradeBreakdown(Breakdown):
+    def add(self, student):
+        super().add(student)
+        length_of_time = datetime.datetime.today() - student.entry_date
+
+class HRBreakdown(Breakdown):
+    pass
+
 class Breakdowns:
     """ Separates into units """
 
@@ -50,9 +61,9 @@ class Breakdowns:
         if not target in self._db.keys():
             self._db[target] = Breakdown('Overall')
         if not target_grade in self._db.keys():
-            self._db[target_grade] = Breakdown('Grade {}'.format(student.grade))
+            self._db[target_grade] = GradeBreakdown('Grade {}'.format(student.grade))
         if not target_hr in self._db.keys():
-            self._db[target_hr] = Breakdown('Homeroom {}'.format(student.homeroom))
+            self._db[target_hr] = HRBreakdown('Homeroom {}'.format(student.homeroom))
         if not secondary in self._db.keys():
             self._db[secondary] = Breakdown('Secondary')
         if not elementary in self._db.keys():
@@ -61,6 +72,9 @@ class Breakdowns:
         self._db[target].add(student)
         if student.is_secondary:
             self._db[secondary].add(student)
+            for course in student.courses():
+                pass
+                
         if student.is_elementary:
             self._db[elementary].add(student)
         self._db[target_grade].add(student)
@@ -77,14 +91,14 @@ if __name__ == "__main__":
     class Settings:
         def __init__(self):
             self.verbose = False
-            self.courses = False
-            self.teachers = False
+            self.courses = True
+            self.teachers = True
 
     students = Students(Settings())
-    breakdown = Breakdowns()
+    breakdowns = Breakdowns()
 
     for student_key in students.get_student_keys():
         student = students.get_student(student_key)
-        breakdown.add(student)
+        breakdowns.add(student)
 
-    breakdown.output()
+    breakdowns.output()
