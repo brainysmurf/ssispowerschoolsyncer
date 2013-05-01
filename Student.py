@@ -21,13 +21,14 @@ class Object:
 
 class Student(Entry):
 
-    def __init__(self, num, grade, homeroom, lastfirst, parent_emails, entry_date, nationality,
+    def __init__(self, num, stuid, grade, homeroom, lastfirst, parent_emails, entry_date, nationality,
                  user_data = {},
                  path_to_errors='../errors',
                  path_to_output='../output'):
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
         self.num = num
+        self.stuid = stuid
         self.entry_date = entry_date
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
