@@ -95,7 +95,7 @@ class Homework_Club(DragonNetDBConnection):
         Works by looking for target date on the backend, and then finding all entries with matching dates...
            ... and then adding any entries with any that share the same recordid
         """
-        super().__init__()
+        super().__init__('moodle', 'ssissqlmoodle', 'localhost', 'moodle')
         d = {'table':table}
 
         self.name = self.__class__.__name__.replace("_", " ")
