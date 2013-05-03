@@ -8,6 +8,7 @@ import re
 
 from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 
+
 catch_wrong = True
 
 class Nothing(Exception): pass
@@ -115,7 +116,7 @@ class Homework_Club(DragonNetDBConnection):
         year  = self.date.year
 
         self.final = []
-        self.field_updater = HWDRDFU('Homework Detention Database', 'Date to Attend')
+        self.field_updater = HWDRDFU('moodle', 'ssissqlmoodle', 'localhost', 'moodle','Homework Detention Database', 'Date to Attend')
         
         d['date_to_check'] = self.field_updater.format_date(self.date)
         d['field_id'] = self.field_updater.target_id
