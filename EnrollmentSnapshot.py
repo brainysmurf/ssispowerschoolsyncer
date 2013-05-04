@@ -5,15 +5,10 @@ class Breakdown:
     """ Represents a unit """
 
     round_to = 1
+    exclusions = ['is_student', 'is_elementary', 'is_secondary']
     
     def __init__(self, identity):
         self.identity = identity
-        self.number_koreans = 0
-        self.number_chinese = 0
-        self.number_other = 0
-        self.percent_koreans = 0
-        self.percent_chinese = 0
-        self.percent_other = 0
         self._total = 0
 
     @property
@@ -22,26 +17,90 @@ class Breakdown:
 
     @total.setter
     def total(self, value):
+        """
+        Recalculate percentages every time total has been counted
+        """
         self._total = value
-        self.percent_koreans = round((self.number_koreans / self._total) * 100, self.round_to)
-        self.percent_chinese = round((self.number_chinese / self._total) * 100, self.round_to)
-        self.percent_other = round((self.number_other / self._total) * 100, self.round_to)
+        for nationality in self.nationalities():
+            number_key, percent_key = self.nationality_keys(nationality)
+            number, percent = self.nationality_info(nationality)
+            setattr(self, percent_key, round((number / self._total) * 100, self.round_to))
+        for group in self.groups():
+            number_key, percent_key = self.group_keys(group)
+            number, percent = self.group_info(group)
+            setattr(self, percent_key, round((number / self._total) * 100, self.round_to))
 
     def add(self, student):
-        if student.is_chinese:
-            self.number_chinese += 1
-        elif student.is_korean:
-            self.number_koreans += 1
-        else:
-            self.number_other += 1
+        nationality_number_key, nationality_percent_key = self.nationality_keys(student.nationality)
+        for key in student.__dict__.keys():
+            if key.startswith('is_') and getattr(student, key) and not key in self.exclusions:
+                group_name = key.replace('is_', '')
+                group_number_key, group_percent_key = self.group_keys(group_name)
+                if not hasattr(self, group_number_key):
+                    setattr(self, group_number_key, 0)
+                if not hasattr(self, group_percent_key):
+                    setattr(self, group_percent_key, 0)
+                group_number, group_percent = self.group_info(group_name)
+                setattr(self, group_number_key, group_number + 1)
+
+        # set default values:
+        if not hasattr(self, nationality_number_key):
+            setattr(self, nationality_number_key, 0)
+        if not hasattr(self, nationality_percent_key):
+            setattr(self, nationality_percent_key, 0)
+        setattr(self, nationality_number_key, getattr(self, nationality_number_key) + 1)
+        # percentages are calculated on below call
         self.total += 1
 
-import datetime
+    def groups(self):
+        for attr in self.__dict__.keys():
+            if attr.startswith('group_number_'):
+                yield attr.replace('group_number_', '')
+
+    def group_keys(self, group):
+        return ('group_number_{}'.format(group), 'group_percent_{}'.format(group))
+
+    def group_info(self, group):
+        number, percent = self.group_keys(group)
+        return (getattr(self, number), getattr(self, percent))
+
+    def nationalities(self):
+        for attr in self.__dict__.keys():
+            if attr.startswith('number_'):
+                yield attr.replace("number_", '')
+
+    def nationality_keys(self, nationality):
+        return ('number_{}'.format(nationality.lower()), 'percent_{}'.format(nationality.lower()))
+
+    def nationality_info(self, nationality):
+        number_key, percent_key = self.nationality_keys(nationality)
+        return (getattr(self, number_key), getattr(self, percent_key))
+
+    def output(self):
+        print("In {identity} there are:".format(identity=self.identity))
+        groups = list(self.groups())
+        groups.sort()
+        #print('\tBy groups')
+        for group in groups:
+            number, percent = self.group_info(group)
+            d = dict(group=group.upper(), number=number, percent=percent)
+            print("\t{group}: {number} ({percent}%)".format(**d))
+        nationalities = list(self.nationalities())
+        nationalities.sort()
+        #print('\tBy passports')
+        for nationality in nationalities:
+            number, percent = self.nationality_info(nationality)
+            d = dict(nationality=nationality.title(), number=number, percent=percent)
+            print("\t{nationality}: {number} ({percent}%)".format(**d))
+        total_nationalities = len(list(self.nationalities()))
+        total_groups = len(list(self.groups()))
+        print("\t---\n\t{total} total individuals with passports from {total_nationalities} countries and {total_groups} group(s)".format(total=self.total,
+                                                                                                                                 total_nationalities=total_nationalities,
+                                                                                                                                 total_groups=total_groups))
 
 class GradeBreakdown(Breakdown):
     def add(self, student):
         super().add(student)
-        length_of_time = datetime.datetime.today() - student.entry_date
 
 class HRBreakdown(Breakdown):
     pass
@@ -84,9 +143,11 @@ class Breakdowns:
         keys = list(self._db.keys())
         keys.sort()
         for key in keys:
-            print("In {identity} there are:\n\t{number_koreans} koreans ({percent_koreans})\n\t{number_chinese} chinese ({percent_chinese})\n\t{number_other} other ({percent_other})\n\t---\n\t{_total} total".format(**self._db[key].__dict__))
+            self._db[key].output()
+
 
 if __name__ == "__main__":
+
 
     class Settings:
         def __init__(self):
