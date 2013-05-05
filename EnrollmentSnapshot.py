@@ -98,9 +98,25 @@ class Breakdown:
                                                                                                                                  total_nationalities=total_nationalities,
                                                                                                                                  total_groups=total_groups))
 
+import datetime
+
 class GradeBreakdown(Breakdown):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.years_here = {}        
+    
     def add(self, student):
         super().add(student)
+        years = str(student.years_enrolled)[0]
+        if not years in self.years_here.keys():
+            self.years_here[years] = []
+        self.years_here[years].append(student)
+
+    def output(self):
+        if not self.years_here:
+            return
+        for year in list(self.years_here.keys()):
+            print("\t\t{} kids who have been for {} years".format(len(self.years_here), year))
 
 class HRBreakdown(Breakdown):
     pass
@@ -144,7 +160,6 @@ class Breakdowns:
         keys.sort()
         for key in keys:
             self._db[key].output()
-
 
 if __name__ == "__main__":
 

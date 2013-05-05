@@ -65,7 +65,7 @@ class Students:
         self.path_to_powerschool = path_to_powerschool
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
-        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfo_v2')
+        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfo_v2.1')
         self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student,
                                                   path_to_errors=path_to_errors,
@@ -152,7 +152,7 @@ class Students:
 
             # This MUST sync with AutoSend
             try:
-                stunum, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
+                stunum, stuid, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
             except ValueError:
                 print(line)
                 print("Possibly this line had even number of tabs??")
@@ -167,7 +167,7 @@ class Students:
 
             # This SHOULD PROBABLY sync with AutoSend, with above
             new_student = self.add(stunum,
-                grade,
+                stuid, grade,
                 homeroom,
                 firstlast,
                 re.split('[;,]', parent_emails),

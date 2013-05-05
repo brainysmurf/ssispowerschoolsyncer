@@ -8,6 +8,7 @@ import re
 
 from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 
+
 catch_wrong = True
 
 class Nothing(Exception): pass
@@ -95,7 +96,7 @@ class Homework_Club(DragonNetDBConnection):
         Works by looking for target date on the backend, and then finding all entries with matching dates...
            ... and then adding any entries with any that share the same recordid
         """
-        super().__init__()
+        super().__init__('moodle', 'ssissqlmoodle', 'localhost', 'moodle')
         d = {'table':table}
 
         self.name = self.__class__.__name__.replace("_", " ")
@@ -115,7 +116,7 @@ class Homework_Club(DragonNetDBConnection):
         year  = self.date.year
 
         self.final = []
-        self.field_updater = HWDRDFU('Homework Detention Database', 'Date to Attend')
+        self.field_updater = HWDRDFU('moodle', 'ssissqlmoodle', 'localhost', 'moodle','Homework Detention Database', 'Date to Attend')
         
         d['date_to_check'] = self.field_updater.format_date(self.date)
         d['field_id'] = self.field_updater.target_id
