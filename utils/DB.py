@@ -340,6 +340,7 @@ class ServerInfo(DragonNetDBConnection):
             password = moodle_config.get('database_password')
             database = moodle_config.get('database_name')
             self.server = moodle_config.get('host')
+            self.actually_sync = moodle_config.get('sync', False)
 
             super().__init__(user, password, self.server, database, verbose=verbose)
             self.init_users_and_groups()
@@ -426,6 +427,8 @@ class ServerInfo(DragonNetDBConnection):
         Does not handle infinite loops though
         """
         if not self.db:
+            return
+        if not self.actually_sync:
             return
         idnumber = student.num
         username = student.username
