@@ -340,7 +340,7 @@ class ServerInfo(DragonNetDBConnection):
             password = moodle_config.get('database_password')
             database = moodle_config.get('database_name')
             self.server = moodle_config.get('host')
-            self.actually_sync = bool(moodle_config.get('sync', False))
+            self.actually_sync = bool(moodle_config.getboolean('sync', False))
 
             super().__init__(user, password, self.server, database, verbose=verbose)
             self.init_users_and_groups()
