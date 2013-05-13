@@ -125,19 +125,26 @@ class YearsDatabase:
     def how_many_nationality(self, nationality):
         return len(self.nationality_info[nationality])
 
+    def total(self):
+        result = 0
+        for nationality in self.nationality_info.keys():
+            result += len(self.nationality_info[nationality])
+        return result
+
     def nationalities(self):
-        result = []
-        percents = []
+        """
+        Returns list of nationalities we have, sorted by percents
+        """
+        results = []
         percent_dict = {}
         for key in list(self.nationality_info.keys()):
             how_many = self.how_many_nationality(key)
-            p = round((how_many / how_many) * 100, self.round_to)
-            percents.append(p)
-            percent_dict[p] = self.nationality_info[key]
+            p = round((how_many / self.total()) * 100, self.round_to)
+            results.append( (p, key) )
 
-        percents.sort(reverse=True)
-        return [percent_dict[p] for p in percents]
-
+        results.sort(key=lambda x:x[0])
+        return [item[1] for item in results]
+            
     def append(self, student):
         self.duration_info.append(student)
 
@@ -153,7 +160,7 @@ class YearsEnrolled:
         self.years_here = {}
 
     def all_years(self):
-        years = self.years_here.keys()
+        years = list(self.years_here.keys())
         years.sort(reverse=True)
         return years
     
@@ -163,22 +170,38 @@ class YearsEnrolled:
             self.years_here[years] = YearsDatabase(years)
         self.years_here[years].append(student)
 
+    def from_phrase(self, how_many, total):
+        if how_many == total:
+            if how_many == 1:
+                return ("He or she", "is")
+            elif how_many == 2:
+                return ("Both of them", "are")
+            else:
+                return ("All of them", "are")
+        else:
+            if how_many > 1:
+                return (str(how_many) + " of them", "are")
+            else:
+                return (str(how_many) + " of them", "is")
+
     def output(self, total):
         if not self.years_here:
             return
-        all_years = self.years_here.keys()
+        all_years = self.all_years()
         for year in all_years:
             database = self.years_here[year]
             how_many_total = database.how_many_duration()
             how_long = {'0': "less than a year", '1': "one year"}.get(year, '{} years'.format(year))
             percentage = round((how_many_total / total) * 100, self.round_to)
             print("\t{} kids enrolled for {} ({}%)".format(how_many_total, how_long, percentage))
-            nationalities = database.nationalities()
-            nationalities.sort()
-            for nationality in nationalities:
+            for nationality in database.nationalities():
                 how_many = database.how_many_nationality(nationality)
                 percent = round((how_many / how_many_total) * 100, self.round_to)
-                print("\t\t{} of them ({}%) are from {}".format(how_many, percent, nationality))
+                from_phrase, after_from = self.from_phrase(how_many, how_many_total)
+                print("\t\t{} ({}%) {} from {}".format(from_phrase,
+                                                       percent,
+                                                       after_from,
+                                                       nationality))
 
 class HRBreakdown(Breakdown):
     pass
