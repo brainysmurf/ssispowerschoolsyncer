@@ -27,9 +27,12 @@ import os
 class UnknownGrade(BasicException): pass
 class NoHomeroom(BasicException): pass
 
-def put_in_order(what):
-    result = 0 # elementary don't have LEARN
-    trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7}
+def put_in_order(what, reverse=False):
+    result = 1 # elementary don't have LEARN
+    if reverse:
+        trans = {'L':7,'E':6,'A':5,'R':4,'N':3,'S':2,'SWA':1}
+    else:
+        trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7}
     if '6' in what:
         result = 100 + trans[re.sub('[0-9]', '', what)]
     elif '7' in what:
@@ -44,6 +47,8 @@ def put_in_order(what):
         result = 600 + trans[re.sub('[0-9]', '', what)]
     elif '12' in what:
         result = 700 + trans[re.sub('[0-9]', '', what)]
+    elif re.sub('[1..9]', '', what):
+        result = ord(re.sub('[1..9]', '', what)[0])
     return result
 
 class Students:
@@ -169,6 +174,7 @@ class Students:
             new_student = self.add(stunum,
                 stuid, grade,
                 homeroom,
+                self.convert_hr_to_sortable(homeroom),
                 firstlast,
                 re.split('[;,]', parent_emails),
                 datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
@@ -370,6 +376,9 @@ class Students:
                 else:
                     contacts += "{teacher} teaches {course_name}: <a href=\"mailto:{teacher_email}\">{teacher_email}</a><br />".format(**d)
             student.profile_field_contacts = contacts.replace(',', '')  # comma in here would cause a problem
+
+    def convert_hr_to_integer(self, hr):
+        return {'K':-1, 'R':-2, 'G':-3, 'P':-4, 'N':-5}.get(hr[0], put_in_order(hr, reverse=True))
  
     def convert_hr_to_grade(self, hr):
         if not hr: raise NoHomeroom(hr)
@@ -377,9 +386,12 @@ class Students:
             return int(re.sub(r'[a-zA-Z]', '', hr))
         else:
             hr = hr.upper()
-            result = {'K':0, 'R':-1, 'G':-2, 'P':-3, 'N':-4}.get(hr[0], None)
+            result = {'K':-1, 'R':-2, 'G':-3, 'P':-4, 'N':-5}.get(hr[0], None)
             if result == None: raise UnknownGrade(hr)
             return result
+
+    def convert_hr_to_sortable(self, hr):
+        return self.convert_hr_to_grade(hr) + (1 / self.convert_hr_to_integer(hr))
 
     def add(self, *args, **kwargs):
         """

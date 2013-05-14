@@ -21,7 +21,7 @@ class Object:
 
 class Student(Entry):
 
-    def __init__(self, num, stuid, grade, homeroom, lastfirst, parent_emails, entry_date, nationality,
+    def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, parent_emails, entry_date, nationality,
                  user_data = {},
                  path_to_errors='../errors',
                  path_to_output='../output'):
@@ -58,6 +58,7 @@ class Student(Entry):
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
         self.homeroom = homeroom
+        self.homeroom_sortable = homeroom_sortable
         self.profile_existing_institution = "Homeroom {}".format(self.homeroom)   # This is actually details that go on front page
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
         self.determine_username()
