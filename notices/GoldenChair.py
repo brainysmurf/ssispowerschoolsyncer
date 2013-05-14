@@ -48,7 +48,6 @@ class Golden_Chair(ExtendMoodleDatabaseToAutoEmailer):
         super().define()
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
         self.agents = ['rebeccalouiseclentwo@ssis-suzhou.net']
-        self.agents = 'adammorris@ssis-suzhou.net'
         self.agent_map = {}
 
         self.search_date = "same day"
