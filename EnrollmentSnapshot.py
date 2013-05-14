@@ -126,6 +126,13 @@ class YearsDatabase:
     def how_many_duration(self):
         return len(self.duration_info)
 
+    def who(self, nationality):
+        everyone = self.nationality_info[nationality]
+        if len(everyone) > 5:
+            return ", ".join([everyone[i].first + ' ' + everyone[i].last for i in range(4)]) + '...'
+        else:
+            return ", ".join([this.first + ' ' + this.last for this in everyone])
+
     def how_many_nationality(self, nationality):
         return len(self.nationality_info[nationality])
 
@@ -202,10 +209,12 @@ class YearsEnrolled:
                 how_many = database.how_many_nationality(nationality)
                 percent = round((how_many / how_many_total) * 100, self.round_to)
                 from_phrase, after_from = self.from_phrase(how_many, how_many_total)
-                print("\t\t{} ({}%) {} from {}".format(from_phrase,
+                who = database.who(nationality)
+                print("\t\t{} ({}%) {} from {} [{}]".format(from_phrase,
                                                        percent,
                                                        after_from,
-                                                       nationality))
+                                                       nationality,
+                                                          who))
 
 class HRBreakdown(Breakdown):
     pass
