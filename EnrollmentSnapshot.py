@@ -7,9 +7,13 @@ class Breakdown:
     round_to = 1
     exclusions = ['is_student', 'is_elementary', 'is_secondary']
     
-    def __init__(self, identity):
+    def __init__(self, identity, sort=None):
+        """
+        TODO: Figure out sorting technique
+        """
         self.identity = identity
         self._total = 0
+        self.sort = sort if sort else 0
         self.years_enrolled = YearsEnrolled()
 
     @property
@@ -223,23 +227,31 @@ class Breakdowns:
         korean_high_school = 'korean_high_school'
         korean_elementary = 'korean_elementary'
         if not target in self._db.keys():
-            self._db[target] = Breakdown('Overall')
+            self._db[target] = Breakdown('Overall', -100)
         if not target_grade in self._db.keys():
-            self._db[target_grade] = GradeBreakdown('Grade {}'.format(student.grade))
+            self._db[target_grade] = GradeBreakdown('Grade {}'.format(student.grade),
+                                                    sort= student.grade)
         if not target_hr in self._db.keys():
-            self._db[target_hr] = HRBreakdown('Homeroom {}'.format(student.homeroom))
+            self._db[target_hr] = HRBreakdown('Homeroom {}'.format(student.homeroom),
+                                              sort=student.homeroom_sortable)
         if not secondary in self._db.keys():
-            self._db[secondary] = Breakdown('Secondary')
+            self._db[secondary] = Breakdown('Secondary',
+                                            sort=-50)
         if not elementary in self._db.keys():
-            self._db[elementary] = Breakdown('Elementary')
+            self._db[elementary] = Breakdown('Elementary',
+                                             sort=-49)
         if not koreans in self._db.keys():
-            self._db[koreans] = Breakdown("Koreans")
+            self._db[koreans] = Breakdown("Koreans",
+                                          sort=-40)
         if not korean_middle_school in self._db.keys():
-            self._db[korean_middle_school] = Breakdown("Koreans in Middle School")
+            self._db[korean_middle_school] = Breakdown("Koreans in Middle School",
+                                                       sort=-30)
         if not korean_high_school in self._db.keys():
-            self._db[korean_high_school] = Breakdown("Koreans in High School")
+            self._db[korean_high_school] = Breakdown("Koreans in High School",
+                                                     sort=-20)
         if not korean_elementary in self._db.keys():
-            self._db[korean_elementary] = Breakdown("Koreans in Elementary")
+            self._db[korean_elementary] = Breakdown("Koreans in Elementary",
+                                                    sort=-10)
 
         self._db[target].add(student)
         if student.is_secondary:
@@ -263,9 +275,12 @@ class Breakdowns:
 
     def output(self):
         keys = list(self._db.keys())
-        keys.sort()
+        to_sort = []
         for key in keys:
-            self._db[key].output()
+            to_sort.append( (key, self._db[key].sort) )
+        to_sort.sort(key= lambda x: x[1])
+        for item in to_sort:
+            self._db[item[0]].output()
 
 if __name__ == "__main__":
 
