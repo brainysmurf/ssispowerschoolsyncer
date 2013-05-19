@@ -5,7 +5,7 @@ from Families import Families
 from utils.Bulk import MoodleCSVFile
 from utils.Utilities import no_whitespace_all_lower, convert_short_long, Categories, department_heads, department_email_names
 from utils.FilesFolders import clear_folder
-from utils.DB import ServerInfo
+from utils.ServerInfo import ServerInfo
 from utils.DB import NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, \
     GroupDoesNotExist, StudentNotInGroup, ParentAccountNotAssociated, ParentNotInGroup, MustExit
 from utils.AutoSendFile import File
