@@ -340,7 +340,8 @@ class ServerInfo(DragonNetDBConnection):
             password = moodle_config.get('database_password')
             database = moodle_config.get('database_name')
             self.server = moodle_config.get('host')
-            self.actually_sync = bool(moodle_config.getboolean('sync', False))
+            self.sync_moodle = moodle_config.getboolean('sync', False)
+            self.sync_email  = email_config.getboolean('sync', False)
 
             super().__init__(user, password, self.server, database, verbose=verbose)
             self.init_users_and_groups()
@@ -428,14 +429,12 @@ class ServerInfo(DragonNetDBConnection):
         """
         if not self.db:
             return
-        if not self.actually_sync:
-            return
         idnumber = student.num
         username = student.username
         self.verbose and print("Checking current server information for student:\n{}".format(student))
         if student.is_secondary:
             # Account-based checks
-            if self.moodle_config:
+            if self.moodle_config and self.sync_moodle:
                 if self.students.get(idnumber):
                     if not username == self.students[idnumber]:
                         # Use the one that we know from DragonNet
@@ -494,36 +493,46 @@ class ServerInfo(DragonNetDBConnection):
                 # Yuck
                 # TODO: Unenroll students from courses in teaching & learning they don't need to be in anymore
                     
-            if self.email_config:  #TODO: use path provided in settings
-                if self.email_config.get('check_accounts') and self.email_config.get('accounts_path'):
+            if self.email_config and self.sync_email:
+                if self.email_config.get('accounts_path'):
+                    if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
+                        self.verbose and print("Raising NoEmailAddress")
+                        raise NoEmailAddress
+
+        if student.is_elementary:
+            # Don't need to check for whether parent account exists or not, because that
+            # will happen in family info below
+            if student.grade == 5:
+                if self.email_config and self.sync_email:
                     if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
                         self.verbose and print("Raising NoEmailAddress")
                         raise NoEmailAddress
 
         familyid = student.family_id
-        if not familyid in list(self.families.keys()):
-            raise NoParentAccount
-        else:
-            if student.is_secondary:
-                if not student.num in self.families[familyid]:
-                    self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
-                    raise ParentAccountNotAssociated
+        if self.sync_moodle:
+            if not familyid in list(self.families.keys()):
+                raise NoParentAccount
+            else:
+                if student.is_secondary:
+                    if not student.num in self.families[familyid]:
+                        self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
+                        raise ParentAccountNotAssociated
 
-        self.verbose and print("Now checking parent account enrollments")
-        for i in range(len(student.courses())):
-            course = student.courses()[i]
-            group = student.groups()[i]
-            members = self._group_members.get(group)
+            self.verbose and print("Now checking parent account enrollments")
+            for i in range(len(student.courses())):
+                course = student.courses()[i]
+                group = student.groups()[i]
+                members = self._group_members.get(group)
 
-            if members:
-                if not student.family_id in members:
-                    if not course in self.courses.keys():
-                        self.verbose and print("Not raising ParentNotInGroup because the course {} doesn't exist".format(course))
-                        continue
-                    self.verbose and print("This parent is not in group {}:\n{}".format(group, student.family_id))
-                    raise ParentNotInGroup
-                else:
-                    pass # ok
+                if members:
+                    if not student.family_id in members:
+                        if not course in self.courses.keys():
+                            self.verbose and print("Not raising ParentNotInGroup because the course {} doesn't exist".format(course))
+                            continue
+                        self.verbose and print("This parent is not in group {}:\n{}".format(group, student.family_id))
+                        raise ParentNotInGroup
+                    else:
+                        pass # ok
 
 class ProfileUpdater(DragonNetDBConnection):
 
