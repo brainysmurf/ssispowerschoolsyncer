@@ -15,7 +15,7 @@ import datetime
 import os
 from utils.Formatter import Smartformatter
 
-from ModifyMoodleUsers import StudentModifier
+from ModifyDragonNet import DragonNetModifier
 
 from utils.DB import DragonNetDBConnection
 
@@ -586,7 +586,7 @@ and set permissions accordingly.".format(php_src))
         self.verbose and print("Building csv file for moodle")
         path_to_cli = self.config['MOODLE'].get('path_to_cli') if self.config.has_section('MOODLE') else None
         path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
-        modify = StudentModifier(dry_run=self.dry_run,
+        modify = DragonNetModifier(dry_run=self.dry_run,
                                  verbose =self.verbose,
                                  path_to_cli=path_to_cli,
                                  path_to_php=path_to_php,

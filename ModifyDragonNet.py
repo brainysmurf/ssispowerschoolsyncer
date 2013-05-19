@@ -20,7 +20,7 @@ def test(id, student, extra):
             }.get(id, None)
             )
 
-class StudentModifier(CallPHP):
+class DragonNetModifier(CallPHP):
 
       def enrol_student_into_courses(self, student):
             """
@@ -188,5 +188,5 @@ class FakeStudent:
 
 if __name__ == "__main__":
       s = FakeStudent()
-      m = StudentModifier()
+      m = DragonNetModifier()
       m.no_email(s)
