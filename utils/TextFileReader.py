@@ -1,3 +1,5 @@
+import re
+
 class Columns(list):    
     def output(self):
         for item in self:
@@ -9,15 +11,29 @@ class AbstractInterfaceClass:
     """
     def __init__(self, **kwargs):
         self.init(**kwargs)
+
+    def __str__(self):
+        return self.__class__.__name__ + ': ' + "\n\t".join([key + ' -> ' + str(getattr(self, key)) for key in self.__dict__])
     
     def init(self, **kwargs):
         for key, value in kwargs.items():
-            if hasattr(self, self.get_hook(key)):
-                hook = getattr(self, self.get_hook(key))
-                setattr(self, key, hook(value))
-            setattr(self, key, value)
 
-    def get_hook(self, keyword):
+            new_key = self.is_getting_key(key)
+            
+            if hasattr(self, self.will_get_hook(new_key)):
+                hook = getattr(self, self.will_get_hook(new_key))
+                setattr(self, new_key, hook(value))
+            setattr(self, new_key, value)
+
+    def is_getting_key(self, key):
+        """
+        Override if needed to standardize key names
+        In order to ensure we can get attributes without using getattr,
+        we need to make key a legal attribute name that can be typed with . syntax
+        """
+        return re.sub('[\[\]()]', '', key)
+
+    def will_get_hook(self, keyword):
         return 'hook_{}'.format(keyword)
 
     # Example hook
@@ -28,6 +44,14 @@ class AbstractInterfaceClass:
         # returns integer value of whatever is passed
         return int(value)
 
+class Grade:    
+    def __init__(self, value):
+        self.value = value
+
+class Behavior:
+    def __init__(self, value):
+        self.value = value
+        
 class TextFileReader:
     """
     Provides mechanism for creation of classes (or of dictionary instances)
@@ -51,7 +75,7 @@ class TextFileReader:
 
     def init(self):
         """
-        Called after opening file, self.raw should be defined
+        Called after constructor
         """
         with open(self.path) as the_file:
             firstline = the_file.readline()
@@ -62,15 +86,17 @@ class TextFileReader:
             column = split[icolumn].replace(' ', '_').lower()
             self.columns.append(column)
             icolumn += 1
-        self.columns.output()
 
     def readin(self):
         with open(self.path) as the_file:
-            the_file.readline() # skip
+            the_file.readline() # skip first row
             for line in the_file:
                 yield line.rstrip('\n')
 
-    def assign(self):
+    def generate(self):
+        """
+        Returns objects
+        """
         for line in self.readin():
             split = line.split(self.delimiter)
             content = {self.columns[i]: split[i] for i in range(len(self.columns))}
@@ -79,8 +105,11 @@ class TextFileReader:
             else:
                 yield content
 
+    def __iter__(self):
+        return self.assign
+
 if __name__ == "__main__":
 
-    grades = TextFileReader('../powerschool/ssis_storedgrades', interface_class=AbstractInterfaceClass)
-    for item in grades.assign():
+    grades = TextFileReader('../powerschool/ssis_storedgrades')
+    for item in grades.generate():
         print(item)
