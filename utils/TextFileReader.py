@@ -62,15 +62,18 @@ class TextFileReader:
     By default the values are all strings but can be converted by defining hook_ methods
     """
 
-    def __init__(self, path, interface_class=None,
+    def __init__(self, path, interface_class=None, no_klass=False,
                  delimiter='\t'):
         """
-        Pass me a klass, and there are more hooks, otherwise we'll use dictionaries as an interface
+        Pass me a klass, and you can override with hooks, otherwise we'll use AbstractInterfaceClass
+        No_klass can be used if you want the raw dictionary
+        NOTE: no_klass is not used if interface_class is passed as value that evaluates to True
         """
         self.path = path
         self.delimiter = delimiter
         self.columns = Columns()
         self.interface_class = interface_class
+        self.no_klass = no_klass
         self.init()
 
     def init(self):
@@ -102,6 +105,8 @@ class TextFileReader:
             content = {self.columns[i]: split[i] for i in range(len(self.columns))}
             if self.interface_class:
                 yield self.interface_class(**content)
+            elif not self.no_klass:
+                yield AbstractInterfaceClass(**content)
             else:
                 yield content
 
@@ -110,6 +115,6 @@ class TextFileReader:
 
 if __name__ == "__main__":
 
-    grades = TextFileReader('../powerschool/ssis_storedgrades')
+    grades = TextFileReader('../../powerschool/ssis_storedgrades')
     for item in grades.generate():
         print(item)
