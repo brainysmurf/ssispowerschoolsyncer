@@ -126,8 +126,10 @@ class YearsDatabase:
     def how_many_duration(self):
         return len(self.duration_info)
 
-    def who(self, nationality):
+    def who(self, nationality, all=False):
         everyone = self.nationality_info[nationality]
+        if all:
+            return ", ".join([this.first + ' ' + this.last for this in everyone])
         if len(everyone) > 5:
             return ", ".join([everyone[i].first + ' ' + everyone[i].last for i in range(4)]) + '...'
         else:
@@ -176,7 +178,7 @@ class YearsEnrolled:
         return years
     
     def add(self, student):
-        years = str(student.years_enrolled)[0]
+        years = int(student.years_enrolled)
         if not years in self.years_here.keys():
             self.years_here[years] = YearsDatabase(years)
         self.years_here[years].append(student)
@@ -209,12 +211,11 @@ class YearsEnrolled:
                 how_many = database.how_many_nationality(nationality)
                 percent = round((how_many / how_many_total) * 100, self.round_to)
                 from_phrase, after_from = self.from_phrase(how_many, how_many_total)
-                who = database.who(nationality)
+                who = database.who(nationality, all=True)
                 print("\t\t{} ({}%) {} from {} [{}]".format(from_phrase,
                                                        percent,
                                                        after_from,
-                                                       nationality,
-                                                          who))
+                                                       nationality, who))
 
 class HRBreakdown(Breakdown):
     pass
