@@ -393,7 +393,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             'title': self.get_subject(),   # remove the 'Student Notices for' part
             'author': 35,  # peter fowles
             'content': self.get_html().replace("'", replace_apostrophes).replace('\n', ''),   # escape apostrophes for bash
-            'date': self.date.strftime('%Y-%m-%d {}'.format(hour.strftime('%H:%S:%M')),
+            'date': self.date.strftime('%Y-%m-%d {}'.format(hour.strftime('%H:%S:%M'))),
             'blog': "sites.ssis-suzhou.net/{}".format(blog)
             }
         command = """/usr/bin/wp post create --path=/var/www/wordpress --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --url={blog}""".format(**d)
