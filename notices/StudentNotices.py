@@ -23,6 +23,7 @@ from utils.PythonMail import send_html_email
 from utils.Dates import custom_strftime
 from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 from notices.Samples import student_notices_samples, student_notices_tag_samples
+import datetime
 
 verbose = False
 catch_wrong = True
