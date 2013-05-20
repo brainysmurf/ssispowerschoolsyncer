@@ -108,6 +108,6 @@ if __name__ == "__main__":
     try:
         notices = Student_Notices()
         notices.email_to_agents()
-        notices.post_to_wordpress('secondarystudentannouncements', '7:00')
+        notices.post_to_wordpress('secondarystudentannouncements', datetime(hour=7,minute=0,second=0)
     except Nothing:
         print("No matching entries found")
