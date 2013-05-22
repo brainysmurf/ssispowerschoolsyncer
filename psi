@@ -5,8 +5,7 @@ from Families import Families
 from utils.Bulk import MoodleCSVFile
 from utils.Utilities import no_whitespace_all_lower, convert_short_long, Categories, department_heads, department_email_names
 from utils.FilesFolders import clear_folder
-from utils.ServerInfo import ServerInfo
-from utils.DB import NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, \
+from utils.ServerInfo import ServerInfo, NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, \
     GroupDoesNotExist, StudentNotInGroup, ParentAccountNotAssociated, ParentNotInGroup, MustExit
 from utils.AutoSendFile import File
 from Inform import inform_new_parent, inform_new_student, reinform_new_parent
@@ -750,6 +749,17 @@ and set permissions accordingly.".format(php_src))
                             times_through = 11
                         else:
                             self.server_information.init_users_and_groups()
+                            
+                    except NoEmailAddress:
+                        self.verbose and print("Student does not have an email address:\n{}".format(student))
+                        modify.no_email(student)
+                        self.server_information.init_users_and_groups()
+                        if self.dry_run:
+                            times_through = 11
+                            # or just manually update the database, right?
+                        else:
+                            self.server_information.init_users_and_groups()
+                            
                     except MustExit:
                         continue_until_no_errors = False
                     else:

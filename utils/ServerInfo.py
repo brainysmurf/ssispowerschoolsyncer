@@ -1,4 +1,32 @@
 from utils.DB import DragonNetDBConnection
+import os
+
+class StudentChangedName(Exception):
+    pass
+
+class NoStudentInMoodle(Exception):
+    pass
+
+class NoEmailAddress(Exception):
+    pass
+
+class NoParentAccount(Exception):
+    pass
+
+class ParentAccountNotAssociated(Exception):
+    pass
+
+class ParentNotInGroup(Exception):
+    pass
+
+class GroupDoesNotExist(Exception):
+    pass
+
+class StudentNotInGroup(Exception):
+    pass
+
+class MustExit(Exception):
+    pass
 
 class ServerInfo(DragonNetDBConnection):
 
@@ -99,6 +127,7 @@ class ServerInfo(DragonNetDBConnection):
             # Store the actual information
             self._groups[usernum].append(groupname)
             self._group_members[groupname].append(usernum)
+
     def check_student(self, student):
         """
         Raises errors describing what has happened, if anything
@@ -183,6 +212,7 @@ class ServerInfo(DragonNetDBConnection):
                 if self.email_config and self.sync_email:
                     if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
                         self.verbose and print("Raising NoEmailAddress")
+                        input(self)
                         raise NoEmailAddress
 
         familyid = student.family_id

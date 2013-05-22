@@ -13,32 +13,6 @@ class NotActuallyPG:
     def __call__(self):
         return []
 
-class StudentChangedName(Exception):
-    pass
-
-class NoStudentInMoodle(Exception):
-    pass
-
-class NoEmailAddress(Exception):
-    pass
-
-class NoParentAccount(Exception):
-    pass
-
-class ParentAccountNotAssociated(Exception):
-    pass
-
-class ParentNotInGroup(Exception):
-    pass
-
-class GroupDoesNotExist(Exception):
-    pass
-
-class StudentNotInGroup(Exception):
-    pass
-
-class MustExit(Exception):
-    pass
 
 class DBConnection:
     """
