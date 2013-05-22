@@ -76,7 +76,7 @@ department_email_names = {
 	'departHUM':'humanitiesdepartment',
 	'departARTS':'artsdepartment',
 	'departTOK':'tokdepartment',
-	'departHROOM':'homeroomteachers',
+	'departHROOM':'homeroomteachersALL',
 	'departSCIENCE':'sciencedepartment',
 	'departENGLISH':'englishdepartment',
 	'departLIB':'librarydepartment',
