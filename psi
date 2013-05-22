@@ -1091,8 +1091,9 @@ and set permissions accordingly.".format(php_src))
 
 
         self.verbose and print("Set up department batch emails")
-        ##  SETUP DEPARTMENTS
+        ##  SETUP DEPARTMENTS, including by homeroom teachers
         depart_dict = {}
+        homeroom_teachers_dict = {}
         for teacher_key in self.students.get_teacher_keys():
             teacher = self.students.get_teacher(teacher_key)
             departments = teacher.get_departments()
@@ -1109,6 +1110,17 @@ and set permissions accordingly.".format(php_src))
                 if teacher and not teacher.email in depart_dict[d_email_name]:
                     self.verbose and print("Adding {} into department {}".format(teacher, d_email_name))
                     depart_dict[d_email_name].append(teacher.email)
+
+            if teacher.homeroom:
+                d['homeroom'] = teacher.homeroom
+                if not teacher.homeroom in homeroom_teachers_dict.keys():
+                    homeroom_teachers_dict[teacher.homeroom] = True
+                    setup_postfix = '{path}/departments{ext}'.format(**d)
+                    with open(setup_postfix, 'a') as f:
+                        f.write("homeroomteachers{homeroom}: :include:{path}/departments/homeroomteachers{homeroom}{ext}\n".format(**d))
+                setup_postfix = '{path}/departments/homeroomteachers{homeroom}{ext}'.format(**d)
+                with open(setup_postfix, 'a') as f:
+                    f.write(teacher.email + '\n')
 
         for department in list(depart_dict.keys()):
             # department is now actually the email name we want to use 
