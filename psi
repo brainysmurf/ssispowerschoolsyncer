@@ -632,7 +632,6 @@ and set permissions accordingly.".format(php_src))
                     except NoEmailAddress:
                         self.verbose and print("Student does not have an email address:\n{}".format(student))
                         modify.no_email(student)
-                        self.server_information.init_users_and_groups()
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
@@ -742,6 +741,7 @@ and set permissions accordingly.".format(php_src))
                 while continue_until_no_errors:
                     try:
                         self.server_information.check_student(student)
+
                     except NoParentAccount:
                         self.verbose and print("No parent account for elem student:\n{}".format(student))
                         modify.new_parent(student)
@@ -752,6 +752,7 @@ and set permissions accordingly.".format(php_src))
                             
                     except NoEmailAddress:
                         self.verbose and print("Student does not have an email address:\n{}".format(student))
+                        input()
                         modify.no_email(student)
                         self.server_information.init_users_and_groups()
                         if self.dry_run:

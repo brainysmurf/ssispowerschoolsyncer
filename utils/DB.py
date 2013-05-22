@@ -13,7 +13,6 @@ class NotActuallyPG:
     def __call__(self):
         return []
 
-
 class DBConnection:
     """
     Glue code between me and the database
