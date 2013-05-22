@@ -33,6 +33,7 @@ class Teacher(Entry):
         self._departments = []
         self.is_primary = False
         self.is_secondary = False
+        self.homeroom = None
         if schoolid == str(PRIMARYSCHOOLID):
             self.is_primary = True
             self.profile_bool_iselemteacher = True
@@ -41,8 +42,11 @@ class Teacher(Entry):
             self.profile_bool_issecteacher = True
 
     def update_courses(self, course_obj):
-        if course_obj not in self._courses:
-            self._courses.append(course_obj.moodle_short)
+        course_name = course_obj.moodle_short
+        if course_name not in self._courses:
+            if course_name.startswith('HROOM'):
+                self.homeroom = int(re.sub('[A-Z]', '', course_name.upper()))
+            self._courses.append(course_name)
 
     def update_students(self, s):
         if s not in self._students:
