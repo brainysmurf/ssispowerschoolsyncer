@@ -752,7 +752,6 @@ and set permissions accordingly.".format(php_src))
                             
                     except NoEmailAddress:
                         self.verbose and print("Student does not have an email address:\n{}".format(student))
-                        input()
                         modify.no_email(student)
                         if self.dry_run:
                             times_through = 11

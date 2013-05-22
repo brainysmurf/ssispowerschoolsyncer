@@ -212,7 +212,6 @@ class ServerInfo(DragonNetDBConnection):
                 if self.email_config and self.sync_email:
                     if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
                         self.verbose and print("Raising NoEmailAddress")
-                        input(self)
                         raise NoEmailAddress
 
         familyid = student.family_id
