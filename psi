@@ -754,7 +754,6 @@ and set permissions accordingly.".format(php_src))
                         self.verbose and print("Student does not have an email address:\n{}".format(student))
                         input()
                         modify.no_email(student)
-                        self.server_information.init_users_and_groups()
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
