@@ -757,7 +757,10 @@ and set permissions accordingly.".format(php_src))
                             times_through = 11
                             # or just manually update the database, right?
                         else:
-                            self.server_information.init_users_and_groups()
+                            # No need to init_users_groups because we just check the system itself
+                            # TODO: Maybe read this info in anyway?
+                            #self.server_information.init_users_and_groups()
+                            pass
                             
                     except MustExit:
                         continue_until_no_errors = False

@@ -138,7 +138,7 @@ class ServerInfo(DragonNetDBConnection):
         idnumber = student.num
         username = student.username
         self.verbose and print("Checking current server information for student:\n{}".format(student))
-        if student.is_secondary:
+        if student.is_secondary or student.grade == 5:
             # Account-based checks
             if self.moodle_config and self.sync_moodle:
                 if self.students.get(idnumber):
@@ -177,39 +177,9 @@ class ServerInfo(DragonNetDBConnection):
                             self.verbose and print("Not raising GroupDoesNotExist because the course {} doesn't exist".format(course))
                             continue
                         raise GroupDoesNotExist
-                # TODO: Implement this in preparation for 2012/13 school year
-                # Now see about deleting groups they shouldn't be a part of
-                # Not yet implemented because I don't have the balls to actually do this,
-                # lest something happen and I am unawares
-                #if not student.groups() == self._groups[student.num]:
-                #    database_groups = set(self._groups[student.num])
-                #    schedule_groups = set(student.groups())
-                #    self.verbose and print("Going through each group that is in the database but not in the schedule")
-                #    for group in schedule_groups:
-                #        print(group)
-                #    print('------')
-                #    for group in database_groups.difference(schedule_groups):
-                #        if group.endswith('12') or group.endswith('11'):
-                #            continue
-                #        print(group)
-                #    input()
 
-                # Now see if I should de-enrol anyone from a course
-                # Don't do this yet, because we have to filter out things by the teaching & learning category
-                # Yuck
-                # TODO: Unenroll students from courses in teaching & learning they don't need to be in anymore
-                    
             if self.email_config and self.sync_email:
                 if self.email_config.get('accounts_path'):
-                    if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
-                        self.verbose and print("Raising NoEmailAddress")
-                        raise NoEmailAddress
-
-        if student.is_elementary:
-            # Don't need to check for whether parent account exists or not, because that
-            # will happen in family info below
-            if student.grade == 5:
-                if self.email_config and self.sync_email:
                     if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
                         self.verbose and print("Raising NoEmailAddress")
                         raise NoEmailAddress
