@@ -128,11 +128,20 @@ class ServerInfo(DragonNetDBConnection):
             self._groups[usernum].append(groupname)
             self._group_members[groupname].append(usernum)
 
-    def check_student(self, student):
+    def check_student(self, student, dontraise=(), onlyraise=()):
         """
         Raises errors describing what has happened, if anything
         Does not handle infinite loops though
         """
+        # First, process the dontraise and onlyraise
+        # onlyraise takes on priority over dontraise
+        if onlyraise:
+            all = ('StudentChangedName', 'NoStudentInMoodle',
+                   'NoParentAccount', 'StudentNotInGroup',
+                   'GroupDoesNotExist', 'NoEmailAddress',
+                   'ParentAccountNotAssociated', 'ParentNotInGroup')
+            dontraise = tuple( set(all) - set(onlyraise) )
+        
         if not self.db:
             return
         idnumber = student.num
@@ -146,13 +155,15 @@ class ServerInfo(DragonNetDBConnection):
                         # Use the one that we know from DragonNet
                         # This error will not happen again
                         student.username = self.students[idnumber]
-                        self.verbose and print("Raising StudentChangedName")
-                        raise StudentChangedName
+                        if not 'StudentChangedName' in dontraise:
+                            self.verbose and print("Raising StudentChangedName")
+                            raise StudentChangedName
                     else:
                         self.verbose and print("Account exists in moodle")
                 else:
-                    self.verbose and print("Raising NoStudentInMoodle")
-                    raise NoStudentInMoodle
+                    if not 'NoStudentInMoodle' in dontraise:
+                        self.verbose and print("Raising NoStudentInMoodle")
+                        raise NoStudentInMoodle
 
                 self.verbose and print("Checking enrollments")
                 for i in range(len(student.courses())):
@@ -167,8 +178,9 @@ class ServerInfo(DragonNetDBConnection):
                             if not course in self.courses.keys():
                                 self.verbose and print("Not raising StudentNotInGroup because the course {} doesn't exist".format(course))
                                 continue
-                            self.verbose and print("This student is not in group {}:\n{}".format(group, student))
-                            raise StudentNotInGroup
+                            if not 'StudentNotInGroup' in dontraise:
+                                self.verbose and print("This student is not in group {}:\n{}".format(group, student))
+                                raise StudentNotInGroup
                         else:
                             pass # ok
                     else:
@@ -176,23 +188,27 @@ class ServerInfo(DragonNetDBConnection):
                         if not course in self.courses.keys():
                             self.verbose and print("Not raising GroupDoesNotExist because the course {} doesn't exist".format(course))
                             continue
-                        raise GroupDoesNotExist
+                        if not 'GroupDoesNotExist' in dontraise:
+                            raise GroupDoesNotExist
 
             if self.email_config and self.sync_email:
                 if self.email_config.get('accounts_path'):
                     if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
-                        self.verbose and print("Raising NoEmailAddress")
-                        raise NoEmailAddress
+                        if not 'NoEmailAddress' in dontraise:
+                            self.verbose and print("Raising NoEmailAddress")
+                            raise NoEmailAddress
 
         familyid = student.family_id
         if self.sync_moodle:
             if not familyid in list(self.families.keys()):
-                raise NoParentAccount
+                if not 'NoParentAccount' in dontraise:
+                    raise NoParentAccount
             else:
                 if student.is_secondary:
                     if not student.num in self.families[familyid]:
-                        self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
-                        raise ParentAccountNotAssociated
+                        if not 'ParentAccountNotAssociated' in dontraise:
+                            self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
+                            raise ParentAccountNotAssociated
 
             self.verbose and print("Now checking parent account enrollments")
             for i in range(len(student.courses())):
@@ -206,6 +222,7 @@ class ServerInfo(DragonNetDBConnection):
                             self.verbose and print("Not raising ParentNotInGroup because the course {} doesn't exist".format(course))
                             continue
                         self.verbose and print("This parent is not in group {}:\n{}".format(group, student.family_id))
-                        raise ParentNotInGroup
+                        if not 'ParentNotInGroup' in dontraise:
+                            raise ParentNotInGroup
                     else:
                         pass # ok
