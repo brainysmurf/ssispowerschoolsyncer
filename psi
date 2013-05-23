@@ -635,8 +635,6 @@ and set permissions accordingly.".format(php_src))
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
-                        else:
-                            self.server_information.init_users_and_groups()
 
                     except GroupDoesNotExist:
                         self.verbose and print("At least one group does not exist, enrolling them, which will take care of this")
@@ -751,6 +749,13 @@ and set permissions accordingly.".format(php_src))
                             self.server_information.init_users_and_groups()
                         self.server_information.add_temp_storage('to_be_informed',
                                                                  idnumber = student.family_id, comment = 'newparent')
+
+                    except NoEmailAddress:
+                        self.verbose and print("Student does not have an email address:\n{}".format(student))
+                        modify.no_email(student)
+                        if self.dry_run:
+                            times_through = 11
+                            # or just manually update the database, right?
 
                     except MustExit:
                         continue_until_no_errors = False
