@@ -749,6 +749,8 @@ and set permissions accordingly.".format(php_src))
                             times_through = 11
                         else:
                             self.server_information.init_users_and_groups()
+                        self.server_information.add_temp_storage('to_be_informed',
+                                                                 idnumber = student.family_id, comment = 'newparent')
 
                     except MustExit:
                         continue_until_no_errors = False
