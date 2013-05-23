@@ -740,7 +740,7 @@ and set permissions accordingly.".format(php_src))
                 times_through = 0
                 while continue_until_no_errors:
                     try:
-                        self.server_information.check_student(student, onlyraise=('NoParentAccount')
+                        self.server_information.check_student(student, onlyraise=('NoParentAccount'))
 
                     except NoParentAccount:
                         self.verbose and print("No parent account for elem student:\n{}".format(student))
