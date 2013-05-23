@@ -497,12 +497,13 @@ if __name__ == "__main__":
 
     students = Students(Settings())
     from utils.Formatter import Smartformatter
+    print('Full Name,User Name,Email\n')
     for student_key in students.get_student_keys():
         student = students.get_student(student_key)
         sf = Smartformatter()
         sf.take_dict(student)
-        if student.homeroom == '8A':
-            print(sf('{first}, {last}, {email}'))
+        if student.grade == 5:
+            print(sf('{first} {last},{username},{email}'))
     #students.courses_output()
     #print("Here are the ones with ???:")
     #students.output_filter(check_is_in_preferred_list)
