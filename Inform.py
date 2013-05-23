@@ -32,8 +32,8 @@ def inform_new_student(family, student, server='localhost'):
           email.add_cc('aubreycurran@ssis-suzhou.net')
     email.define_fields(sf)
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
-    email.add_bcc('brentclark@ssis-suzhou.net')
-    email.add_bcc('geoffreyderry@ssis-suzhou.net')
+    #email.add_bcc('brentclark@ssis-suzhou.net')
+    #email.add_bcc('geoffreyderry@ssis-suzhou.net')
     email.send()
     
 def inform_new_parent(family, server='localhost'):
