@@ -22,7 +22,7 @@ class DBConnection:
         sf = Smartformatter(user=user, password=password, server=server, database=database)
         self.last_call = None
         self._database = database
-        self.verbose = verbose
+        self.verbose = False  #TODO: Make this damn thing less verbose!
         self.verbose and print(sf("About to connect to {server}"))
         self.db = postgresql.open(sf('pq://{user}:{password}@{server}/{database}'))
 
