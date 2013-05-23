@@ -738,7 +738,7 @@ and set permissions accordingly.".format(php_src))
                 times_through = 0
                 while continue_until_no_errors:
                     try:
-                        self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress'))
+                        self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress', 'ParentAccountNotAssociated'))
 
                     except NoParentAccount:
                         self.verbose and print("No parent account for elem student:\n{}".format(student))
@@ -756,6 +756,15 @@ and set permissions accordingly.".format(php_src))
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
+
+                    except ParentAccountNotAssociated:
+                        self.verbose and print("Parent account {} hasn't been assocated to student {}".format(student.family_id, student))
+                        modify.parent_account_not_associated(student)
+                        if self.dry_run:
+                            times_through = 11
+                            # or just manually update the database, right?
+                        else:
+                            self.server_information.init_users_and_groups()
 
                     except MustExit:
                         continue_until_no_errors = False

@@ -204,7 +204,7 @@ class ServerInfo(DragonNetDBConnection):
                 if not 'NoParentAccount' in dontraise:
                     raise NoParentAccount
             else:
-                if student.is_secondary:
+                if student.is_secondary or student.grade == 5:
                     if not student.num in self.families[familyid]:
                         if not 'ParentAccountNotAssociated' in dontraise:
                             self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
