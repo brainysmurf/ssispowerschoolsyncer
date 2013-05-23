@@ -738,7 +738,17 @@ and set permissions accordingly.".format(php_src))
                 times_through = 0
                 while continue_until_no_errors:
                     try:
-                        self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress', 'ParentAccountNotAssociated'))
+                        self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress', 'ParentAccountNotAssociated', 'NoStudentInMoodle'))
+
+                    except NoStudentInMoodle:
+                        self.verbose and print("Student does not have a Moodle account:\n{}".format(student))
+                        modify.new_student(student)
+                        #TODO Do informing here
+                        if self.dry_run:
+                            times_through = 11
+                            # or just manually update the database, right?
+                        else:
+                            self.server_information.init_users_and_groups()
 
                     except NoParentAccount:
                         self.verbose and print("No parent account for elem student:\n{}".format(student))
