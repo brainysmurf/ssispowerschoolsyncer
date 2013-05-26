@@ -455,21 +455,20 @@ and set permissions accordingly.".format(php_src))
         for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
 
-            d = {}
+            formatter = Smartformatter()
+            formatter.take_dict(student)
 
             try:
-                _id = database.sql("select id from ssismdl_user where idnumber = '{}'".format(student.num))()[0][0]
+                formatter.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
             except IndexError:
                 # They don't have an account yet?
                 continue
 
             # TODO: Make preferred names and homeroom user_profile fields work
-            #database.sql("update xxxx set homeroom = '{}' where id = {}".format(student.homeroom, _id))()
-            #database.sql("update xxxx set preferred_name = '{}' where id = {}".format(student.preferred_name, _id))()
 
             grade_rows = [ grade_row.format(**dict(course_name="Forums",
                                                        course_short="All Classes",
-                                                       url="http://dragonnet.ssis-suzhou.net/mod/forum/user.php?id={}".format(_id))) ]
+                                                       url=format("http://dragonnet.ssis-suzhou.net/mod/forum/user.php?id={user_id}"))) ]
 
             email_rows = [
                     email_row.format(**dict(teacher_name="Homeroom Teacher",
@@ -481,24 +480,22 @@ and set permissions accordingly.".format(php_src))
 
 
 
-            if not _id:
-                print("User with idnumber {} could not be found in the database, cannot put in profile: {}".format(student.idnum, student.username))
+            if not formatter.user_id:
+                print(formatter("User with idnumber {num} could not be found in the database, cannot put in profile: {username}"))
                 continue
             courses = []
             for course in student.courses():
-                if 'HROOM' in course:
+                formatter.course_short = course
+                if 'HROOM' in formatter.course_short:
                     continue
-                query = database.sql("select id, fullname from ssismdl_course where shortname = '{}'".format(course))()
+                query = database.sql(formatter("select id, fullname from ssismdl_course where shortname = '{shortname}'"))()
                 if not query:
-                     print("Course with shortname {} could not be found in the database".format(course))
+                     print(formatter("Course with shortname {shortname} could not be found in the database"))
                      continue
-                course_id, course_fullname = query[0]
+                formatter.course_id, formatter.course_name = query[0]
 
-                grade_url = "http://dragonnet.ssis-suzhou.net/course/user.php?mode=grade&id={}&user={}".format(course_id, _id)
-                d['course_name'] = course_fullname
-                d['course_short'] = course
-                d['url'] = grade_url
-                grade_rows.append( grade_row.format(**d) )
+                formatter.url = formatter("http://dragonnet.ssis-suzhou.net/course/user.php?mode=grade&id={course_id}&user={user_id}")
+                grade_rows.append( formatter(grade_row) )
 
                 for teacher_key in self.students.get_teacher_keys():
                     teacher = self.students.get_teacher(teacher_key)
@@ -507,69 +504,57 @@ and set permissions accordingly.".format(php_src))
                             if 'HROOM' in teacher_course:
                                 continue
                             if teacher_course in student.courses():
-                                d['teacher_name'] = teacher.lastfirst.replace("'", '')
-                                d['teacher_email'] = teacher.username + '@ssis-suzhou.net'
-                                d['course_short'] = teacher_course
-                                email_rows.append( email_row.format(**d) )
+                                formatter.teacher_name = teacher.lastfirst.replace("'", '')
+                                formatter.teacher_email = teacher.username + '@ssis-suzhou.net'
+                                formatter.course_short = teacher_course
+                                email_rows.append( formatter(email_row) )
                                 break
 
-                email_html = html_start
+                formatter.email_html = html_start
                 for row in email_rows:
-                    email_html += row
-                email_html += html_end
+                    formatter.email_html += row
+                formatter.email_html += html_end
 
-                grade_html = html_start
+                formatter.grade_html = html_start
                 for row in grade_rows:
-                    grade_html += row
-                grade_html += html_end
+                    formatter.grade_html += row
+                formatter.grade_html += html_end
 
-                teacher_email_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 2 and userid = {}".format(_id))()
-                if not teacher_email_field_id:
-                    database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 2, '{}', 0)".format(
-                        _id, email_html))()
+                formatter.teacher_email_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 2 and userid = {user_id}"))()
+                if not formatter.teacher_email_field_id:
+                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 2, '{email_html}', 0)"))()
                 else:
-                    teacher_email_field_id = teacher_email_field_id[0][0]
-                    database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(
-                        email_html, teacher_email_field_id))()
+                    formatter.teacher_email_field_id = formatter.teacher_email_field_id[0][0]
+                    database.sql(formatter("update ssismdl_user_info_data set data = '{email_html}' where id = {teacher_email_field_id}"))()
 
-                teacher_grade_field_id = database.sql("select id from ssismdl_user_info_data where fieldid = 3 and userid = {}".format(_id))()
+                formatter.teacher_grade_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 3 and userid = {user_id}"))()
                 if not teacher_grade_field_id:
-                    database.sql("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({}, 3, '{}', 0)".format(
-                        _id, grade_html))()
+                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 3, '{grade_html}', 0)"))()
                 else:
                     teacher_grade_field_id = teacher_grade_field_id[0][0]
-                    database.sql("update ssismdl_user_info_data set data = '{}' where id = {}".format(
-                        grade_html, teacher_grade_field_id))()
+                    database.sql(formatter("update ssismdl_user_info_data set data = '{grade_html}' where id = {teacher_grade_field_id}"))()
 
-            for existing_profile_field, value in student.get_existing_profile_fields():
-                sf = Smartformatter()
-                sf.define(existing_profile_field=existing_profile_field,
-                          userid=student.database_id,
-                          value=value)
-                self.verbose and print(sf("Existing profile field: {existing_profile_field}"))
+            for formatter.existing_profile_field, formatter.value in student.get_existing_profile_fields():
+                self.verbose and print(formatter("Existing profile field: {existing_profile_field}"))
                 # Just use database directly instead of checking to see if already there
                 # (Below we have to check first)
-                database.sql(sf("update ssismdl_user set {existing_profile_field} = '{value}' where id = {userid}"))()
+                database.sql(formatter("update ssismdl_user set {existing_profile_field} = '{value}' where id = {user_id}"))()
                 
-            for extra_profile_field, value in student.get_extra_profile_fields():
-                sf = Smartformatter(value=int(value),
-                                    userid=student.database_id,
-                                    extra_profile_field=extra_profile_field)
-                fieldid = database.sql(sf("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
-                if not fieldid:
-                    print(sf("You need to manually add the {extra_profile_field} field!"))
+            for formatter.extra_profile_field, formatter.value in student.get_extra_profile_fields():
+                formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
+                if not formatter.field_id:
+                    print(formatter("You need to manually add the {extra_profile_field} field!"))
                     continue
-                fieldid = fieldid[0][0]
-                sf.define(fieldid=fieldid)
-                there_already = database.sql(sf("select data from ssismdl_user_info_data where fieldid = {fieldid} and userid = {userid}"))()
+                formatter.field_id = formatter.field_id[0][0]
+                there_already = database.sql(formatter("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
                 if there_already:
-                    if not there_already[0][0] == str(int(value)):
+                    if not there_already[0][0] == str(int(formatter.value)):
                         # only call update if it's different
-                        database.sql(sf("update ssismdl_user_info_data set data = {value} where fieldid = {fieldid} and userid = {userid}"))()
+                        database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))()
                     else:
-                        self.verbose and print(sf("No change in {extra_profile_field}, so didn't call the database"))
+                        self.verbose and print(formatter("No change in {extra_profile_field}, so didn't call the database"))
                 else:
-                    database.sql(sf("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({userid}, {fieldid}, {value}, 0)"))()
+                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
 
     def build_email_list(self):
         with open(self.path_to_output + '/' + 'student_emails.txt', 'w') as f:
