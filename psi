@@ -488,9 +488,9 @@ and set permissions accordingly.".format(php_src))
                 formatter.course_short = course
                 if 'HROOM' in formatter.course_short:
                     continue
-                query = database.sql(formatter("select id, fullname from ssismdl_course where shortname = '{shortname}'"))()
+                query = database.sql(formatter("select id, fullname from ssismdl_course where shortname = '{course_short}'"))()
                 if not query:
-                     print(formatter("Course with shortname {shortname} could not be found in the database"))
+                     print(formatter("Course with shortname {course_short} could not be found in the database"))
                      continue
                 formatter.course_id, formatter.course_name = query[0]
 
@@ -528,10 +528,10 @@ and set permissions accordingly.".format(php_src))
                     database.sql(formatter("update ssismdl_user_info_data set data = '{email_html}' where id = {teacher_email_field_id}"))()
 
                 formatter.teacher_grade_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 3 and userid = {user_id}"))()
-                if not teacher_grade_field_id:
+                if not formatter.teacher_grade_field_id:
                     database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 3, '{grade_html}', 0)"))()
                 else:
-                    teacher_grade_field_id = teacher_grade_field_id[0][0]
+                    formatter.teacher_grade_field_id = formatter.teacher_grade_field_id[0][0]
                     database.sql(formatter("update ssismdl_user_info_data set data = '{grade_html}' where id = {teacher_grade_field_id}"))()
 
             for formatter.existing_profile_field, formatter.value in student.get_existing_profile_fields():
