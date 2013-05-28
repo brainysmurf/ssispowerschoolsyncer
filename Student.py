@@ -51,6 +51,8 @@ class Student(Entry):
 
         self.nationality = nationality
         self.is_korean = self.nationality == "Korea"
+        self.is_japanese = self.nationality == "Japan"
+        self.is_german = self.nationality == "Germany"
         self.is_chinese = self.nationality in ["China", "Hong Kong", "Taiwan", "Malaysia", "Singapore"]
         self.is_big5 = self.nationality in ["America", "Australia", "Canada", "New Zealand", "United Kingdom"]
         self.is_european = self.nationality in ["Austria", "Belgium", "Czech Republic", "Denmark", "Finland", "France", "Germany", "Hungary", "Italy", "Netherlands", "Norway", "Poland", "Portugal", "Spain", "Sweden", "Switzerland", "United Kingdom"]
