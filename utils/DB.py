@@ -202,6 +202,14 @@ class DragonNetDBConnection(DBConnection):
             user_data[idnumber] = (username, _id)
         return user_data
 
+    def get_all_users_enrollments(self):
+        """ returns list of tuple (idnumber, groupname, courseidnumber) """
+        return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id")()
+
+    def get_user_enrollments(self, idnumber):
+        """ returns a tuple (groupname, courseidnumber) """
+        return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))()
+
     def get_parent_child_associations(self):
         """
         Returns which accounts are linked to which accounts
