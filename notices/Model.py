@@ -1,6 +1,6 @@
-from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
-from utils.DB import DragonNetDBConnection
-from utils.Dates import today, tomorrow, yesterday, timestamp_to_python_date
+from ssispowerschoolsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
+from ssispowerschoolsyncer.utils.DB import DragonNetDBConnection
+from ssispowerschoolsyncer.utils.Dates import today, tomorrow, yesterday, timestamp_to_python_date
 import datetime
 import re
 

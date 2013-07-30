@@ -1,24 +1,9 @@
 #!/usr/local/bin/python3
     
-if __name__ == "__main__":
-    import sys
-    import os
-    path = os.path.realpath(__file__)
-    src_path = None
-    while not path == '/':
-        path = os.path.split(path)[0]
-        print(path)
-        if not '__init__.py' in os.listdir(path):
-            src_path = path
-            break
-    if src_path == None:
-        raise ImportError("Could not set up!")
-    else:
-        sys.path.insert(0, src_path)
-from utils import *
-from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
+from ssispowerschoolsyncer.utils import *
+from ssispowerschoolsyncer import ExtendMoodleDatabaseToAutoEmailer
 import re
-from notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
+from ssispowerschoolsyncer.notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
 
 class Nothing(Exception): pass
 
