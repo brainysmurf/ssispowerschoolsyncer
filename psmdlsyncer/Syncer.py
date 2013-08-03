@@ -42,7 +42,7 @@ def determine_grade(x):
     if not result:
         return -1
     else:
-        return int(result)
+        return int(result) + 1 # FIXME: CHANGE THIS WHEN POWERSCHOOL'S SCHEDULE HAS BEEN UPDATED
 
 def determine_username(x):
     default_return = ""
@@ -283,9 +283,9 @@ def sync_sec_students_cohorts(students):
     students.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
     declared_cohorts.assign_column('studentsALL', to=True)
     declared_cohorts.change_index('powerschoolID')  # otherwise, students.filter will get wrong results
-    declared_cohorts.assign_column('studentsSEC', to=students.filter(column='grade', by_list=range(6, 13)))
+    declared_cohorts.assign_column('studentsSEC', to=students.filter(column='grade', by_list=range(6, 14)))  #FIXME: CHANGE BACK TO 13
     declared_cohorts.assign_column('studentsMS',  to=students.filter(column='grade', by_list=range(6, 9)))
-    declared_cohorts.assign_column('studentsHS',  to=students.filter(column='grade', by_list=range(9, 13)))
+    declared_cohorts.assign_column('studentsHS',  to=students.filter(column='grade', by_list=range(9, 14)))  #FIXME: CHANGE BACK TO 13
 
     # FILTER OUT BOTH QUERIED AND DECLARED FOR SECONDARY ONLY
     temp = queried_cohorts.dataframe.reset_index()
