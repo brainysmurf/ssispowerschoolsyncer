@@ -323,7 +323,9 @@ if __name__ == "__main__":
     requires_setting('DIRECTORIES', 'path_to_powerschool_dump')
     full_path = lambda _file: config['DIRECTORIES'].get('path_to_powerschool_dump') + '/' + _file
 
-    students = PandasDataFrame.from_csv(full_path('ssis_studentinfo_v2.1'),
+    # TODO: MAKE SURE THEY GET THE LATEST VERSION AUTOMAGICALLY?
+    # TODO: FIGURE OUT A WAY TO GET THE HEADERS IN POWERSCHOOL FILE
+    students = PandasDataFrame.from_csv(full_path('ssis_dist_studentinfo_v3.0'),
                                         header=None,
                                         names=["powerschoolID", "id",
                                                "homeroom", "fullname", "emails", "entrydate", "nationality", "delete"],
@@ -338,7 +340,7 @@ if __name__ == "__main__":
                                      index_col=None,
                                      dtype={'powerschoolID':np.object})
 
-    schedule = PandasDataFrame.from_csv(full_path('ssis_sec_studentschedule'),
+    schedule = PandasDataFrame.from_csv(full_path('ssis_sec_studentschedule_v3.0'),
                                         header=None,
                                         names=["course","period", "termid",
                                                "teacher","studentname", "studentid"],
