@@ -1,4 +1,4 @@
-from ssispowerschoolsyncer.utils.DB import DragonNetDBConnection
+from psmdlsyncer.utils.DB import DragonNetDBConnection
 import os
 
 class StudentChangedName(Exception):
@@ -30,26 +30,27 @@ class MustExit(Exception):
 
 class ServerInfo(DragonNetDBConnection):
 
-    def __init__(self, verbose=True,
-                 dry_run=True,
-                 email_config=None,
-                 moodle_config=None):
+    def __init__(self):
         """
         moodle_account should be config info
         """
-        self.dry_run = dry_run
-        self.email_config = email_config
-        self.moodle_config = moodle_config
+        #TODO: Just use settings.config
+        from psmdlsyncer.settings import config
+
+        self.dry_run = config.defaults().get('dry_run')
+        self.verbose = config.defaults().get('verbose')
+
+        self.email_config = config['EMAIL']
+        self.moodle_config = config['MOODLE']
         if self.moodle_config:
+            user = self.moodle_config.get('database_user')
+            password = self.moodle_config.get('database_password')
+            database = self.moodle_config.get('database_name')
+            self.server = self.moodle_config.get('host')
+            self.sync_moodle = self.moodle_config.getboolean('sync', False)
+            self.sync_email  = self.email_config.getboolean('sync', False)
 
-            user = moodle_config.get('database_user')
-            password = moodle_config.get('database_password')
-            database = moodle_config.get('database_name')
-            self.server = moodle_config.get('host')
-            self.sync_moodle = moodle_config.getboolean('sync', False)
-            self.sync_email  = email_config.getboolean('sync', False)
-
-            super().__init__(user, password, self.server, database, verbose=verbose)
+            super().__init__()
             self.init_users_and_groups()
 
             # We'll need course information when enrolling into groups

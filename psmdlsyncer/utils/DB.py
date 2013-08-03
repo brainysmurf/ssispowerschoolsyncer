@@ -109,8 +109,17 @@ class DBConnection:
 
 class DragonNetDBConnection(DBConnection):
 
-    def __init__(self, user, password, server, database, verbose=False):
-        super().__init__(user, password, server, database, verbose=verbose)
+    def __init__(self, verbose=False):
+        from settings import config, requires_setting
+        settings = ['db_username', 'db_password', 'db_name', 'db_prefix', 'db_host']
+        for setting in settings:
+            requires_setting('MOODLE', setting)
+        
+        super().__init__(config['MOODLE'].get('db_username'),
+                         config['MOODLE'].get('db_password'),
+                         config['MOODLE'].get('db_host'),
+                         config['MOODLE'].get('db_name'),
+                         verbose=verbose)
 
     def create_temp_storage(self, table_name, *args):
         if not self.exists_temp_storage(table_name):
@@ -204,13 +213,16 @@ class DragonNetDBConnection(DBConnection):
 
     def get_all_users_enrollments(self):
         """ returns list of tuple (idnumber, groupname, courseidnumber) """
-        return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where crs.id in ({})".format(
-            ",".join(db.get_teaching_learning_courses())
+        return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id IN ({})".format(
+            ",".join(self.get_teaching_learning_courses())
             ))()
 
     def get_user_enrollments(self, idnumber):
         """ returns a tuple (groupname, courseidnumber) """
         return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))()
+
+    def get_user_cohort_enrollments(self):
+        return self.sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where LENGTH(usr.idnumber)>0")()
 
     def get_parent_child_associations(self):
         """

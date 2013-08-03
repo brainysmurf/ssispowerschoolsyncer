@@ -47,7 +47,7 @@ class moodlephp
 	  $cohort_membership = $DB->get_record_select('cohort_members', 'cohortid = ? and userid = ?', array('cohortid'=>$cohortID,'userid'=>$userID));
 	  if( $cohort_membership )
 	    {
-	      return "0";
+	      return "0 ".$idnumber." is already a member of this cohort ".$cohortidnumber."!";
 	    }
 	}
       else
@@ -58,8 +58,38 @@ class moodlephp
       $r = cohort_add_member($cohortID, $userID);
       echo "Added ".$idnumber." to cohort ".$cohortidnumber ;
       return $r;
+    }
+
+    private function remove_user_from_cohort($args) 
+    {
+      $idnumber = $args[0];
+      $cohortidnumber = $args[1];
 
       global $DB;
+      if( !$user = $this->getUserByIDNumber($idnumber) )
+	{
+	  return "-1 Could not find user ".$idnumber." while adding cohort ".$cohortidnumber;
+	}
+
+      if( $cohort = $DB->get_record_select( 'cohort', 'idnumber = ?', array($cohortidnumber) ) )
+	{
+	  $cohortID= $cohort->id;
+	  $userID = $user->id;
+	  // workaround, instead of using cohort_existing_selector, due to bug
+	  $cohort_membership = $DB->get_record_select('cohort_members', 'cohortid = ? and userid = ?', array('cohortid'=>$cohortID,'userid'=>$userID));
+	  if( !($cohort_membership) )
+	    {
+	      return "0 ". $idnumber . " is not a member of the cohort ".$cohortidnumber;
+	    }
+	}
+      else
+	{
+	  return "-1 Could not find cohort ".$cohortName;
+	}
+     
+      $r = cohort_remove_member($cohortID, $userID);
+      echo "Removed ".$idnumber." from cohort ".$cohortidnumber ;
+      return $r;
     }
 
     private function create_account( $args ) 

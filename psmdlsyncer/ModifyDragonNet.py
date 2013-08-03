@@ -33,7 +33,7 @@ class DragonNetModifier(CallPHP):
                         test('enrol_user_in_course', student, course + ' ' + group)
                   else:
                         error = self.enrol_user_in_course( student.num, course, group, 'Student' )
-                        if error and error[0] == '-':
+                        if error and error[nnao0] == '-':
                               # got an error code, print it
                               output = input if self.verbose else print
                               output(error)
@@ -139,6 +139,29 @@ class DragonNetModifier(CallPHP):
                   if error and error[0] == '-':
                         output = input if self.verbose else print
                         output(error)
+
+      def new_support_staff(self, staff):
+            """
+            Support staff have fairly simple accounts
+            IStaff: username
+                    first_name
+                    last_name
+                    email
+                    num
+            """
+            if self.dry_run:
+                  test('new_staff', staff, '')
+            else:
+                  error = self.create_account( staff.username, staff.email, staff.first_name, staff.last_name, staff.num )
+                  if error and error[0] == '-':
+                        output = input if self.verbose else print
+                        output(error)
+
+            if self.dry_run:
+                  test('add_user_to_cohort', staff.num, 'adminALL')
+            else:
+                  error = self.add_user_to_cohort( staff.num, 'adminALL' )
+                  print(error)
 
       def parent_account_not_associated(self, student):
             if self.dry_run:

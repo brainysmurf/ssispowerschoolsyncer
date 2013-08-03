@@ -4,6 +4,10 @@ import numpy as np
 import re
 import datetime
 
+from psmdlsyncer.settings import config, requires_setting
+from psmdlsyncer.ModifyDragonNet import DragonNetModifier
+from psmdlsyncer.utils.DB import DragonNetDBConnection
+
 def num_years(begin, end=None):
     if end is None:
         end = datetime.datetime.now()
@@ -24,6 +28,12 @@ def get_year_of_graduation(grade):
     this_year = get_this_academic_year()
     years_left = 12 - int(grade)
     return this_year + years_left
+
+def determine_grade_from_coursename(coursename):
+    m = re.search(r'\(([0-9]+)\)$', coursename)
+    if not m:
+        return 0
+    return m.group(1)
 
 def determine_grade(x):
     if pd.isnull(x) or not x:
@@ -108,6 +118,13 @@ def determine_grade_from_coursename(name):
         return np.nan
     return int(result.group(1))
 
+def determine_username_from_email(username):
+    if not username or pd.isnull(username):
+        return ""
+    if "@" not in username:
+        return ""
+    return username[:username.index('@')]
+
 import sys
 from io import StringIO
 import contextlib
@@ -129,68 +146,186 @@ def deserialize(obj):
 def serialize(obj):
     return str(obj)
 
+def wrap_row_to_object(row):
+    obj = lambda x: None
+    for column in row.index.tolist():
+        setattr(obj, column, row[column])
+    return obj
+
+def sync_dragonnet_accounts(staff_database):
+    """
+    If DragoNet doesn't have any accounts listed, creates them
+    Composes and sends email to them letting them know
+    """
+    from psmdlsyncer.utils.DB import DragonNetDBConnection
+    dn = DragonNetDBConnection()    
+    from_dn = PandasDataFrame(dn.sql(
+        'select idnumber, username, firstname, lastname, email from ssismdl_user where deleted = 0'
+        )(), columns=["powerschoolID", "username", "first_name", "last_name", "email"])
+    
+    #current_staff = PandasDataFrame.from_dataframe(staff_database.dataframe[staff_database.dataframe['status'] == 1 & staff_database.dataframe['staff_status'] == 2].
+    #                                               set_index('username').sort_index())
+
+    dn_list = from_dn.new_index('username').dataframe.index.tolist()
+    sdf = staff_database.dataframe
+    support_staff_to_add = sdf[ (sdf.email.str.len>0) & (sdf.status == 1) & (sdf.staff_status == 2) & (-sdf.username.isin(dn_list))]
+    teaching_staff_to_add = sdf[ (sdf.email.str.len>0) & (sdf.status == 1) & (sdf.staff_status == 1) & (-sdf.username.isin(dn_list)) ]
+    staff_to_delete = sdf[ (sdf.email.str.len>0) & (sdf.status == 2) & (sdf.username.isin(dn_list)) ]
+
+def update_this_time(staff):
+    """ throwaway at the beginning of the year """
+    from_excel = PandasDataFrame.from_excel('/Users/brainysmurf/Downloads/Secondary Teachers 2013-14.xls', 'Sheet1', index_col=None, na_values=['NA'])
+    from_excel.assign_column('full_name', by_iterrows=lambda index, row: row['Given Name'].strip() + ' ' + row['Family Name'].strip())
+    
+
+def sync_sec_students_enrollments(students, courses, schedule):
+    """
+    PARSES schedule AND QUERIES DRAGONNET, UPDATING DRAGONNET TO MATCH declared_enrollments
+    """
+    dn = DragonNetDBConnection()
+    mod_dn = DragonNetModifier()
+    queried_enrollments = PandasDataFrame(dn.get_all_users_enrollments(), columns=['powerschoolID', 'group', 'course'], index=None)
+    from IPython import embed
+    embed()
+
+
+    # DEFINE declared_enrollments
+    #TODO: Insert course and group mapping code here... pain in the ass!
+    declared_cohorts = PandasDataFrame({'powerschoolID':students.dataframe['powerschoolID'].tolist()})
+    students.
+    
+
+def sync_sec_students_cohorts(students):
+    """
+    PARSES students AND QUERIES DRAGONNET, UPDATING DRAGONNET TO MATCH declared_cohorts
+    """
+    secondary_student_IDs = students.dataframe[ students.dataframe['is_secondary'] ]['powerschoolID'].values.tolist()
+    # DEFINE queried_cohorts
+    # QUERY DRAGONNET USING get_user_cohort_enrollments FOR EXISTING ENROLLMENTS
+    # SO USE pivot_table TO FORMAT QUERTY RESULT (userid, cohort) INTO A TRUTH-TABLE
+    dn = DragonNetDBConnection()
+    mod_dn = DragonNetModifier()
+    queried_cohorts = PandasDataFrame(dn.get_user_cohort_enrollments(), columns=['powerschoolID', 'cohort'], index=None)
+    queried_cohorts.pivot_table(rows='powerschoolID', cols='cohort', aggfunc=lambda x: True, fill_value=False)
+
+    # DEFINE declared_enrollments
+
+    # BECAUSE COHORTS HAVE TO BE CREATED IN DRAGONNET,
+    # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
+    # EXIST IN THE SYSTEM YET
+    # TODO: Present some sort of warning, or something
+    declared_enrollments = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
+    queried_enrollments = queried_cohorts.dataframe.columns.tolist()
+    for missing_enrollment in set(declared_enrollments) - set(queried_enrollments):
+        queried_cohorts.assign_column(missing_enrollment, to=False)
+
+    # PROGRAMATICALLY SET UP declared_enrollments
+    declared_cohorts = PandasDataFrame({'powerschoolID':students.dataframe['powerschoolID'].tolist()})
+    students.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
+    declared_cohorts.assign_column('studentsALL', to=True)
+    declared_cohorts.change_index('powerschoolID')  # otherwise, students.filter will get wrong results
+    declared_cohorts.assign_column('studentsSEC', to=students.filter(column='grade', by_list=range(6, 13)))
+    declared_cohorts.assign_column('studentsMS',  to=students.filter(column='grade', by_list=range(6, 9)))
+    declared_cohorts.assign_column('studentsHS',  to=students.filter(column='grade', by_list=range(9, 13)))
+
+    # FILTER OUT BOTH QUERIED AND DECLARED FOR SECONDARY ONLY
+    temp = queried_cohorts.dataframe.reset_index()
+    temp = temp[ temp['powerschoolID'].isin(secondary_student_IDs) ]
+    secondary_queried_cohorts = PandasDataFrame.from_dataframe(temp)
+    temp = declared_cohorts.dataframe.reset_index()
+    temp = temp[ temp['powerschoolID'].isin(secondary_student_IDs) ]
+    secondary_declared_cohorts = PandasDataFrame.from_dataframe(temp)
+    
+    secondary_queried_cohorts.change_index('powerschoolID')
+    secondary_declared_cohorts.change_index('powerschoolID')
+    
+    # GO THROUGH EACH ITEM
+    # item.index   = powerschoolID
+    # item.column  = cohort
+    # item.left    = VALUE IT SHOULD BE (DEFINED IN secondary_declared_cohorts
+    # item.right   = VALUE IT WAS FOUND (DEFINED IN secondary_queried_cohorts
+    for item in secondary_declared_cohorts.identify_differences \
+            (secondary_queried_cohorts.set_columns(*declared_enrollments)):
+        print(item.index, item.column)
+        if item.is_deleted:
+            pass
+        elif item.is_new:
+            pass
+        # TODO: MAKE should AND should_not OR SOMETHING
+        else:
+            if item.left:
+                # SHOULD BE IN THERE, BUT ISN'T
+                mod_dn.add_user_to_cohort(item.index, item.column)
+            elif item.right:
+                # SHOULD NOT BE IN THERE, AND IS
+                mod_dn.remove_user_from_cohort(item.index, item.column)
+
 if __name__ == "__main__":
 
-    students = PandasDataFrame.from_csv('../powerschool/ssis_studentinfo_v2.1',
+    requires_setting('DIRECTORIES', 'path_to_powerschool_dump')
+    full_path = lambda _file: config['DIRECTORIES'].get('path_to_powerschool_dump') + '/' + _file
+
+    students = PandasDataFrame.from_csv(full_path('ssis_studentinfo_v2.1'),
                                         header=None,
                                         names=["powerschoolID", "id", "homeroom","fullname","emails","entrydate","nationality","delete"],
+                                        dtype={'powerschoolID':np.object},
+                                        index_col=False,
                                         converters={5:pd.to_datetime})
-    staff = PandasDataFrame.from_csv('../powerschool/ssis_teacherinfodumpall',
-                                        header=None,
-                                        names=["fullname", "email", "title", "school", "something"],
-                                        index_col=0)
-    schedule = PandasDataFrame.from_csv('../powerschool/ssis_studentscheduledumpsec',
+    staff = PandasDataFrame.from_csv(full_path('ssis_dist_staffinfo_v2.0'),
+                                     header=None,
+                                     names=["powerschoolID", "first_name", "preferred_name", "middle_name", "last_name", "email", "title", "staff_status", "status", "delete"],
+                                     index_col=None,
+                                     dtype={'powerschoolID':np.object},)
+
+    schedule = PandasDataFrame.from_csv(full_path('ssis_sec_studentschedule'),
                                         header=None,
                                         names=["course","period", "termid", "teacher","studentname", "studentid"],
                                         index_col=False)
-    allocations = PandasDataFrame.from_csv('../powerschool/ssis_teacherallocationsec',
+    courses = PandasDataFrame.from_csv(full_path('ssis_sec_courseinfo'),
+                                       header=None,
+                                       names=["course", "name"],
+                                       index_col=False)
+    allocations = PandasDataFrame.from_csv(full_path('ssis_teacherallocationsec'),
                                            header=None,
                                            names=["coursecode", "coursename", "teachername", "termid", "delete"],
                                            index_col=False)
+
+    # setup courses with schedule
+    courses.assign_column('grade',         from_column={'name':determine_grade_from_coursename})
     
+    # set up staff tables
+    staff.set_column_nas('email',           value="")
+    staff.set_column_nas('title',           value="")
+    staff.assign_column('username',         from_column={'email':determine_username})
+    staff.assign_column('left',             to=staff.dataframe['status']==2)
+    staff.assign_column('still_here',       to=staff.dataframe['status']==1)
+    staff.set_column_nas('username',        value="")
+    staff.assign_column('account_type',     to="Teacher")
+    staff.assign_column('is_support_staff', to=staff.dataframe['staff_status']==2)
+    staff.assign_column('is_secondary',     to=staff.dataframe['staff_status']==1)
+    staff.assign_column('is_elementary',    to=staff.dataframe['staff_status']==0)
+
+    # set up schedule
+    
+
+    # set up students
     students.assign_column('grade',         from_column={'homeroom': determine_grade})
-    students.assign_column('emails',         from_column={'emails': lambda x: x.lower()})  # how bad is this?
+    students.assign_column('emails',        from_column={'emails': lambda x: x.lower()})  # how bad is this?
     students.assign_column('section',       from_column={'grade':determine_section})
     students.assign_column('first',         to=students.split_column_text('fullname', NAMESPLIT, 1))
     students.assign_column('last',          to=students.split_column_text('fullname', NAMESPLIT, 0))
     students.assign_column('name',          by_iterrows=lambda index, row: row['first'] + ' ' + row['last'])
     students.assign_column('graduation',    from_column={'grade':get_year_of_graduation})
     students.assign_column('orig_username', by_iterrows=derive_username)
-
-    #TODO: Fill in username by checking DragonNet first
-    students.assign_column('username',      from_column={'orig_username':lambda x: x})
-
     students.assign_column('yearsenrolled', from_column={'entrydate':get_years_since_enrolled})
     students.assign_column('parentID',      from_index=lambda x: str(x)[:4]+'P')
-
-    staff.set_column_nas('email',           value="")
-    staff.set_column_nas('title',           value="")
-    staff.assign_column('username',         from_column={'email':determine_username})
-    staff.assign_column('account_type',     to="Teacher")
-
-    #TODO: Change this to "teacherID" when I have it!
-    schedule.assign_column('teacherID',     from_column={'teacher':lambda teacher: staff.row_column(teacher, 'username')})
-    schedule.assign_column('teacherusername',
-                           from_column={'teacher':lambda teacher: staff.row_column(teacher, 'username')})
-
-    students.assign_column('teachers',      to=schedule.change_index('studentid').collapse_multiple_values('teacherID'))
-    students.set_column_nas('teachers',     value="")
-
-    schedule.assign_column('class',         by_iterrows=lambda index, row: row['teacherusername'] + row['course'])
-    students.assign_column('classes',       to=students.collapse_foreign_column(schedule, 'studentid'))
+    students.assign_column('is_secondary',  from_column={'grade':lambda x: x in range(6, 13)})
+    students.assign_column('is_elementary', from_column={'grade':lambda x: x in range(1, 6)})
+    students.assign_column('is_highschool',  from_column={'grade':lambda x: x in range(9, 13)})
+    students.assign_column('is_middleschool',from_column={'grade':lambda x: x in range(6, 10)})
 
     allocations.assign_column('grade',      from_column={'coursename':determine_grade_from_coursename})
 
-    from IPython import embed
-    embed()
+    sync_sec_students_cohorts(students)
+    sync_sec_students_enrollments(students, courses, schedule)
 
-
-    #from utils.FilesFolders import clear_folder
-
-    #exclude_db_files = lambda x: x.endswith('.db')
-    #path = '../postfix2'
-    #clear_folder(path, exclude=exclude_db_files)
-
-    #for grade in students.dataframe['grade'].unique:
-        
-    

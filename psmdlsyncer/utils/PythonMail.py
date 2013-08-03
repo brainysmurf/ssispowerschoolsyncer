@@ -1,4 +1,4 @@
-from ssispowerschoolsyncer.utils.Utilities import on_server
+from psmdlsyncer.utils.Utilities import on_server
 
 try:
     import smtplib

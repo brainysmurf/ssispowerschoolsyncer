@@ -2,10 +2,10 @@
 Every student represents a student
 """
 import re
-from ssispowerschoolsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled
-from ssispowerschoolsyncer.utils.Utilities import no_whitespace_all_lower, determine_password
-from ssispowerschoolsyncer.Entry import Entry
-from ssispowerschoolsyncer.Errors import DocumentErrors
+from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled
+from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, determine_password
+from psmdlsyncer.Entry import Entry
+from psmdlsyncer.Errors import DocumentErrors
 import os
 
 class Object:
@@ -73,14 +73,13 @@ class Student(Entry):
             self.profile_extra_issecstudent = True
         if self.grade in range(6, 8):
             self.profile_extra_ismsstudent = True
-            self.profile_existing_department = 'HOME4MS'
+            self._cohorts.append('studentsMS')
         if self.grade in range(9, 12):
             self.profile_extra_ishsstudent = True
-            self.profile_existing_department = 'HOME4HS'
+            self._cohorts.append('studentsHS')
         elif self.is_elementary:
             self._cohorts = ['studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
-            self.profile_existing_department = 'HOME4ES'
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}

@@ -7,7 +7,6 @@ from psmdlsyncer.utils.AutoSendFile import File
 from psmdlsyncer.ReadFiles import SimpleReader
 from psmdlsyncer.Exceptions import BasicException
 from psmdlsyncer.Controller import Controller, NoSuchStudent
-from psmdlsyncer.Password import Password
 from psmdlsyncer.Student import Student
 from psmdlsyncer.Course import Course
 from psmdlsyncer.Teacher import Teacher
@@ -55,26 +54,23 @@ class Students:
 
     exclude_these_teachers_manually = ['Sections, Dead', 'User, Drews Test']
 
-    def __init__(self, settings, user_data = {},
-                 path_to_powerschool='../powerschool',
-                 path_to_errors = '../errors',
-                 path_to_output = '../output',
-                 verbose=True):
+    def __init__(self, user_data = {}):
         """
         Does the work of reading in basic information from file, creates native Python structures
         StudentNumber\tHomeroom\tLastFirst\tguardianemails
         """
-        self.settings = settings
-        self.verbose = self.settings.verbose
-        self.errors = DocumentErrors(path_to_errors)
-        self.path_to_powerschool = path_to_powerschool
-        self.path_to_errors = path_to_errors
-        self.path_to_output = path_to_output
+        from psmdlsyncer.settings import settings, config_get_section_attribute
+        self.settings = settings.arguments
+        self.verbose = config_get_section_attribute('DEFAULTS', 'verbose')
+        self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
+        self.errors = DocumentErrors(self.path_to_errors)
+        self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
+        self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
         self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfo_v2.1')
         self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student,
-                                                  path_to_errors=path_to_errors,
-                                                  path_to_output=path_to_output)
+                                                  path_to_errors=self.path_to_errors,
+                                                  path_to_output=self.path_to_output)
         self.course_info_controller = Controller(Course)
         self.teacher_info_controller = Controller(Teacher)
         self.schedule_info_controller = Controller(Schedule)
@@ -186,7 +182,6 @@ class Students:
         self.sync_others()
 
     def read_in_others(self):
-        #self.read_in_preferred()
         if self.settings.courses:
             self.read_in_courses()
             self.read_in_schedule()
@@ -247,6 +242,7 @@ class Students:
         pass
 
     def read_in_allocations(self):
+        return
         self.verbose and print("Setting up allocation table by reading in raw teacher allocations for secondary")
         allocations = File(self.path_to_powerschool + '/' + 'ssis_teacherallocationsec')
         raw = allocations.content()
@@ -263,6 +259,7 @@ class Students:
             self.allocation_table[course_number].append(self.teacher_info_controller.get(teacher_name))
             
     def sync_allocations(self):
+        return
         self.verbose and print("Syncing teachers")
         for allocation in self.allocation_table.keys():
             for teacher in self.allocation_table[allocation]:
@@ -280,11 +277,11 @@ class Students:
 
     def read_in_teachers(self):
         self.verbose and print("Reading in teacher info for both schools")
-        teachers = File(self.path_to_powerschool + '/' + 'ssis_teacherinfodumpall')
+        teachers = File(self.path_to_powerschool + '/' + 'ssis_dist_staffinfo_v2.0')
         raw = teachers.content()
         for line in raw:
             try:
-                lastfirst, email, title, schoolid, status = line.strip('\n').split('\t')
+                num, first, preferred, last, email, title, staff_status, school = line.strip('\n').split('\t')
             except ValueError:
                 # PowerSchool data sometimes has so little that it gives us two consecutive rows of blanks... how annoying
                 try:
@@ -294,13 +291,8 @@ class Students:
                     continue
                 email = ''
                 title = ''
-            if lastfirst in self.exclude_these_teachers_manually:
-                continue
-            if 1 == int(status):
-                self.verbose and print("Adding teacher! {}".format(lastfirst))
+            if 1 == int(staff_status):
                 self.add_teacher(lastfirst, email, title, schoolid)
-            else:
-                pass # teachers with status of not 1 are no longer here
 
     def sync_teachers(self):
         """

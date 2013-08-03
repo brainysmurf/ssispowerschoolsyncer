@@ -10,6 +10,43 @@ import random
 class UnequalColumns(Exception):
     pass
 
+class Difference:
+    def __init__(self, index, column, left, right):
+        self.index = index
+        self.column = column
+        self.left = left
+        self.right = right
+    @property 
+    def is_deleted(self):
+        return False
+    @property
+    def is_new(self):
+        return False
+
+class New:
+    def __init__(self, index, column, value):
+        self.index = index
+        self.column = column
+        self.value = value
+    @property 
+    def is_deleted(self):
+        return False
+    @property
+    def is_new(self):
+        return True
+
+class Deleted:
+    def __init__(self, index, column, value):
+        self.index = index
+        self.column = column
+        self.value = value
+    @property 
+    def is_deleted(self):
+        return True
+    @property
+    def is_new(self):
+        return False
+
 def null():
     """
     Get me a null placeholder value. PS: Are you kidding me?
@@ -37,6 +74,18 @@ class PandasDataFrame:
             if not key in source:
                 source.update( {key:kwargs[key]} )
         return source
+
+    @classmethod
+    def from_excel(cls, path, sheet, *args, **kwargs):
+        return PandasDataFrame.from_dataframe(pd.read_excel(path, sheet, *args, **kwargs))
+
+    @classmethod
+    def from_index(cls, index, dtype=None):
+        """ create a table with indexes but no columns """
+        if dtype:
+            return PandasDataFrame(index=index, dtype=dtype)
+        else:
+            return PandasDataFrame(index=index)
 
     @classmethod
     def from_csv(cls, path, **kwargs):
@@ -78,8 +127,11 @@ class PandasDataFrame:
     def row_column(self, r, c):
         return self.dataframe.loc[r, c]
 
+    def columns(self, columns: "Must be a list"):
+        return PandasDataFrame.from_dataframe(self.dataframe[ columns ])
+
     @property
-    def routput(self):
+    def output(self):
         """ random output, useful for informally checking data quickly """
         rand = random.randrange(0, len(self.dataframe.index))
         return self.dataframe[rand:rand+10]
@@ -90,12 +142,23 @@ class PandasDataFrame:
         """
         self.dataframe[new_col] = self.dataframe[from_col].map(func)
 
+    def filter(self, column=None, by_list=None, columns=None):
+        if by_list:
+            return self.dataframe[column].isin(by_list)
+
+    def set_columns(self, *cols):
+        return PandasDataFrame.from_dataframe(self.dataframe[ list(cols) ])
+
+    def define_index(self, new_index, *args, **kwargs):
+        self.dataframe = self.dataframe.reindex(new_index, *args, **kwargs)
+
     def assign_column(self, column,
                       to=None,
                       from_index=None,
                       from_column=None,
                       by_iterrows=None,
-                      by_apply=None):
+                      by_apply=None,
+                      by_logic=None):
         """
         Returns the column for assignment
 
@@ -113,6 +176,8 @@ class PandasDataFrame:
             key = list(by_apply.keys())[0]
             func = by_apply[key]
             self.dataframe[column] = self.dataframe.apply(func)
+        elif by_logic:
+            self.dataframe[column] = by_logic
         else:
             # Can't check for "if to" due to the way pandas handles this assignment,
             #   so make it the default by logic
@@ -121,6 +186,11 @@ class PandasDataFrame:
             #   solve it with subsequent call to PandasDataFrame.set_column_nas after returning
             self.dataframe[column] = to
 
+    def copy_column_from(self, this=None, column=None):
+        """
+        if self and other share the same index, and you want to copy 
+        """
+        self.dataframe = self.dataframe.join(this.dataframe[column])
 
     def column_matches_string(self, col, match):
         """ returns whole frame that has match string contained within """
@@ -137,8 +207,11 @@ class PandasDataFrame:
     def slice_column_text(self, col, slice_obj):
         return self.dataframe[col].str.slice(slice_obj)
 
-    def change_index(self, new_index):
+    def new_index(self, new_index):
         return PandasDataFrame.from_dataframe(self.dataframe.set_index(new_index))
+
+    def change_index(self, new_index):
+        self.dataframe = self.dataframe.set_index(new_index).sort_index()
 
     def set_column_nas(self, column, value=None):
         """ set the column to whatever value, in place operation """
@@ -158,6 +231,9 @@ class PandasDataFrame:
                 values = [self.dataframe.loc[item, key]]
             _list.append(",".join(sorted(values)))
         return pd.Series(_list, index=self.unique_index_values)
+
+    def pivot_table(self, *args, **kwargs):
+        self.dataframe = pd.pivot_table(self.dataframe, *args, **kwargs)
 
     #
     # The following methods provide routines for interaction between two dataframes
@@ -227,7 +303,7 @@ class PandasDataFrame:
 
     def equal_columns(self, other):
         """ Returns True if columns are exactly the same """
-        return self.columns_list == other.columns_list
+        return set(self.columns_list) - set(other.columns_list) == set([])
 
     @staticmethod
     def is_new(values):
@@ -241,7 +317,7 @@ class PandasDataFrame:
         l = list(values)
         return l[3] is None and isinstance(l[2], list)
         
-    def pinpoint_differences(self, other):
+    def identify_differences(self, other):
         """
         Generates a (new) list of tuples
         that represents the differences between before and after
@@ -252,6 +328,9 @@ class PandasDataFrame:
         (index, 'DELETED', list_of_values, None)
         Best practice is to use static methods above to check for new or deleted
         """
+        before = self
+        after = other
+
         if not self.equal_columns(other):
             raise UnequalColumns("It's assumed that before and after have the same exact columns:\nBefore: {}\n After: {}".format(
                 ", ".join(self.columns_list), ", ".join(other.columns_list)
@@ -262,7 +341,7 @@ class PandasDataFrame:
         self.drop_meaningless()
         other.drop_meaningless()
 
-        # Next two lines makes any nan a None value, so we can check against itself
+        # Next two lines makes any nan a None value, so we can check against itself        
         before.convert_nas_to_zero()
         after.convert_nas_to_zero()
 
@@ -270,8 +349,10 @@ class PandasDataFrame:
         before_indexes = set(before.index_values)
         after_indexes = set(after.index_values)
         for new_one in (after_indexes - before_indexes):
-            yield (new_one, "NEW", None, list(after.dataframe.loc[new_one].values))
-        
+            yield New(index, new_one, list(after.dataframe.loc[new_one].values))
+        for deleted_one in (before_indexes - after_indexes):
+            yield Deleted(index, deleted_one, list(before.dataframe.loc[deleted_one].values))
+
         for index, row in before.dataframe.iterrows():
             for column in range(0, len(row)):
                 this_cell = row[column]
@@ -279,7 +360,8 @@ class PandasDataFrame:
                     that_row = after.dataframe.loc[index]
                 except KeyError:
                     # No longer present
-                    yield (index, "DELETED", list(before.dataframe.loc[index].values), None)
+                    # TODO: Decide if this should be defined differently than "DELETE"
+                    yield Deleted(list(before.dataframe.loc[index].values))
                     break
                 that_cell = that_row[column]
                 if this_cell != that_cell:
@@ -288,7 +370,7 @@ class PandasDataFrame:
                         # For some reason NaN's logic makes no sense to me....
                         #TODO include a wrapper for that
                         continue
-                    yield (index, before.columns_list[column], this_cell, that_cell)
+                    yield Difference(index, before.columns_list[column], this_cell, that_cell)
 
 
 class TestPandas(unittest.TestCase):
