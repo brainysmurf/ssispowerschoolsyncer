@@ -43,8 +43,9 @@ while current_working_list:
     current_working_list.pop(-1)
 
 settings = HoldPassedArguments('verbose', 'dry_run', 'teachers', 'courses',
-                                'students', 'email_list', 'families', 'parents',
-                                'automagic_emails', 'profiles', 'input_okay', 'updaters',
+                               'students', 'email_list', 'families', 'parents',
+                               'automagic_emails', 'profiles', 'input_okay', 'updaters',
+                               'enroll_cohorts', 'enroll_courses',
                                 inspect_student=False)
 
 config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
@@ -58,11 +59,12 @@ if config.has_section('ARGUMENTS'):
     for key in config_arguments.keys():
         setattr(settings.arguments, key, config['ARGUMENTS'][key])
 
+# SET UP ASSUMPTIONS GIVEN PASSED ARGUMENTS AT COMMAND LINE
 if settings.arguments.automagic_emails:
-    # Set up dependencies
     settings.arguments.courses = True
     settings.arguments.teachers = True
     settings.arguments.students = True
+    
 verbose = settings.arguments.verbose
 dry_run = settings.arguments.dry_run
 
@@ -91,6 +93,9 @@ def requires_setting(section, attribute):
         raise Exception("I require {} attribute in {} section, no such section in settings.ini file".format(attribute, section))
     if not config[section].get(attribute):
         raise Exception("Requires {} attribute in {} section, no such attribute in settings.ini file".format(attribute, section))
+
+def flag_passed(flag):
+    return getattr(settings.arguments, flag)
 
 
 __all__ = [verbose, dry_run, email_server, config, settings, requires_setting]

@@ -4,7 +4,7 @@ import numpy as np
 import re
 import datetime
 
-from psmdlsyncer.settings import config, requires_setting
+from psmdlsyncer.settings import config, requires_setting, flag_passed
 from psmdlsyncer.ModifyDragonNet import DragonNetModifier
 from psmdlsyncer.utils.DB import DragonNetDBConnection
 
@@ -192,8 +192,67 @@ def sync_sec_students_enrollments(students, courses, schedule):
     # DEFINE declared_enrollments
     #TODO: Insert course and group mapping code here... pain in the ass!
     declared_cohorts = PandasDataFrame({'powerschoolID':students.dataframe['powerschoolID'].tolist()})
-    students.
     
+def sync_support_staff_cohorts(staff):
+    """
+    I'M NOT GOING TO DO THIS UNTIL DREW TELLS HIS STAFF TO GIVE PROPER POWERSCHOOL IDs TO EVERYONE
+    """
+    staff_IDs = staff.dataframe[ staff.dataframe['is_secondary'] ]['powerschoolID'].values.tolist()
+    dn = DragonNetDBConnection()
+    mod_dn = DragonNetModifier()
+    queried_cohorts = PandasDataFrame(dn.get_user_cohort_enrollments(), columns=['powerschoolID', 'cohort'], index=None)
+    queried_cohorts.pivot_table(rows='powerschoolID', cols='cohort', aggfunc=lambda x: True, fill_value=False)    
+
+    # DEFINE declared_enrollments
+
+    # BECAUSE COHORTS HAVE TO BE CREATED IN DRAGONNET,
+    # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
+    # EXIST IN THE SYSTEM YET
+    # TODO: Present some sort of warning, or something
+    declared_names = ['supportstaffALL']
+    queried_names = queried_cohorts.dataframe.columns.tolist()
+    for missing_enrollment in set(declared_names) - set(queried_names):
+        queried_cohorts.assign_column(missing_enrollment, to=False)
+
+    # PROGRAMATICALLY SET UP declared_names
+    declared_cohorts = PandasDataFrame({'powerschoolID':staff.dataframe['powerschoolID'].tolist()})
+    from IPython import embed
+    embed()
+    staff.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
+    declared_cohorts.assign_column('studentsALL', to=True)
+    declared_cohorts.change_index('powerschoolID')  # do I need this?
+
+    # FILTER OUT BOTH QUERIED AND DECLARED FOR SECONDARY ONLY
+    temp = queried_cohorts.dataframe.reset_index()
+    temp = temp[ temp['powerschoolID'].isin(staff_IDs) ]
+    staff_queried_cohorts = PandasDataFrame.from_dataframe(temp)
+    temp = declared_cohorts.dataframe.reset_index()
+    temp = temp[ temp['powerschoolID'].isin(staff_IDs) ]
+    staff_declared_cohorts = PandasDataFrame.from_dataframe(temp)
+    
+    staff_queried_cohorts.change_index('powerschoolID')
+    staff_declared_cohorts.change_index('powerschoolID')
+    
+    # GO THROUGH EACH ITEM
+    # item.index   = powerschoolID
+    # item.column  = cohort
+    # item.left    = VALUE IT SHOULD BE (DEFINED IN secondary_declared_cohorts
+    # item.right   = VALUE IT WAS FOUND (DEFINED IN secondary_queried_cohorts
+    for item in staff_declared_cohorts.identify_differences \
+            (staff_queried_cohorts.set_columns(*declared_names)):
+        if item.is_deleted:
+            pass
+        elif item.is_new:
+            pass
+        # TODO: MAKE should AND should_not OR SOMETHING
+        else:
+            if item.left:
+                # SHOULD BE IN THERE, BUT ISN'T
+                mod_dn.add_user_to_cohort(item.index, item.column)
+            elif item.right:
+                # SHOULD NOT BE IN THERE, AND IS
+                mod_dn.remove_user_from_cohort(item.index, item.column)
+
 
 def sync_sec_students_cohorts(students):
     """
@@ -208,18 +267,18 @@ def sync_sec_students_cohorts(students):
     queried_cohorts = PandasDataFrame(dn.get_user_cohort_enrollments(), columns=['powerschoolID', 'cohort'], index=None)
     queried_cohorts.pivot_table(rows='powerschoolID', cols='cohort', aggfunc=lambda x: True, fill_value=False)
 
-    # DEFINE declared_enrollments
+    # DEFINE declared_names
 
     # BECAUSE COHORTS HAVE TO BE CREATED IN DRAGONNET,
     # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
     # EXIST IN THE SYSTEM YET
     # TODO: Present some sort of warning, or something
-    declared_enrollments = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
-    queried_enrollments = queried_cohorts.dataframe.columns.tolist()
-    for missing_enrollment in set(declared_enrollments) - set(queried_enrollments):
+    declared_names = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
+    queried_names = queried_cohorts.dataframe.columns.tolist()
+    for missing_enrollment in set(declared_names) - set(queried_names):
         queried_cohorts.assign_column(missing_enrollment, to=False)
 
-    # PROGRAMATICALLY SET UP declared_enrollments
+    # PROGRAMATICALLY SET UP declared_names
     declared_cohorts = PandasDataFrame({'powerschoolID':students.dataframe['powerschoolID'].tolist()})
     students.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
     declared_cohorts.assign_column('studentsALL', to=True)
@@ -245,8 +304,7 @@ def sync_sec_students_cohorts(students):
     # item.left    = VALUE IT SHOULD BE (DEFINED IN secondary_declared_cohorts
     # item.right   = VALUE IT WAS FOUND (DEFINED IN secondary_queried_cohorts
     for item in secondary_declared_cohorts.identify_differences \
-            (secondary_queried_cohorts.set_columns(*declared_enrollments)):
-        print(item.index, item.column)
+            (secondary_queried_cohorts.set_columns(*declared_names)):
         if item.is_deleted:
             pass
         elif item.is_new:
@@ -267,19 +325,23 @@ if __name__ == "__main__":
 
     students = PandasDataFrame.from_csv(full_path('ssis_studentinfo_v2.1'),
                                         header=None,
-                                        names=["powerschoolID", "id", "homeroom","fullname","emails","entrydate","nationality","delete"],
+                                        names=["powerschoolID", "id",
+                                               "homeroom", "fullname", "emails", "entrydate", "nationality", "delete"],
                                         dtype={'powerschoolID':np.object},
                                         index_col=False,
                                         converters={5:pd.to_datetime})
     staff = PandasDataFrame.from_csv(full_path('ssis_dist_staffinfo_v2.0'),
                                      header=None,
-                                     names=["powerschoolID", "first_name", "preferred_name", "middle_name", "last_name", "email", "title", "staff_status", "status", "delete"],
+                                     names=["powerschoolID",
+                                            "first_name", "preferred_name", "middle_name", "last_name",
+                                            "email", "title", "staff_status", "status", "delete"],
                                      index_col=None,
-                                     dtype={'powerschoolID':np.object},)
+                                     dtype={'powerschoolID':np.object})
 
     schedule = PandasDataFrame.from_csv(full_path('ssis_sec_studentschedule'),
                                         header=None,
-                                        names=["course","period", "termid", "teacher","studentname", "studentid"],
+                                        names=["course","period", "termid",
+                                               "teacher","studentname", "studentid"],
                                         index_col=False)
     courses = PandasDataFrame.from_csv(full_path('ssis_sec_courseinfo'),
                                        header=None,
@@ -287,7 +349,8 @@ if __name__ == "__main__":
                                        index_col=False)
     allocations = PandasDataFrame.from_csv(full_path('ssis_teacherallocationsec'),
                                            header=None,
-                                           names=["coursecode", "coursename", "teachername", "termid", "delete"],
+                                           names=["coursecode", "coursename",
+                                                  "teachername", "termid", "delete"],
                                            index_col=False)
 
     # setup courses with schedule
@@ -326,6 +389,9 @@ if __name__ == "__main__":
 
     allocations.assign_column('grade',      from_column={'coursename':determine_grade_from_coursename})
 
-    sync_sec_students_cohorts(students)
-    sync_sec_students_enrollments(students, courses, schedule)
+    if flag_passed('enroll_cohorts'):
+        #sync_support_staff_cohorts(staff)    FIXME: POWERSCHOOL IDs HAVE TO WORK FOR EVERYONE THE SAME WAY
+        sync_sec_students_cohorts(students)
+    if flag_passed('enroll_groups'):
+        sync_sec_students_enrollments(students, courses, schedule)
 
