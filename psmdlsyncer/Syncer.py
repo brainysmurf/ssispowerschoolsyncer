@@ -335,7 +335,7 @@ if __name__ == "__main__":
     staff = PandasDataFrame.from_csv(full_path('ssis_dist_staffinfo_v3.0'),
                                      header=None,
                                      names=["powerschoolID",
-cd .ec                                            "first_name", "preferred_name", "middle_name", "last_name",
+                                            "first_name", "preferred_name", "middle_name", "last_name",
                                             "email", "title", "staff_status", "status", "delete"],
                                      index_col=None,
                                      dtype={'powerschoolID':np.object})
