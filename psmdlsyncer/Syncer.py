@@ -335,7 +335,7 @@ if __name__ == "__main__":
     staff = PandasDataFrame.from_csv(full_path('ssis_dist_staffinfo_v3.0'),
                                      header=None,
                                      names=["powerschoolID",
-                                            "first_name", "preferred_name", "middle_name", "last_name",
+cd .ec                                            "first_name", "preferred_name", "middle_name", "last_name",
                                             "email", "title", "staff_status", "status", "delete"],
                                      index_col=None,
                                      dtype={'powerschoolID':np.object})
@@ -345,11 +345,11 @@ if __name__ == "__main__":
                                         names=["course","period", "termid",
                                                "teacher","studentname", "studentid"],
                                         index_col=False)
-    courses = PandasDataFrame.from_csv(full_path('ssis_sec_courseinfo'),
+    courses = PandasDataFrame.from_csv(full_path('ssis_sec_courseinfo_v3.0'),
                                        header=None,
                                        names=["course", "name"],
                                        index_col=False)
-    allocations = PandasDataFrame.from_csv(full_path('ssis_teacherallocationsec'),
+    allocations = PandasDataFrame.from_csv(full_path('ssis_sec_teacherallocations_v3.0'),
                                            header=None,
                                            names=["coursecode", "coursename",
                                                   "teachername", "termid", "delete"],
