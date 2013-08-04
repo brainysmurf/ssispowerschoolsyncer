@@ -98,5 +98,10 @@ def requires_setting(section, attribute):
 def flag_passed(flag):
     return getattr(settings.arguments, flag)
 
+def verbosity(passed):
+    if config.has_section('DEFAULTS') and config['DEFAULTS'].get(passed):
+        return config.getboolean('DEFAULTS', passed)
+    else:
+        return False
 
-__all__ = [verbose, dry_run, email_server, config, settings, requires_setting]
+__all__ = [verbose, verbosity, dry_run, email_server, config, settings, requires_setting]

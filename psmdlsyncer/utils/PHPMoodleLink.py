@@ -1,6 +1,6 @@
 import subprocess
 from psmdlsyncer.utils.Formatter import Smartformatter
-from psmdlsyncer.settings import config_get_section_attribute, verbose
+from psmdlsyncer.settings import config_get_section_attribute, verbosity
 
 class CallPHP:
     """
@@ -10,7 +10,7 @@ class CallPHP:
     def __init__(self):
         #TODO: Get this info from standard settings and config
         self.sf = Smartformatter()
-        self.verbose = config_get_section_attribute('DEFAULTS', 'verbose')
+        self.verbose = verbosity('CallPHP')
         self.dry_run = config_get_section_attribute('DEFAULTS', 'dry_run')
         self.path_to_cli = config_get_section_attribute('MOODLE', 'path_to_cli')
         self.path_to_php = config_get_section_attribute('MOODLE', 'path_to_php')
@@ -50,7 +50,7 @@ class CallPHP:
         self.sf(useridnumber=useridnumber, cohortidnumber=cohortidnumber)
         to_pass = self.sf("{useridnumber} '{cohortidnumber}'")
         if self.moodle_accounts:
-            verbose and print('Command: add_user_to_cohort {}'.format(to_pass))
+            self.verbose and print('Command: add_user_to_cohort {}'.format(to_pass))
             return self.command('add_user_to_cohort', to_pass)
         else:
             return "Dry run enabled: add_user_to_cohort {}".format(to_pass)

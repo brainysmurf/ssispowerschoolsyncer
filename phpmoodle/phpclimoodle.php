@@ -52,7 +52,7 @@ class moodlephp
 	}
       else
 	{
-	  return "-1 Could not find cohort ".$cohortName;
+	  return "-1 Could not find cohort ".$cohortidnumber;
 	}
      
       $r = cohort_add_member($cohortID, $userID);
