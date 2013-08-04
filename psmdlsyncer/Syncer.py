@@ -8,7 +8,7 @@ from psmdlsyncer.settings import config, requires_setting, flag_passed
 from psmdlsyncer.ModifyDragonNet import DragonNetModifier
 from psmdlsyncer.utils.DB import DragonNetDBConnection
 
-from psmdlsyncer.settings import verbose
+from psmdlsyncer.settings import verbose, verbosity
 
 def num_years(begin, end=None):
     if end is None:
@@ -335,17 +335,18 @@ def sync_sec_students_cohorts(students):
     # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
     # EXIST IN THE SYSTEM YET
     # TODO: Present some sort of warning, or something
-    declared_names = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS', 'parentsALL']
+    declared_names = ['testTEST', 'studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
     queried_names = queried_cohorts.dataframe.columns.tolist()
     for missing_enrollment in set(declared_names) - set(queried_names):
         queried_cohorts.assign_column(missing_enrollment, to=False)
 
-    # FIXME: WHAT ABOUT COHORTS THAT ARE ENROLLED BUT SHOULDN'T BE? THEY ARE NOT DECLARED HERE!
-
     # PROGRAMATICALLY SET UP declared_cohorts
+    # MUST BE DECLARED IN SAME ORDER AS ABOVE
+    # FIXME: IT SHOULDN'T BE THAT ANNOYING!
     declared_cohorts = PandasDataFrame({'powerschoolID':secondary_student_IDs})
     students.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
     declared_cohorts.assign_column('studentsALL', to=True)
+    #declared_cohorts.assign_column('testTEST', to=True)
     declared_cohorts.change_index('powerschoolID')  # otherwise, students.filter will get wrong results
     declared_cohorts.assign_column('studentsSEC', to=students.filter(column='grade', by_list=range(6, 14)))  #FIXME: CHANGE BACK TO 13
     declared_cohorts.assign_column('studentsMS',  to=students.filter(column='grade', by_list=range(6, 9)))

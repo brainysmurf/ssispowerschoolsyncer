@@ -313,7 +313,7 @@ class PandasDataFrame:
         l = list(values)
         return l[3] is None and isinstance(l[2], list)
         
-    def identify_differences(self, other):
+    def identify_differences(self, right):
         """
         Generates a (new) list of tuples
         that represents the differences between before and after
@@ -324,39 +324,38 @@ class PandasDataFrame:
         (index, 'DELETED', list_of_values, None)
         Best practice is to use static methods above to check for new or deleted
         """
-        before = self
-        after = other
+        left = self
 
-        if not self.equal_columns(other):
+        if not self.equal_columns(right):
             raise UnequalColumns("It's assumed that before and after have the same exact columns:\nBefore: {}\n After: {}".format(
-                ", ".join(self.columns_list), ", ".join(other.columns_list)
+                ", ".join(self.columns_list), ", ".join(right.columns_list)
                 ))
 
         # Next two lines drop any columns full of meaningless data,
         # because we don't want to pass on that on to next in line in the chain
-        self.drop_meaningless()
-        other.drop_meaningless()
+        left.drop_meaningless()
+        right.drop_meaningless()
 
         # Next two lines makes any nan a None value, so we can check against itself        
-        before.convert_nas_to_zero()
-        after.convert_nas_to_zero()
+        left.convert_nas_to_zero()
+        right.convert_nas_to_zero()
 
         # Determine new items first TODO Figure out a better algorithm for this
-        before_indexes = set(before.index_values)
-        after_indexes = set(after.index_values)
+        left_indexes = set(left.index_values)
+        right_indexes = set(right.index_values)
 
         # GIVE A CHANCE TO CALLING CODE TO INSPECT MAJOR DIFFERENCES UP FRONT
-        for new_one in (after_indexes - before_indexes):
+        for new_one in (right_indexes - left_indexes):
             yield NotInLeft(new_one)
-        for deleted_one in (before_indexes - after_indexes):
+        for deleted_one in (left_indexes - right_indexes):
             yield NotInRight(deleted_one)
 
         # NOW GO THROUGH EACH INDEX ITEM
-        for index, row in before.dataframe.iterrows():
+        for index, row in left.dataframe.iterrows():
             for column in range(0, len(row)):
                 this_cell = row[column]
                 try:
-                    that_row = after.dataframe.loc[index]
+                    that_row = right.dataframe.loc[index]
                 except KeyError:
                     # STILL NOT IN RIGHT
                     # TODO: OR DO I JUST BREAK? BECAUSE IT MIGHT BE POSSIBLE TO RUN PARTICULAR CODE TWICE!
@@ -369,10 +368,10 @@ class PandasDataFrame:
                         # For some reason NaN's logic makes no sense to me....
                         #TODO include a wrapper for that
                         continue
-                    yield Difference(index, before.columns_list[column], this_cell, that_cell)
+                    yield Difference(index, left.columns_list[column], this_cell, that_cell)
 
 
-class TestPandas(unittest.TestCase):
+class TestPandas(unittest.TestCase):NULL
 
     def test_csv_files(self):
         b = PandasDataFrame.from_csv('before.txt', header=None, names=["homeroom","name","emails","entrydate","nationality","delete"])
