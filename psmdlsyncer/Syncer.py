@@ -362,6 +362,9 @@ def sync_sec_students_cohorts(students):
     
     secondary_queried_cohorts.change_index('powerschoolID')
     secondary_declared_cohorts.change_index('powerschoolID')
+
+    from IPython import embed()
+    embed()
     
     # GO THROUGH EACH ITEM
     # item.index   = powerschoolID
