@@ -240,9 +240,9 @@ def sync_support_staff_cohorts(staff):
     # item.right   = VALUE IT WAS FOUND (DEFINED IN secondary_queried_cohorts
     for item in staff_declared_cohorts.identify_differences \
             (staff_queried_cohorts.set_columns(*declared_names)):
-        if item.not_in_left:
+        if item.is_not_in_left:
             pass
-        elif item.not_in_right:
+        elif item.is_not_in_right:
             pass
         # TODO: MAKE should AND should_not OR SOMETHING
         else:
@@ -365,10 +365,10 @@ def sync_sec_students_cohorts(students):
     # item.right   = VALUE IT WAS FOUND (DEFINED IN secondary_queried_cohorts
     for item in secondary_declared_cohorts.identify_differences \
             (secondary_queried_cohorts.set_columns(*declared_names)):
-        if item.not_in_left:
+        if item.is_not_in_left:
             # MAKE A NEW ACCOUNT
             pass
-        elif item.not_in_right:
+        elif item.is_not_in_right:
             # LOG IT, UNTIL SUCH TIME THAT WE'RE READY TO DELETE
             pass
         else:
