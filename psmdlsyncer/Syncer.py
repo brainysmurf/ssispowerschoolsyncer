@@ -332,7 +332,7 @@ if __name__ == "__main__":
                                         dtype={'powerschoolID':np.object},
                                         index_col=False,
                                         converters={5:pd.to_datetime})
-    staff = PandasDataFrame.from_csv(full_path('ssis_dist_staffinfo_v2.0'),
+    staff = PandasDataFrame.from_csv(full_path('ssis_dist_staffinfo_v3.0'),
                                      header=None,
                                      names=["powerschoolID",
                                             "first_name", "preferred_name", "middle_name", "last_name",
