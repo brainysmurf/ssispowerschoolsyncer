@@ -8,6 +8,8 @@ from psmdlsyncer.settings import config, requires_setting, flag_passed
 from psmdlsyncer.ModifyDragonNet import DragonNetModifier
 from psmdlsyncer.utils.DB import DragonNetDBConnection
 
+from psmdlsyncer.settings import verbose
+
 def num_years(begin, end=None):
     if end is None:
         end = datetime.datetime.now()
@@ -297,11 +299,13 @@ def sync_sec_parents_cohorts(parents):
             (queried_cohorts.set_columns(*declared_names)):
         if item.is_not_in_left:
             # EXISTS IN DRAGONNET, BUT NOT IN POWERSCHOOL
-            print("Not in left: {}".format(item.index))
+            # verbose and print("Not in left: {}".format(item.index))
             # TODO: Delete? Log?
+            pass
         elif item.is_not_in_right:
             # EXISTS IN POWERSCHOOL, BUT NOT IN DRAGONNET
-            print("Not in right: {}".format(item.index)) # TODO: Add to Dragonnet?
+            # verbose and print("Not in right: {}".format(item.index)) # TODO: Add to Dragonnet?
+            pass
         # TODO: MAKE should AND should_not OR SOMETHING
         else:
             if item.left:
@@ -374,9 +378,11 @@ def sync_sec_students_cohorts(students):
         else:
             if item.left:
                 # SHOULD BE IN THERE, BUT ISN'T
+                verbose and print("Adding {} to cohort {}".format(students.row_column(item.index, 'str'), item.column))
                 mod_dn.add_user_to_cohort(item.index, item.column)
             elif item.right:
                 # SHOULD NOT BE IN THERE, AND IS
+                verbose and print("Removing {} from cohort {}".format(students.row_column(item.index, 'str'), item.column))
                 mod_dn.remove_user_from_cohort(item.index, item.column)
 
 if __name__ == "__main__":
@@ -449,6 +455,8 @@ if __name__ == "__main__":
     students.assign_column('is_elementary', from_column={'grade':lambda x: x in range(1, 6)})
     students.assign_column('is_highschool',  from_column={'grade':lambda x: x in range(9, 13)})
     students.assign_column('is_middleschool',from_column={'grade':lambda x: x in range(6, 10)})
+    # STR IS USED FOR PRINTING OUT INFORMATION ABOUT THE STUDENT
+    students.assign_column('str',           by_iterrows=lambda index, row: '[ ' + row['name'] + ' (' + row['powerschoolID'] + ') ]')
 
     # SET UP PARENTS, WHICH IS A SPECIAL CASE
     parents = PandasDataFrame({'powerschoolID':students.dataframe['parentID']})

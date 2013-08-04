@@ -2,6 +2,8 @@ from psmdlsyncer.utils.PHPMoodleLink import CallPHP
 from psmdlsyncer.utils.Formatter import Smartformatter
 from psmdlsyncer.utils.PythonMail import send_html_email
 
+from psmdlsyncer.settings import verbose
+
 def test(id, student, extra):
       sf = Smartformatter()
       if isinstance(student, str):
@@ -67,7 +69,7 @@ class DragonNetModifier(CallPHP):
                         test('add_user_to_cohort', student, cohort)
                   else:
                         error = self.add_user_to_cohort( student.num, cohort )
-                        print(error)
+                        verbose and print(error)
             self.enrol_student_into_courses(student)
 
             #TODO: Modify profile fields as appropriate

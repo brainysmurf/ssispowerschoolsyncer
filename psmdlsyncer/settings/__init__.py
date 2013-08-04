@@ -64,9 +64,10 @@ if settings.arguments.automagic_emails:
     settings.arguments.courses = True
     settings.arguments.teachers = True
     settings.arguments.students = True
-    
-verbose = settings.arguments.verbose
-dry_run = settings.arguments.dry_run
+
+
+verbose = config.getboolean('DEFAULTS', 'verbose')
+dry_run = config.getboolean('DEFAULTS', 'dry_run')
 
 if 'DEFAULTS' in config.sections():
     for key in config['DEFAULTS']:

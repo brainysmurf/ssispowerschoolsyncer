@@ -1,6 +1,6 @@
 import subprocess
 from psmdlsyncer.utils.Formatter import Smartformatter
-from psmdlsyncer.settings import config_get_section_attribute
+from psmdlsyncer.settings import config_get_section_attribute, verbose
 
 class CallPHP:
     """
@@ -55,6 +55,7 @@ class CallPHP:
         self.sf(useridnumber=useridnumber, cohortidnumber=cohortidnumber)
         to_pass = self.sf("{useridnumber} '{cohortidnumber}'")
         if self.moodle_accounts:
+            verbose and print('Command: add_user_to_cohort {}'.format(to_pass))
             return self.command('add_user_to_cohort', to_pass)
         else:
             return "Dry run enabled: add_user_to_cohort {}".format(to_pass)
