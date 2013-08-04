@@ -224,6 +224,9 @@ class DragonNetDBConnection(DBConnection):
     def get_user_cohort_enrollments(self):
         return self.sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where LENGTH(usr.idnumber)>0")()
 
+    def get_parent_cohort_enrollments(self):
+        return self.sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where POSITION('P' IN usr.idnumber)>0")()
+
     def get_parent_child_associations(self):
         """
         Returns which accounts are linked to which accounts

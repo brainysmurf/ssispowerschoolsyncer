@@ -253,6 +253,64 @@ def sync_support_staff_cohorts(staff):
                 # SHOULD NOT BE IN THERE, AND IS
                 mod_dn.remove_user_from_cohort(item.index, item.column)
 
+def sync_sec_parents_cohorts(parents):
+    """
+    sdflksd
+    """
+    parent_IDs = parents.dataframe['powerschoolID'].values.tolist()
+    # DEFINE queried_cohorts
+    # QUERY DRAGONNET USING get_user_cohort_enrollments FOR EXISTING ENROLLMENTS
+    # SO USE pivot_table TO FORMAT QUERTY RESULT (userid, cohort) INTO A TRUTH-TABLE
+    dn = DragonNetDBConnection()
+    mod_dn = DragonNetModifier()
+    queried_cohorts = PandasDataFrame(dn.get_parent_cohort_enrollments(), columns=['powerschoolID', 'cohort'], index=None)
+    queried_cohorts.pivot_table(rows='powerschoolID', cols='cohort', aggfunc=lambda x: True, fill_value=False)
+
+    # DEFINE declared_names
+
+    # BECAUSE COHORTS HAVE TO BE CREATED IN DRAGONNET,
+    # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
+    # EXIST IN THE SYSTEM YET
+    # TODO: Present some sort of warning, or something
+    declared_names = ['parentsALL']
+    queried_names = queried_cohorts.dataframe.columns.tolist()
+    for missing_enrollment in set(declared_names) - set(queried_names):
+        queried_cohorts.assign_column(missing_enrollment, to=False)
+
+    # FIXME: SOME PARENTS ARE ALSO TEACHERS... UGH
+
+    # PROGRAMATICALLY SET UP declared_cohorts
+    declared_cohorts = PandasDataFrame({'powerschoolID':parent_IDs})
+    parents.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
+    declared_cohorts.assign_column('parentsALL', to=True)
+
+    declared_cohorts.change_index('powerschoolID')
+
+    # FILTER IF NECESSARY HERE
+    
+    # GO THROUGH EACH ITEM
+    # item.index   = powerschoolID
+    # item.column  = cohort
+    # item.left    = VALUE IT SHOULD BE (DEFINED IN declared_cohorts
+    # item.right   = VALUE IT WAS FOUND (DEFINED IN queried_cohorts
+    for item in declared_cohorts.identify_differences \
+            (queried_cohorts.set_columns(*declared_names)):
+        if item.is_not_in_left:
+            # EXISTS IN DRAGONNET, BUT NOT IN POWERSCHOOL
+            print("Not in left: {}".format(item.index))
+            # TODO: Delete? Log?
+        elif item.is_not_in_right:
+            # EXISTS IN POWERSCHOOL, BUT NOT IN DRAGONNET
+            print("Not in right: {}".format(item.index)) # TODO: Add to Dragonnet?
+        # TODO: MAKE should AND should_not OR SOMETHING
+        else:
+            if item.left:
+                # SHOULD BE IN THERE, BUT ISN'T
+                mod_dn.add_user_to_cohort(item.index, item.column)
+            elif item.right:
+                # SHOULD NOT BE IN THERE, AND IS
+                mod_dn.remove_user_from_cohort(item.index, item.column)
+
 
 def sync_sec_students_cohorts(students):
     """
@@ -273,13 +331,15 @@ def sync_sec_students_cohorts(students):
     # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
     # EXIST IN THE SYSTEM YET
     # TODO: Present some sort of warning, or something
-    declared_names = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
+    declared_names = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS', 'parentsALL']
     queried_names = queried_cohorts.dataframe.columns.tolist()
     for missing_enrollment in set(declared_names) - set(queried_names):
         queried_cohorts.assign_column(missing_enrollment, to=False)
 
-    # PROGRAMATICALLY SET UP declared_names
-    declared_cohorts = PandasDataFrame({'powerschoolID':students.dataframe['powerschoolID'].tolist()})
+    # FIXME: WHAT ABOUT COHORTS THAT ARE ENROLLED BUT SHOULDN'T BE? THEY ARE NOT DECLARED HERE!
+
+    # PROGRAMATICALLY SET UP declared_cohorts
+    declared_cohorts = PandasDataFrame({'powerschoolID':secondary_student_IDs})
     students.change_index('powerschoolID')  # THIS REALLY IS NEEDED FOR BELOW STATEMENTS TO WORK
     declared_cohorts.assign_column('studentsALL', to=True)
     declared_cohorts.change_index('powerschoolID')  # otherwise, students.filter will get wrong results
@@ -347,7 +407,7 @@ if __name__ == "__main__":
                                         index_col=False)
     courses = PandasDataFrame.from_csv(full_path('ssis_sec_courseinfo_v3.0'),
                                        header=None,
-                                       names=["course", "name"],
+                                       names=["course", "name", "delete"],
                                        index_col=False)
     allocations = PandasDataFrame.from_csv(full_path('ssis_sec_teacherallocations_v3.0'),
                                            header=None,
@@ -383,16 +443,22 @@ if __name__ == "__main__":
     students.assign_column('graduation',    from_column={'grade':get_year_of_graduation})
     students.assign_column('orig_username', by_iterrows=derive_username)
     students.assign_column('yearsenrolled', from_column={'entrydate':get_years_since_enrolled})
-    students.assign_column('parentID',      from_index=lambda x: str(x)[:4]+'P')
+    students.assign_column('parentID',      from_column={'powerschoolID':lambda x: str(x)[:4]+'P'})
     students.assign_column('is_secondary',  from_column={'grade':lambda x: x in range(6, 13)})
     students.assign_column('is_elementary', from_column={'grade':lambda x: x in range(1, 6)})
     students.assign_column('is_highschool',  from_column={'grade':lambda x: x in range(9, 13)})
     students.assign_column('is_middleschool',from_column={'grade':lambda x: x in range(6, 10)})
 
+    # SET UP PARENTS, WHICH IS A SPECIAL CASE
+    parents = PandasDataFrame({'powerschoolID':students.dataframe['parentID']})
+    parents.assign_column('studentID',     to=students.dataframe['powerschoolID'].values)
+    parents.assign_column('emails',         to=students.dataframe['emails'].values)
+
     allocations.assign_column('grade',      from_column={'coursename':determine_grade_from_coursename})
 
     if flag_passed('enroll_cohorts'):
         #sync_support_staff_cohorts(staff)    FIXME: POWERSCHOOL IDs HAVE TO WORK FOR EVERYONE THE SAME WAY
+        sync_sec_parents_cohorts(parents)
         sync_sec_students_cohorts(students)
     if flag_passed('enroll_groups'):
         sync_sec_students_enrollments(students, courses, schedule)

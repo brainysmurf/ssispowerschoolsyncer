@@ -17,35 +17,31 @@ class Difference:
         self.left = left
         self.right = right
     @property 
-    def is_deleted(self):
+    def is_not_in_left(self):
         return False
     @property
-    def is_new(self):
+    def is_not_in_right(self):
         return False
 
-class New:
-    def __init__(self, index, column, value):
+class NotInLeft:
+    def __init__(self, index):
         self.index = index
-        self.column = column
-        self.value = value
     @property 
-    def is_deleted(self):
-        return False
-    @property
-    def is_new(self):
+    def is_not_in_left(self):
         return True
+    @property
+    def is_not_in_right(self):
+        return False
 
-class Deleted:
-    def __init__(self, index, column, value):
+class NotInRight:
+    def __init__(self, index):
         self.index = index
-        self.column = column
-        self.value = value
     @property 
-    def is_deleted(self):
-        return True
-    @property
-    def is_new(self):
+    def is_not_in_left(self):
         return False
+    @property
+    def is_not_in_right(self):
+        return True
 
 def null():
     """
@@ -348,20 +344,23 @@ class PandasDataFrame:
         # Determine new items first TODO Figure out a better algorithm for this
         before_indexes = set(before.index_values)
         after_indexes = set(after.index_values)
-        for new_one in (after_indexes - before_indexes):
-            yield New(index, new_one, list(after.dataframe.loc[new_one].values))
-        for deleted_one in (before_indexes - after_indexes):
-            yield Deleted(index, deleted_one, list(before.dataframe.loc[deleted_one].values))
 
+        # GIVE A CHANCE TO CALLING CODE TO INSPECT MAJOR DIFFERENCES UP FRONT
+        for new_one in (after_indexes - before_indexes):
+            yield NotInLeft(new_one)
+        for deleted_one in (before_indexes - after_indexes):
+            yield NotInRight(deleted_one)
+
+        # NOW GO THROUGH EACH INDEX ITEM
         for index, row in before.dataframe.iterrows():
             for column in range(0, len(row)):
                 this_cell = row[column]
                 try:
                     that_row = after.dataframe.loc[index]
                 except KeyError:
-                    # No longer present
-                    # TODO: Decide if this should be defined differently than "DELETE"
-                    yield Deleted(list(before.dataframe.loc[index].values))
+                    # STILL NOT IN RIGHT
+                    # TODO: OR DO I JUST BREAK? BECAUSE IT MIGHT BE POSSIBLE TO RUN PARTICULAR CODE TWICE!
+                    yield NotInRight(index)
                     break
                 that_cell = that_row[column]
                 if this_cell != that_cell:
