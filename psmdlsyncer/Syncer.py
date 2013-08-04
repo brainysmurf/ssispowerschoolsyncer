@@ -335,7 +335,7 @@ def sync_sec_students_cohorts(students):
     # CHECK FOR THAT SITUATION WHERE WE HAVE COHORTS DECLARED BUT DON'T ACTUALLY
     # EXIST IN THE SYSTEM YET
     # TODO: Present some sort of warning, or something
-    declared_names = ['testTEST', 'studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
+    declared_names = ['studentsALL', 'studentsSEC', 'studentsMS', 'studentsHS']
     queried_names = queried_cohorts.dataframe.columns.tolist()
     for missing_enrollment in set(declared_names) - set(queried_names):
         queried_cohorts.assign_column(missing_enrollment, to=False)
@@ -362,9 +362,6 @@ def sync_sec_students_cohorts(students):
     
     secondary_queried_cohorts.change_index('powerschoolID')
     secondary_declared_cohorts.change_index('powerschoolID')
-
-    from IPython import embed
-    embed()
     
     # GO THROUGH EACH ITEM
     # item.index   = powerschoolID
