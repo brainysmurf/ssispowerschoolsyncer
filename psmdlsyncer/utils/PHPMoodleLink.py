@@ -7,13 +7,7 @@ class CallPHP:
     Implements common functions
     Serves as gateway to php functions available in moodle, makes available to Python
     """
-    def __init__(self,
-                 dry_run=False,
-                 verbose = True,
-                 path_to_cli="",
-                 path_to_php="",
-                 email_accounts=False,
-                 moodle_accounts=True):
+    def __init__(self):
         #TODO: Get this info from standard settings and config
         self.sf = Smartformatter()
         self.verbose = config_get_section_attribute('DEFAULTS', 'verbose')
@@ -27,6 +21,7 @@ class CallPHP:
         self.sf(php_path=self.path_to_php, routine=routine, space=" ")
         cmd = self.sf('{php_path} phpclimoodle.php {routine}{space}' ) + cmd
         if not self.dry_run:
+            self.verbose and print('Calling using Popen: ' + cmd)
             p = subprocess.Popen( cmd,
                               shell=True, stdout=subprocess.PIPE, cwd=self.path_to_cli)
             result = p.communicate()
