@@ -371,7 +371,7 @@ class PandasDataFrame:
                     yield Difference(index, left.columns_list[column], this_cell, that_cell)
 
 
-class TestPandas(unittest.TestCase):NULL
+class TestPandas(unittest.TestCase):
 
     def test_csv_files(self):
         b = PandasDataFrame.from_csv('before.txt', header=None, names=["homeroom","name","emails","entrydate","nationality","delete"])
