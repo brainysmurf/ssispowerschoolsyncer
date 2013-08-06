@@ -1,28 +1,13 @@
 #!/usr/local/bin/python3
     
-if __name__ == "__main__":
-    import sys
-    import os
-    path = os.path.realpath(__file__)
-    src_path = None
-    while not path == '/':
-        path = os.path.split(path)[0]
-        print(path)
-        if not '__init__.py' in os.listdir(path):
-            src_path = path
-            break
-    if src_path == None:
-        raise ImportError("Could not set up!")
-    else:
-        sys.path.insert(0, src_path)
-from utils import *
+from ssispowerschoolsyncer.utils import *
 
-from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
-from Model import DatabaseObject
-from utils.PythonMail import send_html_email
-from utils.Dates import custom_strftime
-from utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
-from notices.Samples import student_notices_samples, student_notices_tag_samples
+from ssispowerschoolsyncer.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
+from ssispowerschoolsyncer.Model import DatabaseObject
+from ssispowerschoolsyncer.utils.PythonMail import send_html_email
+from ssispowerschoolsyncer.utils.Dates import custom_strftime
+from ssispowerschoolsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
+from ssispowerschoolsyncer.notices.Samples import student_notices_samples, student_notices_tag_samples
 import datetime
 
 verbose = False

@@ -28,7 +28,48 @@ class moodlephp
       echo $r;
     }
 
+    private function create_cohort($idnumber, $name, $description)
+    {
+      $new_cohort = new stdClass;
+      $new_cohort->idnumber = $idnumber;
+      $new_cohort->name = $name;
+      $new_cohort->description = $description;
+
+      $cohortID = cohort_add_cohort($new_cohort);
+      echo "Added new cohort ".$name;
+      return $cohortID;
+    }
+
     private function add_user_to_cohort($args) 
+    {
+      $idnumber = $args[0];
+      $cohortidnumber = $args[1];
+
+      global $DB;
+      if( !$user = $this->getUserByIDNumber($idnumber) )
+	{
+	  return "-1 Could not find user ".$idnumber." while adding cohort ".$cohortidnumber;
+	}
+
+      if( ! ($cohort = $DB->get_record_select( 'cohort', 'idnumber = ?', array($cohortidnumber) )) ) {
+	//$cohortID = $this->create_cohort($idnumber, $cohortidnumber, '');
+	return "-1 Cohort does not exit";
+      }
+
+      $cohortID= $cohort->id;
+      $userID = $user->id;
+      // workaround, instead of using cohort_existing_selector, due to bug
+      $cohort_membership = $DB->get_record_select('cohort_members', 'cohortid = ? and userid = ?', array('cohortid'=>$cohortID,'userid'=>$userID));
+      if( $cohort_membership ) {
+	  return "0 ".$idnumber." is already a member of this cohort ".$cohortidnumber."!";
+	}
+     
+      $r = cohort_add_member($cohortID, $userID);
+      echo "Added ".$idnumber." to cohort ".$cohortidnumber ;
+      return $r;
+    }
+
+    private function remove_user_from_cohort($args) 
     {
       $idnumber = $args[0];
       $cohortidnumber = $args[1];
@@ -45,9 +86,9 @@ class moodlephp
 	  $userID = $user->id;
 	  // workaround, instead of using cohort_existing_selector, due to bug
 	  $cohort_membership = $DB->get_record_select('cohort_members', 'cohortid = ? and userid = ?', array('cohortid'=>$cohortID,'userid'=>$userID));
-	  if( $cohort_membership )
+	  if( !($cohort_membership) )
 	    {
-	      return "0";
+	      return "0 ". $idnumber . " is not a member of the cohort ".$cohortidnumber;
 	    }
 	}
       else
@@ -55,11 +96,9 @@ class moodlephp
 	  return "-1 Could not find cohort ".$cohortName;
 	}
      
-      $r = cohort_add_member($cohortID, $userID);
-      echo "Added ".$idnumber." to cohort ".$cohortidnumber ;
+      $r = cohort_remove_member($cohortID, $userID);
+      echo "Removed ".$idnumber." from cohort ".$cohortidnumber ;
       return $r;
-
-      global $DB;
     }
 
     private function create_account( $args ) 

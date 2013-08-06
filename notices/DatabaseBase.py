@@ -1,32 +1,17 @@
 #!/usr/local/bin/python3
 
-if __name__ == "__main__":
-    import sys
-    import os
-    path = os.path.realpath(__file__)
-    src_path = None
-    while not path == '/':
-        path = os.path.split(path)[0]
-        print(path)
-        if not '__init__.py' in os.listdir(path):
-            src_path = path
-            break
-    if src_path == None:
-        raise ImportError("Could not set up!")
-    else:
-        sys.path.insert(0, src_path)
-from utils import *
+from ssispowerschoolsyncer.utils import *
 
 try:
     import postgresql
     dry_run = False
 except:
     dry_run = True
-from utils.Dates import today, tomorrow, yesterday
-from utils.PythonMail import send_html_email
-from utils.Email import Email
-from utils.DB import FieldObject
-from Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
+from ssispowerschoolsyncer.utils.Dates import today, tomorrow, yesterday
+from ssispowerschoolsyncer.utils.PythonMail import send_html_email
+from ssispowerschoolsyncer.utils.Email import Email
+from ssispowerschoolsyncer.utils.DB import FieldObject
+from ssispowerschoolsyncer.Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
 import datetime
 
