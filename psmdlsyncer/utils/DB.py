@@ -79,7 +79,7 @@ class DBConnection:
     def update_table(self, table_name, where={}, **kwargs):
         set_phrase = ",".join(["{}='{}'".format(c[0], c[1]) for c in kwargs.items()])
         where_items = where.items()
-        where_phrase = " AND ".join(["where {} = '{}'".format(w[0], w[1]) for w in where_items])
+        where_phrase = " AND ".join(["{} = '{}'".format(w[0], w[1]) for w in where_items])
         self.sql('update {} set {} where {}'.format(table_name, set_phrase, where_phrase))()
 
     def update_or_insert(self, table_name, where={}, **kwargs):
@@ -203,6 +203,9 @@ class DragonNetDBConnection(DBConnection):
         lastlogin, lastaccess = result[0]
         return int(lastlogin) == 0 and int(lastaccess) == 0
 
+    def get_userid_idnumber(self):
+        return self.sql( "select id, idnumber, username from ssismdl_user")()
+    
     def get_student_info(self):
         self.verbose and print("Reading in usernames that are already taken")
         get_users = self.sql('select idnumber, username, id from ssismdl_user')()
@@ -223,6 +226,12 @@ class DragonNetDBConnection(DBConnection):
 
     def get_user_cohort_enrollments(self):
         return self.sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where LENGTH(usr.idnumber)>0")()
+
+    def get_user_profile_data(self):
+        """
+        RETURNS ANY PROFILE FIELD INFORMATION THAT BEGINS WITH 'is'
+        """
+        return self.sql("select usr.idnumber, usr.id, uif.shortname, uid.data from ssismdl_user_info_field uif join ssismdl_user_info_data uid on uid.fieldid = uif.id join ssismdl_user usr on uid.userid = usr.id where uif.shortname like 'is%'")()
 
     def get_parent_cohort_enrollments(self):
         return self.sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where POSITION('P' IN usr.idnumber)>0")()

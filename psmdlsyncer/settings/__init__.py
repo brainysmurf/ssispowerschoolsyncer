@@ -45,7 +45,7 @@ while current_working_list:
 settings = HoldPassedArguments('verbose', 'dry_run', 'teachers', 'courses',
                                'students', 'email_list', 'families', 'parents',
                                'automagic_emails', 'profiles', 'input_okay', 'updaters',
-                               'enroll_cohorts', 'enroll_courses',
+                               'sync_profile_fields', 'enroll_cohorts', 'enroll_courses',
                                 inspect_student=False)
 
 config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
@@ -96,7 +96,7 @@ def requires_setting(section, attribute):
         raise Exception("Requires {} attribute in {} section, no such attribute in settings.ini file".format(attribute, section))
 
 def flag_passed(flag):
-    return getattr(settings.arguments, flag)
+    return hasattr(settings.arguments, flag)
 
 def verbosity(passed):
     if config.has_section('DEFAULTS') and config['DEFAULTS'].get(passed):
