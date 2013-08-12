@@ -106,6 +106,9 @@ class PandasDataFrame:
     def columns_list(self):
         return list(self.dataframe.columns)
 
+    def columns_start_with(self, start):
+        return [c for c in self.columns_list if c.startswith(start)]
+
     @property
     def index_values(self):
         return self.dataframe.index.values
@@ -113,6 +116,11 @@ class PandasDataFrame:
     @property
     def unique_index_values(self):
         return set(self.index_values)
+
+    def get(self, index, column):
+        """
+        """
+        return self.dataframe.loc[index, column]
 
     def convert_nas_to_zero(self):
         self.dataframe.fillna(value=0, inplace=True)
@@ -126,6 +134,18 @@ class PandasDataFrame:
     def columns(self, columns: "Must be a list"):
         return PandasDataFrame.from_dataframe(self.dataframe[ columns ])
 
+    def columns_to_type(self, columns: "list" , the_type: "bool, FOR EXAMPLE"):
+        """
+        Converts the columns indicated to the type indicated
+        """
+        for column in columns:
+            self.assign_column(column, to= self.dataframe[column].astype(the_type))
+
+
+    @property
+    def column_values(self):
+        return self.dataframe.columns.values
+
     @property
     def output(self):
         """ random output, useful for informally checking data quickly """
@@ -138,9 +158,13 @@ class PandasDataFrame:
         """
         self.dataframe[new_col] = self.dataframe[from_col].map(func)
 
-    def filter(self, column=None, by_list=None, columns=None):
+    def filter(self, column=None, by_list=None, columns=None, equals=None, bool=False):
         if by_list:
             return self.dataframe[column].isin(by_list)
+        if equals:
+            return self.dataframe[column]==equals
+        if bool:
+            return self.dataframe[self.dataframe[column]]
 
     def set_columns(self, *cols):
         return PandasDataFrame.from_dataframe(self.dataframe[ list(cols) ])
