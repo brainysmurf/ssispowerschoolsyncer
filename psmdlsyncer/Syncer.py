@@ -432,7 +432,7 @@ class Sync:
         identify_differences(declared_profile_field_data,
                              queried_filtered,
                              self.add_profile_for_user, self.remove_profile_for_user,
-                             None, None)
+                             print, print)
         embed()
 
     def sync_sec_students_cohorts(self):
