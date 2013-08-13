@@ -156,6 +156,7 @@ def identify_differences(left: "PandasDataFrame", right: "PandasDataFrame",
     """
     More abstract code used for syncing procedures
     """
+    embed()
     verbose = verbosity('Sync')
     for item in left.identify_differences(right):
         if item.is_not_in_left:
@@ -185,7 +186,7 @@ class Sync:
         self._dn = None
         self._queried_enrollments = None
         self._query_userid_idnumber = None
-        self._queried_profile_field_data = None
+        self._qpfd = None
         self._queried_cohorts = None
         self.verbose = verbosity('Sync')
         self.mod_dn = DragonNetModifier()
@@ -204,12 +205,12 @@ class Sync:
         self.mod_dn.remove_user_from_cohort(item.index, item.column)
 
     def add_profile_for_user(self, item):
-        embed()
-        self.get_userid_from_idnumber(item)
-
+        userid = self.get_userid_from_idnumber(item.index)
+        print("Adding", userid, item.left)
 
     def remove_profile_for_user(self, item):
-        pass
+        userid = self.get_userid_from_idnumber(item.index)
+        print("Removing", userid, item.left)
 
     @property
     def get_dn_connection(self):
@@ -221,18 +222,14 @@ class Sync:
     def queried_enrollments(self):
         if self._queried_enrollments is None:
             self._queried_enrollments = PandasDataFrame(self.get_dn_connection.get_all_users_enrollments(),
-                                                        columns=['powerschoolID', 'group', 'course'],
-                                                        dtype={'powerschoolID':np.object},
-                                                        index=None)
+                                                        columns=['powerschoolID', 'group', 'course'])
         return self._queried_enrollments
 
     @property
     def query_userid_idnumber(self):
         if self._query_userid_idnumber is None:
             self._query_userid_idnumber = PandasDataFrame(self.get_dn_connection.get_userid_idnumber(),
-                                                          columns=['userid', 'powerschoolID', 'username'],
-                                                          dtype={'powerschoolID':np.object},
-                                                          index=None)
+                                                          columns=['userid', 'powerschoolID', 'username'])
             self._query_userid_idnumber.change_index('powerschoolID')
         return self._query_userid_idnumber
 
@@ -241,18 +238,28 @@ class Sync:
 
     @property
     def queried_profile_field_data(self):
-        if self._queried_profile_field_data is None:
-            self._queried_profile_field_data = PandasDataFrame(self.get_dn_connection.get_user_profile_data(),
+        if self._qpfd is None:
+            self._qpfd = PandasDataFrame(self.get_dn_connection.get_user_profile_data(),
                                                                columns=['powerschoolID','userid', 'field', 'value'],
                                                                index=None)
             # DTYPE DOESN'T WORK, SO ADJUST THE VALUES MANUALLY
-            self._queried_profile_field_data.assign_column('value', from_column={'value': lambda x: True if int(x) else False})
-                
-            self._queried_profile_field_data.pivot_table(rows='powerschoolID', cols='field', values='value', fill_value=False)
-            columns = self.queried_profile_field_data.column_values
-            self._queried_profile_field_data.columns_to_type(columns, bool)
+            self._qpfd.assign_column('value', from_column={'value': lambda x: True if int(x) else False})
+            self._qpfd.filter(column='value', equals=True)
+            newlist = self._qpfd.columns_list
+            value_index = newlist.index('value')
+            if not value_index:
+                print("won't work!")
+            newlist.pop(value_index)
+
+            self._qpfd.dataframe = self._qpfd.dataframe[self._qpfd.dataframe['value']==True]
+            self._qpfd = self._qpfd.set_columns(*newlist)
+
+            self._qpfd.pivot_table(rows='powerschoolID',
+                                   cols='field',
+                                   aggfunc=lambda x: True,
+                                   fill_value=False)
             
-        return self._queried_profile_field_data
+        return self._qpfd
 
     @property
     def queried_cohorts(self):
@@ -376,9 +383,6 @@ class Sync:
                 self.get_dn_connection.update_table('ssismdl_course', idnumber=shortname, where={'id':get_id})
                 self.get_dn_connection.update_table('ssismdl_course', shortname=shortname, where={'id':get_id})
                 self.get_dn_connection.update_table('ssismdl_course', summary='', where={'id':get_id})
-                embed()
-
-        embed()
     
     def sync_sec_parents_cohorts(self):
         """
@@ -416,12 +420,13 @@ class Sync:
 
     def sync_student_profile_fields(self):
         queried_profile_field_data = self.queried_profile_field_data
-
         # GET TO SUBSET THAT EXISTS WITHIN DECLARED
         target_columns = self.students.columns_start_with('is')
+        queried_columns = queried_profile_field_data.dataframe.columns
+        for column in set(target_columns) - set(queried_columns):
+            queried_profile_field_data.assign_column(column, to=False)
         queried_filtered = queried_profile_field_data.columns(target_columns)
-
-        self.students.change_index('powerschoolID')
+        embed()
         declared_profile_field_data = self.students.columns(target_columns)
 
         identify_differences(declared_profile_field_data,
@@ -569,11 +574,10 @@ if __name__ == "__main__":
 
     sync = Sync(students, staff, parents, schedule, allocations)
 
-    sync.sync_courses()
+    #sync.sync_courses()
 
     if flag_passed('sync_profile_fields'):
         sync.sync_student_profile_fields()
-        
 
     if flag_passed('enroll_cohorts'):
         sync.sync_staff_cohorts()    #FIXME: POWERSCHOOL IDs HAVE TO WORK FOR EVERYONE THE SAME WAY

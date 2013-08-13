@@ -550,12 +550,7 @@ and set permissions accordingly.".format(php_src))
         self.verbose and print("Building csv file for moodle")
         path_to_cli = self.config['MOODLE'].get('path_to_cli') if self.config.has_section('MOODLE') else None
         path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
-        modify = DragonNetModifier(dry_run=self.dry_run,
-                                 verbose =self.verbose,
-                                 path_to_cli=path_to_cli,
-                                 path_to_php=path_to_php,
-                                 email_accounts=self.config.has_section('EMAIL'),
-                                 moodle_accounts=self.config.has_section('MOODLE'))
+        modify = DragonNetModifier()
 
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_users.txt')
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
