@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import unittest
 import random
+from IPython import embed
 
 class UnequalColumns(Exception):
     pass
