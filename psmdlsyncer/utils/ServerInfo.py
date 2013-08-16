@@ -162,7 +162,7 @@ class ServerInfo(DragonNetDBConnection):
                 else:
                     if not 'NoStudentInMoodle' in dontraise:
                         self.verbose and print("Raising NoStudentInMoodle")
-                        #raise NoStudentInMoodle
+                        raise NoStudentInMoodle
 
                 self.verbose and print("Checking enrollments")
                 for i in range(len(student.courses())):
@@ -201,14 +201,13 @@ class ServerInfo(DragonNetDBConnection):
         if self.sync_moodle:
             if not familyid in list(self.families.keys()):
                 if not 'NoParentAccount' in dontraise:
-                    pass
-                    #raise NoParentAccount
+                    raise NoParentAccount
             else:
                 if student.is_secondary or student.grade == 5:
                     if not student.num in self.families[familyid]:
                         if not 'ParentAccountNotAssociated' in dontraise:
                             self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
-                            #raise ParentAccountNotAssociated
+                            raise ParentAccountNotAssociated
 
             self.verbose and print("Now checking parent account enrollments")
             for i in range(len(student.courses())):
