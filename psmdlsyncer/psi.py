@@ -129,6 +129,8 @@ and set permissions accordingly.".format(php_src))
             self.build_profiles()
         if self.settings.updaters:
             self.build_updates()
+        if self.settings.remove_enrollments:
+            self.remove_enrollments()
         #self.assign_groups()
         #self.build_student_list()
         #self.build_opening_table(students)
@@ -201,9 +203,9 @@ and set permissions accordingly.".format(php_src))
             courses = heads[head]
             row = output_file.factory()
             row.build_username(head)
-            row.build_firstname("firstname")
-            row.build_lastname("lastname")
-            row.build_password('changeme')
+            row.build_firstname("headof")
+            row.build_lastname("department")
+            row.build_password('nopasswordneeded')
             row.build_email(head+'@ssis-suzhou.net')
             row.build_maildigest('1')
             row.build_course_(courses)
@@ -430,7 +432,7 @@ and set permissions accordingly.".format(php_src))
         user = moodle.get('database_user')
         password = moodle.get('password')
         database_name = moodle.get('database_name')
-        database = DragonNetDBConnection(user, password, host, database_name, verbose=self.verbose)
+        database = DragonNetDBConnection()
 
         for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
@@ -479,7 +481,7 @@ and set permissions accordingly.".format(php_src))
 
                 for teacher_key in self.students.get_teacher_keys():
                     teacher = self.students.get_teacher(teacher_key)
-                    if teacher.username in student.get_teacher_names():
+                    if teacher.lastfirst in student.get_teacher_names():
                         for teacher_course in teacher.courses():
                             if 'HROOM' in teacher_course:
                                 continue
@@ -521,6 +523,7 @@ and set permissions accordingly.".format(php_src))
                 database.sql(formatter("update ssismdl_user set {existing_profile_field} = '{value}' where id = {user_id}"))()
                 
             for formatter.extra_profile_field, formatter.value in student.get_extra_profile_fields():
+                self.verbose and print(formatter("Manually created profile field: {extra_profile_field}"))
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
                     print(formatter("You need to manually add the {extra_profile_field} field!"))
@@ -530,10 +533,13 @@ and set permissions accordingly.".format(php_src))
                 if there_already:
                     if not there_already[0][0] == str(int(formatter.value)):
                         # only call update if it's different
+                        formatter.value = int(formatter.value)
+                        self.verbose and print(formatter('updating for {user_id}'))
                         database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))()
                     else:
                         self.verbose and print(formatter("No change in {extra_profile_field}, so didn't call the database"))
                 else:
+                    self.verbose and print(formatter('inserting {extra_profile_field}'))
                     database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
 
     def build_email_list(self):
@@ -542,6 +548,29 @@ and set permissions accordingly.".format(php_src))
                 student = self.students.get_student(student_key)
                 if student.is_secondary:
                     f.write(student.email + '\n')
+
+    def remove_enrollments(self):
+        """
+        De-enrols all users from all courses, except for Grade 12s
+        """
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            self.verbose and print("Got to this one here: \n{}".format(student))
+            dnet = DragonNetDBConnection()
+            modify = DragonNetModifier()
+
+            secondary_homerooms = self.students.get_secondary_homerooms()
+
+            # First handle secondary students
+            if student.homeroom in secondary_homerooms and student.courses() and int(student.num) > 30000:
+                if student.grade == 12:
+                    continue
+                queried = dnet.get_user_enrollments(student.num)
+                courses = student.courses()
+                for query in queried:
+                    _, group, course = query
+                    if course not in courses:
+                        modify.unenrol_user_from_course(student.num, course)
 
     def build_students(self, verify=False):
         """
@@ -843,7 +872,7 @@ and set permissions accordingly.".format(php_src))
         if self.config.has_section("EMAIL"):
             path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
         if not path:
-            path = self.settings.output_path + '/postfix'
+            path = self.output_path + '/postfix'
 
         #TODO: Use smartformatter for this crap!
         d = {'path':path}

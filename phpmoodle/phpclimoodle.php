@@ -189,6 +189,19 @@ class moodlephp
       groups_add_member($group, $user);
     }
 
+    private function remove_user_from_group($args)
+    {
+      $user_idnum = $args[0];
+      $group_name = $args[1];
+
+      global $DB;
+
+      $user = $this->getUserByIDNumber($user_idnum);
+      $group = $DB->get_record('groups', array('name'=>$group_name), '*', MUST_EXIST);
+
+      groups_remove_member($group, $user);
+    }
+
     private function create_group_for_course($args)
     {
       $short_name = $args[0];
@@ -233,7 +246,7 @@ class moodlephp
 	  return "-1 Could not find user ".$useridnumber." when enrolling in course".$short_name;
 	}
 
-      if( !$course = $DB->get_record('course', array('shortname'=>$short_name), '*') ) {
+      if( !$course = $DB->get_record('course', array('idnumber'=>$short_name), '*') ) {
 	return "-1 Course does not exist!... ".$short_name;
       }
       if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
@@ -266,8 +279,8 @@ class moodlephp
 	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
 	  echo "PHP says Enrolled ".$useridnumber." into class ".$short_name." as a ".$roleid.".";
 	}
-
-      if( !$group = groups_get_group_by_name($course->id, $group_name) )
+      
+      if( !($group = groups_get_group_by_name($course->id, $group_name)) )
 	{
 	  //create the group first
           $group_data = new stdClass;
@@ -279,21 +292,62 @@ class moodlephp
           } else {
 	    return "-1 Cannot create group, OH NO!";
           }
-	  
-	} else {
-	// group should be there now
-	  if (!$group = groups_get_group_by_name($course->id, $group_name) )
-	    {
-	      //probably won't happen, but I wouldn't want to debug if it did
-	      return "-1 Created group but can't fetch it from database... hmmm...";
-	     }
-       } 
-        
+
+	} 
+
+      if ( !($group) ) {
+	  $group = groups_get_group_by_name($course->id, $group_name);
+      }
+
        if( groups_add_member($group, $user) ) {
          echo "PHP says Added (or was already a member) user ".$useridnumber." into group ".$group_name." for course ".$short_name.".";
        } else {
          echo "-1 Couldn't add user ".$useridnumber." to group ".$group_name;
        }
+    }
+
+    private function deenrol_user_in_course($args)
+    {
+      $useridnumber = $args[0];
+      $short_name = $args[1];
+
+      global $DB, $PAGE;
+
+      if( !$user = $this->getUserByIDnumber($useridnumber) )
+	{
+	  return "-1 Could not find user ".$useridnumber." when deenrolling from course".$short_name;
+	}
+
+      if( !$course = $DB->get_record('course', array('idnumber'=>$short_name), '*') ) {
+	return "-1 Course does not exist!... ".$short_name;
+      }
+      if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
+	return "-1 Could not get context for course ".$short_name." with ID ".$course->id;
+      }
+      $manager = new course_enrolment_manager($PAGE, $course);
+
+      if( !is_enrolled($context, $user->id) )
+	{
+	  return "-1 Already not enrolled";
+	}
+
+      $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
+      $enrolid = $enrolMethod->id;
+
+      $instances = $manager->get_enrolment_instances();
+      $plugins = $manager->get_enrolment_plugins();
+
+      if (!array_key_exists($enrolid, $instances))
+      {
+	 throw new enrol_ajax_exception('invalidenrolinstance');
+      }
+
+      $instance = $instances[$enrolid];
+      $plugin = $plugins[$instance->enrol];
+      
+      $plugin->unenrol_user($instance, $user->id);
+
+      echo "PHP says de-enrolled ".$user->id." from class ".$short_name;
     }
 
     private function change_username($args)

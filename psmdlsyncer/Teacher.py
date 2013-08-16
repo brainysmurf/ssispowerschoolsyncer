@@ -67,7 +67,6 @@ class Teacher(Entry):
             l.append('teachersELEM')
         if self.is_secondary or self.is_primary:
             l.append('teachersALL')
-        l.append('everyoneALL')
         return l
 
     def get_departments(self):

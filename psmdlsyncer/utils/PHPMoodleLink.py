@@ -46,6 +46,13 @@ class CallPHP:
         else:
             return "Dry run enabled: enrol_user_in_course {}".format(to_pass)
 
+    def unenrol_user_from_course(self, idnumber, course):
+        self.sf(idnumber=idnumber, course=course)
+        if self.moodle_accounts:
+            return self.command('deenrol_user_in_course', self.sf('{idnumber} {course}'))
+        else:
+            return "Dry run enabled: deenrol_user_in_course".format(to_pass)
+
     def add_user_to_cohort(self, useridnumber, cohortidnumber):
         self.sf(useridnumber=useridnumber, cohortidnumber=cohortidnumber)
         to_pass = self.sf("{useridnumber} '{cohortidnumber}'")

@@ -37,9 +37,7 @@ class ServerInfo(DragonNetDBConnection):
         #TODO: Just use settings.config
         from psmdlsyncer.settings import config
 
-        self.dry_run = config.defaults().get('dry_run')
-        self.verbose = config.defaults().get('verbose')
-
+        self.courses = {}
         self.email_config = config['EMAIL']
         self.moodle_config = config['MOODLE']
         if self.moodle_config:
@@ -51,12 +49,13 @@ class ServerInfo(DragonNetDBConnection):
             self.sync_email  = self.email_config.getboolean('sync', False)
 
             super().__init__()
+            self.verbose = True
             self.init_users_and_groups()
 
             # We'll need course information when enrolling into groups
             # this way we can avoid infinite loops
             self.verbose and print("Reading in course informaiton from database now")
-            get_courses = self.sql('select id, shortname from ssismdl_course')()
+            get_courses = self.sql('select id, idnumber from ssismdl_course')()
             for item in get_courses:
                 courseid, shortname = item
                 self.courses[shortname] = courseid
@@ -68,7 +67,6 @@ class ServerInfo(DragonNetDBConnection):
         Sets up internal databases for use with syncs
         """
         self.students = {}
-        self.courses = {}
         self.users_db_map = {}
         self.families = {}
 
@@ -148,7 +146,7 @@ class ServerInfo(DragonNetDBConnection):
         idnumber = student.num
         username = student.username
         self.verbose and print("Checking current server information for student:\n{}".format(student))
-        if student.is_secondary or student.grade == 5:
+        if student.is_secondary:
             # Account-based checks
             if self.moodle_config and self.sync_moodle:
                 if self.students.get(idnumber):
@@ -164,7 +162,7 @@ class ServerInfo(DragonNetDBConnection):
                 else:
                     if not 'NoStudentInMoodle' in dontraise:
                         self.verbose and print("Raising NoStudentInMoodle")
-                        raise NoStudentInMoodle
+                        #raise NoStudentInMoodle
 
                 self.verbose and print("Checking enrollments")
                 for i in range(len(student.courses())):
@@ -203,13 +201,14 @@ class ServerInfo(DragonNetDBConnection):
         if self.sync_moodle:
             if not familyid in list(self.families.keys()):
                 if not 'NoParentAccount' in dontraise:
-                    raise NoParentAccount
+                    pass
+                    #raise NoParentAccount
             else:
                 if student.is_secondary or student.grade == 5:
                     if not student.num in self.families[familyid]:
                         if not 'ParentAccountNotAssociated' in dontraise:
                             self.verbose and print("Student account {} not in here: {}".format(student.num, self.families[familyid]))
-                            raise ParentAccountNotAssociated
+                            #raise ParentAccountNotAssociated
 
             self.verbose and print("Now checking parent account enrollments")
             for i in range(len(student.courses())):

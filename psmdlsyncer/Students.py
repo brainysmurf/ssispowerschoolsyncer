@@ -27,11 +27,12 @@ class UnknownGrade(BasicException): pass
 class NoHomeroom(BasicException): pass
 
 def put_in_order(what, reverse=False):
+    what = what.upper()
     result = 1 # elementary don't have LEARN
     if reverse:
-        trans = {'L':7,'E':6,'A':5,'R':4,'N':3,'S':2,'SWA':1}
+        trans = {'L':8,'E':7,'A':6,'R':5,'N':4,'S':3,'SWA':2,'JS':1}
     else:
-        trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7}
+        trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7, 'JS':8}
     if '6' in what:
         result = 100 + trans[re.sub('[0-9]', '', what)]
     elif '7' in what:
@@ -66,7 +67,7 @@ class Students:
         self.errors = DocumentErrors(self.path_to_errors)
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
-        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_studentinfo_v2.1')
+        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_dist_studentinfo_v3.0')
         self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student,
                                                   path_to_errors=self.path_to_errors,
@@ -153,7 +154,7 @@ class Students:
 
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
+                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
             except ValueError:
                 print(line)
                 print("Possibly this line had even number of tabs??")
@@ -228,7 +229,7 @@ class Students:
 
     def read_in_courses(self):
         self.verbose and print("Reading in raw course information in secondary")
-        courses = File(self.path_to_powerschool + '/' + 'ssis_courseinfosec')
+        courses = File(self.path_to_powerschool + '/' + 'ssis_sec_courseinfo_v3.0')
         raw = courses.content()
         for line in raw:
             course_number, full_name = line.split('\t')
@@ -242,14 +243,13 @@ class Students:
         pass
 
     def read_in_allocations(self):
-        return
         self.verbose and print("Setting up allocation table by reading in raw teacher allocations for secondary")
-        allocations = File(self.path_to_powerschool + '/' + 'ssis_teacherallocationsec')
+        allocations = File(self.path_to_powerschool + '/' + 'ssis_sec_teacherallocations_v3.0')
         raw = allocations.content()
         self.allocation_table = {}
         for line in raw:
             line = line.strip().strip('\n')
-            course_number, course_name, teacher_name, termID = line.strip('\n').split('\t')
+            course_number, course_name, teacher_name, termID, _ = line.strip('\n').split('\t')
             if course_number not in self.allocation_table:
                 self.allocation_table[course_number] = []
             teacher = self.teacher_info_controller.get(teacher_name)
@@ -259,7 +259,6 @@ class Students:
             self.allocation_table[course_number].append(self.teacher_info_controller.get(teacher_name))
             
     def sync_allocations(self):
-        return
         self.verbose and print("Syncing teachers")
         for allocation in self.allocation_table.keys():
             for teacher in self.allocation_table[allocation]:
@@ -277,20 +276,14 @@ class Students:
 
     def read_in_teachers(self):
         self.verbose and print("Reading in teacher info for both schools")
-        teachers = File(self.path_to_powerschool + '/' + 'ssis_dist_staffinfo_v2.0')
+        teachers = File(self.path_to_powerschool + '/' + 'ssis_dist_staffinfo_v3.0')
         raw = teachers.content()
         for line in raw:
             try:
-                num, first, preferred, last, email, title, staff_status, school = line.strip('\n').split('\t')
+                num, lastfirst, email, title, schoolid, staff_status = line.strip('\n').split('\t')
             except ValueError:
-                # PowerSchool data sometimes has so little that it gives us two consecutive rows of blanks... how annoying
-                try:
-                    lastfirst, schoolid, status = line.strip('\n').split('\t')
-                except ValueError:
-                    self.verbose and print("This teacher wasn't added to database: {}".format(line))
-                    continue
-                email = ''
-                title = ''
+                self.verbose and print("This teacher wasn't added to database: {}".format(line))
+                continue
             if 1 == int(staff_status):
                 self.add_teacher(lastfirst, email, title, schoolid)
 
@@ -302,12 +295,12 @@ class Students:
 
     def read_in_schedule(self):
         self.verbose and print("Reading in schedule information from secondary")
-        schedule = File(self.path_to_powerschool + '/' + 'ssis_studentscheduledumpsecnew')
+        schedule = File(self.path_to_powerschool + '/' + 'ssis_sec_studentschedule_v3.0')
         raw = schedule.content()
         self.schedule = {}
         for line in raw:
             line = line.strip('\n').split('\t')
-            course_number, section_details, termID, teacher, student, studentID = line
+            course_number, periods, teacher, teacherID, student, studentID = line
             if not course_number in self.schedule:
                 self.schedule[course_number] = []
             self.schedule[course_number].append((teacher, studentID))
@@ -324,7 +317,7 @@ class Students:
                 teacher = self.teacher_info_controller.get(teacher_lastfirst)
                 student = self.student_info_controller.get(studentID)
                 if not student:
-                    self.verbose and input("sync_scheule problem: {}".format(row))
+                    self.verbose and print("sync_schedule problem: {}".format(row))
                     self.document_error("sync_schedule", row)
                     continue
                 if teacher and student:
