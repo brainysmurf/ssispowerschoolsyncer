@@ -18,6 +18,7 @@ def inform_new_student(family, student, server='localhost'):
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(student_email_templates)
     email.make_subject(sf("New Student in Homeroom {homeroom}, {lastfirst}"))
+    """
     homeroom_teacher = student.get_homeroom_teacher()
     if homeroom_teacher:
           email.add_to(homeroom_teacher)
@@ -34,6 +35,7 @@ def inform_new_student(family, student, server='localhost'):
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
     #email.add_bcc('brentclark@ssis-suzhou.net')
     #email.add_bcc('geoffreyderry@ssis-suzhou.net')
+    """
     email.send()
     
 def inform_new_parent(family, server='localhost'):
