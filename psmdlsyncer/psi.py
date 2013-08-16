@@ -148,7 +148,7 @@ and set permissions accordingly.".format(php_src))
         of those that actually have enrollments rather than through powerschool file
         ############
         """
-        source = File(self.path_to_powerschool + '/' + 'ssis_sec_courseinfo_3.0')
+        source = File(self.path_to_powerschool + '/' + 'ssis_sec_courseinfo_v3.0')
         raw = source.content()
         courses = {}
         summaries = {}
