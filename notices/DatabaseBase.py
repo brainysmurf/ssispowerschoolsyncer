@@ -238,7 +238,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         content_field = self.content_field.replace(' ', '_').lower()
         if not hasattr(item, content_field):
             return "This item does not have any content!"
-        content = getattr(item, content_field).strip()
+        content = getattr(item, content_field)
         if hasattr(item, 'user'):
             # item.user is defined, so process accordingly
             if content.endswith('</p>'):
@@ -383,5 +383,5 @@ class ExtendMoodleDatabaseToAutoEmailer:
         """
         Can be used by formatting engine to make a list
         """
-        return "{}{}{}".format(self.begin_list_tag, s, self.end_list_tag)
+        return "{}{}{}".format(self.begin_list_tag, s.strip('\n'), self.end_list_tag)
 
