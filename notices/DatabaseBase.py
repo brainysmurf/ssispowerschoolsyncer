@@ -62,7 +62,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.start_html_tag    = "<html><head><style>H3{{margin-left:150px;margin-right:150px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;}}</style></head><body>"
         self.start_html_tag    = "<html>"
         self.end_html_tag      = "</body></html>"
-        self.end_html_tag      = "</html"
+        self.end_html_tag      = "</html>"
         self.header_pre_tag    = "<h1>"
         self.header_post_tag   = "</h1>"
         self.begin_section_tag = ""
