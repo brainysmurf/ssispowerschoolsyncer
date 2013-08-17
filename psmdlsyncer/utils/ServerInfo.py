@@ -164,14 +164,12 @@ class ServerInfo(DragonNetDBConnection):
                         self.verbose and print("Raising NoStudentInMoodle")
                         raise NoStudentInMoodle
 
-                self.verbose and print("Checking enrollments")
+                self.verbose and print("Checking students' own enrollments")
                 for i in range(len(student.courses())):
                     course = student.courses()[i]
                     self.verbose and print("Looking at enrollments for course {}".format(course))
                     group = student.groups()[i]
-                    members = self._group_members.get(group)
 
-                    self.verbose and print("Checking out students' own enrollments")
                     if members:
                         if not student.num in members:
                             if not course in self.courses.keys():
@@ -203,7 +201,7 @@ class ServerInfo(DragonNetDBConnection):
                 if not 'NoParentAccount' in dontraise:
                     raise NoParentAccount
             else:
-                if student.is_secondary or student.grade == 5:
+                if student.is_secondary:
                     if not student.num in self.families[familyid]:
                         if not 'ParentAccountNotAssociated' in dontraise:
                             self.verbose and print("Student account {} not associated with parent".format(student.num))
@@ -213,15 +211,13 @@ class ServerInfo(DragonNetDBConnection):
             for i in range(len(student.courses())):
                 course = student.courses()[i]
                 group = student.groups()[i]
-                members = self._group_members.get(group)
 
-                if members:
-                    if not student.family_id in members:
-                        if not course in self.courses.keys():
-                            self.verbose and print("Not raising ParentNotInGroup because the course {} doesn't exist".format(course))
-                            continue
-                        self.verbose and print("This parent is not in group {}:\n{}".format(group, student.family_id))
-                        if not 'ParentNotInGroup' in dontraise:
-                            raise ParentNotInGroup
-                    else:
-                        pass # ok
+                if not group in self._groups.get(student.family_id):
+                    if not course in self.courses.keys():
+                        self.verbose and print("Not raising ParentNotInGroup because the course {} doesn't exist".format(course))
+                        continue
+                    self.verbose and print("This parent is not in group {}:\n{}".format(group, student.family_id))
+                    if not 'ParentNotInGroup' in dontraise:
+                        raise ParentNotInGroup
+                else:
+                    pass # ok
