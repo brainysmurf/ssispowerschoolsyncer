@@ -58,7 +58,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.server = args.domain if args.domain else 'localhost'
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
-        self.start_html_tag    = "<html><head><style>H3{margin-left:150px;margin-right:150px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;}</style></head><body>"
+        # Need two {{ and }} because it goes through a parser later at another layer
+        self.start_html_tag    = "<html><head><style>H3{{margin-left:150px;margin-right:150px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;}}</style></head><body>"
         self.end_html_tag      = "</body></html>"
         self.header_pre_tag    = "<h1>"
         self.header_post_tag   = "</h1>"
