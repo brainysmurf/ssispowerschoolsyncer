@@ -1,4 +1,4 @@
-from ssispowerschoolsyncer.Model import DatabaseObject
+from Model import DatabaseObject
 
 teacher_notices_samples = [
     (2036, 1281, 'Judy', 'Chen', '', 'Date to Publish', '1355400000'), (2036, 1281, 'Judy', 'Chen', '', 'School Section', 'All Secondary ##secstunot_all##'), (2036, 1281, 'Judy', 'Chen', '', 'Times to Repeat', None),

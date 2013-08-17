@@ -43,7 +43,7 @@ def inform_new_parent(family, server='localhost'):
     family is object
     """
     parent_email_templates = read_in_templates(
-        '../templates/parent_new_account'
+        '../../templates/parent_new_account'
         )
     email = Email(server)
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")

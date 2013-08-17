@@ -1,16 +1,16 @@
 #!/usr/local/bin/python3
     
-from ssispowerschoolsyncer.utils import *
+from psmdlsyncer.utils import *
 
-from ssispowerschoolsyncer.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
-from ssispowerschoolsyncer.Model import DatabaseObject, DatabaseObjects
-from ssispowerschoolsyncer.utils.PythonMail import send_html_email
-from ssispowerschoolsyncer.utils.Dates import custom_strftime
-from ssispowerschoolsyncer.utils.DB import UpdateField
-from ssispowerschoolsyncer.notices.Samples import student_notices_samples, student_notices_tag_samples
+from psmdlsyncer.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
+from psmdlsyncer.Model import DatabaseObject, DatabaseObjects
+from psmdlsyncer.utils.PythonMail import send_html_email
+from psmdlsyncer.utils.Dates import custom_strftime
+from psmdlsyncer.utils.DB import UpdateField
+from psmdlsyncer.notices.Samples import student_notices_samples, student_notices_tag_samples
 import datetime
-from ssispowerschoolsyncer.utils.Formatter import Smartformatter
-from ssispowerschoolsyncer.Students import Students
+from psmdlsyncer.utils.Formatter import Smartformatter
+from psmdlsyncer.Students import Students
 
 verbose = False
 catch_wrong = True

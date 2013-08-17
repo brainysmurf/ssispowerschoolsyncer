@@ -1,12 +1,11 @@
 #!/usr/local/bin/python3
     
-from ssispowerschoolsyncer.utils import *
-from ssispowerschoolsyncer import ExtendMoodleDatabaseToAutoEmailer
+from psmdlsyncer.utils import *
+from psmdlsyncer import ExtendMoodleDatabaseToAutoEmailer
 import re
-from ssispowerschoolsyncer.notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
+from psmdlsyncer.notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
 
 class Nothing(Exception): pass
-
 
 # Following gives me 1st, 2nd, 3rd, 4th, etc
 def suffix(d):

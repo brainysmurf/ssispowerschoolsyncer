@@ -1,6 +1,6 @@
-from ssispowerschoolsyncer.utils.DB import UpdateField
+from psmdlsyncer.utils.DB import UpdateField
 import datetime
-from ssispowerschoolsyncer.utils.Dates import date_to_database_timestamp, today, custom_strftime
+from psmdlsyncer.utils.Dates import date_to_database_timestamp, today, custom_strftime
 
 class RelativeDateFieldUpdater(UpdateField):
 
