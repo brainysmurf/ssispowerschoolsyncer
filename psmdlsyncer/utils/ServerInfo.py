@@ -169,6 +169,7 @@ class ServerInfo(DragonNetDBConnection):
                     course = student.courses()[i]
                     self.verbose and print("Looking at enrollments for course {}".format(course))
                     group = student.groups()[i]
+                    members = self._group_members.get(group)
 
                     if members:
                         if not student.num in members:
