@@ -156,7 +156,6 @@ def identify_differences(left: "PandasDataFrame", right: "PandasDataFrame",
     """
     More abstract code used for syncing procedures
     """
-    embed()
     verbose = verbosity('Sync')
     for item in left.identify_differences(right):
         if item.is_not_in_left:
@@ -288,12 +287,23 @@ class Sync:
         teaching_staff_to_add = sdf[ (sdf.email.str.len>0) & (sdf.status == 1) & (sdf.staff_status == 1) & (-sdf.username.isin(dn_list)) ]
         staff_to_delete = sdf[ (sdf.email.str.len>0) & (sdf.status == 2) & (sdf.username.isin(dn_list)) ]
 
-    def sync_sec_students_enrollments(self):
+    def sync_sec_student_enrollments(self):
         """
         PARSES schedule AND QUERIES DRAGONNET, UPDATING DRAGONNET TO MATCH declared_enrollments
         """
         #TODO: Do it
-        pass
+        df1 = self.schedule.dataframe
+        df2 = self.staff.dataframe
+
+        df2 = df2.rename(columns = {'powerschoolID':'teacher_powerschoolID'})
+        sch = pd.merge(df1, df2, on='teacher_powerschoolID')[['studentid', 'course', 'teacher_powerschoolID', 'username']]
+        all_students = sch['studentid'].values
+
+        sch['enrollment'] = pd.Series([row['username'] + row['course'] for index, row in sch.iterrows()])
+
+        queried = self.queried_enrollments
+        
+        embed()
 
     def sync_teachers(self):
         embed()
@@ -503,13 +513,15 @@ if __name__ == "__main__":
                                      names=["powerschoolID",
                                             "first_name", "preferred_name", "middle_name", "last_name",
                                             "email", "title", "staff_status", "status", "delete"],
-                                     index_col=None,
+                                     index_col=False,
                                      dtype={'powerschoolID':np.object})
 
     schedule = PandasDataFrame.from_csv(full_path('ssis_sec_studentschedule_v3.0'),
                                         header=None,
-                                        names=["course","period", "termid",
-                                               "teacher","studentname", "studentid"],
+                                        names=["course", 'period',
+                                               "teacher", "teacher_powerschoolID",
+                                               "studentname", "studentid", "delete"],
+                                        dtype={'studentid':np.object},
                                         index_col=False)
     courses = PandasDataFrame.from_csv(full_path('ssis_sec_courseinfo_v3.0'),
                                        header=None,
@@ -576,6 +588,9 @@ if __name__ == "__main__":
 
     #sync.sync_courses()
 
+    if flag_passed('enroll_groups'):
+        sync.sync_sec_student_enrollments()
+
     if flag_passed('sync_profile_fields'):
         sync.sync_student_profile_fields()
 
@@ -584,5 +599,5 @@ if __name__ == "__main__":
         #sync.sync_sec_parents_cohorts()
         #sync.sync_sec_students_cohorts()
     if flag_passed('enroll_groups'):
-        sync.sync_sec_students_enrollments()
+        sync.sync_sec_student_enrollments()
 

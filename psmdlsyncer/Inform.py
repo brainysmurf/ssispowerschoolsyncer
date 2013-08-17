@@ -2,6 +2,7 @@ from psmdlsyncer.html_email.Email import Email
 from psmdlsyncer.html_email.Email import read_in_templates
 from psmdlsyncer.utils.Formatter import Smartformatter
 from psmdlsyncer.utils.PythonMail import send_html_email
+from psmdlsyncer.settings import config_get_section_attribute
 
 def inform_admin(admin_email):
     pass
@@ -10,7 +11,8 @@ def reinform_new_parent(family):
     pass
 
 def inform_new_student(family, student, server='localhost'):
-    student_email_templates = read_in_templates('../templates/student_new_account')
+    path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
+    student_email_templates = read_in_templates(path_to_templates + 'student_new_account')
     sender = '"DragonNet Admin" <lcssisadmin@student.ssis-suzhou.net>'
     sf = Smartformatter()
     sf.take_dict(student)
@@ -40,9 +42,8 @@ def inform_new_parent(family, server='localhost'):
     """
     family is object
     """
-    parent_email_templates = read_in_templates(
-        '../templates/parent_new_account'
-        )
+    path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
+    parent_email_templates = read_in_templates(path_to_templates + 'parent_new_account')
     email = Email(server)
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(parent_email_templates)
