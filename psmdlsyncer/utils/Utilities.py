@@ -92,14 +92,14 @@ department_heads = {
 	# Make lists in case there are multiple needs
 	'departMATH': ['garypost'],
 	'departWL':   ['reneerehfeldt'],
-	'departARTS': ['brettnugent', 'heidimesser'],
+	'departARTS': ['heidimesser'],
 	'departHUM': ['jarrettbrown', 'donpreston'],
-	'departENGLISH': ['lauralynnstefureak', 'ingridmorton'],
-	'departPE': ['mitchhyde'],
+	'departENGLISH': ['jenniferlively', 'leeannesmith'],
+	'departPE': ['markparratt'],
 	'departSCIENCE': ['bryandennie'],
-	'departDESIGN': ['patricelder'],
+	'departDESIGN': ['jasonreagin'],
 	'departCHI': ['rebeccaruan'],
-	'departCAS': ['santinagambrill'],
+	'departCAS': ['allisonparratt'],
 	'departHROOM': ['peterfowles']
 	}
 

@@ -1,12 +1,10 @@
 #!/usr/local/bin/python3
-    
-from ssispowerschoolsyncer.utils import *
-from ssispowerschoolsyncer import ExtendMoodleDatabaseToAutoEmailer
+
+from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
-from ssispowerschoolsyncer.notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
+from Samples import teacher_notices_samples, teacher_notices_tag_samples
 
 class Nothing(Exception): pass
-
 
 # Following gives me 1st, 2nd, 3rd, 4th, etc
 def suffix(d):
@@ -34,6 +32,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
             'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
             'richardbruford@ssis-suzhou.net':['Whole School', 'Secondary']
             }
+        self.agent_map = {}
         self.search_date = "same day"
         self.content_field = 'Full Content'
         self.attachment_field = 'Attached Content'

@@ -1,21 +1,12 @@
 #!/usr/local/bin/python3
-
-from ssispowerschoolsyncer.utils import *
-
-try:
-    import postgresql
-    dry_run = False
-except:
-    dry_run = True
-from ssispowerschoolsyncer.utils.Dates import today, tomorrow, yesterday
-from ssispowerschoolsyncer.utils.PythonMail import send_html_email
-from ssispowerschoolsyncer.utils.Email import Email
-from ssispowerschoolsyncer.utils.DB import FieldObject
-from ssispowerschoolsyncer.Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
+import postgresql
+from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
+from psmdlsyncer.utils.PythonMail import send_html_email
+from psmdlsyncer.html_email import Email
+from psmdlsyncer.utils.DB import FieldObject
+from Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
 import datetime
-
-catch_wrong = True
 
 class Nothing(Exception): pass
 
@@ -67,14 +58,15 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.server = args.domain if args.domain else 'localhost'
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
-        self.start_html_tag    = "<html>"
+        # Need two {{ and }} because it goes through a parser later at another layer
+        self.start_html_tag    = '<html>'
         self.end_html_tag      = "</html>"
-        self.header_pre_tag    = "<p><b>"
-        self.header_post_tag   = "</b></p>"
-        self.begin_section_tag = "<ul>"
-        self.end_section_tag   = "</ul><br />"
-        self.begin_list_tag    = "<li>"
-        self.end_list_tag      = "</li>"
+        self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;line-height:1em;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
+        self.header_post_tag   = "</div>"
+        self.begin_section_tag = ""
+        self.end_section_tag   = "<br />"
+        self.begin_list_tag    = '<div style="font-family:Tahoma,sans-serif;font-size:12px;width=200px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border: 2px solid #4D63A3;">'
+        self.end_list_tag      = "</div>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
         self.name = self.__class__.__name__.replace("_", " ")
@@ -90,18 +82,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
         if self.section_field:
             if self.use_samples:
                 # Testing/Debugging use
-                self.section_field_object = FieldObject(self.user,
-                                                        self.password,
-                                                        self.server,
-                                                        self.database,
-                                                        self.database_name, self.section_field,
+                self.section_field_object = FieldObject(self.database_name, self.section_field,
                                         samples=self.section_samples())
             else:
                 # Production use
-                self.section_field_object = FieldObject(self.user,
-                                                        self.password,
-                    self.server,
-                    self.database,
+                self.section_field_object = FieldObject(
                     self.database_name, self.section_field)
             self.section_field_default_value = self.section_field_object.default_value()
         else:
@@ -171,6 +156,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             self.date = yesterday()
         else:
             raise Nothing
+        self.date = datetime.date(2013, 8, 19)
 
         self.custom_date = custom_strftime('%A %B {S}, %Y', self.date)
         self.verbose and print(self.date)
@@ -396,5 +382,5 @@ class ExtendMoodleDatabaseToAutoEmailer:
         """
         Can be used by formatting engine to make a list
         """
-        return "{}{}{}".format(self.begin_list_tag, s, self.end_list_tag)
+        return "{}{}{}".format(self.begin_list_tag, s.strip('\n'), self.end_list_tag)
 

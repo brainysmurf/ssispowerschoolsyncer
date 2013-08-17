@@ -1,17 +1,12 @@
 #!/usr/local/bin/python3
     
-from ssispowerschoolsyncer.utils import *
-
-from ssispowerschoolsyncer.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
-from ssispowerschoolsyncer.Model import DatabaseObject
-from ssispowerschoolsyncer.utils.PythonMail import send_html_email
-from ssispowerschoolsyncer.utils.Dates import custom_strftime
-from ssispowerschoolsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
-from ssispowerschoolsyncer.notices.Samples import student_notices_samples, student_notices_tag_samples
+from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
+from Model import DatabaseObject
+from psmdlsyncer.utils.PythonMail import send_html_email
+from psmdlsyncer.utils.Dates import custom_strftime
+from psmdlsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
+from Samples import student_notices_samples, student_notices_tag_samples
 import datetime
-
-verbose = False
-catch_wrong = True
 
 class Nothing(Exception): pass
 
@@ -25,8 +20,9 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     Converts a database on moodle into a useable system that emails users
     """
     def __init__(self):
+        self.verbose = False
         super().__init__('Secondary Notices Database')
-        self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'
+        #self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'
 
     def define(self):
         """
@@ -41,7 +37,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
                        'jihyungsuh13@student.ssis-suzhou.net',
                        'danbiku14@student.ssis-suzhou.net',
                        'myungjinlee14@student.ssis-suzhou.net']
-        #self.agents = 'adammorris@ssis-suzhou.net'
+        self.agents = 'adammorris@ssis-suzhou.net'
         self.agent_map = {}
 
         self.search_date = "next day"
@@ -60,7 +56,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
     def email_to_agents(self):
         if self.agents:
-            verbose and print("Sending notices to {}".format(self.agents))
+            self.verbose and print("Sending notices to {}".format(self.agents))
             message_to_staff = """<p><i>These are tomorrow's announcements, as of 7:00 pm today.</i></p>"""
             self.format_for_email()
             if self.no_emails:

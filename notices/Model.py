@@ -1,6 +1,6 @@
-from ssispowerschoolsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
-from ssispowerschoolsyncer.utils.DB import DragonNetDBConnection
-from ssispowerschoolsyncer.utils.Dates import today, tomorrow, yesterday, timestamp_to_python_date
+from psmdlsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
+from psmdlsyncer.utils.DB import DragonNetDBConnection
+from psmdlsyncer.utils.Dates import today, tomorrow, yesterday, timestamp_to_python_date
 import datetime
 import re
 
@@ -163,7 +163,7 @@ class DatabaseObjects(DragonNetDBConnection):
         Sets up the model accordingly. The sql is in the same place as the code that unpacks the sql
         and puts the resulting infomation into python objects. This is a good way to do it.
         """
-        super().__init__(user, password, server, database)
+        super().__init__()
         self.samples = samples
         self.database_name = database_name
         self.verbose = verbose

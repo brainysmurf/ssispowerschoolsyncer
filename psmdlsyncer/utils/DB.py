@@ -110,7 +110,7 @@ class DBConnection:
 class DragonNetDBConnection(DBConnection):
 
     def __init__(self, verbose=False):
-        from settings import config, requires_setting
+        from psmdlsyncer.settings import config, requires_setting
         settings = ['db_username', 'db_password', 'db_name', 'db_prefix', 'db_host']
         for setting in settings:
             requires_setting('MOODLE', setting)
@@ -290,8 +290,8 @@ class FieldObject(DragonNetDBConnection):
 
     """
 
-    def __init__(self, user, password, server, database, database_name, field_name, samples=None):
-        super().__init__(user, password, server, database)
+    def __init__(self, database_name, field_name, samples=None):
+        super().__init__()
         self.use_samples = samples
         if not self.use_samples:
             self.database_name = database_name
@@ -314,7 +314,7 @@ class UpdateField(DragonNetDBConnection):
     """
 
     def __init__(self, user, password, server, database, database_name, field_name):
-        super().__init__(user, password, server, database)
+        super().__init__()
         self.field_name = field_name
         try:
             self.target = self.sql(

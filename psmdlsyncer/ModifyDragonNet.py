@@ -35,7 +35,7 @@ class DragonNetModifier(CallPHP):
                         test('enrol_user_in_course', student, course + ' ' + group)
                   else:
                         error = self.enrol_user_in_course( student.num, course, group, 'Student' )
-                        if error and error[nnao0] == '-':
+                        if error and error[0] == '-':
                               # got an error code, print it
                               output = input if self.verbose else print
                               output(error)

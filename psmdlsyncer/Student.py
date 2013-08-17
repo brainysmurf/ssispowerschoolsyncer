@@ -80,6 +80,10 @@ class Student(Entry):
         elif self.is_elementary:
             self._cohorts = ['studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
+            self.profile_existing_department = 'HOME4ES'
+        if not self._cohorts:
+            self._cohorts = []
+        self._cohorts.append('everyoneALL')
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}
@@ -180,6 +184,42 @@ class Student(Entry):
 
     def groups(self):
         return self._groups
+
+    def get_english(self):
+        # Returns the first English... 
+        englishes = [course for course in self._courses if 'ENG' in course]
+        for english in englishes:
+            if 'BS' in english:
+                return "B Standard"
+            elif 'BA' in english:
+                return "B Advanced"
+            elif 'BF' in english:
+                return "B Foundation"
+            elif 'I' in english:
+                return "JumpStart"
+            elif 'BENG' in english:
+                return "English B"
+            elif 'A' in english:
+                return "English A"
+            elif 'ENG' in english:
+                return "English A"
+            else:
+                return "Unknown English! " + english
+        return "No English Class?"
+
+    def get_math(self):
+        maths = [course for course in self._courses if 'MAT' in course]
+        for math in maths:
+            if 'ST' in math:
+                return "Math Standard"
+            elif 'SU' in math:
+                return "Math Support"
+            elif 'EX' in math:
+                return "Math Extended"
+            else:
+                return "Unknown Maths!"
+            
+        return "No Maths?"
 
     def update_groups(self, shortcode, group):
         """
