@@ -60,7 +60,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
         self.start_html_tag    = '<html>'
-        self.end_html_tag      = "</body></html>"
         self.end_html_tag      = "</html>"
         self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;line-height:1em;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
         self.header_post_tag   = "</div>"
