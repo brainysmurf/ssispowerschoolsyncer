@@ -59,14 +59,14 @@ class ExtendMoodleDatabaseToAutoEmailer:
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
-        self.start_html_tag    = '<html><head><style>.heading {{ font-family:"Tahoma",sans-serif;font-weight:bold;font-size:18px;margin-top:10px;margin-bottom:10px;}}.local-alert {{font-family:"Tahoma",sans-serif;font-size:12px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;}}</style></head><body bgcolor=#eee>'
+        self.start_html_tag    = '<html><head><style>.local-alert {{}}</style></head><body bgcolor=#eee>'
         self.end_html_tag      = "</body></html>"
         self.end_html_tag      = "</html>"
-        self.header_pre_tag    = '<div class="heading">'
+        self.header_pre_tag    = '<div style="font-family:"Tahoma",sans-serif;font-weight:bold;font-size:18px;margin-top:10px;margin-bottom:10px;">'
         self.header_post_tag   = "</div>"
         self.begin_section_tag = ""
         self.end_section_tag   = "<br />"
-        self.begin_list_tag    = '<div class="local-alert">'
+        self.begin_list_tag    = '<div style="font-family:"Tahoma",sans-serif;font-size:12px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;">'
         self.end_list_tag      = "</div>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
