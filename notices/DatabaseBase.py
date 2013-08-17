@@ -66,7 +66,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.header_post_tag   = "</div>"
         self.begin_section_tag = ""
         self.end_section_tag   = "<br />"
-        self.begin_list_tag    = '<div style="font-family:Tahoma,sans-serif;font-size:12px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;">'
+        self.begin_list_tag    = '<div style="font-family:Tahoma,sans-serif;font-size:12px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border: 2px solid #4D63A3;">'
         self.end_list_tag      = "</div>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
@@ -238,7 +238,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         content_field = self.content_field.replace(' ', '_').lower()
         if not hasattr(item, content_field):
             return "This item does not have any content!"
-        content = getattr(item, content_field)
+        content = getattr(item, content_field).strip()
         if hasattr(item, 'user'):
             # item.user is defined, so process accordingly
             if content.endswith('</p>'):
