@@ -62,7 +62,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.start_html_tag    = '<html>'
         self.end_html_tag      = "</body></html>"
         self.end_html_tag      = "</html>"
-        self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
+        self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;line-height:1em;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
         self.header_post_tag   = "</div>"
         self.begin_section_tag = ""
         self.end_section_tag   = "<br />"
