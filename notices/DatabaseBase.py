@@ -66,8 +66,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.header_post_tag   = "</h3>"
         self.begin_section_tag = ""
         self.end_section_tag   = "<br />"
-        self.begin_list_tag    = '<h4>'
-        self.end_list_tag      = "</h4>"
+        self.begin_list_tag    = '<div class="local-alert">'
+        self.end_list_tag      = "</div>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
         self.name = self.__class__.__name__.replace("_", " ")
