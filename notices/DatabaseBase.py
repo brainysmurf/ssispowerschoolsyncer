@@ -60,13 +60,15 @@ class ExtendMoodleDatabaseToAutoEmailer:
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
         self.start_html_tag    = "<html><head><style>H3{{margin-left:150px;margin-right:150px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;}}</style></head><body>"
+        self.start_html_tag    = "<html>"
         self.end_html_tag      = "</body></html>"
+        self.end_html_tag      = "</html"
         self.header_pre_tag    = "<h1>"
         self.header_post_tag   = "</h1>"
         self.begin_section_tag = ""
         self.end_section_tag   = "<br />"
-        self.begin_list_tag    = "<h3>"
-        self.end_list_tag      = "</h3>"
+        self.begin_list_tag    = '<div style="margin-left:150px;margin-right:150px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border-top: 2px solid #4D63A3; border-bottom: 2px solid #4D63A3;">'
+        self.end_list_tag      = "</div>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
         self.name = self.__class__.__name__.replace("_", " ")
