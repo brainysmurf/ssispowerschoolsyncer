@@ -66,7 +66,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.header_post_tag   = "</div>"
         self.begin_section_tag = ""
         self.end_section_tag   = "<br />"
-        self.begin_list_tag    = '<div style="font-family:Tahoma,sans-serif;font-size:12px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border: 2px solid #4D63A3;">'
+        self.begin_list_tag    = '<div style="font-family:Tahoma,sans-serif;font-size:12px;width=200px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border: 2px solid #4D63A3;">'
         self.end_list_tag      = "</div>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
