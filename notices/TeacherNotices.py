@@ -1,9 +1,8 @@
 #!/usr/local/bin/python3
-    
-from psmdlsyncer.utils import *
-from psmdlsyncer import ExtendMoodleDatabaseToAutoEmailer
+
+from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
-from psmdlsyncer.notices.Samples import teacher_notices_samples, teacher_notices_tag_samples
+from Samples import teacher_notices_samples, teacher_notices_tag_samples
 
 class Nothing(Exception): pass
 
