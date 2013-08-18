@@ -51,7 +51,7 @@ class moodlephp
 	  return "-1 Could not find user ".$idnumber." while adding cohort ".$cohortidnumber;
 	}
 
-      if( ! ($cohort = $DB->get_record_select( 'cohort', "idnumber = '?'", array(0=>$cohortidnumber) )) ) {
+      if( ! ($cohort = $DB->get_record_select( 'cohort', "idnumber = '?'", array(1=>$cohortidnumber) )) ) {
 	//$cohortID = $this->create_cohort($idnumber, $cohortidnumber, '');
 	return "-1 Cohort does not exit";
       }
