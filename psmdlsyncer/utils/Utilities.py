@@ -169,6 +169,10 @@ def map_codes(short, grade, higher_lower):
 		'MASTUSH1112':  'MASTU'+higher_lower+grade,
 
 		'MAHIGH1112': 'MAHIGH'+grade,
+
+		# SWA Study Skills are really just learning support stuff
+		'STUDYSWA10': 'STDSKL10',
+		'STUDYSWA9': 'STDSKL9',
 		
 		# Straight conversions
 		'ENLHONSH1112': 'ENGLLSH1112',  # English A Lang & Lit
@@ -217,7 +221,7 @@ def map_codes_names(short):
 		'MASTUH12': "IB Math Studies HL (12)",  # doesn't exist though
 
 		'MAHIGH11': "IB Mathematics HL (11)",
-		'MAHIGH12': "IB Mathematics HL (12"
+		'MAHIGH12': "IB Mathematics HL (12)"
 
 		}.get(short)
 
