@@ -12,7 +12,7 @@ def reinform_new_parent(family):
 
 def inform_new_student(family, student, server='localhost'):
     path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
-    student_email_templates = read_in_templates(path_to_templates + 'student_new_account')
+    student_email_templates = read_in_templates(path_to_templates + '/student_new_account')
     sender = '"DragonNet Admin" <lcssisadmin@student.ssis-suzhou.net>'
     sf = Smartformatter()
     sf.take_dict(student)
@@ -46,7 +46,7 @@ def inform_new_parent(family, server='localhost'):
     family is object
     """
     path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
-    parent_email_templates = read_in_templates(path_to_templates + 'parent_new_account')
+    parent_email_templates = read_in_templates(path_to_templates + '/parent_new_account')
     email = Email(server)
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(parent_email_templates)
