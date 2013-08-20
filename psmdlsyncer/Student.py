@@ -59,7 +59,7 @@ class Student(Entry):
         self.is_western = self.is_big5 or self.is_european
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
-        self.homeroom = homeroom
+        self.homeroom = homeroom.upper()
         self.homeroom_sortable = homeroom_sortable
         self.profile_existing_institution = "Homeroom {}".format(self.homeroom)   # This is actually details that go on front page
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
