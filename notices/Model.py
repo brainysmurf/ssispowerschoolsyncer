@@ -247,8 +247,6 @@ class DatabaseObjects(DragonNetDBConnection):
         return lst
 
     def get_items_by_section(self, section):
-        from IPython import embed
-        embed()
         result = [item for item in self if hasattr(item, 'section') and item.section == section]
         return self.sort(result)
 
