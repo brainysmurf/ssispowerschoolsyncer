@@ -27,6 +27,12 @@ class DatabaseObject:
             month_str = datetime.date(2012, month, 1).strftime('%b').lower()
             self.months[month_str] = month
 
+    def __repr__(self):
+        return "\n     ".join([key + ': ' + self.__dict__[key] for key in self.__dict__.keys()])
+        
+        for key in self.__dict__:
+            print(
+
     def define(self, *args, **kwargs):
         if args:
             if len(args) == 2:
