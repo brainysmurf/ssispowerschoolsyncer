@@ -223,7 +223,6 @@ class DatabaseObjects(DragonNetDBConnection):
                     value = row[8]
                     new_object.define(field, value)
                 # Okay, we got everything, so now place it into our internal object
-                self.verbose and input(new_object)
                 self.add(new_object)
                 
 
@@ -245,6 +244,8 @@ class DatabaseObjects(DragonNetDBConnection):
         return lst
 
     def get_items_by_section(self, section):
+        from IPython import embed
+        embed()
         result = [item for item in self if hasattr(item, 'section') and item.section == section]
         return self.sort(result)
 
