@@ -28,7 +28,7 @@ class DatabaseObject:
             self.months[month_str] = month
 
     def __repr__(self):
-        return "\n     ".join([key + ': ' + self.__dict__[key] for key in self.__dict__.keys()])
+        return "\n     ".join(['{}: {}'.format(key, self.__dict__[key]) for key in self.__dict__.keys()])
 
     def define(self, *args, **kwargs):
         if args:
