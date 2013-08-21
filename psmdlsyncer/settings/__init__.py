@@ -46,6 +46,7 @@ settings = HoldPassedArguments('verbose', 'dry_run', 'teachers', 'courses',
                                'students', 'email_list', 'families', 'parents',
                                'automagic_emails', 'profiles', 'input_okay', 'updaters',
                                'sync_profile_fields', 'enroll_cohorts', 'enroll_courses', 'remove_enrollments',
+                               'wp_only', 'em_only',
                                 inspect_student=False)
 
 config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
