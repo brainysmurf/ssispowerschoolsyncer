@@ -139,7 +139,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
             self.date = yesterday()
         else:
             raise Nothing
-        self.date = datetime.date(2013, 8, 19)
 
         self.custom_date = custom_strftime('%A %B {S}, %Y', self.date)
         self.verbose and print(self.date)
