@@ -29,9 +29,6 @@ class DatabaseObject:
 
     def __repr__(self):
         return "\n     ".join([key + ': ' + self.__dict__[key] for key in self.__dict__.keys()])
-        
-        for key in self.__dict__:
-            print(
 
     def define(self, *args, **kwargs):
         if args:
