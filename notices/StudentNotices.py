@@ -21,6 +21,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     """
     def __init__(self):
         self.verbose = False
+        self.end_of_item = ""
         super().__init__('Secondary Notices Database')
         #self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'
 
@@ -29,14 +30,8 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         Called by init
         """
         super().define()
-        self.sender = 'Peter Fowles <peterfowles@ssis-suzhou.net>'
-        self.agents = ['group-sec-all@ssis-suzhou.net',
-                       'judychen15@student.ssis-suzhou.net',
-                       'ruthellenlittle13@student.ssis-suzhou.net',
-                       'soyeonpark13@student.ssis-suzhou.net',
-                       'jihyungsuh13@student.ssis-suzhou.net',
-                       'danbiku14@student.ssis-suzhou.net',
-                       'myungjinlee14@student.ssis-suzhou.net']
+        self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
+        self.agents = ['Adam Morris <adammorris@ssis-suzhou.net>']
         self.agents = 'adammorris@ssis-suzhou.net'
         self.agent_map = {}
 
@@ -57,7 +52,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     def email_to_agents(self):
         if self.agents:
             self.verbose and print("Sending notices to {}".format(self.agents))
-            message_to_staff = """<p><i>These are tomorrow's announcements, as of 7:00 pm today.</i></p>"""
+            message_to_staff = """<p>Edit these notices by <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d=5">going here</a>.</p>"""
             self.format_for_email()
             if self.no_emails:
                 print("NOT sending email... but this is what would have been sent:")
@@ -87,9 +82,10 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
 
 if __name__ == "__main__":
-    try:
-        notices = Student_Notices()
+    from psmdlsyncer.settings import settings
+    
+    notices = Student_Notices()
+    if settings.arguments.em_only:
         notices.email_to_agents()
+    if settings.arguments.wp_only:
         notices.post_to_wordpress('secondarystudentannouncements', datetime.time(hour=7,minute=0,second=0))
-    except Nothing:
-        print("No matching entries found")

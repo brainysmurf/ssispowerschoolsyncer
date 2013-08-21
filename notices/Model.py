@@ -154,7 +154,7 @@ class DatabaseObjects(DragonNetDBConnection):
     """
     Defines the objects for use by the application
     """
-    def __init__(self, user, password, server, database, database_name=None, samples=None, verbose=False):
+    def __init__(self, database_name, samples=None, verbose=False):
         """
         database_name is the database we are using
         If defined, it will use custom sql to get the information we need, and then put it into objects the application can use
@@ -206,6 +206,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 shared_info = records[0][:7]
                 # Got the records with a single unique ID, now pack them in
                 new_object = DatabaseObject()
+                new_object.define(record_id = shared_info[0])
                 new_object.define(user_id = shared_info[1])
                 new_object.define(user_first_name = shared_info[2])
                 new_object.define(user_last_name = shared_info[3])

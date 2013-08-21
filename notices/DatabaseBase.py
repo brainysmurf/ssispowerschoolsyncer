@@ -35,27 +35,18 @@ class ExtendMoodleDatabaseToAutoEmailer:
         import argparse
         parser = argparse.ArgumentParser(description="Integrates Moodle Database with emailing system")
         parser.add_argument('-e', '--no_emails', action="store_true", help="Do NOT send emails")
-        parser.add_argument('-w', '--no_wordpress', action="store_true", help="Do NOT post to wordpress")
         parser.add_argument('-x', '--use_samples', action="store_true", help="Use included samples")
         parser.add_argument('-v', '--verbose', action="store_true", help="Tell you what I'm doing")
         parser.add_argument('-d', '--passed_date', help="DD-MM-YYYY format")
         parser.add_argument('-s', '--smtp', action="store", help="Which smtp server to use")
-        parser.add_argument('-u', '--user', action="store", help="username for database")
-        parser.add_argument('-b', '--database', action="store", help="database name")
-        parser.add_argument('-p', '--password', action="store", help="password, insecure if sent in the command line")
-        parser.add_argument('-m', '--domain', action="store", help="the domain of the server that hosts our moodle database")
+        parser.add_argument('-w', '--wp_only', action="store_true", help="only execute a wordpress")
+        parser.add_argument('-m', '--em_only', action="store_true", help="only execute an email")
         
         args = parser.parse_args()
         self.use_samples = args.use_samples
         self.no_emails = args.no_emails
         self.verbose = args.verbose
         self.passed_date = args.passed_date
-        self.no_wordpress = args.no_wordpress
-        self.smtp = args.smtp
-        self.user = args.user
-        self.database = args.database
-        self.password = args.password
-        self.server = args.domain if args.domain else 'localhost'
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
@@ -63,10 +54,10 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.end_html_tag      = "</html>"
         self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;line-height:1em;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
         self.header_post_tag   = "</div>"
-        self.begin_section_tag = ""
-        self.end_section_tag   = "<br />"
-        self.begin_list_tag    = '<div style="font-family:Tahoma,sans-serif;font-size:12px;width=200px;margin-left:50px;margin-right:50px;margin-bottom:10px;padding: 15px 20px 15px 45px; background-color: #fff; border: 2px solid #4D63A3;">'
-        self.end_list_tag      = "</div>"
+        self.begin_section_tag = "<ul>"
+        self.end_section_tag   = "</ul>"
+        self.begin_list_tag    = '<li>'
+        self.end_list_tag      = "</li>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
         self.name = self.__class__.__name__.replace("_", " ")
@@ -93,16 +84,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
             self.section_field_object = None
             self.section_field_default_value = None
         
-        self.start_date_field = StartDateField(self.user,
-                                               self.password,
-            self.server,
-            self.database,
-            self.database_name, 'Start Date')
-        self.end_date_field   = EndDateField(self.user,
-                                             self.password,
-            self.server,
-            self.database,
-            self.database_name, 'End Date')
+        self.start_date_field = StartDateField('Start Date')
+        self.end_date_field   = EndDateField('End Date')
         self.process()
         self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
         self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
@@ -113,7 +96,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         and then processes them accordingly. Can be overridden if necessary, but must define self.database_objects
         """
         items = self.raw_data()
-        self.database_objects = DatabaseObjects(self.user, self.password, self.server, self.database)
+        self.database_objects = DatabaseObjects(self.database_name)
         self.verbose and print(self.database_objects)
         for item in items.items_within_date(self.date):
             self.verbose and print("Item here:")
@@ -134,7 +117,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             return DatabaseObjects(self.database_name, samples=self.samples(), verbose=self.verbose)
         else:
             # Production use
-            return DatabaseObjects(self.user, self.password, self.server, self.database, self.database_name, verbose=self.verbose)
+            return DatabaseObjects(self.database_name, verbose=self.verbose)
 
     def setup_date(self):
         """
@@ -226,7 +209,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
     def subject(self, the_subject):
         self.subject_output = the_subject.format(**self.__dict__)
 
-    def derive_content(self, item):
+    def derive_content(self, item: "Model.DatabaseObject"):
         """
         Formats the content of the item
         if item.user is defined, adds user info at the end
@@ -355,10 +338,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
         Requires wp-cli https://github.com/wp-cli/wp-cli
         Assuming wp installation is multisite, but works with standalone (blog parameter not needed)
         """
-        if self.no_wordpress:
-            print("NOT posting to wordpress")
-            print(self.get_subject())
-            return
         replace_apostrophes = "'\\''"
         d = {
             'title': self.get_subject(),   # remove the 'Student Notices for' part
