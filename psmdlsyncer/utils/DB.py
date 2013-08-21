@@ -313,7 +313,7 @@ class UpdateField(DragonNetDBConnection):
     Class that is used to update a field in a database module
     """
 
-    def __init__(self, user, password, server, database, database_name, field_name):
+    def __init__(self, field_name):
         super().__init__()
         self.field_name = field_name
         try:
