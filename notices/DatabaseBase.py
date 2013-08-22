@@ -262,8 +262,10 @@ class ExtendMoodleDatabaseToAutoEmailer:
             self.header = section if section else self.__class__.__name__.replace("_", ' ')
             # Get the right items, depending on what the value of section is
             if section is None:
+                self.verbose and print("Getting all items")
                 items = self.database_objects.get_all_items()
             else:
+                self.verbose and print("Getting section {} items".format(section))
                 items = self.database_objects.get_items_by_section(section)
             # Check and make sure we actually have content in this section (cont ...)
             if not items:

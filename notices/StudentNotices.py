@@ -58,6 +58,8 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
                 print("NOT sending email... but this is what would have been sent:")
                 self.print_email(self.agents)
             else:
+                self.verbose and print(self.get_subject())
+                self.verbose and print(self.get_html(first_p_block=message_to_staff))
                 send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(first_p_block=message_to_staff),
                                 domain='student.ssis-suzhou.net')
         if self.agent_map:
