@@ -265,8 +265,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 items = self.database_objects.get_all_items()
             else:
                 items = self.database_objects.get_items_by_section(section)
-                from IPython import embed
-                embed()
             # Check and make sure we actually have content in this section (cont ...)
             if not items:
                 self.verbose and print("Nothing found!")

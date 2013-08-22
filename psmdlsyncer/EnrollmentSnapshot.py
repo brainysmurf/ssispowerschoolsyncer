@@ -295,13 +295,7 @@ class Breakdowns:
 if __name__ == "__main__":
 
 
-    class Settings:
-        def __init__(self):
-            self.verbose = False
-            self.courses = True
-            self.teachers = True
-
-    students = Students(Settings())
+    students = Students()
     breakdowns = Breakdowns()
 
     for student_key in students.get_student_keys():

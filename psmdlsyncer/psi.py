@@ -597,7 +597,7 @@ and set permissions accordingly.".format(php_src))
             self.verbose and print("Got to this one here: \n{}".format(student))
 
             # First handle secondary students
-            if student.homeroom in secondary_homerooms and student.courses() and int(student.num) > 30000:                
+            if student.is_secondary and student.courses() and int(student.num) > 30000:                
                 continue_until_no_errors = True
                 times_through = 0
                 while continue_until_no_errors:

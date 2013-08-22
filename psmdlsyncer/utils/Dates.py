@@ -19,6 +19,11 @@ def num_years(begin, end=None):
 def get_years_since_enrolled(enrolment_date):
     return num_years(enrolment_date)
 
+def get_academic_start_date():
+    now = datetime.date.today()
+    year = now.year if now.month in range(8, 13) else now.year - 1
+    return datetime.datetime(2013, 8, 1)
+
 def get_this_academic_year():
     now = datetime.date.today()
     year, month = int(str(now.year)[2:]), now.month
