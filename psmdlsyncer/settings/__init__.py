@@ -31,7 +31,7 @@ class HoldPassedArguments:
         #for key, value in vars(parser.parse_args(sys.argv[1:])).items():
         #    setattr(self.arguments, key, value)
 
-current_working_list = os.path.abspath(os.getcwd()).split(os.sep)
+current_working_list = os.path.abspath(os.path.join(__file__, os.pardir)).split(os.sep)
 
 # Look through every parent folder, looking for first settings.ini files
 settings_list = []

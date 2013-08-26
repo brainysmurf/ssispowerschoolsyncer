@@ -70,7 +70,7 @@ class Student(Entry):
         self.other_defaults()
         self._courses = []
         if self.is_secondary:
-            self._cohorts = ['studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
+            self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_issecstudent = True
         if self.grade in range(6, 8):
             self.profile_extra_ismsstudent = True
@@ -79,7 +79,7 @@ class Student(Entry):
             self.profile_extra_ishsstudent = True
             self._cohorts.append('studentsHS')
         elif self.is_elementary:
-            self._cohorts = ['studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
+            self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
             self.profile_existing_department = 'HOME4ES'
         if not self._cohorts:
@@ -103,7 +103,7 @@ class Student(Entry):
         grade_name = self.grade if self.grade <= 10 else 'SH1112'
         try:
             teacher_name = self._teachers['HROOM{}'.format(grade_name)]
-        except:
+        except KeyError:
             return None
         return teacher_name
 
