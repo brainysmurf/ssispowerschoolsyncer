@@ -1,16 +1,9 @@
 from psmdlsyncer.Students import Students
 from psmdlsyncer.utils.Formatter import Smartformatter
 
-class Config:
-    def __init__(self):
-        self.students = True
-        self.verbose = False
-        self.courses = False
-        self.teachers = False
-        self.output_path = '../output'
+from settings import config_get_section_attribute
 
-config = Config()
-students = Students(config)
+students = Students()
 
 results = []
 
@@ -23,11 +16,11 @@ for student_key in students.get_student_keys():
     sf = Smartformatter(newline='\n', comma=',', space=" ",
                         left='(', right=')')
     sf.take_dict(student)
-    results.append(sf("{last}{comma}{space}{first}{space}{left}{homeroom}{space}{num}{right}{newline}"))
+    results.append(sf("{homeroom}:{space}{first}{space}{last}{space}{left}{num}{right}{newline}"))
 
 results.sort()
 
-with open(config.output_path + '/' + 'all_students', 'w') as f:
+with open(config_get_section_attribute('DIRECTORIES', 'path_to_output') + '/' + 'all_students', 'w') as f:
     for item in results:
         f.write(item)
         

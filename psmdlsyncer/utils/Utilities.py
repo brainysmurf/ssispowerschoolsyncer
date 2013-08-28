@@ -173,6 +173,12 @@ def map_codes(short, grade, higher_lower):
 		# SWA Study Skills are really just learning support stuff
 		'STUDYSWA10': 'STDSKL10',
 		'STUDYSWA9': 'STDSKL9',
+
+		'ENGSWA9': 'ENGBA9',
+		'ENGSWA8': 'ENGBA8',
+		'ENGSWA7': 'ENGBA7',
+		'ENGSWA6': 'ENGBA6',
+		'ENBSWA10': 'ENGBA10',
 		
 		# Straight conversions
 		'ENLHONSH1112': 'ENGLLSH1112',  # English A Lang & Lit
