@@ -84,7 +84,6 @@ class Student(Entry):
             self.profile_existing_department = 'HOME4ES'
         if not self._cohorts:
             self._cohorts = []
-        self._cohorts.append('everyoneALL')
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}
