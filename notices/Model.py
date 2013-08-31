@@ -116,8 +116,8 @@ class DatabaseObject:
         # If end_compare is not defined, then we assume it's for one day only, and therefore end_compare should equal start_compare
         if not end_compare:
             end_compare = start_compare
-        # Do the actual comparison
 
+        # Do the actual comparison
         return to_compare_date >= start_compare and to_compare_date <= end_compare
 
     def determine_section(self, field, default_value=None):
@@ -157,7 +157,7 @@ class DatabaseObjects(DragonNetDBConnection):
     """
     Defines the objects for use by the application
     """
-    def __init__(self, database_name, samples=None, verbose=False):
+    def __init__(self, database_name=False, samples=None, verbose=False):
         """
         database_name is the database we are using
         If defined, it will use custom sql to get the information we need, and then put it into objects the application can use
@@ -177,7 +177,9 @@ class DatabaseObjects(DragonNetDBConnection):
             if self.samples:
                 sql_result = self.samples
             else:
+                # GET DATABASE ID FROM THE NAME
                 database_id = self.sql("select id from ssismdl_data where name ='{}'".format(self.database_name))()[0][0]
+
                 # The following sql gets a "flat" list of items:
                 # (recordid, firstname, lastname, institution, field, content)
                 # where each row's field has content are unique but the others all repeat for the same recordid
@@ -226,6 +228,7 @@ class DatabaseObjects(DragonNetDBConnection):
                     value = row[8]
                     new_object.define(field, value)
                 # Okay, we got everything, so now place it into our internal object
+                self.verbose and print(new_object)
                 self.add(new_object)
                 
 

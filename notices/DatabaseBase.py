@@ -2,8 +2,9 @@
 import postgresql
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
 from psmdlsyncer.utils.PythonMail import send_html_email
-from psmdlsyncer.html_email import Email
+from psmdlsyncer.html_email.Email import Email
 from psmdlsyncer.utils.DB import FieldObject
+from psmdlsyncer.settings import config_get_section_attribute
 from Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
 import datetime
@@ -22,6 +23,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
     """
     Converts a database on moodle into a useable system that emails users
     """
+    #TODO: Make it simple to get the new kid on the block
+    master_username = 'peterfowles'
 
     def __init__(self, database_name, server='dragonnet.ssis-suzhou.net'):
         """
@@ -50,20 +53,29 @@ class ExtendMoodleDatabaseToAutoEmailer:
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
+        # Also, since it goes to an email, CSS is avoided
         self.start_html_tag    = '<html>'
         self.end_html_tag      = "</html>"
         self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;line-height:1em;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
         self.header_post_tag   = "</div>"
         self.begin_section_tag = "<ul>"
         self.end_section_tag   = "</ul>"
-        self.begin_list_tag    = '<li>'
+        self.begin_list_tag    = '<li style="font-family:Tahoma,sans-serif;line-height:1em;font-size:14px;">'
         self.end_list_tag      = "</li>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
+
+        self.server = config_get_section_attribute('EMAIL', 'domain')
+        if not self.server:
+            print("Using localhost for mail server")
+            self.server = 'localhost'
+        
         self.name = self.__class__.__name__.replace("_", " ")
         # Class-specific settings, which are delegated to sub-classes
         self.define()
         self.setup_date()
+
+        
 
         # Initial values
         month = self.date.month
@@ -96,15 +108,18 @@ class ExtendMoodleDatabaseToAutoEmailer:
         and then processes them accordingly. Can be overridden if necessary, but must define self.database_objects
         """
         items = self.raw_data()
-        self.database_objects = DatabaseObjects(self.database_name)
+
+        # DO NOT PASS IT A NAME, WE NEED A BLANK ONE
+        self.database_objects = DatabaseObjects()
+        
         self.verbose and print(self.database_objects)
         for item in items.items_within_date(self.date):
-            self.verbose and print("Item here:")
+            self.verbose and print("Item within date found here:")
             item.determine_priority(self.date, self.priority_ids)
             if self.section_field:
                 item.determine_section(self.section_field, self.section_field_default_value)
             self.database_objects.add(item)
-            self.verbose and print(item)
+        self.verbose and print("\n\nDatabase object")
         self.verbose and print(self.database_objects)
         
     def raw_data(self):
@@ -313,8 +328,16 @@ class ExtendMoodleDatabaseToAutoEmailer:
             if self.no_emails:
                 self.print_email(self.agents)
             else:
-                send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(),
-                                domain='student.ssis-suzhou.net')
+                #send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(),
+                #                domain='student.ssis-suzhou.net')
+                email = Email(self.server)
+                email.define_sender(self.sender)
+                for agent in self.agents:
+                    email.add_to(agent)
+                email.define_subject(self.get_subject())
+                email.define_content(self.get_html())
+                email.send()
+
         if self.agent_map:
             for agent in self.agent_map.keys():
                 sections = self.agent_map[agent]
@@ -323,28 +346,29 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 if self.no_emails:
                     self.print_email(agent)
                 else:
-                    send_html_email(self.sender, agent, self.get_subject(), self.get_html(),
-                                domain='student.ssis-suzhou.net')
-                    #email = Email(self.server)
-                    #email.define_sender(self.sender)
-                    #email.add_to(agent)
-                    #email.define_subject(self.get_subject())
-                    #email.define_content(self.get_html())
-                    #email.send()
-                    #send_html_email(self.sender, agent, self.get_subject(), self.get_html())
+                    #send_html_email(self.sender, agent, self.get_subject(), self.get_html(),
+                    #            domain='student.ssis-suzhou.net')
+                    email = Email(self.server)
+                    email.define_sender(self.sender)
+                    email.add_to(agent)
+                    email.define_subject(self.get_subject())
+                    email.define_content(self.get_html())
+                    email.send()
 
-    def post_to_wordpress(self, blog, hour):
+    def post_to_wordpress(self, blog, hour, date=None):
         """
-        Simplistic way to get what could be an email onto a wordpress blog
-        Requires wp-cli https://github.com/wp-cli/wp-cli
-        Assuming wp installation is multisite, but works with standalone (blog parameter not needed)
+        SIMPLISTIC WAY TO GET WHAT COULD BE AN EMAIL ONTO A WORDPRESS BLOG
+        REQUIRES wp-cli https://github.com/wp-cli/wp-cli
+        ASSUMING WP INSTALLATION IS MULTISITE, BUT WORKS WITH STANDALONE (BLOG PARAMETER NOT NEEDED)
+        If date IS none THEN USE self.date
         """
+        date_to_use = date if date else self.date            
         replace_apostrophes = "'\\''"
         d = {
             'title': self.get_subject(),   # remove the 'Student Notices for' part
             'author': 35,  # peter fowles
             'content': self.get_html().replace("'", replace_apostrophes).replace('\n', ''),   # escape apostrophes for bash
-            'date': self.date.strftime('%Y-%m-%d {}'.format(hour.strftime('%H:%S:%M'))),
+            'date': date_to_use.strftime('%Y-%m-%d {}'.format(hour.strftime('%H:%S:%M'))),
             'blog': "sites.ssis-suzhou.net/{}".format(blog)
             }
         command = """/usr/bin/wp post create --path=/var/www/wordpress --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --url={blog}""".format(**d)
