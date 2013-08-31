@@ -67,7 +67,7 @@ class Students:
         self.errors = DocumentErrors(self.path_to_errors)
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
-        self.student_info_file = File(self.path_to_powerschool + '/' + 'ssis_dist_studentinfo_v3.0')
+        self.student_info_file = File('dist', 'studentinfo')
         self.raw = self.student_info_file.content()
         self.student_info_controller = Controller(Student,
                                                   path_to_errors=self.path_to_errors,
@@ -229,7 +229,7 @@ class Students:
 
     def read_in_courses(self):
         self.verbose and print("Reading in raw course information in secondary")
-        courses = File(self.path_to_powerschool + '/' + 'ssis_sec_courseinfo_v3.0')
+        courses = File('sec', 'courseinfo')
         raw = courses.content()
         for line in raw:
             course_number, full_name = line.split('\t')
@@ -244,7 +244,7 @@ class Students:
 
     def read_in_allocations(self):
         self.verbose and print("Setting up allocation table by reading in raw teacher allocations for secondary")
-        allocations = File(self.path_to_powerschool + '/' + 'ssis_sec_teacherallocations_v3.0')
+        allocations = File('sec', 'teacherallocations')
         raw = allocations.content()
         self.allocation_table = {}
         for line in raw:
@@ -276,7 +276,7 @@ class Students:
 
     def read_in_teachers(self):
         self.verbose and print("Reading in teacher info for both schools")
-        teachers = File(self.path_to_powerschool + '/' + 'ssis_dist_staffinfo_v3.0')
+        teachers = File('dist', 'staffinfo')
         raw = teachers.content()
         for line in raw:
             try:
@@ -295,7 +295,7 @@ class Students:
 
     def read_in_schedule(self):
         self.verbose and print("Reading in schedule information from secondary")
-        schedule = File(self.path_to_powerschool + '/' + 'ssis_sec_studentschedule_v3.0')
+        schedule = File('sec', 'studentschedule')
         raw = schedule.content()
         self.schedule = {}
         for line in raw:
