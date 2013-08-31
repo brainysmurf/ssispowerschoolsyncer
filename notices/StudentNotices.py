@@ -32,7 +32,6 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         super().define()
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
         self.agents = ['Adam Morris <adammorris@ssis-suzhou.net>']
-        self.agents = 'adammorris@ssis-suzhou.net'
         self.agent_map = {}
 
         self.search_date = "next day"
@@ -63,7 +62,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
                 #send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(first_p_block=message_to_staff),
                 #                domain='student.ssis-suzhou.net')
                 email = Email(self.server)
-                email.define_sender(sender)
+                email.define_sender(self.sender)
                 for agent in self.agents:
                     email.add_to(agent)
                 email.define_subject(self.get_subject())
