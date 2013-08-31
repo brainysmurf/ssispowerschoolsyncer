@@ -220,6 +220,14 @@ class DragonNetDBConnection(DBConnection):
             ",".join(self.get_teaching_learning_courses())
             ))()
 
+    def get_all_users_activity_enrollments(self):
+        return self.sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'self'")()
+        
+        return self.sql("select usr.idnumber, crs.idnumber from ssismdl_user usr join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id IN (idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id I{})".format(
+            ",".join(self.get_activities_courses())
+            ))()
+    
+
     def get_user_enrollments(self, idnumber):
         """ returns a tuple (groupname, courseidnumber) """
         return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))()
@@ -255,6 +263,10 @@ class DragonNetDBConnection(DBConnection):
         result = self.sql("select id, idnumber, category from ssismdl_course where category in ({})".format(
             ",".join([str(c) for c in self.get_teaching_learning_categories()])
             ))
+        return { str(item[0]) for item in result }
+
+    def get_activities_courses(self):
+        result = self.sql("select id, idnumber, category from ssismdl_course where category = '1'")()
         return { str(item[0]) for item in result }
 
     def prepare_id_username_map(self):
@@ -373,3 +385,11 @@ class ProfileUpdater(DragonNetDBConnection):
                                       data='1',
                                       dataformat='0')
                 
+
+if __name__ == "__main__":
+
+    db = DragonNetDBConnection()
+    results = db.get_all_users_activity_enrollments()
+    for result in results:
+        if 'Minecraft' in result[0]:
+            print(result)
