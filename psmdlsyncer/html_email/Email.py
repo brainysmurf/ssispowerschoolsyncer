@@ -1,7 +1,6 @@
 import email.utils as _email
 from email.header import Header
 from email.generator import Generator
-
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -118,9 +117,12 @@ class RecipientList:
 
 class Email:
 
-    def __init__(self, server='localhost'):
+    def __init__(self, domain):
+        """
+        domain CAN BE localhost
+        """
         self.sent = False
-        self.server = server
+        self.domain = domain
         self.html = ""
         self.htmls = {}
         self.lang = ["en"]
@@ -253,7 +255,7 @@ class Email:
         #regexp = re.compile('[^\x09\x0A\x0D\x20-\x7F]')
         #msg_as_string = regexp.sub('', msg.as_string())
         try:
-            s = smtplib.SMTP(self.server)
+            s = smtplib.SMTP(self.domain)
         except smtplib.socket.error:
             #TODO: Email admin when in production
             print("SMTLib report socket error, did not send email from {} to {}".format(self.from_who, [r.email for r in self.recipients]))
