@@ -75,8 +75,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.define()
         self.setup_date()
 
-        
-
         # Initial values
         month = self.date.month
         day   = self.date.day
@@ -96,8 +94,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
             self.section_field_object = None
             self.section_field_default_value = None
         
-        self.start_date_field = StartDateField('Start Date')
-        self.end_date_field   = EndDateField('End Date')
+        self.start_date_field = StartDateField(self.database_name, 'Start Date')
+        self.end_date_field   = EndDateField(self.database_name, 'End Date')
         self.process()
         self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
         self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
@@ -158,9 +156,41 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.custom_date = custom_strftime('%A %B {S}, %Y', self.date)
         self.verbose and print(self.date)
 
+    def email(self, email: "List or not", cc=None, bcc=None):
+        """
+        USE THE Email API TO SEND AN EMAIL
+        HANDLES IT WHETHER OR NOT LISTS ARE PASSED
+        """
+        e = Email(self.server)
+        e.define_sender(self.sender)
+        if isinstance(email, list):
+            for item in email:
+                e.add_to(item)
+        else:
+            e.add_to(item)
+
+        if cc:
+           if isinstance(cc, list):
+               for item in cc:
+                   e.add_cc(item)
+           else:
+               e.add_cc(item)
+
+        if bcc:
+            if isinstance(bcc, list):
+                for item in bcc:
+                    e.add_bcc(item)
+            else:
+                e.add_bcc(item)
+
+        e.define_subject(self.get_subject())
+        e.define_content(self.get_html())
+        e.send()
+            
+
     def define(self):
         """
-        Override in subclass
+        OVERRIDE IN SUBCLASS
         """
         # priority_ids
         self.priority_ids = []

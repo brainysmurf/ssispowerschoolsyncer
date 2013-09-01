@@ -3,7 +3,7 @@
 from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 from Model import DatabaseObject
 from psmdlsyncer.html_email.Email import Email
-from psmdlsyncer.utils.Dates import custom_strftime
+from psmdlsyncer.utils.Dates import custom_strftime, today
 from psmdlsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 from Samples import student_notices_samples, student_notices_tag_samples
 import datetime
@@ -59,15 +59,8 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
             else:
                 self.verbose and print(self.get_subject())
                 self.verbose and print(self.get_html(first_p_block=message_to_staff))
-                #send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(first_p_block=message_to_staff),
-                #                domain='student.ssis-suzhou.net')
-                email = Email(self.server)
-                email.define_sender(self.sender)
-                for agent in self.agents:
-                    email.add_to(agent)
-                email.define_subject(self.get_subject())
-                email.define_content(self.get_html(first_p_block=message_to_staff))
-                email.send()
+                self.email(self.agents)
+
         if self.agent_map:
             raise NotImplemented
 
@@ -95,4 +88,4 @@ if __name__ == "__main__":
     if settings.arguments.em_only:
         notices.email_to_agents()
     if settings.arguments.wp_only:
-        notices.post_to_wordpress('secondarystudentannouncements', datetime.time(hour=19,minute=0,second=0))
+        notices.post_to_wordpress('secondarystudentannouncements', today, datetime.time(hour=19,minute=0,second=0))
