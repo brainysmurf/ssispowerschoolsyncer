@@ -325,22 +325,15 @@ class UpdateField(DragonNetDBConnection):
     Class that is used to update a field in a database module
     """
 
-    def __init__(self, field_name):
+    def __init__(self, database_name, field_name):
         super().__init__()
         self.field_name = field_name
-        try:
-            self.target = self.sql(
+        self.target = self.sql(
             "select ssismdl_data_fields.id from ssismdl_data join ssismdl_data_fields on (ssismdl_data.name = '{}' and ssismdl_data.id = ssismdl_data_fields.dataid and ssismdl_data_fields.name = '{}')"
             .format(database_name, field_name)
             )
-        except:
-            self.target_id = None
-            return
 
-        try:
-            self.target_id = self.target()[0][0]
-        except:
-            self.target_id = None
+        self.target_id = self.target()[0][0]
 
     def update_menu(self, value):
         """
