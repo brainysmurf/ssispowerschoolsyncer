@@ -3,8 +3,7 @@ import re
 import subprocess
 import os
 
-from psmdlsyncer.utils.Email import Email
-from psmdlsyncer.utils.Email import read_in_templates
+from psmdlsyncer.html_email.Email import Email, read_in_templates
 
 reset_password_templates = "/home/lcssisadmin/ssispowerschoolsync/templates/password_reset"
 
