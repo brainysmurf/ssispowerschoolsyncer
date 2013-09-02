@@ -1,0 +1,17 @@
+<p>{salutation},</p>
+
+<p>这是一封邮件提醒，您的DragonNet家长帐户已经可以使用。我们的记录显示您尚未登陆成功。</p>
+
+<p>找到DragonNet,首先进入到SSIS的主页。在右上角找到“DragonNet”。然后点击“我的DragonNet”。 或者您可以将这个链接作为标签: <a href="http://dragonnet.ssis-suzhou.net">http://dragonnet.ssis-suzhou.net</a>.</p>
+
+<p>如果你需要帮助登录,请发电子邮件到<a href="mailto:help@ssis-suzhou.net">help@ssis-suzhou.net</a>。</p>
+
+<blockquote>
+<p>Your login is:<br />
+{username}</p>
+
+<p>Your password is:<br />
+changeme</p>
+</blockquote>
+
+<p>DragonNet Admin</p>

@@ -1,0 +1,21 @@
+<p>{salutation}</p>
+
+<p><i>这个一个自动发送信息。不需要回复。</i></p>
+
+作为一个SSIS的学生家长。你有一个登录DragonNet 2的账户。使用这个帐户,您可以访问学生课程的信息。您还可以查看老师在特定作业上的反馈。 请登陆（您需要标记这个连接）：<a href="http://dragonnet.ssis-suzhou.net/my">http://dragonnet.ssis-suzhou.net/my</a>
+
+<p>您的用户名是：<b>{username}</b><br />
+您的密码是: <b>changeme</b></p>
+
+<p>您需要在登陆后更改密码。请注意密码至少需要一个非字母数字字符 ex) ! or $ or #</p>
+
+<ul>
+	<li>您可以点击"parents"查询SSIS的基本信息</li>
+	<li>如果您的孩子在中学部，您可以点击"Teaching & Learning"查询他们的课程</li>
+	<li>如果您的孩子在中学部，您可以在"My Children"下点击您孩子的名字查找更多的信息.</li>
+</ul>
+
+<p>诚挚的问候</p>
+
+<p>SSIS DragonNet Admin Team<br />
+<a href="mailto:help@ssis-suzhou.net">Email</a>

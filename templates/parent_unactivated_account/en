@@ -1,0 +1,20 @@
+<p>{salutation},</p>
+
+<p>This is an email reminder that your SSIS DragonNet account is available. Our records indicate that {record}.</p>
+
+<p>To find DragonNet, first navigate to SSIS' homepage. Find the "DragonNet" on the top right corner. Then click on "My DragonNet". Or you 
+can bookmark <a href="http://dragonnet.ssis-suzhou.net/my">this link</a>.</p>
+
+<p>If you need help logging in, please email <a 
+href="mailto:dragonnethelp@student.ssis-suzhou.net">dragonnethelp@student.ssis-suzhou.net</a>.</p>
+
+<blockquote>
+<p>Your login is:<br />
+{username}</p>
+
+<p>Your password is:<br />
+changeme</p>
+</blockquote>
+
+<p>Thank you and best regards,</p>
+<p>DragonNet Admin</p>

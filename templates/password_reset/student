@@ -1,0 +1,6 @@
+<html>
+<p>Dear {salutation},
+<p>Your password has been reset to:</p>
+<p>{password}</p>
+<p>Please note that you can reset your password by yourself by following <a href="{url}">these instructions</a>.
+</html>

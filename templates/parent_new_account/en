@@ -1,0 +1,23 @@
+<p>{salutation}</p>
+
+<p><i>This is an automated message. No reply necessary.</i></p>
+
+<p>As a parent of a child at SSIS, you have been given a login for DragonNet 2. Using this account, you can access SSIS information, and your child's courses. You can also view teacher feedback.</p>
+
+<p>Please login <a href="http://dragonnet.ssis-suzhou.net/my">http://dragonnet.ssis-suzhou.net/my</a>:</p>
+
+<p>Your username is: <b>{username}</b><br />
+Your password is: <b>changeme</b></p>
+
+<p>You will need to change your password after logging in. Please note that the password requires at least one non-alphanumeric character, for example $ or % or !</p>
+
+<p>Here are the features that your parent account provides:</p>
+
+<ul>
+<li>You can find SSIS general information in the "Parents" tab.</li>
+<li>If you have a child in secondary, you can find their classes in the "Teaching & Learning" tab.</li>
+<li>If you have a child in secondary, you can also find additional information by clicking on your child's name under "My Children".</li>
+</ul>
+
+<p>Thank you and kind regards,<br/>
+SSIS DragonNet Admin Team</p>

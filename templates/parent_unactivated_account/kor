@@ -1,0 +1,11 @@
+<p>{salutation},</p>
+
+<p>학교기록상 귀하는 아직 학교 DragonNet 학부모계정을 사용하지 않고있는것으로 나타났습니다.  시간을 내셔서 접속을 해주세요.  DragonNet는 SSIS 홈페이지에 들어가시거나 아래 링크를   즐겨찾기 해놓으시면 됩니다 : <a href="http://dragonnet.ssis-suzhou.net/my">http://dragonnet.ssis-suzhou.net/my</a></p>
+
+<p>귀하의 사용자명은: {username}<br />
+귀하의 비밀번호는: changeme</p>
+
+<p>접속하는데 어려움이 있으신분은 주저마시고 학교에 도움을 요청하시기 바랍니다.</p>
+
+<p>DragonNet Admin<br />
+<a href="mailto:help@ssis-suzhou.net">Email Help</a></p>
