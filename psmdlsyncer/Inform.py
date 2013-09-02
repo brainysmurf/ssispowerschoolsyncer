@@ -10,13 +10,13 @@ def inform_admin(admin_email):
 def reinform_new_parent(family):
     pass
 
-def inform_new_student(family, student, server='localhost'):
+def inform_new_student(family, student):
     path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
     student_email_templates = read_in_templates(path_to_templates + '/student_new_account')
     sender = '"DragonNet Admin" <lcssisadmin@student.ssis-suzhou.net>'
     sf = Smartformatter()
     sf.take_dict(student)
-    email = Email(server)
+    email = Email()
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(student_email_templates)
     email.make_subject(sf("New Student in Homeroom {homeroom}, {lastfirst}"))
@@ -41,13 +41,13 @@ def inform_new_student(family, student, server='localhost'):
     
     email.send()
     
-def inform_new_parent(family, server='localhost'):
+def inform_new_parent(family):
     """
     family is object
     """
     path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
     parent_email_templates = read_in_templates(path_to_templates + '/parent_new_account')
-    email = Email(server)
+    email = Email()
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(parent_email_templates)
     email.make_subject("Your SSIS DragonNet Parent Account")

@@ -392,6 +392,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         ASSUMING WP INSTALLATION IS MULTISITE, BUT WORKS WITH STANDALONE (BLOG PARAMETER NOT NEEDED)
         If date IS none THEN USE self.date
         """
+        self.format_for_email()
+                    
         date_to_use = date if date else self.date            
         replace_apostrophes = "'\\''"
         d = {
