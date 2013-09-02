@@ -3,11 +3,12 @@ import postgresql
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
 from psmdlsyncer.utils.PythonMail import send_html_email
 from psmdlsyncer.html_email.Email import Email
-from psmdlsyncer.utils.DB import FieldObject
+from psmdlsyncer.utils.DB import FieldObject, DragonNetDBConnection
 from psmdlsyncer.settings import config_get_section_attribute
 from Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
 import datetime
+import smtplib
 
 class Nothing(Exception): pass
 
@@ -35,6 +36,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         super().__init__()
         # Setup
         self.database_name = database_name
+        dnet = DragonNetDBConnection()
+        self.database_id = dnet.sql("select id from ssismdl_data where name ='{}'".format(self.database_name))()[0][0]
         import argparse
         parser = argparse.ArgumentParser(description="Integrates Moodle Database with emailing system")
         parser.add_argument('-e', '--no_emails', action="store_true", help="Do NOT send emails")
@@ -64,6 +67,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.end_list_tag      = "</li>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
+        self.email_editing     = False
 
         self.server = config_get_section_attribute('EMAIL', 'domain')
         if not self.server:
@@ -99,6 +103,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.process()
         self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
         self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
+        self.edit_word = "Edit"
 
     def process(self):
         """
@@ -185,7 +190,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
 
         e.define_subject(self.get_subject())
         e.define_content(self.get_html())
-        e.send()
+
+        try:
+            e.send()
+        except smtplib.SMTPRecipientsRefused:
+            self.print_email(email)
             
 
     def define(self):
@@ -265,12 +274,25 @@ class ExtendMoodleDatabaseToAutoEmailer:
         if not hasattr(item, content_field):
             return "This item does not have any content!"
         content = getattr(item, content_field)
+        edit_phrase = ""
+
+        # BLOCK FOR email_editing FEATURE
+        # TODO GET A BETTER IMPLEMENTATION OF THIS!
+        #      edit_phrase CAN BE BETTER BECAUSE THE MODEL HAS MOST OF THIS INFO
+        #      ESPECIALLY THE dbid_id VARIABLE
+        if self.email_editing and hasattr(item, 'dbid'):
+            edit_phrase = ' <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d={}&mode=list&advanced=0&filter=1&advanced=1&f_192={}">{}</a> '.format(
+                self.database_id,
+                item.dbid,
+                self.edit_word)
+
+        # BLOCK FOR INCLUDING THE USER INFORMATION
         if hasattr(item, 'user'):
             # item.user is defined, so process accordingly
             if content.endswith('</p>'):
-                return self.list(content[:-4] + " (" + item.user + ")</p>")
+                return self.list(content[:-4] + " (" + item.user + ") " + edit_phrase + "</p>")
             else:
-                return self.list(content + " (" + item.user + ")")
+                return self.list(content + " (" + item.user + ") " + edit_phrase)
         else:
             # no item.user, so just send the content back
             return self.list(content)
@@ -340,7 +362,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
                         self.html("{header_pre_tag}{header}{colon}{header_post_tag}")
                         header = True
                     self.html(attachment)
-
         self.html("{end_html_tag}")
 
     def print_email(self, recipient_list):
@@ -358,15 +379,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             if self.no_emails:
                 self.print_email(self.agents)
             else:
-                #send_html_email(self.sender, self.agents, self.get_subject(), self.get_html(),
-                #                domain='student.ssis-suzhou.net')
-                email = Email(self.server)
-                email.define_sender(self.sender)
-                for agent in self.agents:
-                    email.add_to(agent)
-                email.define_subject(self.get_subject())
-                email.define_content(self.get_html())
-                email.send()
+                self.email(self.agents)
 
         if self.agent_map:
             for agent in self.agent_map.keys():
@@ -376,14 +389,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 if self.no_emails:
                     self.print_email(agent)
                 else:
-                    #send_html_email(self.sender, agent, self.get_subject(), self.get_html(),
-                    #            domain='student.ssis-suzhou.net')
-                    email = Email(self.server)
-                    email.define_sender(self.sender)
-                    email.add_to(agent)
-                    email.define_subject(self.get_subject())
-                    email.define_content(self.get_html())
-                    email.send()
+                    self.email(agent)
 
     def post_to_wordpress(self, blog, hour, date=None):
         """
