@@ -59,11 +59,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
         # Also, since it goes to an email, CSS is avoided
         self.start_html_tag    = '<html>'
         self.end_html_tag      = "</html>"
-        self.header_pre_tag    = '<div style="font-family:Tahoma,sans-serif;line-height:1em;font-weight:bold;font-size:18px;margin-top:20px;margin-bottom:20px;">'
-        self.header_post_tag   = "</div>"
+        self.header_pre_tag    = '<h3>'
+        self.header_post_tag   = "</h3>"
         self.begin_section_tag = "<ul>"
         self.end_section_tag   = "</ul>"
-        self.begin_list_tag    = '<li style="font-family:Tahoma,sans-serif;line-height:1em;font-size:14px;">'
+        self.begin_list_tag    = '<li>'
         self.end_list_tag      = "</li>"
         self.colon             = ":"
         self.attachment_header = 'Attachments'
@@ -285,6 +285,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 self.database_id,
                 item.dbid,
                 self.edit_word)
+
+        # NOW EDIT THE CONTENT SO THAT <p> TAGS ARE REMOVED, AND ANY SPACES ARE CONSOLIDATED
+        content = re.sub(r'</*p>', '', content)
+        content = re.sub(r'\n', ' ', content)
+        content = re.sub(' {2,}', ' ', content).strip()
 
         # BLOCK FOR INCLUDING THE USER INFORMATION
         if hasattr(item, 'user'):
