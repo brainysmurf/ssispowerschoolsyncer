@@ -167,18 +167,21 @@ class DatabaseObjects(DragonNetDBConnection):
         and puts the resulting infomation into python objects. This is a good way to do it.
         """
         super().__init__()
+
         self.samples = samples
         self.database_name = database_name
         self.verbose = verbose
         self._db = []
+
         if self.database_name:
+            # STORE DATABASE ID 
+            self.database_id = self.sql("select id from ssismdl_data where name ='{}'".format(self.database_name))()[0][0]
+
             # First get the information, samples if that's what is wanted
             # TODO: Verify database_name
             if self.samples:
                 sql_result = self.samples
             else:
-                # GET DATABASE ID FROM THE NAME
-                database_id = self.sql("select id from ssismdl_data where name ='{}'".format(self.database_name))()[0][0]
 
                 # The following sql gets a "flat" list of items:
                 # (recordid, firstname, lastname, institution, field, content)
@@ -186,7 +189,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 # Since it's "flat", we then have to unpack to put all the items with the same recordid into the same object
                 # I choose to do that with python below rather than the sql itself, which is possible (this is known as making a pivot table)
                 # But doing it in python is better because we don't have to worry about whether it's mysql or postgres or what
-                sql = """select dc.recordid, usr.id, usr.firstname, usr.lastname, usr.institution, dr.timecreated, dr.timemodified, df.name, dc.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id""".format(database_id)
+                sql = """select dc.recordid, usr.id, usr.firstname, usr.lastname, usr.institution, dr.timecreated, dr.timemodified, df.name, dc.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id""".format(self.database_id)
                 sql_result = self.sql(sql)()
             # Unpack the sql results into useable objects.
             # NOTE: This essentially converts multiple rows into a pivot table
@@ -195,6 +198,10 @@ class DatabaseObjects(DragonNetDBConnection):
                 print("Here is the sql result, which might be useful for saving for testing purposes:")
                 print(sql_result)
                 print("------- End SQL -------")
+
+            # SET UP THE dbid FIELD THAT IMPLEMENTS COOL EDIT BUTTON NEXT TO ITEM
+            dbid_id = self.sql("select id from ssismdl_data_fields where name = 'dbid' and dataid = {}".format(self.database_id))()[0][0]
+
             unique_records = []
             for row in sql_result:
                 recordid = row[0]
@@ -229,6 +236,11 @@ class DatabaseObjects(DragonNetDBConnection):
                     new_object.define(field, value)
                 # Okay, we got everything, so now place it into our internal object
                 self.verbose and print(new_object)
+                if hasattr(new_object, 'dbid') and not new_object.dbid:
+                    self.sql("update ssismdl_data_content set content = {} where recordid = {} and fieldid = {}".format(recordid, recordid, dbid_id))()
+                    new_object.dbid = recordid
+
+                
                 self.add(new_object)
                 
 
