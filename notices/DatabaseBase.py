@@ -285,7 +285,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 self.database_id,
                 item.dbid,
                 self.edit_word)
-
+            
         # NOW EDIT THE CONTENT SO THAT <p> TAGS ARE REMOVED, AND ANY SPACES ARE CONSOLIDATED
         content = re.sub(r'</*p>', '', content)
         content = re.sub(r'\n', ' ', content)
