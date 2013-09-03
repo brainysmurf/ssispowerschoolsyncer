@@ -415,7 +415,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
             'blog': "sites.ssis-suzhou.net/{}".format(blog)
             }
         command = """/usr/bin/wp post create --path=/var/www/wordpress --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --url={blog}""".format(**d)
-        print(command)
         import subprocess
         subprocess.call(command, shell=True)
 

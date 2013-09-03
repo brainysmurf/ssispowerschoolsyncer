@@ -92,4 +92,4 @@ if __name__ == "__main__":
     if settings.arguments.em_only:
         notices.email_to_agents()
     if settings.arguments.wp_only:
-        notices.post_to_wordpress('secondarystudentannouncements', datetime.time(hour=19,minute=0,second=0), date=today())
+        notices.post_to_wordpress('secondarystudentannouncements', datetime.time(hour=19,minute=5,second=0), date=today())
