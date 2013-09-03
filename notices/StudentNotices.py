@@ -88,8 +88,9 @@ if __name__ == "__main__":
     # TURN ON THE ABILITY TO CLICK "EDIT" NEXT TO EACH ONE.
     # THIS REQUIRES THAN A dbid FIELD BE CREATED ON THE SERVER SIDE
     # TODO: STREAMLINE THIS BETTER
-    notices.email_editing = True
     if settings.arguments.em_only:
+        notices.email_editing = True
         notices.email_to_agents()
     if settings.arguments.wp_only:
+        notices.email_editing = False
         notices.post_to_wordpress('secondarystudentannouncements', datetime.time(hour=19,minute=5,second=0), date=today())
