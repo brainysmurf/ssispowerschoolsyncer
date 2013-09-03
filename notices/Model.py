@@ -237,7 +237,9 @@ class DatabaseObjects(DragonNetDBConnection):
                 # Okay, we got everything, so now place it into our internal object
                 self.verbose and print(new_object)
                 if hasattr(new_object, 'dbid') and not new_object.dbid:
-                    self.sql("update ssismdl_data_content set content = {} where recordid = {} and fieldid = {}".format(recordid, recordid, dbid_id))()
+                    self.sql("update ssismdl_data_content set content = {} where recordid = {} and fieldid = {}".format(
+                        new_object.record_id, new_object.record_id, dbid_id)
+                        )()
                     new_object.dbid = recordid
 
                 
