@@ -172,21 +172,21 @@ class ExtendMoodleDatabaseToAutoEmailer:
             for item in email:
                 e.add_to(item)
         else:
-            e.add_to(item)
+            e.add_to(email)
 
         if cc:
            if isinstance(cc, list):
                for item in cc:
                    e.add_cc(item)
            else:
-               e.add_cc(item)
+               e.add_cc(cc)
 
         if bcc:
             if isinstance(bcc, list):
                 for item in bcc:
                     e.add_bcc(item)
             else:
-                e.add_bcc(item)
+                e.add_bcc(bcc)
 
         e.define_subject(self.get_subject())
         e.define_content(self.get_html())
