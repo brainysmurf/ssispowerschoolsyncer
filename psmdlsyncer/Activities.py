@@ -73,11 +73,14 @@ if __name__ == "__main__":
     sf.SPACE = ' '
     sf.EXT = '.txt'
     sf.NEWLINE = '\n'
-    sf.SLASH = '/'  # uppercase for readability
+    sf.SLASH = '/'
     sf.INCLUDE = ':include:'
     sf.activities_path = sf('{path}{SLASH}{base}')
     sf.space = ' '
     clear_folder(sf.activities_path)
+    with open(sf('{path}{SLASH}{base}{EXT}'), 'w'):
+        pass
+
     for activity_name in postfix:
         sf.handle = name_to_email(activity_name)
         sf.full_email = sf('{handle}{SUFFIX}')
