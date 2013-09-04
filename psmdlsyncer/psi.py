@@ -866,7 +866,6 @@ and set permissions accordingly.".format(php_src))
                 d = student.__dict__.copy()
                 f.write('{username},{num},{first},{last},changeme,{email}\n'.format(**d))
 
-
     def build_automagic_emails(self):
         path = None
         if self.config.has_section("EMAIL"):
@@ -886,7 +885,7 @@ and set permissions accordingly.".format(php_src))
 
         self.verbose and print("Clearing folders in postfix")
         clear_folder('{path}'.format(**d), exclude=exclude_db_files) 
-        # 
+        #
 
         clear_folder('{path}/grades'.format(**d))
         clear_folder('{path}/homerooms'.format(**d))
@@ -965,7 +964,6 @@ and set permissions accordingly.".format(php_src))
                 setup_postfix = "{path}/special/usebccparentsCHINESE{ext}".format(**d)
                 with open(setup_postfix, 'a') as f:
                     f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
 
         done_homerooms = []
         done_grades = []

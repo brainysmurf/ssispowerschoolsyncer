@@ -227,7 +227,6 @@ class DragonNetDBConnection(DBConnection):
             ",".join(self.get_activities_courses())
             ))()
     
-
     def get_user_enrollments(self, idnumber):
         """ returns a tuple (groupname, courseidnumber) """
         return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))()
