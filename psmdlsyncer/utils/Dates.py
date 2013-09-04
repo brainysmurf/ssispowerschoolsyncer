@@ -51,6 +51,12 @@ def today():
 def tomorrow():
     return today() + datetime.timedelta(days=1)
 
+def day_after_tomorrow():
+    return today() + datetime.timedelta(days=2)
+
+def day_n_after_today(n):
+    return today() + datetime.timedelta(days=n)
+
 def yesterday():
     return today() - datetime.timedelta(days=1)
 
