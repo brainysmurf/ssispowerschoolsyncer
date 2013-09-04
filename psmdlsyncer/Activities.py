@@ -27,6 +27,8 @@ if __name__ == "__main__":
     results.sort(key=lambda x: x[0])  # sort by name
     old_name = ''
     sf = Smartformatter()
+    sf.domain = 'student.ssis-suzhou.net'
+    sf.AT = '@'
     sf.tab = '\t'
     sf.newline = '\n'
 
@@ -59,10 +61,12 @@ if __name__ == "__main__":
     for item in printout:
         sf.homeroom, sf.lastfirst, sf.activity = item
         if sf.homeroom != last_homeroom:
-            print(sf('\n{homeroom}'))
+            #print(sf('\n{homeroom}'))
+            pass
         if sf.lastfirst != last_lastfirst:
-            print(sf('{lastfirst}'))
-        print(sf('{tab}{activity}'))
+            #print(sf('{lastfirst}'))
+            pass
+        #print(sf('{tab}{activity}'))
 
         last_homeroom, last_lastfirst = sf.homeroom, sf.lastfirst
 
@@ -82,10 +86,21 @@ if __name__ == "__main__":
     with open(sf('{path}{SLASH}{base}{EXT}'), 'w'):
         pass
 
-    for activity_name in postfix:
+    for activity_name in postfix:        
         sf.handle = name_to_email(activity_name)
         sf.full_email = sf('{handle}{SUFFIX}')
         with open(sf('{path}{SLASH}{base}{EXT}'), 'a') as f:
             f.write(sf('{full_email}{COLON}{SPACE}{INCLUDE}{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
         with open(sf('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
             f.write("\n".join(postfix[activity_name]))
+
+
+    output = []
+    for activity_name in postfix:
+        output.append(activity_name)
+
+    output.sort()
+    for activity in output:
+        sf.activity = name_to_email(activity_name)
+        sf.email = sf('{activity}{SUFFIX}{AT}{domain}')
+        print(sf( '<a href="{email}">{email}</a>' ))
