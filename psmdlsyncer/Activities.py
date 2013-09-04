@@ -102,4 +102,4 @@ if __name__ == "__main__":
     for activity in output:
         sf.activity = name_to_email(activity)
         sf.email = sf('{activity}{SUFFIX}{AT}{domain}')
-        print(sf( '<a href="{email}">{email}</a>' ))
+        print(sf( '<a href="{email}">{email}</a><br />' ))
