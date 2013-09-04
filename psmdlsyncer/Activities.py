@@ -82,6 +82,6 @@ if __name__ == "__main__":
         sf.handle = name_to_email(activity_name)
         sf.full_email = sf('{handle}{SUFFIX}')
         with open(sf('{path}{SLASH}{base}{EXT}'), 'a') as f:
-            f.write(sf('{full_email}{SPACE}{INCLUDE}{activities_path}{full_email}{EXT}{NEWLINE}'))
+            f.write(sf('{full_email}{SPACE}{INCLUDE}{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
         with open(sf('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
             f.write("\n".join(postfix[activity_name]))
