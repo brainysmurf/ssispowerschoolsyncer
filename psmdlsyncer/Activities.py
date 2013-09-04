@@ -96,10 +96,10 @@ if __name__ == "__main__":
 
     output = []
     for activity_name in postfix:
-        output.append(activity_name)
+        output.append(name_to_email(activity_name))
 
     output.sort()
     for activity in output:
-        sf.activity = name_to_email(activity)
+        sf.activity = activity
         sf.email = sf('{activity}{SUFFIX}{AT}{domain}')
         print(sf( '<a href="mailto:{email}">{email}</a><br />' ))
