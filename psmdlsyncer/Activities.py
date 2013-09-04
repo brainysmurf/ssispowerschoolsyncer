@@ -94,13 +94,12 @@ if __name__ == "__main__":
         with open(sf('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
             f.write("\n".join(postfix[activity_name]))
 
-
     output = []
     for activity_name in postfix:
         output.append(activity_name)
 
     output.sort()
     for activity in output:
-        sf.activity = name_to_email(activity_name)
+        sf.activity = name_to_email(activity)
         sf.email = sf('{activity}{SUFFIX}{AT}{domain}')
         print(sf( '<a href="{email}">{email}</a>' ))
