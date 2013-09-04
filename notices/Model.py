@@ -1,6 +1,6 @@
 from psmdlsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 from psmdlsyncer.utils.DB import DragonNetDBConnection
-from psmdlsyncer.utils.Dates import today, tomorrow, yesterday, timestamp_to_python_date
+from psmdlsyncer.utils.Dates import today, tomorrow, yesterday, day_after_tomorrow, timestamp_to_python_date
 import datetime
 import re
 
