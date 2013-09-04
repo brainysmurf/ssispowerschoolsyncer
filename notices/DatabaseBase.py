@@ -281,7 +281,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         #      edit_phrase CAN BE BETTER BECAUSE THE MODEL HAS MOST OF THIS INFO
         #      ESPECIALLY THE dbid_id VARIABLE
         if self.email_editing and hasattr(item, 'dbid'):
-            edit_phrase = ' <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d={}&mode=list&advanced=0&filter=1&advanced=1&f_192={}">{}</a> '.format(
+            edit_phrase = '<br /><a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d={}&mode=list&advanced=0&filter=1&advanced=1&f_192={}">{}</a> '.format(
                 self.database_id,
                 item.dbid,
                 self.edit_word)
