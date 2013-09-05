@@ -3,7 +3,7 @@
 from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
 from Samples import teacher_notices_samples, teacher_notices_tag_samples
-from psmdlsyncer import settings
+from psmdlsyncer.settings import settings
 
 class Nothing(Exception): pass
 
