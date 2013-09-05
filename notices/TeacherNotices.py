@@ -3,6 +3,7 @@
 from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
 from Samples import teacher_notices_samples, teacher_notices_tag_samples
+from psmdlsyncer import settings
 
 class Nothing(Exception): pass
 
@@ -20,7 +21,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
     def __init__(self):
         super().__init__('Teacher Notices Database')
-        self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/ssakorean/">Click here Secondary Student Notices</i></a></p>'
+        self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/secondarystudentannouncements/">Click here Secondary Student Notices</i></a></p>'
 
     def define(self):
         """
@@ -71,6 +72,11 @@ if __name__ == "__main__":
     try:
         notices = Teacher_Notices()
         notices.email_editing = True
+        if settings.arguments.em_only:
+            notices.email_editing = False
+            notices.agent_map = {
+                'adammorris@ssis-suzhou.net':['Whole School', 'Secondary']
+            }
         notices.email_to_agents()
     except Nothing:
         print("No matching entries found")
