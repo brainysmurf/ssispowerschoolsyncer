@@ -75,7 +75,7 @@ if __name__ == "__main__":
         if settings.arguments.em_only:
             notices.email_editing = False
             notices.agent_map = {
-                'adammorris@ssis-suzhou.net':['Whole School', 'Secondary']
+                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']
             }
         notices.email_to_agents()
     except Nothing:
