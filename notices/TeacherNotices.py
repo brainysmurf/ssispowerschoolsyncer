@@ -20,6 +20,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
     def __init__(self):
         super().__init__('Teacher Notices Database')
+        self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/ssakorean/">Click here Secondary Student Notices</i></a></p>'
 
     def define(self):
         """
@@ -30,8 +31,9 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.agents = ['adammorris@ssis-suzhou.net']
         self.agent_map = {
             'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'richardbruford@ssis-suzhou.net':['Whole School', 'Secondary']
+            'nicholaslittle@ssis-suzhou.net':['Whole School', 'Secondary']
             }
+        self.agent_map = {}
         self.search_date = "next day"
         self.content_field = 'Full Content'
         self.attachment_field = 'Attached Content'
