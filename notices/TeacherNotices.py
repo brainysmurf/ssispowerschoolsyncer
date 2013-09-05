@@ -32,11 +32,11 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
             'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
             'richardbruford@ssis-suzhou.net':['Whole School', 'Secondary']
             }
-        self.search_date = "same day"
+        self.search_date = "next day"
         self.content_field = 'Full Content'
         self.attachment_field = 'Attached Content'
         self.section_field = 'School Section'
-        self.priority_ids      = [32]
+        self.priority_ids      = [32, 14, 48]
 
     def post_to_wordpress(self):
         """ Teacher notices doesn't have a wordpress site ...  yet? """
@@ -68,6 +68,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
 if __name__ == "__main__":
     try:
         notices = Teacher_Notices()
+        notices.email_editing = True
         notices.email_to_agents()
     except Nothing:
         print("No matching entries found")
