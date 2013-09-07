@@ -118,6 +118,7 @@ class Access:
 
             success = "Success: Reset {} password".format(select[0][3][17:])
             dont_again = self.update_kwarg(d['table'], 'content', success, recordid=recordid, id=id)
+            print('Entry on the database has been changed to read successful')
 
             dont_again()
         return reset_list
@@ -169,6 +170,7 @@ class Access:
             print("About to try and reset {target}'s {which}.".format(**item))
             try:
                 getattr(self, item['which'].strip())(item['target'])
+                print("Successfully reset")
             except AttributeError:
                 print("I do not have a method that goes by the name of {}".format(item['which']))
 
