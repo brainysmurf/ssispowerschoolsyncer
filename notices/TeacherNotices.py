@@ -72,7 +72,7 @@ if __name__ == "__main__":
     try:
         notices = Teacher_Notices()
         notices.email_editing = True
-        if settings.arguments.em_only:
+        if settings.arguments.em_only:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
             notices.email_editing = False
             notices.agent_map = {
                 'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']

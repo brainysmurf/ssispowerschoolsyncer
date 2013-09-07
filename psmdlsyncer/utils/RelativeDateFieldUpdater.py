@@ -1,6 +1,6 @@
 from psmdlsyncer.utils.DB import UpdateField
 import datetime
-from psmdlsyncer.utils.Dates import date_to_database_timestamp, today, custom_strftime
+from psmdlsyncer.utils.Dates import date_to_database_timestamp, tomorrow, day_after_tomorrow, today, custom_strftime
 
 class RelativeDateFieldUpdater(UpdateField):
 
@@ -12,7 +12,7 @@ class RelativeDateFieldUpdater(UpdateField):
         menu = []
         every_seven_days = [i * 7 for i in range(1, 100)]
 
-        for day in range(1, forward_delta.days+1):  # 1..7 by default
+        for day in range(forward_delta.days):
             iter_date = d + datetime.timedelta(days=day)
             day_of_week = iter_date.strftime('%A')
 
@@ -39,10 +39,12 @@ class RelativeDateFieldUpdater(UpdateField):
 
     def format_date(self, d):
         return custom_strftime( "{S} %b", d )
-    
 
 if __name__ == "__main__":
 
-    t = RelativeDateFieldUpdater('Testing testing', 'Changeme')
-
-    t.update_menu_relative_dates(forward_delta=datetime.timedelta(days=20))
+    t = RelativeDateFieldUpdater('Teacher Notices Database', 'Start Date')
+    u = RelativeDateFieldUpdater('Teacher Notices Database', 'End Date')
+    t.first = lambda : tomorrow()
+    u.first = lambda : day_after_tomorrow()
+    t.update_menu_relative_dates()
+    u.update_menu_relative_dates()
