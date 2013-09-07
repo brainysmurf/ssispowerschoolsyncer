@@ -13,7 +13,7 @@ def system_call(str):
     subprocess.call(str, shell=True)
 
 class Access:
-    sf = Smartformatter(0
+    sf = Smartformatter()
     prefix = 'ssismdl_'
     def __init__(self):
         
