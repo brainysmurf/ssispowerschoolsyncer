@@ -6,9 +6,25 @@ class Smartformatter:
         self.sep = ""
         self._args = None
         self._verbose = _verbose
+        self.init()
         self.define(*args, **kwargs)
 
+    def init(self):
+        """
+        DEFINE ANY STANDARD, READILY-AVAILABLE THINGS
+        MUST ALWAYS BE IN ALL-CAPS
+        """
+        self.COLON = ':'
+        self.NEWLINE = '\n'
+        self.SPACE = ' '
+        self.TAB = '\t'
+        self.SLASH = '/'
+        # TODO: DEFINE OS PATH DISTICTION
+        
     def define(self, *args, **kwargs):
+        """
+        SAME AS self.x = y
+        """
         for key in kwargs.keys():
             setattr(self, key, kwargs[key])
         if args:
