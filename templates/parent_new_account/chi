@@ -2,7 +2,7 @@
 
 <p><i>这个一个自动发送信息。不需要回复。</i></p>
 
-作为一个SSIS的学生家长。你有一个登录DragonNet 2的账户。使用这个帐户,您可以访问学生课程的信息。您还可以查看老师在特定作业上的反馈。 请登陆（您需要标记这个连接）：<a href="http://dragonnet.ssis-suzhou.net/my">http://dragonnet.ssis-suzhou.net/my</a>
+作为一个SSIS的学生家长。你有一个登录DragonNet 2的账户。使用这个帐户,您可以访问学生课程的信息。您还可以查看老师在特定作业上的反馈。 请登陆（您需要标记这个连接）：<a href="http://dragonnet.ssis-suzhou.net/">http://dragonnet.ssis-suzhou.net/</a>
 
 <p>您的用户名是：<b>{username}</b><br />
 您的密码是: <b>changeme</b></p>
