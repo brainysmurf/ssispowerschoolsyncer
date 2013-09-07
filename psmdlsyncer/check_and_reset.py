@@ -4,6 +4,7 @@ import subprocess
 import os
 
 from psmdlsyncer.html_email.Email import Email, read_in_templates
+from psmdlsyncer.Formatter import Smartformatter
 from psmdlsyncer.settings import config_get_section_attribute
 
 reset_password_templates = "/home/lcssisadmin/ssispowerschoolsync/templates/password_reset"
@@ -12,13 +13,15 @@ def system_call(str):
     subprocess.call(str, shell=True)
 
 class Access:
+    sf = Smartformatter(0
     prefix = 'ssismdl_'
     def __init__(self):
-        db_name = config_get_section_attribute('MOODLE', 'db_name')
-        db_username = config_get_section_attribute('MOODLE', 'db_username')
-        db_password = config_get_section_attribute('MOODLE', 'db_password')
-        db_host = config_get_section_attribute('MOODLE', 'db_host')
-        self.db = postgresql.open('pq://{db_username}:{db_password}@/{db_name}'.format(locals()))
+        
+        sf.db_name = config_get_section_attribute('MOODLE', 'db_name')
+        sf.db_username = config_get_section_attribute('MOODLE', 'db_username')
+        sf.db_password = config_get_section_attribute('MOODLE', 'db_password')
+        sf.db_host = config_get_section_attribute('MOODLE', 'db_host')
+        self.db = postgresql.open(sf('pq://{db_username}:{db_password}@/{db_name}'))
         self.sql = self.db.prepare
 
     def __del__(self):
