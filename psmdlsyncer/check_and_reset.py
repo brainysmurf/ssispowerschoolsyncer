@@ -4,6 +4,7 @@ import subprocess
 import os
 
 from psmdlsyncer.html_email.Email import Email, read_in_templates
+from psmdlsyncer.settings import config_get_section_attribute
 
 reset_password_templates = "/home/lcssisadmin/ssispowerschoolsync/templates/password_reset"
 
@@ -13,7 +14,11 @@ def system_call(str):
 class Access:
     prefix = 'ssismdl_'
     def __init__(self):
-        self.db = postgresql.open('pq://moodle:ssissqlmoodle@localhost/moodle')
+        db_name = config_get_section_attribute('MOODLE', 'db_name')
+        db_username = config_get_section_attribute('MOODLE', 'db_username')
+        db_password = config_get_section_attribute('MOODLE', 'db_password')
+        db_host = config_get_section_attribute('MOODLE', 'db_host')
+        self.db = postgresql.open('pq://{db_username}:{db_password}@/{db_name}')
         self.sql = self.db.prepare
 
     def __del__(self):
