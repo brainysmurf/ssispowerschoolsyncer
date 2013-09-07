@@ -13,10 +13,10 @@ def system_call(str):
     subprocess.call(str, shell=True)
 
 class Access:
-    sf = Smartformatter()
+
     prefix = 'ssismdl_'
     def __init__(self):
-        
+        sf = Smartformatter()
         sf.db_name = config_get_section_attribute('MOODLE', 'db_name')
         sf.db_username = config_get_section_attribute('MOODLE', 'db_username')
         sf.db_password = config_get_section_attribute('MOODLE', 'db_password')
