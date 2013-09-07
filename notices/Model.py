@@ -13,7 +13,7 @@ class StartDateField(NoticesRelativeDateFieldUpdater):
 
 class EndDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return day_after_tomorrow()
+        return tomorrow()
 
 class DatabaseObject:
     """
