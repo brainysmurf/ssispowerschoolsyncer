@@ -4,7 +4,7 @@ import subprocess
 import os
 
 from psmdlsyncer.html_email.Email import Email, read_in_templates
-from psmdlsyncer.Formatter import Smartformatter
+from psmdlsyncer.utils.Formatter import Smartformatter
 from psmdlsyncer.settings import config_get_section_attribute
 
 reset_password_templates = "/home/lcssisadmin/ssispowerschoolsync/templates/password_reset"
