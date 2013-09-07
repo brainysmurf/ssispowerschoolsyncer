@@ -123,7 +123,6 @@ class Access:
         return reset_list
 
     def reset_email_only(self, who):
-        return # this is now broken
         careful = open('/etc/passwd').readlines()
         path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
         for line in careful:
@@ -168,7 +167,7 @@ class Access:
     def scan_and_reset(self):
         scanned = self.get_list_of_resets()
         for item in scanned:
-            print("About to reset {target}'s {which}.".format(**item))
+            print("About to try and reset {target}'s {which}.".format(**item))
             try:
                 getattr(self, item['which'].strip())(item['target'])
             except AttributeError:
