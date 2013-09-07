@@ -300,7 +300,7 @@ class Students:
         self.schedule = {}
         for line in raw:
             line = line.strip('\n').split('\t')
-            course_number, periods, teacher, teacherID, student, studentID = line
+            course_number, course_name, periods, teacher, teacherID, student, studentID = line
             if not course_number in self.schedule:
                 self.schedule[course_number] = []
             self.schedule[course_number].append((teacher, studentID))
