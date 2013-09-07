@@ -21,7 +21,7 @@ class Access:
         sf.db_username = config_get_section_attribute('MOODLE', 'db_username')
         sf.db_password = config_get_section_attribute('MOODLE', 'db_password')
         sf.db_host = config_get_section_attribute('MOODLE', 'db_host')
-        self.db = postgresql.open(sf('pq://{db_username}:{db_password}@/{db_name}'))
+        self.db = postgresql.open(sf('pq://{db_username}:{db_password}@{db_host}/{db_name}'))
         self.sql = self.db.prepare
 
     def __del__(self):
@@ -98,13 +98,12 @@ class Access:
 
         # we have something, so go through it all
         reset_list = []
+        
         for record_item in command_result:
             id, recordid = record_item
             d['recordid'] = recordid
             select = self.select_table_by_kwarg(**d)
-
-            # [(5123, 49, 1082, 'Happy Student (Test, 99999)', None, None, None, None), (5124, 50, 1082, '##lcssisadmin##: All', None, None, None, None)
-
+            
             # Sort by fieldid, so I can extract it the right way
             select.sort( key=lambda x: x[1] )
 
