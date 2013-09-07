@@ -122,7 +122,7 @@ class Access:
             dont_again()
         return reset_list
 
-    def reset_email_only(self, who):
+    def reset_email(self, who):
         careful = open('/etc/passwd').readlines()
         path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
         for line in careful:
@@ -131,7 +131,6 @@ class Access:
                     f.write( re.sub(':x:', ':changeme:', line) )
                 system_call("/usr/sbin/newusers {}".format(path))
                 os.remove(path)
-        # Don't email the user their password!
 
     def reset_dragonnet_only(self, who):
         careful = open('/etc/passwd').readlines()
