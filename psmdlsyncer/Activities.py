@@ -74,11 +74,7 @@ if __name__ == "__main__":
     sf.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
     sf.base = 'activities'
     sf.SUFFIX = "ACT"
-    sf.SPACE = ' '
-    sf.COLON = ':'
     sf.EXT = '.txt'
-    sf.NEWLINE = '\n'
-    sf.SLASH = '/'
     sf.INCLUDE = ':include:'
     sf.activities_path = sf('{path}{SLASH}{base}')
     sf.space = ' '
