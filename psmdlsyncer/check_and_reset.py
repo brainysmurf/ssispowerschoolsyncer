@@ -18,7 +18,7 @@ class Access:
         db_username = config_get_section_attribute('MOODLE', 'db_username')
         db_password = config_get_section_attribute('MOODLE', 'db_password')
         db_host = config_get_section_attribute('MOODLE', 'db_host')
-        self.db = postgresql.open('pq://{db_username}:{db_password}@/{db_name}')
+        self.db = postgresql.open('pq://{db_username}:{db_password}@/{db_name}'.format(locals()))
         self.sql = self.db.prepare
 
     def __del__(self):
