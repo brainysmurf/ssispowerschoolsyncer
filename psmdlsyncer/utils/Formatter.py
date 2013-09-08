@@ -21,6 +21,7 @@ class Smartformatter:
         self.SLASH = '/'
         self.LPARENS = '('
         self.RPARENS = ')'
+        self.AT = '@'
         # TODO: DEFINE OS PATH DISTICTION
         
     def define(self, *args, **kwargs):

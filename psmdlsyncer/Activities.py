@@ -23,52 +23,33 @@ if __name__ == "__main__":
     students = Students()
     
     db = DragonNetDBConnection()
-    results = db.get_all_users_activity_enrollments()
-    results.sort(key=lambda x: x[0])  # sort by name
-    old_name = ''
     sf = Smartformatter()
+
+    results = db.get_all_users_activity_enrollments()
     sf.domain = 'student.ssis-suzhou.net'
     sf.AT = '@'
-    sf.tab = '\t'
-    sf.newline = '\n'
 
-    # PARSE RESULTS
     from collections import defaultdict
     postfix = defaultdict(list)
-    printout = []    
-    
+    homerooms = defaultdict( lambda : defaultdict(list) )
+
+    # PARSE RESULTS
     for result in results:
-        sf.name, student_key = result
+        activity_name, student_key = result
         student = students.get_student(student_key)
         if not student:
             continue
-        sf.student = student.lastfirst
+        homerooms[student.homeroom][student.num].append(activity)
+        postfix[activity_name].append(student.email)
 
-        # printout
-        if sf.name == old_name:
-            print(sf('{tab}{student}'))
-        else:
-            print(sf('{newline}{name}'))
-            old_name = sf.name
-
-        printout.append( (student.homeroom, student.lastfirst, sf.name) )
-        postfix[sf.name].append(student.email)
-
-    # OUTPUT THE RESULTS IN HUMAN-READABLE FORM
-    printout.sort(key=lambda x: put_in_order(x[0]))
-    last_homeroom = ''
-    last_lastfirst = ''
-    for item in printout:
-        sf.homeroom, sf.lastfirst, sf.activity = item
-        if sf.homeroom != last_homeroom:
-            #print(sf('\n{homeroom}'))
-            pass
-        if sf.lastfirst != last_lastfirst:
-            #print(sf('{lastfirst}'))
-            pass
-        #print(sf('{tab}{activity}'))
-
-        last_homeroom, last_lastfirst = sf.homeroom, sf.lastfirst
+    homerooms_sorted = list(homerooms.keys())
+    homerooms_sorted.sort(key=put_in_order)
+    for homeroom in homerooms_sorted:
+        print(homeroom)
+        for student_key in homerooms[homeroom]:
+            student = students.get_student(student_key)
+            activities = ", ".join( homerooms[homeroom][student_key] )
+            print('\t' + student.lastfirst + ': ' + activities)
 
     # DO THE ACTIVITY EMAILS
     sf.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
