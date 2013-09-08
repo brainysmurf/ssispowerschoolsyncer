@@ -31,6 +31,7 @@ if __name__ == "__main__":
 
     from collections import defaultdict
     postfix = defaultdict(list)
+    activities = defaultdict(list)
     homerooms = defaultdict( lambda : defaultdict(list) )
 
     # PARSE RESULTS
@@ -40,6 +41,7 @@ if __name__ == "__main__":
         if not student:
             continue
         homerooms[student.homeroom][ (student.lastfirst, student)].append(activity_name)
+        activities[activity_name].append(student)
         postfix[activity_name].append(student.email)
 
     homerooms_sorted = list(homerooms.keys())
@@ -54,6 +56,15 @@ if __name__ == "__main__":
             s.take_dict(student)
             s.activities = ", ".join( homerooms[homeroom][(lastfirst, student)] )
             print(s('{lastfirst}{COLON}{SPACE}{activities}'))
+
+    activities_sorted = list(activities.keys())
+    activities_sorted.sort()
+    for activity in activities_sorted:
+        print('\n' + activity)
+        for student in activities[activity]:
+            s = Smartformatter()
+            s.take_dict(student)
+            print(s('{lastfirst}{TAB}{homeroom}'))
 
     # DO THE ACTIVITY EMAILS
     sf.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
