@@ -82,7 +82,7 @@ if __name__ == "__main__":
     with open(sf('{path}{SLASH}{base}{EXT}'), 'w'):
         pass
 
-    for activity_name in postfix:        
+    for activity_name in postfix:
         sf.handle = name_to_email(activity_name)
         sf.full_email = sf('{handle}{SUFFIX}')
         with open(sf('{path}{SLASH}{base}{EXT}'), 'a') as f:

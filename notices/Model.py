@@ -9,11 +9,11 @@ class NoticesRelativeDateFieldUpdater(RelativeDateFieldUpdater):
 
 class StartDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return tomorrow()
+        return day_after_tomorrow()
 
 class EndDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return tomorrow()
+        return day_after_tomorrow()
 
 class DatabaseObject:
     """
