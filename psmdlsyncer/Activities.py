@@ -39,7 +39,7 @@ if __name__ == "__main__":
         student = students.get_student(student_key)
         if not student:
             continue
-        homerooms[student.homeroom][student.num].append(activity)
+        homerooms[student.homeroom][student.num].append(activity_name)
         postfix[activity_name].append(student.email)
 
     homerooms_sorted = list(homerooms.keys())
