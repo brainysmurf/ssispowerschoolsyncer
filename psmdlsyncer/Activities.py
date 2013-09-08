@@ -48,8 +48,10 @@ if __name__ == "__main__":
         print(homeroom)
         for student_key in homerooms[homeroom]:
             student = students.get_student(student_key)
-            activities = ", ".join( homerooms[homeroom][student_key] )
-            print('\t' + student.lastfirst + ': ' + activities)
+            sf = Smartformatter()
+            sf.take_dict(student)
+            sf.activities = ", ".join( homerooms[homeroom][student_key] )
+            print(sf('{first}{SPACE}{last}{COLON}{SPACE}{activities}'))
 
     # DO THE ACTIVITY EMAILS
     sf.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
