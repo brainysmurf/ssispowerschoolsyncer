@@ -4,6 +4,8 @@ import subprocess
 import os
 
 from psmdlsyncer.html_email.Email import Email, read_in_templates
+from psmdlsyncer.utils.Formatter import Smartformatter
+from psmdlsyncer.settings import config_get_section_attribute
 
 reset_password_templates = "/home/lcssisadmin/ssispowerschoolsync/templates/password_reset"
 
@@ -11,9 +13,15 @@ def system_call(str):
     subprocess.call(str, shell=True)
 
 class Access:
+
     prefix = 'ssismdl_'
     def __init__(self):
-        self.db = postgresql.open('pq://moodle:ssissqlmoodle@localhost/moodle')
+        sf = Smartformatter()
+        sf.db_name = config_get_section_attribute('MOODLE', 'db_name')
+        sf.db_username = config_get_section_attribute('MOODLE', 'db_username')
+        sf.db_password = config_get_section_attribute('MOODLE', 'db_password')
+        sf.db_host = config_get_section_attribute('MOODLE', 'db_host')
+        self.db = postgresql.open(sf('pq://{db_username}:{db_password}@{db_host}/{db_name}'))
         self.sql = self.db.prepare
 
     def __del__(self):
@@ -90,13 +98,12 @@ class Access:
 
         # we have something, so go through it all
         reset_list = []
+        
         for record_item in command_result:
             id, recordid = record_item
             d['recordid'] = recordid
             select = self.select_table_by_kwarg(**d)
-
-            # [(5123, 49, 1082, 'Happy Student (Test, 99999)', None, None, None, None), (5124, 50, 1082, '##lcssisadmin##: All', None, None, None, None)
-
+            
             # Sort by fieldid, so I can extract it the right way
             select.sort( key=lambda x: x[1] )
 
@@ -111,12 +118,12 @@ class Access:
 
             success = "Success: Reset {} password".format(select[0][3][17:])
             dont_again = self.update_kwarg(d['table'], 'content', success, recordid=recordid, id=id)
+            print('Entry on the database has been changed to read successful')
 
             dont_again()
         return reset_list
 
-    def reset_email_only(self, who):
-        return # this is now broken
+    def reset_email(self, who):
         careful = open('/etc/passwd').readlines()
         path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
         for line in careful:
@@ -125,7 +132,6 @@ class Access:
                     f.write( re.sub(':x:', ':changeme:', line) )
                 system_call("/usr/sbin/newusers {}".format(path))
                 os.remove(path)
-        # Don't email the user their password!
 
     def reset_dragonnet_only(self, who):
         careful = open('/etc/passwd').readlines()
@@ -161,9 +167,10 @@ class Access:
     def scan_and_reset(self):
         scanned = self.get_list_of_resets()
         for item in scanned:
-            print("About to reset {target}'s {which}.".format(**item))
+            print("About to try and reset {target}'s {which}.".format(**item))
             try:
                 getattr(self, item['which'].strip())(item['target'])
+                print("Successfully reset")
             except AttributeError:
                 print("I do not have a method that goes by the name of {}".format(item['which']))
 
