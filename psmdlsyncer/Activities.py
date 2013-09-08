@@ -39,15 +39,17 @@ if __name__ == "__main__":
         student = students.get_student(student_key)
         if not student:
             continue
-        homerooms[student.homeroom][student.num].append(activity_name)
+        homerooms[student.homeroom][ (student.lastfirst, student)].append(activity_name)
         postfix[activity_name].append(student.email)
 
     homerooms_sorted = list(homerooms.keys())
     homerooms_sorted.sort(key=put_in_order)
     for homeroom in homerooms_sorted:
-        print(homeroom)
-        for student_key in homerooms[homeroom]:
-            student = students.get_student(student_key)
+        print('\n' + homeroom)
+        students_sorted = list(homerooms[homeroom].keys())
+        students_sorted.sort(key=lambda x: x[0])
+        for item in students_sorted:
+            _, student = item
             s = Smartformatter()
             s.take_dict(student)
             s.activities = ", ".join( homerooms[homeroom][student_key] )
