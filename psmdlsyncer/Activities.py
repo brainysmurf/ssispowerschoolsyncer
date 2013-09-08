@@ -49,11 +49,11 @@ if __name__ == "__main__":
         students_sorted = list(homerooms[homeroom].keys())
         students_sorted.sort(key=lambda x: x[0])
         for item in students_sorted:
-            _, student = item
+            lastfirst, student = item
             s = Smartformatter()
             s.take_dict(student)
-            s.activities = ", ".join( homerooms[homeroom][student_key] )
-            print(s('{first}{SPACE}{last}{COLON}{SPACE}{activities}'))
+            s.activities = ", ".join( homerooms[homeroom][(lastfirst, student)] )
+            print(s('{lastfirst}{COLON}{SPACE}{activities}'))
 
     # DO THE ACTIVITY EMAILS
     sf.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
