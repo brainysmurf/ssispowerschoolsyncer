@@ -154,12 +154,12 @@ class Students:
 
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
+                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality, phone1, phone2 = line.strip('\n').split('\t')
             except ValueError:
                 print(line)
-                print("Possibly this line had even number of tabs??")
+                print("Skipping this... did one of the fields have a newline character in there?")
                 continue
-       
+
             try:
                 grade = self.convert_hr_to_grade(homeroom)
             except NoHomeroom:
@@ -300,6 +300,7 @@ class Students:
         self.schedule = {}
         for line in raw:
             line = line.strip('\n').split('\t')
+            print(line)
             course_number, course_name, periods, teacher, teacherID, student, studentID = line
             if not course_number in self.schedule:
                 self.schedule[course_number] = []
@@ -424,6 +425,9 @@ class Students:
 
     def get_student(self, student_id):
         return self.student_info_controller.get(student_id)
+
+    def get_all_student_keys(self):
+        return list(self.student_info_controller._db.keys())
 
     def get_students_by_family_id(self, family_id):
         info = self.student_info_controller
