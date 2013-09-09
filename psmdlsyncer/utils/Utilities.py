@@ -103,6 +103,16 @@ department_heads = {
 	'departHROOM': ['peterfowles']
 	}
 
+get_head_of_grade = {
+	6: ['susancover'],
+	7: ['peterguyan'],
+	8: ['lucyborden'],
+	9: ['ronfrisinger'],
+	10: ['benwylie'],
+	11: ['byronfarrow'],
+	12: ['suemckellor']
+	}
+
 def determine_password():
 	s = 'abcdefghjklmnopqrtuvwxyz'  # no s or i
 	p = "".join([random.choice(s) for i in range(0,4)])  # four random letters
