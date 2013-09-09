@@ -281,8 +281,6 @@ and set permissions accordingly.".format(php_src))
 
         output_file.output()
 
-
-
     def build_opening_table(self):
         open(self.path_to_output + '/' + 'table.txt', 'w').close()
         for course_key in self.students.get_course_keys():
