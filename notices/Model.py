@@ -95,6 +95,8 @@ class DatabaseObject:
                     this_month = self.months.get(split[1].lower())
                 except ValueError:
                     return (None, None)
+                if not this_month:
+                    return (None, None)
                 this_year  = today().year
                 date_objects.append( datetime.date(this_year, this_month, this_day) )
 
