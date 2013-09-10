@@ -106,16 +106,16 @@ class ExtendMoodleDatabaseToAutoEmailer:
 
     def process(self):
         """
-        Finds the objects (using raw_data method) and writes them to self.database_objects,
+        Finds the objects (using model_items method) and writes them to self.database_objects,
         and then processes them accordingly. Can be overridden if necessary, but must define self.database_objects
         """
-        items = self.raw_data()
+        self.model = self.model_items()
 
         # DO NOT PASS IT A NAME, WE NEED A BLANK ONE
         self.database_objects = DatabaseObjects()
-        
+
         self.verbose and print(self.database_objects)
-        for item in items.items_within_date(self.date):
+        for item in self.model.items_within_date(self.date):
             self.verbose and print("Item within date found here:")
             item.determine_priority(self.date, self.priority_ids)
             if self.section_field:
@@ -124,7 +124,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.verbose and print("\n\nDatabase object")
         self.verbose and print(self.database_objects)
         
-    def raw_data(self):
+    def model_items(self):
         """
         Returns a generator object that represents the potential rows in the database
         If we are doing a dry-run then return a testing sample
@@ -280,8 +280,9 @@ class ExtendMoodleDatabaseToAutoEmailer:
         #      edit_phrase CAN BE BETTER BECAUSE THE MODEL HAS MOST OF THIS INFO
         #      ESPECIALLY THE dbid_id VARIABLE
         if self.email_editing and hasattr(item, 'dbid'):
-            edit_phrase = '<br /><a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d={}&mode=list&advanced=0&filter=1&advanced=1&f_192={}">{}</a> '.format(
+            edit_phrase = '<br /><a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d={}&mode=list&advanced=0&filter=1&advanced=1&f_{}={}">{}</a> '.format(
                 self.database_id,
+                self.model.dbid_id,
                 item.dbid,
                 self.edit_word)
             

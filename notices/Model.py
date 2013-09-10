@@ -9,11 +9,11 @@ class NoticesRelativeDateFieldUpdater(RelativeDateFieldUpdater):
 
 class StartDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return day_after_tomorrow()
+        return tomorrow()
 
 class EndDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return day_after_tomorrow()
+        return tomorrow()
 
 class DatabaseObject:
     """
@@ -200,7 +200,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 print("------- End SQL -------")
 
             # SET UP THE dbid FIELD THAT IMPLEMENTS COOL EDIT BUTTON NEXT TO ITEM
-            dbid_id = self.sql("select id from ssismdl_data_fields where name = 'dbid' and dataid = {}".format(self.database_id))()[0][0]
+            self.dbid_id = self.sql("select id from ssismdl_data_fields where name = 'dbid' and dataid = {}".format(self.database_id))()[0][0]
 
             unique_records = []
             for row in sql_result:
@@ -238,7 +238,7 @@ class DatabaseObjects(DragonNetDBConnection):
                 self.verbose and print(new_object)
                 if hasattr(new_object, 'dbid') and not new_object.dbid:
                     self.sql("update ssismdl_data_content set content = {} where recordid = {} and fieldid = {}".format(
-                        new_object.record_id, new_object.record_id, dbid_id)
+                        new_object.record_id, new_object.record_id, self.dbid_id)
                         )()
                     new_object.dbid = recordid
 
