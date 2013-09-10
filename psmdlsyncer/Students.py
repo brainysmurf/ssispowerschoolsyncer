@@ -154,10 +154,12 @@ class Students:
 
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality, phone1, phone2 = line.strip('\n').split('\t')
+                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
             except ValueError:
                 print(line)
                 print("Skipping this... did one of the fields have a newline character in there?")
+                from IPython import embed
+                embed()
                 continue
 
             try:
