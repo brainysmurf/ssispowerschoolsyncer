@@ -103,7 +103,8 @@ department_heads = {
 	'departHROOM': ['peterfowles']
 	}
 
-get_head_of_grade = {
+def get_head_of_grade(grade):
+	return {
 	6: ['susancover'],
 	7: ['peterguyan'],
 	8: ['lucyborden'],
@@ -111,7 +112,7 @@ get_head_of_grade = {
 	10: ['benwylie'],
 	11: ['byronfarrow'],
 	12: ['suemckellor']
-	}
+	}.get(grade)
 
 def determine_password():
 	s = 'abcdefghjklmnopqrtuvwxyz'  # no s or i
