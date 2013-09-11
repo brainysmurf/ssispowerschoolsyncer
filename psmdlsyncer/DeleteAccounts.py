@@ -11,12 +11,12 @@ if __name__ == "__main__":
     all_ids = dnet.get_all_students_name_ids()
     to_delete = []
 
-    for this_id, first, last in all_ids:
+    for this_id, username, first, last in all_ids:
         if not this_id:
             continue
         student = students.get_student(this_id)
         if not student and not students.get_teacher(last + ', ' + first):
-            to_delete.append( (this_id, student.username) )
+            to_delete.append( (this_id, username) )
 
     for this_id, username in to_delete:
         print(username + ',deleted')
