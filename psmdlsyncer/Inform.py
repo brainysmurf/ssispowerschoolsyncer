@@ -38,10 +38,7 @@ def inform_new_student(family, student):
     """
     email.add_cc(get_head_of_grade(student.grade))
     email.define_fields(sf)
-    email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
-    #email.add_bcc('brentclark@ssis-suzhou.net')
-    #email.add_bcc('geoffreyderry@ssis-suzhou.net')
-    
+    email.add_bcc('lcssisadmin@student.ssis-suzhou.net')    
     email.send()
     
 def inform_new_parent(family):
