@@ -15,8 +15,10 @@ if __name__ == "__main__":
         if not this_id:
             continue
         student = students.get_student(this_id)
+        from IPython import embed
+        embed()
         if not student and not students.get_teacher(last + ', ' + first):
             to_delete.append( (this_id, last + ', ' + first) )
 
     for this_id, username in to_delete:
-        print(this_id, username)
+        print(username + ',deleted')
