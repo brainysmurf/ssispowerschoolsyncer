@@ -16,7 +16,7 @@ if __name__ == "__main__":
             continue
         student = students.get_student(this_id)
         if not student and not students.get_teacher(last + ', ' + first):
-            to_delete.append( (this_id, last + ', ' + first) )
+            to_delete.append( (this_id, student.username) )
 
     for this_id, username in to_delete:
         print(username + ',deleted')
