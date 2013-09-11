@@ -302,7 +302,6 @@ class Students:
         self.schedule = {}
         for line in raw:
             line = line.strip('\n').split('\t')
-            print(line)
             course_number, course_name, periods, teacher, teacherID, student, studentID = line
             if not course_number in self.schedule:
                 self.schedule[course_number] = []
