@@ -190,6 +190,9 @@ class DragonNetDBConnection(DBConnection):
     def get_all_user_ids(self):
         return [i[0] for i in self.sql('select idnumber from ssismdl_user where deleted = 0')()]
 
+    def get_all_parent_name_ids(self):
+        return self.sql("select idnumber, username from ssismdl_user where deleted = 0 and idnumber like '%P'")()                
+
     def get_all_user_name_ids(self):
         return self.sql('select idnumber, username, firstname, lastname from ssismdl_user where deleted = 0')()
 

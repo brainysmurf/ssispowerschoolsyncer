@@ -18,5 +18,11 @@ if __name__ == "__main__":
         if not student and not students.get_teacher(last + ', ' + first):
             to_delete.append( (this_id, username) )
 
-    for this_id, username in to_delete:
-        print(username + ',deleted')
+    #for this_id, username in to_delete:
+        #print(username + ',deleted')
+
+    parents = dnet.get_all_parent_name_ids()
+    for idnumber, username in parents:
+        children = students.get_family(idnumber)
+        if not children:
+            print(username + ',deleted')

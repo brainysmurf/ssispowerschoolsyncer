@@ -427,6 +427,16 @@ class Students:
     def get_student(self, student_id):
         return self.student_info_controller.get(student_id)
 
+    def get_family(self, idnumber):
+        if len(idnumber) == 5:
+            idnumber = idnumber[:4]
+        students = []
+        for num in range(0, 9):
+            student = self.get_student(idnumber + chr(num))
+            if student:
+                results.append(student)
+        return students
+
     def get_all_student_keys(self):
         return list(self.student_info_controller._db.keys())
 
