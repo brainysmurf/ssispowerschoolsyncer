@@ -191,7 +191,10 @@ class DragonNetDBConnection(DBConnection):
         return [i[0] for i in self.sql('select idnumber from ssismdl_user where deleted = 0')()]
 
     def get_all_user_name_ids(self):
-        return [(i[0] + ' ' + i[1], i[2]) for i in self.sql('select firstname, lastname from ssismdl_user where deleted = 0')()]
+        return [(i[0], i[1], i[2]) for i in self.sql('select idnumber, firstname, lastname from ssismdl_user where deleted = 0')()]
+
+    def get_all_students_name_ids(self):
+        return [( i[0], i[1], i[2]) for i in self.sql("select idnumber, firstname, lastname from ssismdl_user where deleted = 0 and not idnumber like '%P'")()]
 
     def does_user_exist(self, idnumber):
         """
