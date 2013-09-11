@@ -434,7 +434,7 @@ class Students:
         for num in range(0, 9):
             student = self.get_student(idnumber + str(num))
             if student:
-                results.append(student)
+                students.append(student)
         return students
 
     def get_all_student_keys(self):
