@@ -117,7 +117,7 @@ class RecipientList:
 
 class Email:
 
-    def __init__(self, domain):
+    def __init__(self, domain:
         """
         domain CAN BE localhost
         """
