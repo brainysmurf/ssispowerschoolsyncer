@@ -29,7 +29,7 @@ def handle_new_student(results, family, student, server='localhost', verbose=Fal
     for idnumber, comment in results:
         if 'newstudent' == comment:
             verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(student))
-            inform_new_student(family, student, server)
+            inform_new_student(family, student)
 
 class DragonNet(DragonNetDBConnection):
     pass
@@ -335,7 +335,7 @@ and set permissions accordingly.".format(php_src))
                 for idnumber, comment in results:
                     if 'newparent' == comment:
                         self.verbose and print("This family is a new family and is being informed of their account:\n{}".format(family))
-                        inform_new_parent(family, server=self.email_server)
+                        inform_new_parent(family)
                     else:
                         if 'not_logged_in_yet' == comment:
                             self.verbose and print("This family has had an account for a period of time and needs to be reminded of their account\n{}".format(family))
