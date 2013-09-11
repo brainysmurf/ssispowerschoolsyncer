@@ -432,7 +432,7 @@ class Students:
             idnumber = idnumber[:4]
         students = []
         for num in range(0, 9):
-            student = self.get_student(idnumber + chr(num))
+            student = self.get_student(idnumber + str(num))
             if student:
                 results.append(student)
         return students
