@@ -161,7 +161,13 @@ class Students:
                 continue
 
             if not homeroom:
-                self.document_error('student_no_homeroom', "{}: {}\n".format(stunum, firstlast))
+                self.document_error('student_no_homeroom', "{}: {}".format(stunum, firstlast))
+            
+            try:
+                grade = int(grade)
+            except ValueError:
+                self.document_error('student_grade_wrong', "{}: {}".format(stunum, firstlast))
+                grade = 0
 
             # This SHOULD PROBABLY sync with AutoSend, with above
             new_student = self.add(stunum,
@@ -371,6 +377,7 @@ class Students:
             return result
 
     def convert_hr_to_sortable(self, hr):
+        return 0 #TODO: Use put_in_order, right?
         return self.convert_hr_to_grade(hr) + (1 / self.convert_hr_to_integer(hr))
 
     def add(self, *args, **kwargs):
