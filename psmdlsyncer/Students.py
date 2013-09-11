@@ -158,16 +158,10 @@ class Students:
             except ValueError:
                 print(line)
                 print("Skipping this... did one of the fields have a newline character in there?")
-                from IPython import embed
-                embed()
                 continue
 
-            try:
-                grade = self.convert_hr_to_grade(homeroom)
-            except NoHomeroom:
-                # Do not enroll because a student's info is not live until they've been enrolled in a homeroom
+            if not homeroom:
                 self.document_error('student_no_homeroom', "{}: {}\n".format(stunum, firstlast))
-                continue
 
             # This SHOULD PROBABLY sync with AutoSend, with above
             new_student = self.add(stunum,
@@ -179,7 +173,6 @@ class Students:
                 datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
                 nationality,
                 user_data=self.user_data)
-            
 
         self.read_in_others()
         self.sync_others()
