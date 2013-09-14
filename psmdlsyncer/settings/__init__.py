@@ -5,7 +5,7 @@ from psmdlsyncer.settings import config
 import os
 import argparse
 import sys
-import configparser    
+import configparser
 
 class HoldPassedArguments:
     """
@@ -42,7 +42,7 @@ while current_working_list:
     settings_list.append( here + '/settings.ini' )
     current_working_list.pop(-1)
 
-settings = HoldPassedArguments('verbose', 'dry_run', 'teachers', 'courses',
+settings = HoldPassedArguments('verbose', 'log_level', 'dry_run', 'teachers', 'courses',
                                'students', 'email_list', 'families', 'parents',
                                'automagic_emails', 'profiles', 'input_okay', 'updaters',
                                'sync_profile_fields', 'enroll_cohorts', 'enroll_courses', 'remove_enrollments',
@@ -66,7 +66,6 @@ if settings.arguments.automagic_emails:
     settings.arguments.teachers = True
     settings.arguments.students = True
 
-
 verbose = config.getboolean('DEFAULTS', 'verbose')
 dry_run = config.getboolean('DEFAULTS', 'dry_run')
 
@@ -79,6 +78,9 @@ if config.has_section("EMAIL"):
     email_server = config['EMAIL'].get('domain')
 if not email_server:
     email_server = 'localhost'
+
+def config_get_logging_level():
+    return config_get_section_attribute('LOGGING', 'log_level')
 
 def config_get_section_attribute(section, attribute):
     """ returns None if not present, otherwise returns its value """
@@ -105,4 +107,13 @@ def verbosity(passed):
     else:
         return False
 
-__all__ = [verbose, verbosity, dry_run, email_server, config, settings, requires_setting]
+import logging
+path_to_logger = config_get_section_attribute('LOGGING', 'path_to_logger')
+log_level = config_get_section_attribute('LOGGING', 'log_level')
+numeric_level = getattr(logging, log_level.upper(), None)
+if numeric_level is None:
+    raise ValueError('Invalid log level: %s' % loglevel)
+
+logging.basicConfig(filename=path_to_logger, level=numeric_level)
+
+__all__ = [verbose, verbosity, dry_run, email_server, config, settings, requires_setting, logging]

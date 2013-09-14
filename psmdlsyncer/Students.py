@@ -20,6 +20,8 @@ from psmdlsyncer.utils.FilesFolders import clear_folder
 from psmdlsyncer.utils.Utilities import course_reference
 from psmdlsyncer.Errors import DocumentErrors
 
+from psmdlsyncer.settings import settings, config_get_section_attribute, logging
+
 import re
 import os
 
@@ -60,9 +62,9 @@ class Students:
         Does the work of reading in basic information from file, creates native Python structures
         StudentNumber\tHomeroom\tLastFirst\tguardianemails
         """
-        from psmdlsyncer.settings import settings, config_get_section_attribute
+        
         self.settings = settings.arguments
-        self.verbose = config_get_section_attribute('DEFAULTS', 'verbose')
+        self.logger = logging.getLogger('Students')
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
         self.errors = DocumentErrors(self.path_to_errors)
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
@@ -229,7 +231,6 @@ class Students:
                 pass
 
     def read_in_courses(self):
-        self.verbose and print("Reading in raw course information in secondary")
         courses = File('sec', 'courseinfo')
         raw = courses.content()
         for line in raw:
@@ -244,7 +245,6 @@ class Students:
         pass
 
     def read_in_allocations(self):
-        self.verbose and print("Setting up allocation table by reading in raw teacher allocations for secondary")
         allocations = File('sec', 'teacherallocations')
         raw = allocations.content()
         self.allocation_table = {}
@@ -255,35 +255,34 @@ class Students:
                 self.allocation_table[course_number] = []
             teacher = self.teacher_info_controller.get(teacher_name)
             if not teacher:
-                self.verbose and print("No teacher by this name?: {}".format(teacher_name))
+                self.logger.warn("No teacher by this name?: {}".format(teacher_name))
                 continue
             self.allocation_table[course_number].append(self.teacher_info_controller.get(teacher_name))
-            
+
     def sync_allocations(self):
-        self.verbose and print("Syncing teachers")
+        self.logger.info("Syncing teachers")
         for allocation in self.allocation_table.keys():
             for teacher in self.allocation_table[allocation]:
                 if not teacher: 
-                    self.verbose and print("no teacher?")
-                    self.verbose and print(allocation)
-                    self.verbose and input(self.allocation_table[allocation])
+                    self.logger.warn("no teacher?")
+                    self.logger.warn(allocation)
+                    self.logger.warn(self.allocation_table[allocation])
                     continue
                 teacher = self.teacher_info_controller.get(teacher.lastfirst)
                 course = self.course_info_controller.get(allocation)
                 if course and teacher:
-                    self.verbose and print("Syncing teacher {} with course {}".format(teacher, course))
+                    self.logger.debug("Syncing teacher {} with course {}".format(teacher, course))
                     course.update_teachers(teacher)
                     teacher.update_courses(course)
 
     def read_in_teachers(self):
-        self.verbose and print("Reading in teacher info for both schools")
         teachers = File('dist', 'staffinfo')
         raw = teachers.content()
         for line in raw:
             try:
                 num, lastfirst, email, title, schoolid, staff_status = line.strip('\n').split('\t')
             except ValueError:
-                self.verbose and print("This teacher wasn't added to database: {}".format(line))
+                self.logger.warn("This teacher wasn't added to database: {}".format(line))
                 continue
             if 1 == int(staff_status):
                 self.add_teacher(lastfirst, email, title, schoolid)
@@ -295,7 +294,6 @@ class Students:
         pass
 
     def read_in_schedule(self):
-        self.verbose and print("Reading in schedule information from secondary")
         schedule = File('sec', 'studentschedule')
         raw = schedule.content()
         self.schedule = {}
@@ -310,7 +308,7 @@ class Students:
         """
         Put courses and teachers into student data, so they can be exported
         """
-        self.verbose and print("Syncing schedule information")
+        self.logger.info("Syncing schedule information")
         for key in self.schedule.keys():
             for row in self.schedule[key]:
                 teacher_lastfirst, studentID = row
@@ -318,14 +316,13 @@ class Students:
                 teacher = self.teacher_info_controller.get(teacher_lastfirst)
                 student = self.student_info_controller.get(studentID)
                 if not student:
-                    self.verbose and print("sync_schedule problem: {}".format(row))
-                    self.document_error("sync_schedule", row)
+                    self.logger.warn("sync_schedule problem: {}".format(row))
                     continue
                 if teacher and student:
-                    self.verbose and print("Syncing teacher {} with student {}".format(teacher, student))
+                    self.logger.debug("Syncing teacher {} with student {}".format(teacher, student))
                     teacher.update_students(student)
                 if student and course and teacher:
-                    self.verbose and print("Syncing student {} with teacher {} with course {}".format(student, teacher, course))
+                    self.logger.debug("Syncing student {} with teacher {} with course {}".format(student, teacher, course))
                     student.update_teachers(course, teacher)
                     student.update_courses(course, teacher)
 
@@ -486,16 +483,7 @@ def check_is_in_preferred_list(this):
 
 if __name__ == "__main__":
 
-    class Settings:
-        def __init__(self):
-            self.students = True
-            self.courses = True
-            self.teachers = True
-            self.automagic_emails = False
-            self.verbose = False
-
-
-    students = Students(Settings())
+    students = Students()
     from utils.Formatter import Smartformatter
     print('Full Name,User Name,Email\n')
     for student_key in students.get_student_keys():

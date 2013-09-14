@@ -5,13 +5,7 @@ except:
 import os
 
 from psmdlsyncer.utils.Formatter import Smartformatter
-
-class NotActuallyPG:
-    def __init__(self):
-        pass
-
-    def __call__(self):
-        return []
+from psmdlsyncer.settings import config, requires_setting
 
 class DBConnection:
     """
@@ -22,30 +16,15 @@ class DBConnection:
         sf = Smartformatter(user=user, password=password, server=server, database=database)
         self.last_call = None
         self._database = database
-        self.verbose = False  #TODO: Make this damn thing less verbose!
-        self.verbose and print(sf("About to connect to {server}"))
         self.db = postgresql.open(sf('pq://{user}:{password}@{server}/{database}'))
 
     def sql(self, *args, **kwargs):
-        if not self.db:
-            return NotActuallyPG()
-        if self.verbose:
-            print_db = self._database
-            if not self.last_call:
-                self.last_call = 'prepared'
-            print('Database ' + print_db + ' ' +  self.last_call)
-            print('\t', *args)
-            if kwargs:
-                print('\t', kwargs.items())
-        self.last_call = None
         return self.db.prepare(*args, **kwargs)
 
     def call_sql(self, *args, **kwargs):
-        self.last_call = 'calling' if self.verbose else None
         return self.sql(*args, **kwargs)()
 
     def call_sql_only_one(self, *args, **kwargs):
-        self.last_call = 'calling only one' if self.verbose else None
         result = self.call_sql(*args, **kwargs)
         if result:
             return result[0][0]
@@ -53,7 +32,6 @@ class DBConnection:
             return None
 
     def call_sql_first_row(self, *args, **kwargs):
-        self.last_call = 'calling first row' if self.verbose else None
         result = self.call_sql(*args, **kwargs)
         if result:
             return result[0]
@@ -109,8 +87,7 @@ class DBConnection:
 
 class DragonNetDBConnection(DBConnection):
 
-    def __init__(self, verbose=False):
-        from psmdlsyncer.settings import config, requires_setting
+    def __init__(self):        
         settings = ['db_username', 'db_password', 'db_name', 'db_prefix', 'db_host']
         for setting in settings:
             requires_setting('MOODLE', setting)
@@ -118,8 +95,7 @@ class DragonNetDBConnection(DBConnection):
         super().__init__(config['MOODLE'].get('db_username'),
                          config['MOODLE'].get('db_password'),
                          config['MOODLE'].get('db_host'),
-                         config['MOODLE'].get('db_name'),
-                         verbose=verbose)
+                         config['MOODLE'].get('db_name'))
 
     def create_temp_storage(self, table_name, *args):
         if not self.exists_temp_storage(table_name):
@@ -210,7 +186,6 @@ class DragonNetDBConnection(DBConnection):
     def user_is_new(self, idnumber):
         result = self.sql( "select lastlogin, lastaccess from ssismdl_user where idnumber = '{}'".format(idnumber) )()
         if not result:
-            self.verbose and print("Didn't find anything in the database: {}".format(idnumber))
             return False
         lastlogin, lastaccess = result[0]
         return int(lastlogin) == 0 and int(lastaccess) == 0
@@ -219,7 +194,6 @@ class DragonNetDBConnection(DBConnection):
         return self.sql( "select id, idnumber, username from ssismdl_user")()
     
     def get_student_info(self):
-        self.verbose and print("Reading in usernames that are already taken")
         get_users = self.sql('select idnumber, username, id from ssismdl_user')()
         user_data = {}
         for idnumber, username, _id in get_users:
@@ -240,7 +214,7 @@ class DragonNetDBConnection(DBConnection):
             ))()
     
     def get_user_enrollments(self, idnumber):
-        """ returns a tuple (groupname, courseidnumber) """
+        """ returns a list of tuples [(idnumber, groupname, courseidnumber)] """
         return self.sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))()
 
     def get_user_cohort_enrollments(self):

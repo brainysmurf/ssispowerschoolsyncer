@@ -1,6 +1,6 @@
 import subprocess
 from psmdlsyncer.utils.Formatter import Smartformatter
-from psmdlsyncer.settings import config_get_section_attribute, verbosity
+from psmdlsyncer.settings import config_get_section_attribute, logging
 
 class CallPHP:
     """
@@ -9,8 +9,8 @@ class CallPHP:
     """
     def __init__(self):
         #TODO: Get this info from standard settings and config
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.sf = Smartformatter()
-        self.verbose = verbosity('CallPHP')
         self.dry_run = config_get_section_attribute('DEFAULTS', 'dry_run')
         self.path_to_cli = config_get_section_attribute('MOODLE', 'path_to_cli')
         self.path_to_php = config_get_section_attribute('MOODLE', 'path_to_php')
@@ -21,11 +21,11 @@ class CallPHP:
         self.sf(php_path=self.path_to_php, routine=routine, space=" ")
         cmd = self.sf('{php_path} phpclimoodle.php {routine}{space}' ) + cmd
         if not self.dry_run:
-            self.verbose and print('Calling using Popen: ' + cmd)
+            self.logger.debug('Calling using Popen: ' + cmd)
             p = subprocess.Popen( cmd,
                               shell=True, stdout=subprocess.PIPE, cwd=self.path_to_cli)
             result = p.communicate()
-            self.verbose and print(result)
+            self.logger.debug(result)
             return result
         else:
             print("Command sent in to CallPHP: {}".format(cmd))
@@ -57,7 +57,6 @@ class CallPHP:
         self.sf(useridnumber=useridnumber, cohortidnumber=cohortidnumber)
         to_pass = self.sf("{useridnumber} '{cohortidnumber}'")
         if self.moodle_accounts:
-            self.verbose and print('Command: add_user_to_cohort {}'.format(to_pass))
             return self.command('add_user_to_cohort', to_pass)
         else:
             return "Dry run enabled: add_user_to_cohort {}".format(to_pass)

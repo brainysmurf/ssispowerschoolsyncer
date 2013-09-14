@@ -23,13 +23,7 @@ import subprocess
 from psmdlsyncer.utils.PHPMoodleLink import CallPHP
 from psmdlsyncer.html_email.Email import Email, read_in_templates
 
-from psmdlsyncer.settings import config, settings, config_get_section_attribute
-
-def handle_new_student(results, family, student, server='localhost', verbose=False):
-    for idnumber, comment in results:
-        if 'newstudent' == comment:
-            verbose and print("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(student))
-            inform_new_student(family, student)
+from psmdlsyncer.settings import config, settings, config_get_section_attribute, logging
 
 class DragonNet(DragonNetDBConnection):
     pass
@@ -51,6 +45,9 @@ class PowerSchoolIntegrator():
         """
         # if exists, move the php admin tool to to the right place
 
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.debug("Initiating PowerSchoolInteragrator instance")
+
         self.config = config
         self.settings = settings.arguments
 
@@ -59,7 +56,6 @@ class PowerSchoolIntegrator():
             self.settings.courses = True
             self.settings.teachers = True
             self.settings.students = True
-        self.verbose = self.settings.verbose
         self.dry_run = self.settings.dry_run
 
         if 'DEFAULTS' in self.config.sections():
@@ -71,14 +67,6 @@ class PowerSchoolIntegrator():
             self.email_server = self.config['EMAIL'].get('domain')
         if not self.email_server:
             self.email_server = 'localhost'
-
-        print('------------------------------------------------------')
-        print(datetime.datetime.today())
-        if self.verbose:
-            print("Arguments passed in:")
-            print(self.settings)
-            print("Verbosity is {}".format(self.verbose))
-            print("Dry run is {}".format(self.dry_run))
 
         have_email_section = self.config.has_section('EMAIL')
         have_moodle_section = self.config.has_section('MOODLE')
@@ -94,15 +82,14 @@ class PowerSchoolIntegrator():
                 owner = self.config['MOODLE']['owner_id']
                 group = self.config['MOODLE']['group_id']
                 os.chown(mv_to_full_path, int(owner), int(group))
-                print("Copied php file that was at {} to the correct location in moodle's document root \
+                self.logger.info("Copied php file that was at {} to the correct location in moodle's document root \
 and set permissions accordingly.".format(php_src))
             except:  #TODO: Use the right exceptions
                 print("Copying php file failed, do we have the right permissions?")
         else:
-            print("WARNING:")
-            print("php_src: {}, mv_to_path: {}".format(php_src, mv_to_path))
-            print("Couldn't attempt the copy php file, settings printed above")
-            print("END WARNING")
+            self.logger.warn("php_src: {}, mv_to_path: {}".format(php_src, mv_to_path))
+            self.logger.warn("Couldn't attempt the copy php file, settings printed above")
+            self.logger.warn("END WARNING")
 
         from psmdlsyncer.settings import config_get_section_attribute
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
@@ -148,17 +135,17 @@ and set permissions accordingly.".format(php_src))
         of those that actually have enrollments rather than through powerschool file
         ############
         """
+        self.logger.info("Building courses")
         source = File('sec', 'courseinfo')
         raw = source.content()
         courses = {}
         summaries = {}
-        self.verbose and print("Create the moodle_courses file and put it in output folder")
         with open(self.path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
             f.write('fullname,shortname,category,summary,groupmode\n')
-            self.verbose and print("Go through the file with course information, set up summaries and other info")
+            self.logger.debug("Go through the file with course information, set up summaries and other info")
             for line in raw:
                 orig_short, orig_long = line.strip('\n').split('\t')
-                self.verbose and print("Building course: {}".format(orig_long))
+                self.logger.debug("Building course: {}".format(orig_long))
                 short, long = convert_short_long(orig_short, orig_long)
                 courses[short] = long
                 if short not in summaries.keys():
@@ -177,8 +164,7 @@ and set permissions accordingly.".format(php_src))
 
 
     def build_teachers(self):
-        self.verbose = True
-        self.verbose and print("Building teachers")
+        self.logger.info("Building teachers")
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'teachers_moodle_file.txt')
         output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'maildigest', 'course_', 'cohort_', 'type_'])
 
@@ -196,10 +182,10 @@ and set permissions accordingly.".format(php_src))
                         heads[head] = []
                     heads[head].append(course.moodle_short)        
 
-        self.verbose and print("Head list has been built:\n{}".format(heads))
+        self.logger.debug("Head list has been built:\n{}".format(heads))
         
         for head in list(heads.keys()):
-            self.verbose and print("Building head of dept as non-editing teachers: {}".format(head))
+            self.logger.debug("Building head of dept as 'non-editing teacher' but can be made to manager later: {}".format(head))
             courses = heads[head]
             row = output_file.factory()
             row.build_username(head)
@@ -210,13 +196,13 @@ and set permissions accordingly.".format(php_src))
             row.build_maildigest('1')
             row.build_course_(courses)
             row.build_cohort_(['departHEADS'])
-            row.build_type_(['3' for c in courses])  # non-editing teacher
+            row.build_type_(['3' for c in courses])  # this is non-editing teacher....
             output_file.add_row(row)
 
 
         for teacher_key in self.students.teacher_info_controller.keys():
             teacher = self.students.teacher_info_controller.get(teacher_key)
-            self.verbose and print("Building teacher: {}".format(teacher))
+            self.logger.debug("Building teacher: {}".format(teacher))
             row = output_file.factory()
             row.build_username(teacher.username)
             row.build_firstname(teacher.first)
@@ -234,15 +220,15 @@ and set permissions accordingly.".format(php_src))
             output_file.add_row(row)
 
             # Update profile fields
-            
 
-        self.verbose and print("DragonNet 2 enrollment file now available in output folder")
+        self.logger.info("Writing csv file suitable for 'Upload Users' feature into output folder")
         output_file.output()
 
     def build_parents(self):
         """
         Builds a manual file that can be imported in... horrible
         """
+        self.logger.info("Building parents")
         database = DragonNetDBConnection()
 
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_parents.txt')
@@ -301,16 +287,22 @@ and set permissions accordingly.".format(php_src))
                 f.write(table.format(**d) + '\n\n')
 
     def build_student_courses(self):
-        self.verbose and print("Now build the student_courses file in the output folder")
+        self.logger.info("Now build the student_courses file in the output folder")
         with open(self.path_to_output + '/' + 'student_courses', 'w') as f:
             for student_key in self.students.get_student_keys():
                 student = self.students.get_student(student_key)
-                self.verbose and print("Student course info for {}".format(student))
+                self.logger.debug("Student course info for {}".format(student))
                 d = student.__dict__.copy()
                 d['courses'] = ",".join(student.courses())
                 if student.homeroom in self.students.get_secondary_homerooms():
                     if student.courses():
                         f.write("{num}\t{username}\t{courses}\n".format(**d))
+
+    def handle_new_student(results, family, student):
+        for idnumber, comment in results:
+            if 'newstudent' == comment:
+                self.logger.info("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(student))
+                inform_new_student(family, student)
 
     def build_families(self):
         """server_information
@@ -320,7 +312,7 @@ and set permissions accordingly.".format(php_src))
         """
         families = Families()
 
-        self.verbose and print("Building families")
+        self.logger.info("Building families")
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             families.add(student)
@@ -334,12 +326,12 @@ and set permissions accordingly.".format(php_src))
                 results = set(results)   # remove duplicates, and since duplicates are removed from database with clear all we're good
                 for idnumber, comment in results:
                     if 'newparent' == comment:
-                        self.verbose and print("This family is a new family and is being informed of their account:\n{}".format(family))
+                        self.logger.info("This family is a new family and is being informed of their account:\n{}".format(family))
                         inform_new_parent(family)
                     else:
                         if 'not_logged_in_yet' == comment:
-                            self.verbose and print("This family has had an account for a period of time and needs to be reminded of their account\n{}".format(family))
-                            reinform_parent(family, server=self.email_server)
+                            self.logger.info("This family has had an account for a period of time and needs to be reminded of their account\n{}".format(family))
+                            reinform_parent(family)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = family.idnumber)
 
@@ -347,7 +339,7 @@ and set permissions accordingly.".format(php_src))
                 results = self.server_information.get_temp_storage('to_be_informed',
                                                                    idnumber = child.num)
                 if results:
-                    handle_new_student(results, family, child, server=self.email_server, verbose=self.verbose)
+                    handle_new_student(results, family, child)
                     self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = child.num)
 
@@ -358,7 +350,7 @@ and set permissions accordingly.".format(php_src))
             results = self.server_information.get_temp_storage('to_be_informed',
                                                                idnumber = student.num)
             if results:
-                handle_new_student(results, family, student, server=self.email_server, verbose=self.verbose)
+                handle_new_student(results, family, student, server=self.email_server)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = student.num)
 
@@ -367,7 +359,7 @@ and set permissions accordingly.".format(php_src))
         print("You may want to inspect to_be_informed now")
 
     def build_updates(self):
-        self.verbose and print("Building updates")
+        self.logger.info("Building updates")
         section = self.config['MOODLE']
         user = section.get('database_user')
         password = section.get('password')
@@ -390,7 +382,7 @@ and set permissions accordingly.".format(php_src))
         homework_club_list.sort(key=lambda s: s.last)
         golden_chair_list.sort(key=lambda s: s.homeroom)
 
-        self.verbose and print("Updating homework club")
+        self.logger.info("Updating homework club")
         homework_club_updater.update_menu( ["{} ({} {})".format(student.full_name, student.homeroom, student.num) for student in homework_club_list] )
         #golden_chair_updater.update_menu(golden_chair_list)
 
@@ -398,7 +390,7 @@ and set permissions accordingly.".format(php_src))
         """
         Updates user profile fields
         """
-        self.verbose and print("Building profiles")
+        self.logger.info("Building profiles")
         #TODO: Check for which day of the week it is ... only fun on Mondays.
 
         #if not datetime.datetime.today().strftime('%a').lower() == 'm':
@@ -515,13 +507,13 @@ and set permissions accordingly.".format(php_src))
                     database.sql(formatter("update ssismdl_user_info_data set data = '{grade_html}' where id = {teacher_grade_field_id}"))()
 
             for formatter.existing_profile_field, formatter.value in student.get_existing_profile_fields():
-                self.verbose and print(formatter("Existing profile field: {existing_profile_field}"))
+                self.logger.debug(formatter("Existing profile field: {existing_profile_field}"))
                 # Just use database directly instead of checking to see if already there
                 # (Below we have to check first)
                 database.sql(formatter("update ssismdl_user set {existing_profile_field} = '{value}' where id = {user_id}"))()
                 
             for formatter.extra_profile_field, formatter.value in student.get_extra_profile_fields():
-                self.verbose and print(formatter("Manually created profile field: {extra_profile_field}"))
+                self.logger.debug(formatter("Manually created profile field: {extra_profile_field}"))
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
                     print(formatter("You need to manually add the {extra_profile_field} field!"))
@@ -532,12 +524,12 @@ and set permissions accordingly.".format(php_src))
                     if not there_already[0][0] == str(int(formatter.value)):
                         # only call update if it's different
                         formatter.value = int(formatter.value)
-                        self.verbose and print(formatter('updating for {user_id}'))
+                        self.logger.debug(formatter('updating for {user_id}'))
                         database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))()
                     else:
-                        self.verbose and print(formatter("No change in {extra_profile_field}, so didn't call the database"))
+                        self.logger.debug(formatter("No change in {extra_profile_field}, so didn't call the database"))
                 else:
-                    self.verbose and print(formatter('inserting {extra_profile_field}'))
+                    self.logger.debug(formatter('inserting {extra_profile_field}'))
                     database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
 
     def build_email_list(self):
@@ -553,14 +545,12 @@ and set permissions accordingly.".format(php_src))
         """
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            self.verbose and print("Got to this one here: \n{}".format(student))
+            self.logger.debug("Got to this one here: \n{}".format(student))
             dnet = DragonNetDBConnection()
             modify = DragonNetModifier()
 
-            secondary_homerooms = self.students.get_secondary_homerooms()
-
             # First handle secondary students
-            if student.homeroom in secondary_homerooms and student.courses() and int(student.num) > 30000:
+            if student.is_secondary and int(student.num) > 30000:
                 if student.grade == 12:
                     continue
                 queried = dnet.get_user_enrollments(student.num)
@@ -570,11 +560,26 @@ and set permissions accordingly.".format(php_src))
                     if course not in courses:
                         modify.unenrol_user_from_course(student.num, course)
 
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            dnet = DragaonNetDBConnection()
+            modify = DragonNetModifier()
+
+            if student.is_secondary and int(student.num) > 30000:
+                if student.grade == 12:
+                    continue
+                queried = dnet.get_user_enrollments(studnet.family_id + 'P')
+                courses = student.courses()
+                for query in queried:
+                    _, group, course = query
+                    if course not in courses:
+                        modify.unenrol_user_from_course(student.family_id + 'P', course)
+
     def build_students(self, verify=False):
         """
         Go through each student and do what is necessary to actually sync powerschool data
         """
-        self.verbose and print("Building csv file for moodle")
+        self.logger.debug("Building csv file for moodle")
         path_to_cli = self.config['MOODLE'].get('path_to_cli') if self.config.has_section('MOODLE') else None
         path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
         modify = DragonNetModifier()
@@ -586,13 +591,13 @@ and set permissions accordingly.".format(php_src))
         secondary_homerooms = self.students.get_secondary_homerooms()
         elementary_homerooms = self.students.get_elementary_homerooms()
 
-        self.verbose and print("Looping through students now")
+        self.logger.debug("Looping through students now")
 
         self.server_information.create_temp_storage('to_be_informed', 'idnumber', 'comment')
         
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            self.verbose and print("Got to this one here: \n{}".format(student))
+            self.logger.debug("Got to this one here: \n{}".format(student))
 
             # First handle secondary students
             if student.is_secondary and student.courses() and int(student.num) > 30000:                
@@ -604,7 +609,7 @@ and set permissions accordingly.".format(php_src))
                         self.server_information.check_student(student)
 
                     except NoStudentInMoodle:
-                        self.verbose and print("Student does not have a Moodle account:\n{}".format(student))
+                        self.logger.debug("Student does not have a Moodle account:\n{}".format(student))
                         modify.new_student(student)
                         #TODO Do informing here
                         if self.dry_run:
@@ -617,14 +622,14 @@ and set permissions accordingly.".format(php_src))
                                                                  comment='newstudent')
 
                     except NoEmailAddress:
-                        self.verbose and print("Student does not have an email address:\n{}".format(student))
+                        self.logger.warn("Student does not have an email address:\n{}".format(student))
                         modify.no_email(student)
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
 
                     except GroupDoesNotExist:
-                        self.verbose and print("At least one group does not exist, enrolling them, which will take care of this")
+                        self.logger.debug("At least one group does not exist, enrolling them, which will take care of this")
                         modify.enrol_student_into_courses(student)
                         if self.dry_run:
                             times_through = 11
@@ -633,7 +638,7 @@ and set permissions accordingly.".format(php_src))
                             self.server_information.init_users_and_groups()                            
                         
                     except StudentNotInGroup:
-                        self.verbose and print("Student not enrolled in at least one of the required groups")
+                        self.logger.debug("Student not enrolled in at least one of the required groups")
                         modify.enrol_student_into_courses(student)
                         if self.dry_run:
                             times_through = 11
@@ -642,7 +647,7 @@ and set permissions accordingly.".format(php_src))
                             self.server_information.init_users_and_groups()
 
                     except NoParentAccount:
-                        self.verbose and print("No family account for student\n{}".format(student))
+                        self.logger.warn("No family account for student\n{}".format(student))
                         modify.new_parent(student)
 
                         # Informing the parent at this point is problematic:
@@ -663,7 +668,7 @@ and set permissions accordingly.".format(php_src))
                             self.server_information.init_users_and_groups()
                     
                     except ParentAccountNotAssociated:
-                        self.verbose and print("Parent account {} hasn't been assocated to student {}".format(student.family_id, student))
+                        self.logger.warn("Parent account {} hasn't been assocated to student {}".format(student.family_id, student))
                         modify.parent_account_not_associated(student)
                         if self.dry_run:
                             times_through = 11
@@ -672,7 +677,7 @@ and set permissions accordingly.".format(php_src))
                             self.server_information.init_users_and_groups()
                         
                     except ParentNotInGroup:
-                        self.verbose and print("Parent is not enrolled in at least one group: {}".format(student.family_id))
+                        self.logger.debug("Parent is not enrolled in at least one group: {}".format(student.family_id))
                         modify.enrol_parent_into_courses(student)
                         if self.dry_run:
                             times_through = 11
@@ -728,7 +733,7 @@ and set permissions accordingly.".format(php_src))
                         self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress', 'ParentAccountNotAssociated', 'NoStudentInMoodle'))
 
                     except NoStudentInMoodle:
-                        self.verbose and print("Student does not have a Moodle account:\n{}".format(student))
+                        self.logger.warn("Student does not have a Moodle account:\n{}".format(student))
                         modify.new_student(student)
                         #TODO Do informing here
                         if self.dry_run:
@@ -738,7 +743,7 @@ and set permissions accordingly.".format(php_src))
                             self.server_information.init_users_and_groups()
 
                     except NoParentAccount:
-                        self.verbose and print("No parent account for elem student:\n{}".format(student))
+                        self.logger.warn("No parent account for elem student:\n{}".format(student))
                         modify.new_parent(student)
                         if self.dry_run:
                             times_through = 11
@@ -748,14 +753,14 @@ and set permissions accordingly.".format(php_src))
                                                                  idnumber = student.family_id, comment = 'newparent')
 
                     except NoEmailAddress:
-                        self.verbose and print("Student does not have an email address:\n{}".format(student))
+                        self.logger.warn("Student does not have an email address:\n{}".format(student))
                         modify.no_email(student)
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
 
                     except ParentAccountNotAssociated:
-                        self.verbose and print("Parent account {} hasn't been assocated to student {}".format(student.family_id, student))
+                        self.logger.warn("Parent account {} hasn't been assocated to student {}".format(student.family_id, student))
                         modify.parent_account_not_associated(student)
                         if self.dry_run:
                             times_through = 11
@@ -881,7 +886,7 @@ and set permissions accordingly.".format(php_src))
         # So, tell clear_folder to exclude them
         exclude_db_files = lambda x: x.endswith('.db')
 
-        self.verbose and print("Clearing folders in postfix")
+        self.logger.debug("Clearing folders in postfix")
         clear_folder('{path}'.format(**d), exclude=exclude_db_files) 
         #
 
@@ -893,7 +898,7 @@ and set permissions accordingly.".format(php_src))
         clear_folder('{path}/special'.format(**d))
         clear_folder('{path}/departments'.format(**d))
 
-        self.verbose and print("Setting up largest mailing lists first")
+        self.logger.debug("Setting up largest mailing lists first")
         setup_postfix = '{path}/special{ext}'.format(**d)
         with open(setup_postfix, 'w') as f:
             f.write("usebccparentsALL: :include:{path}/special/usebccparentsALL{ext}\n".format(**d))
@@ -914,7 +919,7 @@ and set permissions accordingly.".format(php_src))
         done_homerooms = []
         done_grades = []
 
-        self.verbose and print("Setting up elementary email lists")
+        self.logger.debug("Setting up elementary email lists")
         for student_key in self.students.get_elementary_student_keys():
             student = self.students.get_student(student_key)
             d['grade'] = student.grade
@@ -969,7 +974,7 @@ and set permissions accordingly.".format(php_src))
         added_teachers_grade = {}
         added_teachers_hr = {}
 
-        self.verbose and print("Setting up secondary email lists")
+        self.logger.debug("Setting up secondary email lists")
         # SECONDARY
         for student_key in self.students.get_secondary_student_keys():
             student = self.students.get_student(student_key)
@@ -1101,7 +1106,7 @@ and set permissions accordingly.".format(php_src))
                     f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
 
 
-        self.verbose and print("Set up department batch emails")
+        self.logger.debug("Set up department batch emails")
         ##  SETUP DEPARTMENTS, including by homeroom teachers
         depart_dict = {}
         homeroom_teachers_dict = {}
@@ -1116,10 +1121,10 @@ and set permissions accordingly.".format(php_src))
                     heads = department_heads.get(department, [])  # returns a list
                     depart_dict[d_email_name] = []
                     for head in heads:
-                        self.verbose and print("Adding {} (the head) into department {}".format(head, d_email_name))
+                        self.logger.debug("Adding {} (the head) into department {}".format(head, d_email_name))
                         depart_dict[d_email_name].append(head + "@ssis-suzhou.net")
                 if teacher and not teacher.email in depart_dict[d_email_name]:
-                    self.verbose and print("Adding {} into department {}".format(teacher, d_email_name))
+                    self.logger.debug("Adding {} into department {}".format(teacher, d_email_name))
                     depart_dict[d_email_name].append(teacher.email)
 
             if teacher.homeroom:
@@ -1149,11 +1154,11 @@ and set permissions accordingly.".format(php_src))
         if self.config.has_section('EMAIL'):
             newaliases_path = self.config['EMAIL'].get('newaliases_path')
         if newaliases_path:
-            self.verbose and print("Running newaliases")
+            self.logger.info("Running newaliases")
             p = subprocess.Popen(newaliases_path, shell=True)
-            print(p.communicate())
+            self.logger.info(p.communicate())
         else:
-            print("warning: newaliases not run!")
+            self.logger.warn("newaliases not run!")
         #TODO: If received error, should email admin
 
 
