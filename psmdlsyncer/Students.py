@@ -158,8 +158,8 @@ class Students:
             try:
                 stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
             except ValueError:
-                print(line)
-                print("Skipping this... did one of the fields have a newline character in there?")
+                self.logger.warn(line)
+                self.logger.warn("Skipping above line... did one of the fields have a newline character in there?")
                 continue
 
             if not homeroom:
@@ -255,7 +255,7 @@ class Students:
                 self.allocation_table[course_number] = []
             teacher = self.teacher_info_controller.get(teacher_name)
             if not teacher:
-                self.logger.warn("No teacher by this name?: {}".format(teacher_name))
+                self.logger.info("No teacher by this name?: {}".format(teacher_name))
                 continue
             self.allocation_table[course_number].append(self.teacher_info_controller.get(teacher_name))
 
@@ -282,7 +282,7 @@ class Students:
             try:
                 num, lastfirst, email, title, schoolid, staff_status = line.strip('\n').split('\t')
             except ValueError:
-                self.logger.warn("This teacher wasn't added to database: {}".format(line))
+                self.logger.info("This teacher wasn't added to database: {}".format(line))
                 continue
             if 1 == int(staff_status):
                 self.add_teacher(lastfirst, email, title, schoolid)

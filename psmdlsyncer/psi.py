@@ -394,8 +394,7 @@ and set permissions accordingly.".format(php_src))
         #    return
 
         html_start = """
-    <table style="width: 400px;" border="0" cellpadding="5" cellspacing="5" border="1">
-    <tbody>"""
+    <table class="userinfotable">"""
         grade_row = """
     <tr>
     <td>{course_name} ({course_short})</td>
@@ -513,7 +512,7 @@ and set permissions accordingly.".format(php_src))
                 self.logger.debug(formatter("Manually created profile field: {extra_profile_field}"))
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
-                    self.logger.warn(formatter("You need to manually add the {extra_profile_field} field!"))
+                    self.logger.debug(formatter("You need to manually add the {extra_profile_field} field!"))
                     continue
                 formatter.field_id = formatter.field_id[0][0]
                 there_already = database.sql(formatter("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
@@ -542,7 +541,7 @@ and set permissions accordingly.".format(php_src))
         """
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            self.logger.debug("Got to this one here: \n{}".format(student))
+            self.logger.info("Got to this one here: \n{}".format(student))
             dnet = DragonNetDBConnection()
             modify = DragonNetModifier()
 
@@ -557,20 +556,29 @@ and set permissions accordingly.".format(php_src))
                     if course not in courses:
                         modify.unenrol_user_from_course(student.num, course)
 
+        # NOW UNENROL PARENTS
+        families = Families()
+
+        self.logger.info("Building families")
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            dnet = DragaonNetDBConnection()
-            modify = DragonNetModifier()
+            families.add(student)
 
-            if student.is_secondary and int(student.num) > 30000:
-                if student.grade == 12:
-                    continue
-                queried = dnet.get_user_enrollments(studnet.family_id + 'P')
-                courses = student.courses()
-                for query in queried:
-                    _, group, course = query
-                    if course not in courses:
-                        modify.unenrol_user_from_course(student.family_id + 'P', course)
+        for family_key in families.families:
+            family = families.families[family_key]
+            family.post_process()
+
+            courses = []
+            for child in family.children:
+                courses.extend(child.courses())
+
+            queried = dnet.get_user_enrollments(student.family_id)
+            for query in queried:
+                _, group, course = query
+                if course not in courses:
+                    self.logger.warn('Unenrolling parent {} from course {}'.format(student.family_id, course))
+                    modify.unenrol_user_from_course(student.family_id, course)
+            
 
     def build_students(self, verify=False):
         """

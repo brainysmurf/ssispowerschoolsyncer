@@ -210,7 +210,10 @@ class ServerInfo(DragonNetDBConnection):
                 course = student.courses()[i]
                 group = student.groups()[i]
 
-                if not group in self._groups.get(student.family_id):
+                groups = self._groups.get(student.family_id)
+                if not groups and not 'ParentNotInGroup' in dontraise:
+                    raise ParentNotInGroup
+                if not group in groups:
                     if not course in self.courses.keys():
                         self.logger.debug("Not raising ParentNotInGroup because the course {} doesn't exist".format(course))
                         continue
