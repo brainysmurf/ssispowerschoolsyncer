@@ -85,7 +85,7 @@ class PowerSchoolIntegrator():
                 self.logger.info("Copied php file that was at {} to the correct location in moodle's document root \
 and set permissions accordingly.".format(php_src))
             except:  #TODO: Use the right exceptions
-                print("Copying php file failed, do we have the right permissions?")
+                self.logger.warn("Copying php file failed, do we have the right permissions?")
         else:
             self.logger.warn("php_src: {}, mv_to_path: {}".format(php_src, mv_to_path))
             self.logger.warn("Couldn't attempt the copy php file, settings printed above")
@@ -123,9 +123,6 @@ and set permissions accordingly.".format(php_src))
         #self.build_opening_table(students)
         #self.create_simple_accounts()
         #self.compile_student_parent_emails(students)
-
-        #self.setup_idnumbers(students)
-        print('------------------------------------------------------')
 
 
     def build_courses(self):
@@ -356,7 +353,7 @@ and set permissions accordingly.".format(php_src))
 
         # TODO: Email the admin any leftover items
         #leftover = self.server_information.dump_temp_storage('to_be_informed', clear=True)
-        print("You may want to inspect to_be_informed now")
+        self.logger.info("to_be_informed should now be empty")
 
     def build_updates(self):
         self.logger.info("Building updates")
@@ -414,7 +411,7 @@ and set permissions accordingly.".format(php_src))
     </table>"""
 
         if not self.config.has_section('MOODLE'):
-            print("No moodle config available, cannot build profiles")
+            self.logger.warn("No moodle config available, cannot build profiles")
             return
 
         moodle = self.config['MOODLE']
@@ -453,7 +450,7 @@ and set permissions accordingly.".format(php_src))
 
 
             if not formatter.user_id:
-                print(formatter("User with idnumber {num} could not be found in the database, cannot put in profile: {username}"))
+                self.logger.warn(formatter("User with idnumber {num} could not be found in the database, cannot put in profile: {username}"))
                 continue
             courses = []
             for course in student.courses():
@@ -462,7 +459,7 @@ and set permissions accordingly.".format(php_src))
                     continue
                 query = database.sql(formatter("select id, fullname from ssismdl_course where shortname = '{course_short}'"))()
                 if not query:
-                     print(formatter("Course with shortname {course_short} could not be found in the database"))
+                     self.logger.info(formatter("Course with shortname {course_short} could not be found in the database"))
                      continue
                 formatter.course_id, formatter.course_name = query[0]
 
@@ -516,7 +513,7 @@ and set permissions accordingly.".format(php_src))
                 self.logger.debug(formatter("Manually created profile field: {extra_profile_field}"))
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
-                    print(formatter("You need to manually add the {extra_profile_field} field!"))
+                    self.logger.warn(formatter("You need to manually add the {extra_profile_field} field!"))
                     continue
                 formatter.field_id = formatter.field_id[0][0]
                 there_already = database.sql(formatter("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
@@ -586,7 +583,6 @@ and set permissions accordingly.".format(php_src))
 
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_users.txt')
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
-        verify and print("Verifying...")
 
         secondary_homerooms = self.students.get_secondary_homerooms()
         elementary_homerooms = self.students.get_elementary_homerooms()
@@ -686,7 +682,7 @@ and set permissions accordingly.".format(php_src))
                         
                     except StudentChangedName:
                         #TODO: Implement an email feature or something to be handled manually by admin
-                        print("Student has had his or her account name changed.\n" +
+                        self.logger.warn("Student has had his or her account name changed.\n" +
                               "We will continue using the available one as defined by DragonNet:\n{}, {}".format(
                                   student.num, student.username)
                             )
@@ -700,7 +696,7 @@ and set permissions accordingly.".format(php_src))
 
                     times_through += 1
                     if times_through > 10:
-                        print("Infinite Loop detected when processing student\n{}".format(student))
+                        self.logger.warn("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
 
 
@@ -775,13 +771,9 @@ and set permissions accordingly.".format(php_src))
                         continue_until_no_errors = False
                     times_through += 1
                     if times_through > 10:
-                        print("Infinite Loop detected when processing student\n{}".format(student))
+                        self.logger.warn("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
 
-            if self.settings.inspect_student and student.num == self.settings.inspect_student:
-                print(student)
-                print(student.groups())
-                self.input_okay and input()
         output_file.output()
 
     def build_emails_for_powerschool(self):
