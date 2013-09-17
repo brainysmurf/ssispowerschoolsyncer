@@ -572,12 +572,13 @@ and set permissions accordingly.".format(php_src))
             for child in family.children:
                 courses.extend(child.courses())
 
-            queried = dnet.get_user_enrollments(family.family_id)
+            queried = dnet.get_user_enrollments(family.idnumber)
+            
             for query in queried:
                 _, group, course = query
                 if course not in courses:
-                    self.logger.warn('Unenrolling parent {} from course {}'.format(family.family_id, course))
-                    modify.unenrol_user_from_course(family.family_id, course)
+                    self.logger.warn('Unenrolling parent {} from course {}'.format(family.idnumber, course))
+                    modify.unenrol_user_from_course(family.idnumber, course)
             
 
     def build_students(self, verify=False):

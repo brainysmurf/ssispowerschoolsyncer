@@ -25,7 +25,9 @@ class CallPHP:
             p = subprocess.Popen( cmd,
                               shell=True, stdout=subprocess.PIPE, cwd=self.path_to_cli)
             result = p.communicate()
-            self.logger.debug(result)
+            # MAKE SURE TO LOG IT IF THERE IS SOME MESSAGE
+            if len(result) > 1 and result[1]:
+                self.logger.warn(result)
             return result
         else:
             print("Command sent in to CallPHP: {}".format(cmd))
