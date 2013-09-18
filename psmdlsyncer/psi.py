@@ -398,12 +398,12 @@ and set permissions accordingly.".format(php_src))
         grade_row = """
     <tr>
     <td>{course_name} ({course_short})</td>
-    <td><a href="{url}">View Feedback</a></td>
+    <td><a href="{url}">View (if available)</a></td>
     </tr>"""
         email_row = """
     <tr>
-    <td>{teacher_name} ({course_short})</td>
-    <td><a href="mailto:{teacher_email}">Email</a></td>
+    <td>{course_short}</td>
+    <td><a href="mailto:{teacher_email}">{teacher_email}</a></td>
     </tr>"""
 
         html_end = """</tbody>
@@ -438,24 +438,30 @@ and set permissions accordingly.".format(php_src))
                                                        course_short="All Classes",
                                                        url=format("http://dragonnet.ssis-suzhou.net/mod/forum/user.php?id={user_id}"))) ]
 
+            homeroom_teacher = student.get_homeroom_teacher()
+            if not homeroom_teacher:
+                self.logger.warn("This student {} doesn't have a homeroom teacher? -- profile field not used, default to 'Not Available'".format(student.lastfirst))
+                homeroom_teacher = '(Not available)'
+            else:
+                homeroom_teacher += '@ssis-suzhou.net'
+
             email_rows = [
                     email_row.format(**dict(teacher_name="Homeroom Teacher",
-                                          teacher_email=student.username + 'HR@student.ssis-suzhou.net',
+                                          teacher_email=homeroom_teacher,
                                           course_short = 'HROOM')),
-                    email_row.format(**dict(teacher_name="All your teachers",
-                                          teacher_email=student.username + 'TEACHERS@student.ssis-suzhou.net', course_short='N/A'))
+                    email_row.format(**dict(teacher_name="All teachers",
+                                          teacher_email=student.username + 'TEACHERS@student.ssis-suzhou.net', course_short='ALL TEACHERS'))
                                           ]
-
-
 
             if not formatter.user_id:
                 self.logger.warn(formatter("User with idnumber {num} could not be found in the database, cannot put in profile: {username}"))
                 continue
-            courses = []
-            for course in student.courses():
-                formatter.course_short = course
-                if 'HROOM' in formatter.course_short:
+
+            # TODO: GET THE PROPER NAME OF THE TEACHER AND THE COURSE, YEAH?
+            for teacherusername, course in student.get_teachers_classes():
+                if course.startswith('HROOM'):
                     continue
+                formatter.course_short = course
                 query = database.sql(formatter("select id, fullname from ssismdl_course where shortname = '{course_short}'"))()
                 if not query:
                      self.logger.info(formatter("Course with shortname {course_short} could not be found in the database"))
@@ -464,43 +470,36 @@ and set permissions accordingly.".format(php_src))
 
                 formatter.url = formatter("http://dragonnet.ssis-suzhou.net/course/user.php?mode=grade&id={course_id}&user={user_id}")
                 grade_rows.append( formatter(grade_row) )
+                    
+                formatter.teacher_email = teacherusername + '@ssis-suzhou.net'
+                formatter.teacher_name = teacherusername
+                formatter.student_name = student.lastfirst # for debugging
+                email_rows.append( formatter(email_row) )
+                self.logger.info(formatter('Added teacher {teacher_name} to {student_name}'))
 
-                for teacher_key in self.students.get_teacher_keys():
-                    teacher = self.students.get_teacher(teacher_key)
-                    if teacher.lastfirst in student.get_teacher_names():
-                        for teacher_course in teacher.courses():
-                            if 'HROOM' in teacher_course:
-                                continue
-                            if teacher_course in student.courses():
-                                formatter.teacher_name = teacher.lastfirst.replace("'", '')
-                                formatter.teacher_email = teacher.username + '@ssis-suzhou.net'
-                                formatter.course_short = teacher_course
-                                email_rows.append( formatter(email_row) )
-                                break
+            formatter.email_html = html_start
+            for row in email_rows:
+                formatter.email_html += row
+            formatter.email_html += html_end
 
-                formatter.email_html = html_start
-                for row in email_rows:
-                    formatter.email_html += row
-                formatter.email_html += html_end
+            formatter.grade_html = html_start
+            for row in grade_rows:
+                formatter.grade_html += row
+            formatter.grade_html += html_end
 
-                formatter.grade_html = html_start
-                for row in grade_rows:
-                    formatter.grade_html += row
-                formatter.grade_html += html_end
+            formatter.teacher_email_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 2 and userid = {user_id}"))()
+            if not formatter.teacher_email_field_id:
+                database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 2, '{email_html}', 0)"))()
+            else:
+                formatter.teacher_email_field_id = formatter.teacher_email_field_id[0][0]
+                database.sql(formatter("update ssismdl_user_info_data set data = '{email_html}' where id = {teacher_email_field_id}"))()
 
-                formatter.teacher_email_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 2 and userid = {user_id}"))()
-                if not formatter.teacher_email_field_id:
-                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 2, '{email_html}', 0)"))()
-                else:
-                    formatter.teacher_email_field_id = formatter.teacher_email_field_id[0][0]
-                    database.sql(formatter("update ssismdl_user_info_data set data = '{email_html}' where id = {teacher_email_field_id}"))()
-
-                formatter.teacher_grade_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 3 and userid = {user_id}"))()
-                if not formatter.teacher_grade_field_id:
-                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 3, '{grade_html}', 0)"))()
-                else:
-                    formatter.teacher_grade_field_id = formatter.teacher_grade_field_id[0][0]
-                    database.sql(formatter("update ssismdl_user_info_data set data = '{grade_html}' where id = {teacher_grade_field_id}"))()
+            formatter.teacher_grade_field_id = database.sql(formatter("select id from ssismdl_user_info_data where fieldid = 3 and userid = {user_id}"))()
+            if not formatter.teacher_grade_field_id:
+                database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, 3, '{grade_html}', 0)"))()
+            else:
+                formatter.teacher_grade_field_id = formatter.teacher_grade_field_id[0][0]
+                database.sql(formatter("update ssismdl_user_info_data set data = '{grade_html}' where id = {teacher_grade_field_id}"))()
 
             for formatter.existing_profile_field, formatter.value in student.get_existing_profile_fields():
                 self.logger.debug(formatter("Existing profile field: {existing_profile_field}"))
@@ -1216,3 +1215,5 @@ and set permissions accordingly.".format(php_src))
 if __name__ == "__main__":
 
     p = PowerSchoolIntegrator()
+    import datetime
+    p.logger.warn('Completed at {}'.format( datetime.datetime.today() ) )

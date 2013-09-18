@@ -185,6 +185,9 @@ class Student(Entry):
     def groups(self):
         return self._groups
 
+    def get_teachers_classes(self):
+        return [ re.match('([a-z]+)([^a-z]+)', item).groups() for item in self.groups() ]
+
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
