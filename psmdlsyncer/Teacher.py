@@ -15,6 +15,7 @@ class Teacher(Entry):
 
     def __init__(self, num, lastfirst, email, title, schoolid, **kwargs):
         self.num = num
+        self.idnumber = self.num
         self.lastfirst = lastfirst
         self.email = email if email.strip() else None
         self.last, self.first = self.lastfirst.split(',')

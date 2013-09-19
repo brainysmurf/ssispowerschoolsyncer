@@ -30,6 +30,7 @@ class Student(Entry):
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
         self.num = num
+        self.idnumber = self.num
         self.stuid = stuid
         self.entry_date = entry_date
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
