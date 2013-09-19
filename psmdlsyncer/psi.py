@@ -420,6 +420,37 @@ and set permissions accordingly.".format(php_src))
         database_name = moodle.get('database_name')
         database = DragonNetDBConnection()
 
+        for teacher_key in self.students.get_teacher_keys():
+            teacher = self.students.get_teacher(teacher_key)
+            formatter = Smartformatter()
+            formatter.take_dict(teacher)
+
+            try:
+                formatter.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
+            except IndexError:
+                # They don't have an account yet?
+                continue
+
+            for formatter.extra_profile_field, formatter.value in teacher.get_extra_profile_fields():
+                formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
+                if not formatter.field_id:
+                    self.logger.debug(formatter("You need to manually add the {extra_profile_field} field!"))
+                    continue
+                formatter.field_id = formatter.field_id[0][0]
+                there_already = database.sql(formatter("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
+                if there_already:
+                    if not there_already[0][0] == str(int(formatter.value)):
+                        # only call update if it's different
+                        formatter.value = int(formatter.value)
+                        self.logger.debug(formatter('updating record {user_id} in ssis_user'))
+                        database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))()
+                    else:
+                        self.logger.debug(formatter("No change in {extra_profile_field}, so didn't call the database"))
+                else:
+                    self.logger.debug(formatter('inserting {extra_profile_field}'))
+                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
+
+
         for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
 
@@ -508,7 +539,6 @@ and set permissions accordingly.".format(php_src))
                 database.sql(formatter("update ssismdl_user set {existing_profile_field} = '{value}' where id = {user_id}"))()
                 
             for formatter.extra_profile_field, formatter.value in student.get_extra_profile_fields():
-                self.logger.debug(formatter("Manually created profile field: {extra_profile_field}"))
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
                     self.logger.debug(formatter("You need to manually add the {extra_profile_field} field!"))

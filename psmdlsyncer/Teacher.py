@@ -13,7 +13,8 @@ SECONDARYSCHOOLID = 112
 
 class Teacher(Entry):
 
-    def __init__(self, lastfirst, email, title, schoolid, **kwargs):
+    def __init__(self, num, lastfirst, email, title, schoolid, **kwargs):
+        self.num = num
         self.lastfirst = lastfirst
         self.email = email if email.strip() else None
         self.last, self.first = self.lastfirst.split(',')
@@ -40,6 +41,8 @@ class Teacher(Entry):
         if schoolid == str(SECONDARYSCHOOLID):
             self.is_secondary = True
             self.profile_bool_issecteacher = True
+
+        self.profile_extra_isteacher = True
 
     def update_courses(self, course_obj):
         course_name = course_obj.moodle_short

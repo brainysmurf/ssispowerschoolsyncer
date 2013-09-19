@@ -4,7 +4,7 @@ Every student represents a student
 import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, determine_password
-from psmdlsyncer.settings import logger
+from psmdlsyncer.settings import logging
 from psmdlsyncer.Entry import Entry
 from psmdlsyncer.Errors import DocumentErrors
 import os
@@ -26,7 +26,7 @@ class Student(Entry):
                  user_data = {},
                  path_to_errors='../errors',
                  path_to_output='../output'):
-        self.logger = logger.getLogger(self.__class__.__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
         self.num = num
@@ -94,9 +94,6 @@ class Student(Entry):
 
     def get_existing_profile_fields(self):
         return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
-
-    def get_extra_profile_fields(self):
-        return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
 
     def other_defaults(self):
         #TODO: Delete this is_in_preferred later

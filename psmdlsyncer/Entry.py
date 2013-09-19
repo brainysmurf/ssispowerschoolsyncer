@@ -34,3 +34,6 @@ class Entry:
             # because as it turns out you might have a method with the same name
             d[key] = kwargs[key]
         return s.format(**d)
+
+    def get_extra_profile_fields(self):
+        return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
