@@ -194,10 +194,17 @@ class DragonNetDBConnection(DBConnection):
         return self.sql( "select id, idnumber, username from ssismdl_user")()
     
     def get_student_info(self):
-        get_users = self.sql('select idnumber, username, id from ssismdl_user')()
+        """
+        RETURNS NEEDED INFORMATION ABOUT USER FOR students
+        """
+        get_users = self.sql("select idnumber, username, id, yahoo from ssismdl_user where char_length(idnumber) = 5 and not idnumber like '%P'")()
         user_data = {}
-        for idnumber, username, _id in get_users:
-            user_data[idnumber] = (username, _id)
+        for idnumber, username, _id, yahoo in get_users:
+            ns = Smartformatter()
+            ns.username = username
+            ns.id = _id
+            ns.slc_page = yahoo
+            user_data[idnumber] = ns
         return user_data
 
     def get_all_users_enrollments(self):

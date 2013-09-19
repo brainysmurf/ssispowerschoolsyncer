@@ -12,6 +12,8 @@ from psmdlsyncer.Course import Course
 from psmdlsyncer.Teacher import Teacher
 from psmdlsyncer.Schedule import Schedule
 from psmdlsyncer.Allocation import Allocation
+from psmdlsyncer.utils.ServerInfo import ServerInfo
+
 
 import datetime
 
@@ -57,14 +59,14 @@ class Students:
 
     exclude_these_teachers_manually = ['Sections, Dead', 'User, Drews Test']
 
-    def __init__(self, user_data = {}):
+    def __init__(self):
         """
         Does the work of reading in basic information from file, creates native Python structures
         StudentNumber\tHomeroom\tLastFirst\tguardianemails
         """
         
         self.settings = settings.arguments
-        self.logger = logging.getLogger('Students')
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
         self.errors = DocumentErrors(self.path_to_errors)
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
@@ -78,7 +80,7 @@ class Students:
         self.teacher_info_controller = Controller(Teacher)
         self.schedule_info_controller = Controller(Schedule)
         self.allocation_info_controller = Controller(Allocation)
-        self.user_data = user_data
+        self.user_data = ServerInfo().get_student_info()
         self.read_in()
         self._homerooms = None
         self._secondary_homerooms = None

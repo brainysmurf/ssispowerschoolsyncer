@@ -4,6 +4,7 @@ Every student represents a student
 import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, determine_password
+from psmdlsyncer.settings import logger
 from psmdlsyncer.Entry import Entry
 from psmdlsyncer.Errors import DocumentErrors
 import os
@@ -25,6 +26,7 @@ class Student(Entry):
                  user_data = {},
                  path_to_errors='../errors',
                  path_to_output='../output'):
+        self.logger = logger.getLogger(self.__class__.__name__)
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
         self.num = num
@@ -43,9 +45,8 @@ class Student(Entry):
         self.lastfirst = lastfirst
         self.user_data = user_data
         self.is_new_student = self.entry_date >= get_academic_start_date()
-        self.database_id = user_data.get(self.num)
-        if self.database_id:
-            self.database_id = self.database_id[1]
+        already_exists = user_data.get(self.num)
+        self.database_id = already_exists.id if already_exists else None
 
         self.determine_first_and_last()
         #self.determine_preferred_name()  # this is derived from preferred.txt
@@ -62,7 +63,10 @@ class Student(Entry):
         self.profile_extra_ischinese = self.is_chinese
         self.homeroom = homeroom.upper()
         self.homeroom_sortable = homeroom_sortable
-        self.profile_existing_institution = "Homeroom {}".format(self.homeroom)   # This is actually details that go on front page
+        
+        self.profile_existing_department = self.homeroom   # This is actually details that go on front page
+        self.profile_existing_institution = ""  # to reset it
+
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
@@ -106,59 +110,22 @@ class Student(Entry):
             return None
         return teacher_name
 
-    def determine_preferred_name(self):
-        """
-        """
-        self.has_preferred_name = False
-        if not hasattr(self, 'preferred_names_from_file'):
-            # read in the information the first time
-            self.preferred_names_from_file = {}
-            with open('/home/lcssisadmin/ssispowerschoolsync/src/preferred_names.txt') as _f:
-                for line in [l.strip('\n') for l in _f.readlines() if l.strip('\n')]:
-                    split = line.split('\t')
-                    if not len(split) == 5:
-                        continue
-                    stu_num = split[0]
-                    preferred_first = split[3]
-                    preferred_last = split[4]
-                    if stu_num and preferred_first:
-                        self.preferred_names_from_file[stu_num] = Object(firstname=preferred_first, lastname=preferred_last)
-        just_alpha = lambda s: re.sub(r'[^a-z]', '', s.lower())
-        is_different = lambda num: just_alpha(self.first) != just_alpha(self.preferred_names_from_file[num].firstname)
-        register_preferred_name = lambda num: num in self.preferred_names_from_file and is_different(num)
-
-        if register_preferred_name(self.num):
-            this = self.preferred_names_from_file[self.num]
-            self.preferred_first = this.firstname
-            self.preferred_last = this.lastname
-            self.has_preferred_name = True
-        else:
-            self.preferred_first = ""
-            self.preferred_last = ""
-
-        if self.has_preferred_name:
-            format_string = "{preferred_first} {preferred_last}"
-        else:
-            format_string = "{first} {last}"
-        self.preferred_name = format_string.format(**self.__dict__)
-
     def determine_username(self):
         """
-        Determines usernames for already existing students
-        and new ones alike
+        DETERMINES THIS USERNAME TAKING INTO ACCOUNT EXISTING USERNAMES
+        MAKES A NEW ONE IF CURRENT USERNAME IS TAKEN
         """
         username_already_exists = self.user_data.get(self.num)
         if username_already_exists:
-            username_already_exists = username_already_exists[0]
-            self.username = username_already_exists
+            self.username = username_already_exists.username
         else:
-            taken_usernames = [item[1][0] for item in self.user_data.items()]
+            taken_usernames = [self.user_data[item].username for item in self.user_data]
             first_half = no_whitespace_all_lower(self.first + self.last)[:20]
             second_half = str(get_year_of_graduation(self.grade))
             self.username = first_half + second_half
             times_through = 1
             while self.username in taken_usernames:
-                print("Looking for a new name for student:\n{}".format(self.username))
+                self.logger.warn("Looking for a new name for student:\n{}".format(self.username))
                 self.username = first_half + ('_' * times_through) + second_half
 
     def update(self, key, value):

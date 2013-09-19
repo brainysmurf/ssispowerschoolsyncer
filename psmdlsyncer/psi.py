@@ -95,7 +95,7 @@ and set permissions accordingly.".format(php_src))
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
-        self.students = Students(user_data=self.server_information.get_student_info())
+        self.students = Students()
 
         if self.settings.teachers:
             self.build_teachers()
@@ -1216,4 +1216,4 @@ if __name__ == "__main__":
 
     p = PowerSchoolIntegrator()
     import datetime
-    p.logger.warn('Completed at {}'.format( datetime.datetime.today() ) )
+    p.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
