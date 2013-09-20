@@ -61,10 +61,9 @@ if config.has_section('ARGUMENTS'):
         setattr(settings.arguments, key, config['ARGUMENTS'][key])
 
 # SET UP ASSUMPTIONS GIVEN PASSED ARGUMENTS AT COMMAND LINE
-if settings.arguments.automagic_emails:
-    settings.arguments.courses = True
-    settings.arguments.teachers = True
-    settings.arguments.students = True
+settings.arguments.courses = True
+settings.arguments.teachers = True
+settings.arguments.students = True
 
 verbose = config.getboolean('DEFAULTS', 'verbose')
 dry_run = config.getboolean('DEFAULTS', 'dry_run')
