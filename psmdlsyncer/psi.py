@@ -325,10 +325,9 @@ and set permissions accordingly.".format(php_src))
                     if 'newparent' == comment:
                         self.logger.info("This family is a new family and is being informed of their account:\n{}".format(family))
                         inform_new_parent(family)
-                    else:
-                        if 'not_logged_in_yet' == comment:
-                            self.logger.info("This family has had an account for a period of time and needs to be reminded of their account\n{}".format(family))
-                            reinform_parent(family)
+                    elif 'not_logged_in_yet' == comment:
+                        self.logger.info("This family has had an account for a period of time and needs to be reminded of their account\n{}".format(family))
+                        reinform_parent(family)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = family.idnumber)
 
