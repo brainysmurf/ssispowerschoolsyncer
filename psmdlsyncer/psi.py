@@ -24,6 +24,7 @@ from psmdlsyncer.utils.PHPMoodleLink import CallPHP
 from psmdlsyncer.html_email.Email import Email, read_in_templates
 
 from psmdlsyncer.settings import config, settings, config_get_section_attribute, logging
+import datetime
 
 class DragonNet(DragonNetDBConnection):
     pass
@@ -46,7 +47,7 @@ class PowerSchoolIntegrator():
         # if exists, move the php admin tool to to the right place
 
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.debug("Initiating PowerSchoolInteragrator instance")
+        self.logger.warn('Started at {}'.format( datetime.datetime.now() ) )
 
         self.config = config
         self.settings = settings.arguments
@@ -71,25 +72,6 @@ class PowerSchoolIntegrator():
         have_email_section = self.config.has_section('EMAIL')
         have_moodle_section = self.config.has_section('MOODLE')
         self.server_information = ServerInfo()
-
-        php_src = 'phpmoodle/phpclimoodle.php'   #TODO: Must figure out full path to myself, right?
-        mv_to_path = self.config['MOODLE'].get('path_to_cli') if have_moodle_section else ""
-        if os.path.exists(php_src) and mv_to_path and os.path.exists(mv_to_path):
-            import shutil
-            mv_to_full_path = mv_to_path + '/phpclimoodle.php'
-            try:
-                shutil.copy(php_src, mv_to_full_path)
-                owner = self.config['MOODLE']['owner_id']
-                group = self.config['MOODLE']['group_id']
-                os.chown(mv_to_full_path, int(owner), int(group))
-                self.logger.info("Copied php file that was at {} to the correct location in moodle's document root \
-and set permissions accordingly.".format(php_src))
-            except:  #TODO: Use the right exceptions
-                self.logger.warn("Copying php file failed, do we have the right permissions?")
-        else:
-            self.logger.warn("php_src: {}, mv_to_path: {}".format(php_src, mv_to_path))
-            self.logger.warn("Couldn't attempt the copy php file, settings printed above")
-            self.logger.warn("END WARNING")
 
         from psmdlsyncer.settings import config_get_section_attribute
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
@@ -118,12 +100,8 @@ and set permissions accordingly.".format(php_src))
             self.build_updates()
         if self.settings.remove_enrollments:
             self.remove_enrollments()
-        #self.assign_groups()
-        #self.build_student_list()
-        #self.build_opening_table(students)
-        #self.create_simple_accounts()
-        #self.compile_student_parent_emails(students)
-
+            
+        self.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
 
     def build_courses(self):
         """
@@ -1277,5 +1255,3 @@ and set permissions accordingly.".format(php_src))
 if __name__ == "__main__":
 
     p = PowerSchoolIntegrator()
-    import datetime
-    p.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
