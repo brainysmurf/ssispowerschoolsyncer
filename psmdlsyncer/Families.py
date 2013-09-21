@@ -39,9 +39,11 @@ class Family:
     def __init__(self, family_id):
         self.family_id = family_id
         self.idnumber = self.family_id + 'P'
+        self.num = self.idnumber
         self.username = ""
         self.emails = []
         self.parent_account_id = family_id + 'P'
+        self.profile_extra_isparent = True
         self.children = Children()
 
     def __str__(self):
@@ -67,6 +69,12 @@ class Family:
         print('\t-> ' + newidnumber)
         self.newidnumber = newidnumber
         self.children.output()
+
+    def get_extra_profile_fields(self):
+        """
+        TODO: IF THIS CLASS WERE A PART OF ENTRY, WE WOULDN'T NEED THIS AT ALL
+        """
+        return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
 
     def post_process(self):
         """

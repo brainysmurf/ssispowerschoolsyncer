@@ -38,6 +38,7 @@ class Recipient:
 
     def __init__(self, email="", name="", lang="en", **kwargs):
         if not email or not '@' in email:
+            print("NO EMAIL")
             self.email = ""
             email = "noemailprovided@example.org"
         if not name:
@@ -258,7 +259,7 @@ class Email:
             s = smtplib.SMTP(self.domain)
         except smtplib.socket.error:
             #TODO: Email admin when in production
-            print("SMTLib report socket error, did not send email from {} to {}".format(self.from_who, [r.email for r in self.recipients]))
+            print("SMTLib report socket error, did not send email from {} to {} with content:\n{}".format(self.from_who, ",".join([r.email for r in self.recipients]), msg.as_string()))
             self.sent = False
             return
         s.sendmail(_email.parseaddr(self.from_who)[1], [r.email for r in self.recipients], msg.as_string())

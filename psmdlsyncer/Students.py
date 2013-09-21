@@ -285,7 +285,7 @@ class Students:
                 self.logger.info("This teacher wasn't added to database: {}".format(line))
                 continue
             if 1 == int(staff_status):
-                self.add_teacher(lastfirst, email, title, schoolid)
+                self.add_teacher(num, lastfirst, email, title, schoolid)
 
     def sync_teachers(self):
         """

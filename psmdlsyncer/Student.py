@@ -30,6 +30,7 @@ class Student(Entry):
         self.path_to_errors = path_to_errors
         self.path_to_output = path_to_output
         self.num = num
+        self.idnumber = self.num
         self.stuid = stuid
         self.entry_date = entry_date
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
@@ -94,9 +95,6 @@ class Student(Entry):
 
     def get_existing_profile_fields(self):
         return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
-
-    def get_extra_profile_fields(self):
-        return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
 
     def other_defaults(self):
         #TODO: Delete this is_in_preferred later
