@@ -198,6 +198,8 @@ def map_codes(short, grade, higher_lower):
 		'BAMHONSH1112': 'SSBAMSH1112', # Business & Management
 
 		'COMHONSH1112': 'TECOMSH1112', # Computer Science
+		'ENVHONSH1112': 'SSENVSH1112', # Environmental Systems, one course
+		
 		'HONTEDSH1112': 'TEDESSH1112', # Design Technology
 		'CNBHONSH1112': 'LBCHISH1112', # Chinese
 		
