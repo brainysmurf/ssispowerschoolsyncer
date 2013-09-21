@@ -17,9 +17,8 @@ from psmdlsyncer.utils.ServerInfo import ServerInfo
 
 import datetime
 
-from psmdlsyncer.utils.Utilities import convert_short_long, determine_password
+from psmdlsyncer.utils.Utilities import convert_short_long
 from psmdlsyncer.utils.FilesFolders import clear_folder
-from psmdlsyncer.utils.Utilities import course_reference
 from psmdlsyncer.Errors import DocumentErrors
 
 from psmdlsyncer.settings import settings, config_get_section_attribute, logging
@@ -218,7 +217,6 @@ class Students:
         if self.settings.teachers:
             self.sync_teachers()    # this one to export teacher data
             self.sync_allocations() # copy to teachers
-        self.sync_profile_fields()
 
     def sync_preferred(self):
         """
@@ -327,40 +325,6 @@ class Students:
                     self.logger.debug("Syncing student {} with teacher {} with course {}".format(student, teacher, course))
                     student.update_teachers(course, teacher)
                     student.update_courses(course, teacher)
-
-    def sync_profile_fields(self):
-        """
-        Input profile fields that students need as it goes around.
-        """
-
-        for student_key in self.get_student_keys():
-            student = self.get_student(student_key)
-            courses = student.courses()
-            contacts = ""
-            for course_num in courses:
-                for course_key in self.course_info_controller.keys():
-                    course  = self.course_info_controller.get(course_key)
-                    if course.moodle_short == course_num:
-                        break
-                teacher_username = student.teachers().get(course_num)
-                for teacher_key in self.teacher_info_controller.keys():
-                    teacher = self.teacher_info_controller.get(teacher_key)
-                    if teacher.username == teacher_username:
-                        break
-                if not teacher:
-                    print(teacher_username)
-                d = {}
-                d['student'] = student.lastfirst
-                d['teacher'] = teacher.first + " " + teacher.last
-                d['teacher_email'] = teacher.email
-                d['course_name'] = course.course_name
-                d['course_url'] = course_reference.get(course.moodle_short)
-                if d['course_url']:
-                    d['course_url'] = "http://dragonnet.ssis-suzhou.net/course/view.php?id={}".format( d['course_url'].strip() )
-                    contacts += "{teacher} teaches <a href=\"{course_url}\">{course_name}</a>: <a href=\"mailto:{teacher_email}\">{teacher_email}</a><br />".format(**d)
-                else:
-                    contacts += "{teacher} teaches {course_name}: <a href=\"mailto:{teacher_email}\">{teacher_email}</a><br />".format(**d)
-            student.profile_field_contacts = contacts.replace(',', '')  # comma in here would cause a problem
 
     def convert_hr_to_integer(self, hr):
         return {'K':-1, 'R':-2, 'G':-3, 'P':-4, 'N':-5}.get(hr[0], put_in_order(hr, reverse=True))

@@ -3,7 +3,7 @@ Every student represents a student
 """
 import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
-from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, determine_password
+from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.Entry import Entry
 from psmdlsyncer.Errors import DocumentErrors

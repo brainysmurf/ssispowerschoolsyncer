@@ -179,7 +179,7 @@ class ServerInfo(DragonNetDBConnection):
                         else:
                             pass # ok
                     else:
-                        self.logger.debug("This group doesn't exist at all: {}".format(group))
+                        self.logger.warn("This group doesn't exist at all: {}".format(group))
                         if not course in self.courses.keys():
                             self.logger.warn("Not raising 'GroupDoesNotExist' because the course {} doesn't exist".format(course))
                             continue

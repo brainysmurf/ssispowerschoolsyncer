@@ -2,7 +2,6 @@
 from psmdlsyncer.html_email.Email import Email
 from psmdlsyncer.html_email.Email import read_in_templates
 from psmdlsyncer.utils.Formatter import Smartformatter
-from psmdlsyncer.utils.PythonMail import send_html_email
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.utils.Utilities import get_head_of_grade
 

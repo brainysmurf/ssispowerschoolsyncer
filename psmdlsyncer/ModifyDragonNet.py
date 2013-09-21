@@ -1,6 +1,5 @@
 from psmdlsyncer.utils.PHPMoodleLink import CallPHP
 from psmdlsyncer.utils.Formatter import Smartformatter
-from psmdlsyncer.utils.PythonMail import send_html_email
 
 from psmdlsyncer.settings import verbose
 
@@ -16,7 +15,6 @@ def test(id, student, extra):
             'create_account': sf('Create user account'),
             'add_user_to_cohort': sf('Add user {lastfirst} to cohort {extra}'),
             'enrol_user_in_course': sf('Add user {lastfirst} to course and group {extra}'),
-            'send_html_email': sf('Sending homeroom teacher {extra} email information about {lastfirst}'),
             'change_name': sf("Changing name of {lastfirst}"),
             'no_email': sf("This student {lastfirst} does not have an email account"),
             }.get(id, None)
@@ -73,22 +71,6 @@ class DragonNetModifier(CallPHP):
             self.enrol_student_into_courses(student)
 
             #TODO: Modify profile fields as appropriate
-
-      def change_name(self, student):
-            if self.dry_run:
-                  test('change_name', student, '')
-            else:
-                  error = self.change_username(student.num, student.username)
-                  print(error)
-                  sender = '"DragonNet Admin" <lcssisadmin@student.ssis-suzhou.net>'
-                  sf = Smartformatter()
-                  sf.take_dict(student)
-                  recipient = student.get_homeroom_teacher()+"@ssis-suzhou.net"
-                  html = sf(changed_name_html)
-                  send_html_email(sender, recipient,
-                                  sf("{lastfirst}'s DragonNet Username has changed"),
-                                  html,
-                                  bccwho="lcssisadmin@student.ssis-suzhou.net")
 
       def no_email(self, student):
             sf = Smartformatter()
