@@ -1,7 +1,6 @@
 #!/usr/local/bin/python3
 import postgresql
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
-from psmdlsyncer.utils.PythonMail import send_html_email
 from psmdlsyncer.html_email.Email import Email
 from psmdlsyncer.utils.DB import FieldObject, DragonNetDBConnection
 from psmdlsyncer.settings import config_get_section_attribute
