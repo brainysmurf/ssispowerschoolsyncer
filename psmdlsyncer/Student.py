@@ -66,7 +66,7 @@ class Student(Entry):
         self.is_western = self.is_big5 or self.is_european
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
-        self.homeroom = homeroom.upper()
+        self.homeroom = homeroom.upper().strip()
         self.homeroom_sortable = homeroom_sortable
         
         self.profile_existing_department = self.homeroom   # This is actually details that go on front page
@@ -249,6 +249,19 @@ class Student(Entry):
         self.first = self.first.replace(',', ' ').strip().replace('  ', ' ')
         self.full_name = "{} {}".format(self.first, self.last)
 
+    @property
+    def guardian_emails(self):
+        return [e.strip() for e in student.parent_emails if e.strip()]
+
+    @property
+    def teacher_emails(self):
+        teachers = student.teachers()
+        return [teachers[k]+"@ssis-suzhou.net" for k in teachers.keys()]
+
+    @property
+    def homeroom_teacher_email(self):
+        return self.get_homeroom_teachers() + '@ssis-suzhou.net'
+
     def compare_num(self, num):
         return self.num == str(num)
 
@@ -321,3 +334,5 @@ class Student(Entry):
                                   firstrow="+ ",
                                   midrow="\n| ",
                                   lastrow="\n| ")
+
+    
