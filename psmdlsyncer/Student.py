@@ -23,7 +23,6 @@ class Object:
 class Student(Entry):
 
     def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, parent_emails, entry_date,
-                 bus_int, bus_morning, bus_afternoon,
                  nationality,
                  user_data = {},
                  path_to_errors='../errors',
@@ -54,9 +53,9 @@ class Student(Entry):
         self.determine_first_and_last()
         #self.determine_preferred_name()  # this is derived from preferred.txt
         
-        self.bus_int = bus_int
-        self.bus_morning = bus_morning
-        self.bus_afternoon = bus_afternoon
+        #self.bus_int = bus_int
+        #self.bus_morning = bus_morning
+        #self.bus_afternoon = bus_afternoon
         self.nationality = nationality
         self.is_korean = self.nationality == "Korea"
         self.is_japanese = self.nationality == "Japan"
@@ -71,9 +70,9 @@ class Student(Entry):
         self.homeroom_sortable = homeroom_sortable
         
         self.profile_existing_department = self.homeroom   # This is actually details that go on front page
-        self.profile_existing_address = self.bus_int
-        self.profile_existing_phone1 = self.bus_morning
-        self.profile_existing_phone2 = self.bus_afternoon
+                                                           #self.profile_existing_address = self.bus_int
+                                                           #self.profile_existing_phone1 = self.bus_morning
+                                                           #self.profile_existing_phone2 = self.bus_afternoon
 
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
         self.determine_username()
