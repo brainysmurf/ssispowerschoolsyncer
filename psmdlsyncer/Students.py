@@ -157,7 +157,7 @@ class Students:
 
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality = line.strip('\n').split('\t')
+                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, bus_int, bus_morning, bus_afternoon, nationality = line.strip('\n').split('\t')
             except ValueError:
                 self.logger.warn(line)
                 self.logger.warn("Skipping above line... did one of the fields have a newline character in there?")
@@ -180,6 +180,9 @@ class Students:
                 firstlast,
                 re.split('[;,]', parent_emails),
                 datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
+                bus_int,
+                bus_morning,
+                bus_afternoon,
                 nationality,
                 user_data=self.user_data)
 

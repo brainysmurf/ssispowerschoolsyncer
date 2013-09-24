@@ -409,23 +409,19 @@ class PowerSchoolIntegrator():
                 # They don't have an account yet?
                 continue
             for formatter.extra_profile_field, formatter.value in family.get_extra_profile_fields():
-                input(formatter('{idnumber}: {extra_profile_field}'))
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
                     self.logger.warn(formatter("You need to manually add the {extra_profile_field} field!"))
                     continue
                 formatter.field_id = formatter.field_id[0][0]
                 there_already = database.sql(formatter("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
-                print(there_already)
                 if there_already:
                     if not there_already[0][0] == str(int(formatter.value)):
                         # only call update if it's different
                         formatter.value = int(formatter.value)
-                        self.logger.debug(formatter('updating record {user_id} in ssis_user'))
-                        
-                        input(database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))())
+                        self.logger.debug(formatter('updating record {user_id} in ssis_user'))                        
+                        database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))()
                     else:
-                        print('no change')
                         self.logger.debug(formatter("No change in {extra_profile_field}, so didn't call the database"))
                 else:
                     self.logger.debug(formatter('inserting {extra_profile_field}'))
