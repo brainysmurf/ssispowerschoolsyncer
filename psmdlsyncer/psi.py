@@ -912,9 +912,10 @@ class PowerSchoolIntegrator():
         if not path:
             path = self.output_path + '/postfix'
 
-        #TODO: Use smartformatter for this crap!
-        d = {'path':path}
-        d['ext'] = '.txt'
+        ns = Smartformatter()
+        ns.PATH = path
+        ns.EXT = '.txt'
+        ns.INCLUDE = ' :include:'
 
         # The clear_folder routine erases all files in a certain folder
         # That has implications for postfix (when we're on the server), because
@@ -926,31 +927,24 @@ class PowerSchoolIntegrator():
         clear_folder('{path}'.format(**d), exclude=exclude_db_files) 
         #
 
-        clear_folder('{path}/grades'.format(**d))
-        clear_folder('{path}/homerooms'.format(**d))
-        clear_folder('{path}/classes'.format(**d))
-        clear_folder('{path}/parentlink'.format(**d))
-        clear_folder('{path}/teacherlink'.format(**d))
-        clear_folder('{path}/special'.format(**d))
-        clear_folder('{path}/departments'.format(**d))
+        clear_folder(ns('{PATH}/grades'))
+        clear_folder(ns('{PATH}/homerooms'))
+        clear_folder(ns('{PATH}/classes'))
+        clear_folder(ns('{PATH}/parentlink'))
+        clear_folder(ns('{PATH}/teacherlink'))
+        clear_folder(ns('{PATH}/special'))
+        clear_folder(ns('{PATH}/departments'))
+
+        special = []
 
         self.logger.debug("Setting up largest mailing lists first")
-        setup_postfix = '{path}/special{ext}'.format(**d)
-        with open(setup_postfix, 'w') as f:
-            f.write("usebccparentsALL: :include:{path}/special/usebccparentsALL{ext}\n".format(**d))
-        setup_postfix = '{path}/special{ext}'.format(**d)
-        with open(setup_postfix, 'a') as f:
-            f.write("usebccparentsSEC: :include:{path}/special/usebccparentsSEC{ext}\n".format(**d))
-        setup_postfix = '{path}/special{ext}'.format(**d)
-        with open(setup_postfix, 'a') as f:
-            f.write("usebccparentsELEM: :include:{path}/special/usebccparentsELEM{ext}\n".format(**d))
 
-        setup_postfix = '{path}/special{ext}'.format(**d)
-        with open(setup_postfix, 'a') as f:
-            f.write("usebccparentsKOREAN: :include:{path}/special/usebccparentsKOREAN{ext}\n".format(**d))
-        setup_postfix = '{path}/special{ext}'.format(**d)
-        with open(setup_postfix, 'a') as f:
-            f.write("usebccparentsCHINESE: :include:{path}/special/usebccparentsCHINESE{ext}\n".format(**d))
+        for item in ['ALL', 'SEC', 'ELEM', 'KOREAN', 'CHINESE']:
+            ns.this = item
+            special.append( ns('usebccparents{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparents{this}{EXT}') )
+
+        with open( ns('{PATH}/special{EXT}'), 'w') as f:
+            f.write( "\n".join(special) )
 
         done_homerooms = []
         done_grades = []
