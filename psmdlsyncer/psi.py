@@ -19,6 +19,7 @@ from psmdlsyncer.ModifyDragonNet import DragonNetModifier
 from psmdlsyncer.utils.DB import DragonNetDBConnection
 
 import subprocess
+from collections import defaultdict
 
 from psmdlsyncer.utils.PHPMoodleLink import CallPHP
 from psmdlsyncer.html_email.Email import Email, read_in_templates
@@ -924,7 +925,7 @@ class PowerSchoolIntegrator():
         exclude_db_files = lambda x: x.endswith('.db')
 
         self.logger.debug("Clearing folders in postfix")
-        clear_folder('{path}'.format(**d), exclude=exclude_db_files) 
+        clear_folder( ns.PATH, exclude=exclude_db_files) 
         #
 
         clear_folder(ns('{PATH}/grades'))
@@ -944,10 +945,8 @@ class PowerSchoolIntegrator():
             special_directory.append( ns('usebccparents{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparents{this}{EXT}') )
 
         with open( ns('{PATH}/special{EXT}'), 'w') as f:
-            f.write( "\n".join(special) )
+            f.write( "\n".join(special_directory) )
 
-        homeroom_directory = {}
-        grade_directory = []
         usebccparentsALL = []
         usebccparentsELEM = []
         usebccparentsSEC = []
@@ -955,18 +954,20 @@ class PowerSchoolIntegrator():
         usebccparentsKOREAN = []
         usebccparentsHR = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
+        usebccparentsHOMEROOM = defaultdict(list)
         usebccstudentsALL = defaultdict(list)
         usebccstudentsSEC = defaultdict(list)
         usebccstudentsELEM = defaultdict(list)
         usebccstudentsGRADE = defaultdict(list)
+        usebccstudentsHOMEROOM = defaultdict(list)
         usebccstudentsHR = defaultdict(list)
         parentlink = defaultdict(list)
         teacherlink = defaultdict(list)
         teachersHOMEROOM = defaultdict(list)
         teachersGRADE = defaultdict(list)
         hrlink = defaultdict(list)
-        groups = defaultdict(list)
-        groupsPARENTS = defaultdict(list)
+        classes = defaultdict(list)
+        classesPARENTS = defaultdict(list)
         special = defaultdict(list)
 
         done_homerooms = []
@@ -980,200 +981,136 @@ class PowerSchoolIntegrator():
             if ns.grade <= 0:
                 ns.grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(ns.grade)
 
-            if student.grade:
-                grade_directory.append(student.grade)
-                usebccparentsGRADE[student.grade].extend( student.guardian_emails )
-            if student.homeroom:
-                homeroom_directory.append(student.homeroom)
-                usebccparentsHR[student.homeroom].extend( student.guardian_emails )            
+            # TODO: Check for now grade or homeroom and warn
+            if not student.grade:
+                self.logger.warn("This student does not have a grade:\n{}".format(student))
+            if not student.homeroom:
+                self.logger.warn("This student does not have a homeroom:\n{}".format(student))
 
             usebccparentsALL.extend( student.guardian_emails )
+            student.grade and usebccparentsGRADE[student.grade].extend(student.guardian_emails)
+            student.homeroom and usebccparentsHOMEROOM[student.grade].extend(student.guardian_emails)
 
             if student.is_elementary:
                 usebccparentsELEM.extend(student.guardian_emails)
+                
             if student.is_secondary:
                 usebccparentsSEC.extend(student.guardian_emails)
                 usebccstudentsSEC.append(student.email)
-                usebccparentsGRADE[student.grade].append(student.guardian_emails)
-                usebccstudentsGRADE[student.grade].append(student.email)
-                teachersGRADE[student.grade].extend(student.teacher_emails)
-                usebccparentsHR[student.homeroom].extend(student.guardian_emails)
-                usebccstudentsHR[student.homeroom].append(student.email)
-                teachersHR[student.grade].extend(student.teachers_emails)
+                if student.grade:
+                    usebccstudentsGRADE[student.grade].append(student.email)
+                    teachersGRADE[student.grade].extend(student.teacher_emails)
+                if student.homeroom:
+                    usebccstudentsHR[student.homeroom].append(student.email)
+                    teachersHR[student.homeroom].extend(student.teachers_emails)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
                 hrlink[student.username].append(student.homeroom_teacher_email)
                 for group in student.groups():
-                    groups[group].append(student.email)
-                    groupsPARENTS[group].extend(student.guardian_emails)
+                    classes[group].append(student.email)
+                    classesPARENTS[group].extend(student.guardian_emails)
 
             if student.is_chinese:
                 usebccparentsCHINESE.extend( student.guardian_emails )
             if student.is_korean:
                 usebccparentsKOREAN.extend( student.guardian_emails )
 
+        # GRADES
+        directory_write = []
+        for ns.grade in usebccparentsGRADE:
+            directory_write.append( ns('usebccparents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}usebccparents{grade}{EXT}') )
+            with open( ns('{PATH}{SLASH}grades{SLASH}usebccparents{grade}{EXT}'), 'w') as f:
+                f.write( '\n'.join(usebccparentsGRADE[ns.grade]) )
+        for ns.grade in usebccstudentsGRADE:
+            directory_write.append( ns('usebccstudents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}usebccstudents{grade}{EXT}') )
+            with open( ns('{PATH}{SLASH}grades{SLASH}usebccstudents{grade}{EXT}'), 'w') as f:
+                f.write( '\n'.join(usebccstudentsGRADE[ns.grade]) )
+        for ns.grade in teachersGRADE:
+            directory_write.append( ns('teachers{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}teachers{grade}{EXT}') )
+            with open( ns('{PATH}{SLASH}grades{SLASH}teachers{grade}{EXT}'), 'w') as f:
+                f.write( '\n'.join(teachersGRADE[ns.grade]) )
         with open( ns('{PATH}{SLASH}grades{EXT}'), 'w') as f:
-            for ns.grade in grade_directory:
-                f.write( ns('usebccparents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade/usebccparents{grade}{EXT}{NEWLINE}') )
+            f.write( '\n'.join(directory_write) )
 
+        # HOMEROOMS
+        directory_write = []
+        for ns.homeroom in usebccparentsHOMEROOM:
+            directory_write.append( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccparents{homeroom}{EXT}') )
+            with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}'), 'w') as f:
+                f.write( '\n'.join(usebccparentsHOMEROOM[ns.homeroom]) )
+        for ns.homeroom in usebccstudentsHOMEROOM:
+            directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccstudents{homeroom}{EXT}') )
+            with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}'), 'w') as f:
+                f.write( '\n'.join(usebccstudentsHOMEROOM[ns.homeroom]) )
+        for ns.homeroom in teachersHOMEROOM:
+            directory_write.append( ns('teachers{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}teachers{homeroom}{EXT}') )
+            with open( ns('{PATH}{SLASH}homerooms{SLASH}teachers{homeroom}{EXT}'), 'w') as f:
+                f.write( '\n'.join(teachersHOMEROOM[ns.homeroom]) )
         with open( ns('{PATH}{SLASH}homeroom{EXT}'), 'w') as f:
-            for ns.homeroom in homeroom_directory:
-                f.write( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}grade/usebccparents{homeroom}{EXT}{NEWLINE}') )
+            f.write( '\n'.join(directory_write) )
 
-        with open( ns('{PATH}{SLASH}usebccparentsALL{EXT}'), 'w') as f:
+        # TEACHERLINK
+        directory_write = []
+        for ns.student in teacherlink:
+            directory_write.append( ns('{student}TEACHERS{COLON}{INCLUDE}{PATH}teacherlink{SLASH}{student}TEACHERS{EXT}') )
+            with open( ns('{PATH}{SLASH}parentlink{SLASH}{student}TEACHERS{EXT}'), 'w') as f:
+                f.write( '\n'.join(teacherlink[ns.student]) )
+        with open( ns('{PATH}{SLASH}teacherlink{EXT}'), 'w') as f:
+            f.write( '\n'.join(directory_write) )
+
+        # PARENTLINK
+        directory_write = []
+        for ns.student in parentlink:
+            directory_write.append( ns('{student}PARENTS{COLON}{INCLUDE}{PATH}parentlink{SLASH}{student}PARENTS{EXT}') )
+            with open( ns('{PATH}{SLASH}parentlink{SLASH}{student}PARENTS{EXT}'), 'w') as f:
+                f.write( '\n'.join(parentlink[ns.student]) )
+        with open( ns('{PATH}{SLASH}parentlink{EXT}'), 'w') as f:
+            f.write( '\n'.join(directory_write) )
+
+        # HRLINK
+        directory_write = []
+        for ns.student in hrlink:
+            directory_write.append( ns('{student}HR{COLON}{INCLUDE}{PATH}homeroomlink{SLASH}{student}HR{EXT}') )
+        with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
+            f.write( '\n'.join(directory_write) )
+        
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsALL{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsALL) )
 
-        with open( ns('{PATH}{SLASH}usebccparentsSEC{EXT}'), 'w') as f:
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSEC{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsSEC) )
 
-        with open( ns('{PATH}{SLASH}usebccparentsSEC{EXT}'), 'w') as f:
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsELEM{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsELEM) )
 
-        with open( ns('{PATH}{SLASH}usebccparentsCHINESE{EXT}'), 'w') as f:
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsCHINESE) )
 
-        with open( ns('{PATH}{SLASH}usebccparentsKOREAN{EXT}'), 'w') as f:
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsKOREAN) )
 
+        with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
+            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM', 'usebccparentsKOREAN', 'usebccparentsCHINESE']:
+                f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
 
-        done_homerooms = []
-        done_grades = []
-        done_groups = []
-        added_teachers_grade = {}
-        added_teachers_hr = {}
+        # CLASSES
+        directory_write = []
+        for ns.klass in classes:
+            directory_write.append( ns('{klass}{COLON}{INCLUDE}{PATH}{SLASH}{klass}{EXT}') )
+        for ns.klass in classesPARENTS:
+            directory_write.append( ns('{klass}PARENTS{COLON}{INCLUDE}{PATH}{SLASH}{klass}PARENTS{EXT}') )
+        with open( ns('{PATH}{SLASH}classes{EXT}'), 'w') as f:
+            f.write( '\n'.join(directory_write) )
 
-        self.logger.debug("Setting up secondary email lists")
-        # SECONDARY
-        for student_key in self.students.get_secondary_student_keys():
-            student = self.students.get_student(student_key)
-            d['grade'] = student.grade
-            d['homeroom'] = student.homeroom
-            d['username'] = student.username
-            d['homeroom_teacher'] = student.get_homeroom_teacher()
+        for ns.klass in classes:
+            with open( ns('{PATH}{SLASH}classes{SLASH}{klass}{EXT}'), 'w') as f:
+                f.write( '\n'.join(classes[ns.klass]) )
 
-            ## SET UP PARENTLINK
-            setup_postfix = '{path}/parentlink{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("{username}PARENTS: :include:{path}/parentlink/{username}PARENTS{ext}\n".format(**d))
+        for ns.klass in classesPARENTS:
+            with open( ns('{PATH}{SLASH}classes{SLASH}{klass}PARENTS{EXT}'), 'w') as f:
+                f.write( '\n'.join(classesPARENTS[ns.klass]) )
 
-            setup_postfix = '{path}/parentlink/{username}PARENTS{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-            ## SET UP TEACHERLINK
-            setup_postfix = '{path}/teacherlink{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("{username}TEACHERS: :include:{path}/teacherlink/{username}TEACHERS{ext}\n".format(**d))
-
-            setup_postfix = '{path}/teacherlink/{username}TEACHERS{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                teachers = student.teachers()
-                f.write("\n".join([teachers[k]+"@ssis-suzhou.net" for k in teachers.keys()]) + '\n')
-
-            # SET UP HOMEROOMLINK
-            setup_postfix = '{path}/homeroomlink{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("{username}HR: {homeroom_teacher}@ssis-suzhou.net\n".format(**d))
-
-            ## SET UP GRADES
-            setup_postfix = '{path}/grades{ext}'.format(**d)
-            if not d['grade'] in done_grades:
-                added_teachers_grade[d['grade']] = []
-                with open(setup_postfix, 'a') as f:
-                    f.write("usebccstudents{grade}: :include:{path}/grades/usebccstudents{grade}{ext}\n".format(**d))
-                    f.write("usebccparents{grade}: :include:{path}/grades/usebccparents{grade}{ext}\n".format(**d))
-                    f.write("teachers{grade}: :include:{path}/grades/teachers{grade}{ext}\n".format(**d))
-                done_grades.append(d['grade'])
-
-            setup_postfix = '{path}/grades/usebccstudents{grade}{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                if student.email.strip():
-                    f.write(student.email.strip()+'\n')
-
-            setup_postfix = '{path}/grades/usebccparents{grade}{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-            setup_postfix = '{path}/grades/teachers{grade}{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                for teacher in student.get_teacher_names():
-                    if teacher and not teacher in added_teachers_grade[d['grade']]:
-                        f.write(teacher + '@ssis-suzhou.net\n')
-                        added_teachers_grade[d['grade']].append(teacher)
-
-            ## SETUP HOMEROOMS
-            setup_postfix = '{path}/homerooms{ext}'.format(**d)
-            if not d['homeroom'] in done_homerooms:
-                added_teachers_hr[d['homeroom']] = []
-                with open(setup_postfix, 'a') as f:
-                    f.write("usebccstudents{homeroom}: :include:{path}/homerooms/usebccstudents{homeroom}{ext}\n".format(**d))
-                    f.write("usebccparents{homeroom}: :include:{path}/homerooms/usebccparents{homeroom}{ext}\n".format(**d))
-                    f.write("teachers{homeroom}: :include:{path}/homerooms/teachers{homeroom}{ext}\n".format(**d))
-                homeroom_teacher = student.get_homeroom_teacher()
-                if homeroom_teacher:
-                    with open('{path}/homerooms/usebccparents{homeroom}{ext}'.format(**d), 'a') as f:
-                        f.write(student.get_homeroom_teacher() + '@ssis-suzhou.net\n')
-                done_homerooms.append(d['homeroom'])
-
-            setup_postfix = '{path}/homerooms/usebccstudents{homeroom}{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                if student.email.strip():
-                    f.write(student.email.strip() + '\n')
-
-            setup_postfix = '{path}/homerooms/usebccparents{homeroom}{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-            setup_postfix = '{path}/homerooms/teachers{homeroom}{ext}'.format(**d)
-            with open(setup_postfix, 'a') as f:
-                teacher = student.get_homeroom_teacher()
-                if teacher and not teacher in added_teachers_hr[d['homeroom']]:
-                    f.write(teacher + '@ssis-suzhou.net\n')
-                    added_teachers_hr[d['homeroom']].append(teacher)
-                for teacher in student.get_teachers_as_list():
-                    if teacher and not teacher in added_teachers_hr[d['homeroom']]:
-                        f.write(teacher + '@ssis-suzhou.net\n')
-                        added_teachers_hr[d['homeroom']].append(teacher)
-
-            # SETUP SPECIAL
-            setup_postfix = "{path}/special/usebccparentsALL{ext}".format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-            setup_postfix = "{path}/special/usebccparentsSEC{ext}".format(**d)
-            with open(setup_postfix, 'a') as f:
-                f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-            if student.is_korean:
-                setup_postfix = "{path}/special/usebccparentsKOREAN{ext}".format(**d)
-                with open(setup_postfix, 'a') as f:
-                    f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-            if student.is_chinese:
-                setup_postfix = "{path}/special/usebccparentsCHINESE{ext}".format(**d)
-                with open(setup_postfix, 'a') as f:
-                    f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-            ##  SETUP CLASSES
-            for group in student.groups():
-                d['group'] = group
-                if not group in done_groups:
-                    done_groups.append(group)
-                    setup_postfix = '{path}/classes{ext}'.format(**d)
-                    with open(setup_postfix, 'a') as f:
-                        f.write("{group}: :include:{path}/classes/{group}{ext}\n".format(**d))
-                    with open(setup_postfix, 'a') as f:
-                        f.write("{group}PARENTS: :include:{path}/classes/{group}PARENTS{ext}\n".format(**d))
-
-                setup_postfix = '{path}/classes/{group}{ext}'.format(**d)
-                with open(setup_postfix, 'a') as f:
-                    if student.email.strip():
-                        f.write(student.email.strip() + '\n')
-
-                setup_postfix = '{path}/classes/{group}PARENTS{ext}'.format(**d)
-                with open(setup_postfix, 'a') as f:
-                    f.write("\n".join([e.strip() for e in student.parent_emails if e.strip()]) + '\n')
-
-
+        """
         self.logger.debug("Set up department batch emails")
         ##  SETUP DEPARTMENTS, including by homeroom teachers
         depart_dict = {}
@@ -1217,6 +1154,8 @@ class PowerSchoolIntegrator():
             with open(setup_postfix, 'w') as f:
                 f.write( "\n".join(depart_dict[department]) )
 
+        """
+                
         # run newaliases command on exit if we're on the server
         newaliases_path = False
         if self.config.has_section('EMAIL'):

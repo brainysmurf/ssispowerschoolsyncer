@@ -251,11 +251,11 @@ class Student(Entry):
 
     @property
     def guardian_emails(self):
-        return [e.strip() for e in student.parent_emails if e.strip()]
+        return [e.strip() for e in self.parent_emails if e.strip()]
 
     @property
     def teacher_emails(self):
-        teachers = student.teachers()
+        teachers = self.teachers()
         return [teachers[k]+"@ssis-suzhou.net" for k in teachers.keys()]
 
     @property
