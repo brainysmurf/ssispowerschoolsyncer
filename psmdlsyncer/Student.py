@@ -260,7 +260,8 @@ class Student(Entry):
 
     @property
     def homeroom_teacher_email(self):
-        return self.get_homeroom_teachers() + '@ssis-suzhou.net'
+        homeroom = self.get_homeroom_teacher()
+        return homeroom and homeroom + '@ssis-suzhou.net'
 
     def compare_num(self, num):
         return self.num == str(num)

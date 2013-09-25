@@ -948,22 +948,21 @@ class PowerSchoolIntegrator():
             f.write( "\n".join(special_directory) )
 
         usebccparentsALL = []
+        usebccstudentsALL = []
         usebccparentsELEM = []
         usebccparentsSEC = []
+        usebccstudentsSEC = []
         usebccparentsCHINESE = []
         usebccparentsKOREAN = []
-        usebccparentsHR = defaultdict(list)
+        usebccparentsHOMEROOM = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
         usebccparentsHOMEROOM = defaultdict(list)
-        usebccstudentsALL = defaultdict(list)
-        usebccstudentsSEC = defaultdict(list)
         usebccstudentsELEM = defaultdict(list)
         usebccstudentsGRADE = defaultdict(list)
         usebccstudentsHOMEROOM = defaultdict(list)
         usebccstudentsHR = defaultdict(list)
         parentlink = defaultdict(list)
         teacherlink = defaultdict(list)
-        teachersHOMEROOM = defaultdict(list)
         teachersGRADE = defaultdict(list)
         hrlink = defaultdict(list)
         classes = defaultdict(list)
@@ -973,13 +972,15 @@ class PowerSchoolIntegrator():
         done_homerooms = []
         done_grades = []
 
+        self.server_information.create_temp_storage('student_email_info', 'list', 'email')
+        self.server_information.empty_temp_storage('student_email_info')
+        write_db = self.server_information.add_temp_storage
+
         self.logger.debug("Setting up elementary email lists")
-        for student_key in self.students.get_elementary_student_keys():
+        for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             ns.homeroom = student.homeroom
             ns.grade = student.grade
-            if ns.grade <= 0:
-                ns.grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(ns.grade)
 
             # TODO: Check for now grade or homeroom and warn
             if not student.grade:
@@ -987,22 +988,28 @@ class PowerSchoolIntegrator():
             if not student.homeroom:
                 self.logger.warn("This student does not have a homeroom:\n{}".format(student))
 
+            if ns.grade <= 0:
+                # USE ns.grade BECAUSE student.grade IS AN INTEGER
+                # TODO: DO WE MAKE student.grade A STRING?
+                # OR PUT THIS IN THE OBJECT SOMEWHOW?
+                ns.grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(ns.grade, None)
+
             usebccparentsALL.extend( student.guardian_emails )
-            student.grade and usebccparentsGRADE[student.grade].extend(student.guardian_emails)
-            student.homeroom and usebccparentsHOMEROOM[student.grade].extend(student.guardian_emails)
+            ns.grade and usebccparentsGRADE[ns.grade].extend(student.guardian_emails)
+            ns.homeroom and usebccparentsHOMEROOM[ns.grade].extend(student.guardian_emails)
 
             if student.is_elementary:
                 usebccparentsELEM.extend(student.guardian_emails)
-                
+
+
             if student.is_secondary:
                 usebccparentsSEC.extend(student.guardian_emails)
                 usebccstudentsSEC.append(student.email)
-                if student.grade:
-                    usebccstudentsGRADE[student.grade].append(student.email)
-                    teachersGRADE[student.grade].extend(student.teacher_emails)
+                if ns.grade:
+                    usebccstudentsGRADE[ns.grade].append(student.email)
+                    teachersGRADE[ns.grade].extend(student.teacher_emails)
                 if student.homeroom:
-                    usebccstudentsHR[student.homeroom].append(student.email)
-                    teachersHR[student.homeroom].extend(student.teachers_emails)
+                    usebccstudentsHR[ns.homeroom].append(student.email)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
                 hrlink[student.username].append(student.homeroom_teacher_email)
@@ -1015,20 +1022,60 @@ class PowerSchoolIntegrator():
             if student.is_korean:
                 usebccparentsKOREAN.extend( student.guardian_emails )
 
+        for ns.grade in usebccparentsGRADE:
+            for ns.email in set(usebccparentsGRADE[ns.grade]):
+                write_db('student_email_info', list=ns('usebccparents{grade}'), email=ns('{email}'))
+
+        for ns.grade in usebccstudentsGRADE:
+            for ns.email in set(usebccstudentsGRADE[ns.grade]):
+                write_db('student_email_info', list=ns('usebccstudents{grade}'), email=ns('{email}'))
+
+        for ns.grade in teachersGRADE:
+            for ns.email in set(teachersGRADE[ns.grade]):
+                write_db('student_email_info', list=ns('teachers{grade}'), email=ns('{email}'))
+
+        for ns.homeroom in usebccparentsHOMEROOM:
+            for ns.email in set(usebccparentsHOMEROOM[ns.grade]):
+                write_db('student_email_info', list=ns('usebccparents{homeroom}'), email=ns('{email}'))
+
+        for ns.homeroom in usebccstudentsHOMEROOM:
+            for ns.email in set(usebccstudentsHOMEROOM[ns.grade]):
+                write_db('student_email_info', list=ns('usebccstudents{homeroom}'), email=ns('{email}'))
+
+        for ns.student in teacherlink:
+            for ns.email in set(teacherlink[ns.student]):
+                write_db('student_email_info', list=ns('{student}TEACHERS'), email=ns('{email}'))
+
+        for ns.student in parentlink:
+            for ns.email in set(parentlink[ns.student]):
+                write_db('student_email_info', list=ns('{student}PARENTS'), email=ns('{email}'))
+
+        for ns.student in hrlink:
+            for ns.email in set(hrlink[ns.student]):
+                write_db('student_email_info', list=ns('{student}HR'), email=ns('{email}'))            
+
+        for ns.klass in classes:
+            for ns.email in classes[ns.klass]:
+                write_db('student_email_info', list=ns('{klass}'), email=ns('{email}'))
+
+        for ns.klass in classesPARENTS:
+            for ns.email in classes[ns.klass]:
+                write_db('student_email_info', list=ns('{klass}PARENTS'), email=ns('{email}'))
+
         # GRADES
         directory_write = []
         for ns.grade in usebccparentsGRADE:
             directory_write.append( ns('usebccparents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}usebccparents{grade}{EXT}') )
             with open( ns('{PATH}{SLASH}grades{SLASH}usebccparents{grade}{EXT}'), 'w') as f:
-                f.write( '\n'.join(usebccparentsGRADE[ns.grade]) )
+                f.write( '\n'.join(set(usebccparentsGRADE[ns.grade])) )
         for ns.grade in usebccstudentsGRADE:
             directory_write.append( ns('usebccstudents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}usebccstudents{grade}{EXT}') )
             with open( ns('{PATH}{SLASH}grades{SLASH}usebccstudents{grade}{EXT}'), 'w') as f:
-                f.write( '\n'.join(usebccstudentsGRADE[ns.grade]) )
+                f.write( '\n'.join(set(usebccstudentsGRADE[ns.grade])) )
         for ns.grade in teachersGRADE:
             directory_write.append( ns('teachers{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}teachers{grade}{EXT}') )
             with open( ns('{PATH}{SLASH}grades{SLASH}teachers{grade}{EXT}'), 'w') as f:
-                f.write( '\n'.join(teachersGRADE[ns.grade]) )
+                f.write( '\n'.join(set(teachersGRADE[ns.grade])) )
         with open( ns('{PATH}{SLASH}grades{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
@@ -1037,40 +1084,36 @@ class PowerSchoolIntegrator():
         for ns.homeroom in usebccparentsHOMEROOM:
             directory_write.append( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccparents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}'), 'w') as f:
-                f.write( '\n'.join(usebccparentsHOMEROOM[ns.homeroom]) )
+                f.write( '\n'.join(set(usebccparentsHOMEROOM[ns.homeroom])) )
         for ns.homeroom in usebccstudentsHOMEROOM:
             directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccstudents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}'), 'w') as f:
-                f.write( '\n'.join(usebccstudentsHOMEROOM[ns.homeroom]) )
-        for ns.homeroom in teachersHOMEROOM:
-            directory_write.append( ns('teachers{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}teachers{homeroom}{EXT}') )
-            with open( ns('{PATH}{SLASH}homerooms{SLASH}teachers{homeroom}{EXT}'), 'w') as f:
-                f.write( '\n'.join(teachersHOMEROOM[ns.homeroom]) )
+                f.write( '\n'.join(set(usebccstudentsHOMEROOM[ns.homeroom])) )
         with open( ns('{PATH}{SLASH}homeroom{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
         # TEACHERLINK
         directory_write = []
         for ns.student in teacherlink:
-            directory_write.append( ns('{student}TEACHERS{COLON}{INCLUDE}{PATH}teacherlink{SLASH}{student}TEACHERS{EXT}') )
-            with open( ns('{PATH}{SLASH}parentlink{SLASH}{student}TEACHERS{EXT}'), 'w') as f:
-                f.write( '\n'.join(teacherlink[ns.student]) )
+            directory_write.append( ns('{student}TEACHERS{COLON}{INCLUDE}{PATH}{SLASH}teacherlink{SLASH}{student}TEACHERS{EXT}') )
+            with open( ns('{PATH}{SLASH}teacherlink{SLASH}{student}TEACHERS{EXT}'), 'w') as f:
+                f.write( '\n'.join(set(teacherlink[ns.student])) )
         with open( ns('{PATH}{SLASH}teacherlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
         # PARENTLINK
         directory_write = []
         for ns.student in parentlink:
-            directory_write.append( ns('{student}PARENTS{COLON}{INCLUDE}{PATH}parentlink{SLASH}{student}PARENTS{EXT}') )
+            directory_write.append( ns('{student}PARENTS{COLON}{INCLUDE}{PATH}{SLASH}parentlink{SLASH}{student}PARENTS{EXT}') )
             with open( ns('{PATH}{SLASH}parentlink{SLASH}{student}PARENTS{EXT}'), 'w') as f:
-                f.write( '\n'.join(parentlink[ns.student]) )
+                f.write( '\n'.join(set(parentlink[ns.student])) )
         with open( ns('{PATH}{SLASH}parentlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
         # HRLINK
         directory_write = []
         for ns.student in hrlink:
-            directory_write.append( ns('{student}HR{COLON}{INCLUDE}{PATH}homeroomlink{SLASH}{student}HR{EXT}') )
+            directory_write.append( ns('{student}HR{COLON}{INCLUDE}{PATH}{SLASH}homeroomlink{SLASH}{student}HR{EXT}') )
         with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
         
@@ -1104,11 +1147,11 @@ class PowerSchoolIntegrator():
 
         for ns.klass in classes:
             with open( ns('{PATH}{SLASH}classes{SLASH}{klass}{EXT}'), 'w') as f:
-                f.write( '\n'.join(classes[ns.klass]) )
+                f.write( '\n'.join(set(classes[ns.klass])) )
 
         for ns.klass in classesPARENTS:
             with open( ns('{PATH}{SLASH}classes{SLASH}{klass}PARENTS{EXT}'), 'w') as f:
-                f.write( '\n'.join(classesPARENTS[ns.klass]) )
+                f.write( '\n'.join(set(classesPARENTS[ns.klass])) )
 
         """
         self.logger.debug("Set up department batch emails")
