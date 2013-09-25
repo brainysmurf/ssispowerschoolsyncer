@@ -965,14 +965,23 @@ class PowerSchoolIntegrator():
         usebccparentsSEC = []
         usebccstudentsSEC = []
         usebccparentsCHINESE = []
+        usebccparentsCHINESEELEM = []
+        usebccparentsCHINESESEC = []
+        usebccparentsCHINESEGRADE = defaultdict(list)
         usebccparentsKOREAN = []
+        usebccparentsKOREANELEM = []
+        usebccparentsKOREANSEC = []
+        usebccparentsKOREANGRADE = defaultdict(list)
+        usebccparentsJAPANESE = []
+        usebccparentsJAPANESEELEM = []
+        usebccparentsJAPANESESEC = []
+        usebccparentsJAPANESEGRADE = defaultdict(list)
         usebccparentsHOMEROOM = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
         usebccparentsHOMEROOM = defaultdict(list)
         usebccstudentsELEM = defaultdict(list)
         usebccstudentsGRADE = defaultdict(list)
         usebccstudentsHOMEROOM = defaultdict(list)
-        usebccstudentsHR = defaultdict(list)
         parentlink = defaultdict(list)
         teacherlink = defaultdict(list)
         teachersGRADE = defaultdict(list)
@@ -980,9 +989,6 @@ class PowerSchoolIntegrator():
         classes = defaultdict(list)
         classesPARENTS = defaultdict(list)
         special = defaultdict(list)
-
-        done_homerooms = []
-        done_grades = []
 
         self.server_information.create_temp_storage('student_email_info', 'list', 'email')
         self.server_information.empty_temp_storage('student_email_info')
@@ -1000,19 +1006,18 @@ class PowerSchoolIntegrator():
             if not student.homeroom:
                 self.logger.warn("This student does not have a homeroom:\n{}".format(student))
 
+            # USE ns.grade BECAUSE student.grade IS AN INTEGER
+            # TODO: DO WE MAKE student.grade A STRING?
+            # OR PUT THIS IN THE OBJECT SOMEWHOW?
             if ns.grade <= 0:
-                # USE ns.grade BECAUSE student.grade IS AN INTEGER
-                # TODO: DO WE MAKE student.grade A STRING?
-                # OR PUT THIS IN THE OBJECT SOMEWHOW?
                 ns.grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(ns.grade, None)
 
             usebccparentsALL.extend( student.guardian_emails )
             ns.grade and usebccparentsGRADE[ns.grade].extend(student.guardian_emails)
-            ns.homeroom and usebccparentsHOMEROOM[ns.grade].extend(student.guardian_emails)
+            ns.homeroom and usebccparentsHOMEROOM[ns.homeroom].extend(student.guardian_emails)
 
             if student.is_elementary:
                 usebccparentsELEM.extend(student.guardian_emails)
-
 
             if student.is_secondary:
                 usebccparentsSEC.extend(student.guardian_emails)
@@ -1021,7 +1026,7 @@ class PowerSchoolIntegrator():
                     usebccstudentsGRADE[ns.grade].append(student.email)
                     teachersGRADE[ns.grade].extend(student.teacher_emails)
                 if student.homeroom:
-                    usebccstudentsHR[ns.homeroom].append(student.email)
+                    usebccstudentsHOMEROOM[ns.homeroom].append(student.email)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
                 hrlink[student.username].append(student.homeroom_teacher_email)
@@ -1031,8 +1036,19 @@ class PowerSchoolIntegrator():
 
             if student.is_chinese:
                 usebccparentsCHINESE.extend( student.guardian_emails )
+                student.is_secondary and usebccparentsCHINESESEC.extend( student.guardian_emails )
+                student.is_elementary and usebccparentsCHINESEELEM.extend( student.guardian_emails )
+                usebccparentsCHINESEGRADE[ns.grade].extend( student.guardian_emails )
             if student.is_korean:
                 usebccparentsKOREAN.extend( student.guardian_emails )
+                student.is_secondary and usebccparentsKOREANSEC.extend( student.guardian_emails )
+                student.is_elementary and usebccparentsKOREANELEM.extend( student.guardian_emails )
+                usebccparentsKOREANGRADE[ns.grade].extend( student.guardian_emails )
+            if student.is_japanese:
+                usebccparentsJAPANESE.extend( student.guardian_emails )
+                student.is_secondary and usebccparentsJAPANESESEC.extend( student.guardian_emails )
+                student.is_elementary and usebccparentsJAPANESEELEM.extend( student.guardian_emails )
+                usebccparentsJAPANESEGRADE[ns.grade].extend( student.guardian_emails )
 
         for ns.grade in usebccparentsGRADE:
             for ns.email in set(usebccparentsGRADE[ns.grade]):
@@ -1047,11 +1063,11 @@ class PowerSchoolIntegrator():
                 write_db('student_email_info', list=ns('teachers{grade}'), email=ns('{email}'))
 
         for ns.homeroom in usebccparentsHOMEROOM:
-            for ns.email in set(usebccparentsHOMEROOM[ns.grade]):
+            for ns.email in set(usebccparentsHOMEROOM[ns.homeroom]):
                 write_db('student_email_info', list=ns('usebccparents{homeroom}'), email=ns('{email}'))
 
         for ns.homeroom in usebccstudentsHOMEROOM:
-            for ns.email in set(usebccstudentsHOMEROOM[ns.grade]):
+            for ns.email in set(usebccstudentsHOMEROOM[ns.homeroom]):
                 write_db('student_email_info', list=ns('usebccstudents{homeroom}'), email=ns('{email}'))
 
         for ns.student in teacherlink:
@@ -1141,12 +1157,51 @@ class PowerSchoolIntegrator():
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsCHINESE) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESESEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsCHINESESEC) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESEELEM{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsCHINESEELEM) )
+
+        for ns.grade in usebccparentsCHINESEGRADE:
+            with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{grade}{EXT}'), 'w') as f:
+                f.write( '\n'.join(set(usebccparentsCHINESEGRADE[ns.grade])) )
+
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsKOREAN) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREANELEM{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsKOREANSEC) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREANSEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsKOREANSEC) )
+
+        for ns.grade in usebccparentsKOREANGRADE:
+            with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}'), 'w') as f:
+                f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsKOREAN) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESESEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsKOREANSEC) )
+
+        for ns.grade in usebccparentsKOREANGRADE:
+            with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}'), 'w') as f:
+                f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
+
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
-            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM', 'usebccparentsKOREAN', 'usebccparentsCHINESE']:
+            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
+                            'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
+                            'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
+                            'usebccparentsJAPANESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
+            for ns.grade in usebccparentsKOREANGRADE:
+                f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
+            for ns.grade in usebccparentsCHINESEGRADE:
+                f.write( ns('usebccparentsCHINESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{grade}{EXT}{NEWLINE}') )
+            for ns.grade in usebccparentsJAPANESEGRADE:
+                f.write( ns('usebccparentsJAPANESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccJAPANESE{grade}{EXT}{NEWLINE}') )
 
         # CLASSES
         directory_write = []
