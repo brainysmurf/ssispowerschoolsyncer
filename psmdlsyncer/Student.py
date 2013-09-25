@@ -86,6 +86,8 @@ class Student(Entry):
         if self.grade in range(6, 8):
             self.profile_extra_ismsstudent = True
             self._cohorts.append('studentsMS')
+        if self.grade == 10:
+            self._cohorts.append('students10')
         if self.grade in range(9, 12):
             self.profile_extra_ishsstudent = True
             self._cohorts.append('studentsHS')

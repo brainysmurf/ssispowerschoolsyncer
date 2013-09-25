@@ -9,6 +9,7 @@ from psmdlsyncer.utils.ServerInfo import ServerInfo, NoStudentInMoodle, StudentC
     GroupDoesNotExist, StudentNotInGroup, ParentAccountNotAssociated, ParentNotInGroup, MustExit
 from psmdlsyncer.utils.AutoSendFile import File
 from psmdlsyncer.Inform import inform_new_parent, inform_new_student, reinform_new_parent
+from psmdlsyncer.ModifyDragonNet import DragonNetModifier
 import re
 import datetime
 import os
@@ -101,6 +102,8 @@ class PowerSchoolIntegrator():
             self.build_updates()
         if self.settings.remove_enrollments:
             self.remove_enrollments()
+        if self.settings.enroll_cohorts:
+            self.enroll_cohorts()
             
         self.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
 
@@ -570,6 +573,15 @@ class PowerSchoolIntegrator():
                 student = self.students.get_student(student_key)
                 if student.is_secondary:
                     f.write(student.email + '\n')
+
+    def enroll_cohorts(self):
+        dnet = DragonNetModifier()
+        for student_key in self.students.get_student_keys():
+            student = self.students.get_student(student_key)
+            if student.is_secondary:
+                for cohort in student._cohorts:
+                    dnet.add_user_to_cohort(student.num, cohort)
+                
 
     def remove_enrollments(self):
         """
