@@ -1194,7 +1194,7 @@ class PowerSchoolIntegrator():
             for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
-                            'usebccparentsJAPANESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM']:
+                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
                 f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
@@ -1220,7 +1220,6 @@ class PowerSchoolIntegrator():
             with open( ns('{PATH}{SLASH}classes{SLASH}{klass}PARENTS{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(classesPARENTS[ns.klass])) )
 
-        """
         self.logger.debug("Set up department batch emails")
         ##  SETUP DEPARTMENTS, including by homeroom teachers
         depart_dict = {}
@@ -1243,28 +1242,26 @@ class PowerSchoolIntegrator():
                     depart_dict[d_email_name].append(teacher.email)
 
             if teacher.homeroom:
-                d['homeroom'] = teacher.homeroom
+                ns.homeroom = teacher.homeroom
                 if not teacher.homeroom in homeroom_teachers_dict.keys():
                     homeroom_teachers_dict[teacher.homeroom] = True
-                    setup_postfix = '{path}/departments{ext}'.format(**d)
+                    setup_postfix = ns('{PATH}/departments{EXT}')
                     with open(setup_postfix, 'a') as f:
-                        f.write("homeroomteachers{homeroom}: :include:{path}/departments/homeroomteachers{homeroom}{ext}\n".format(**d))
-                setup_postfix = '{path}/departments/homeroomteachers{homeroom}{ext}'.format(**d)
+                        f.write(ns("homeroomteachers{homeroom}: :include:{PATH}/departments/homeroomteachers{homeroom}{EXT}\n"))
+                setup_postfix = ns('{PATH}/departments/homeroomteachers{homeroom}{EXT}')
                 with open(setup_postfix, 'a') as f:
                     f.write(teacher.email + '\n')
 
-        for department in list(depart_dict.keys()):
+        for ns.department in list(depart_dict.keys()):
             # department is now actually the email name we want to use 
-            d['department'] = department
-            setup_postfix = '{path}/departments{ext}'.format(**d)
+            setup_postfix = ns('{PATH}/departments{EXT}')
             with open(setup_postfix, 'a') as f:
-                f.write("{department}: :include:{path}/departments/{department}{ext}\n".format(**d))
+                f.write( ns("{department}: :include:{PATH}/departments/{department}{EXT}\n") )
 
-            setup_postfix = '{path}/departments/{department}{ext}'.format(**d)
+            setup_postfix = ns('{PATH}/departments/{department}{EXT}')
             with open(setup_postfix, 'w') as f:
-                f.write( "\n".join(depart_dict[department]) )
+                f.write( "\n".join(depart_dict[ns.department]) )
 
-        """
                 
         # run newaliases command on exit if we're on the server
         newaliases_path = False
