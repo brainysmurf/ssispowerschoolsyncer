@@ -1117,7 +1117,7 @@ class PowerSchoolIntegrator():
             directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccstudents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(usebccstudentsHOMEROOM[ns.homeroom])) )
-        with open( ns('{PATH}{SLASH}homeroom{EXT}'), 'w') as f:
+        with open( ns('{PATH}{SLASH}homerooms{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
         # TEACHERLINK
