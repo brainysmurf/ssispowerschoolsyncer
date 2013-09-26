@@ -1328,4 +1328,4 @@ class PowerSchoolIntegrator():
 
 if __name__ == "__main__":
 
-    p = PowerSchoolIntetor()
+    p = PowerSchoolIntegrator()
