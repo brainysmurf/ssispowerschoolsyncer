@@ -1093,15 +1093,15 @@ class PowerSchoolIntegrator():
         # GRADES
         directory_write = []
         for ns.grade in usebccparentsGRADE:
-            directory_write.append( ns('usebccparents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}usebccparents{grade}{EXT}') )
+            directory_write.append( ns('usebccparents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grades{SLASH}usebccparents{grade}{EXT}') )
             with open( ns('{PATH}{SLASH}grades{SLASH}usebccparents{grade}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(usebccparentsGRADE[ns.grade])) )
         for ns.grade in usebccstudentsGRADE:
-            directory_write.append( ns('usebccstudents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}usebccstudents{grade}{EXT}') )
+            directory_write.append( ns('usebccstudents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grades{SLASH}usebccstudents{grade}{EXT}') )
             with open( ns('{PATH}{SLASH}grades{SLASH}usebccstudents{grade}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(usebccstudentsGRADE[ns.grade])) )
         for ns.grade in teachersGRADE:
-            directory_write.append( ns('teachers{grade}{COLON}{INCLUDE}{PATH}{SLASH}grade{SLASH}teachers{grade}{EXT}') )
+            directory_write.append( ns('teachers{grade}{COLON}{INCLUDE}{PATH}{SLASH}grades{SLASH}teachers{grade}{EXT}') )
             with open( ns('{PATH}{SLASH}grades{SLASH}teachers{grade}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(teachersGRADE[ns.grade])) )
         with open( ns('{PATH}{SLASH}grades{EXT}'), 'w') as f:
@@ -1201,7 +1201,7 @@ class PowerSchoolIntegrator():
             for ns.grade in usebccparentsCHINESEGRADE:
                 f.write( ns('usebccparentsCHINESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{grade}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsJAPANESEGRADE:
-                f.write( ns('usebccparentsJAPANESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccJAPANESE{grade}{EXT}{NEWLINE}') )
+                f.write( ns('usebccparentsJAPANESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}{NEWLINE}') )
 
         # CLASSES
         directory_write = []
@@ -1328,4 +1328,4 @@ class PowerSchoolIntegrator():
 
 if __name__ == "__main__":
 
-    p = PowerSchoolIntegrator()
+    p = PowerSchoolIntetor()
