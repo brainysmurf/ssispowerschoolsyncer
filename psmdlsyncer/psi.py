@@ -1110,11 +1110,11 @@ class PowerSchoolIntegrator():
         # HOMEROOMS
         directory_write = []
         for ns.homeroom in usebccparentsHOMEROOM:
-            directory_write.append( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccparents{homeroom}{EXT}') )
+            directory_write.append( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(usebccparentsHOMEROOM[ns.homeroom])) )
         for ns.homeroom in usebccstudentsHOMEROOM:
-            directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homeroom{SLASH}usebccstudents{homeroom}{EXT}') )
+            directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(usebccstudentsHOMEROOM[ns.homeroom])) )
         with open( ns('{PATH}{SLASH}homerooms{EXT}'), 'w') as f:
