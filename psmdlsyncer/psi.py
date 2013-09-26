@@ -1206,9 +1206,9 @@ class PowerSchoolIntegrator():
         # CLASSES
         directory_write = []
         for ns.klass in classes:
-            directory_write.append( ns('{klass}{COLON}{INCLUDE}{PATH}{SLASH}{klass}{EXT}') )
+            directory_write.append( ns('{klass}{COLON}{INCLUDE}{PATH}{SLASH}classes{SLASH}{klass}{EXT}') )
         for ns.klass in classesPARENTS:
-            directory_write.append( ns('{klass}PARENTS{COLON}{INCLUDE}{PATH}{SLASH}{klass}PARENTS{EXT}') )
+            directory_write.append( ns('{klass}PARENTS{COLON}{INCLUDE}{PATH}{SLASH}classes{SLASH}{klass}PARENTS{EXT}') )
         with open( ns('{PATH}{SLASH}classes{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
