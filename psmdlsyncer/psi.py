@@ -1144,7 +1144,10 @@ class PowerSchoolIntegrator():
             if hrlink[ns.student]:  # not all kids have a homeroom teacher....
                 directory_write.append( ns('{student}HR{COLON}{INCLUDE}{PATH}{SLASH}homeroomlink{SLASH}{student}HR{EXT}') )
                 with open( ns('{PATH}{SLASH}homeroomlink{SLASH}{student}HR{EXT}'), 'w') as f:
-                    f.write( '\n'.join(set(hrlink[ns.student])) )
+                    try:
+                        f.write( '\n'.join(set(hrlink[ns.student])) )
+                    except TypeError:
+                        pass
         with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
         
