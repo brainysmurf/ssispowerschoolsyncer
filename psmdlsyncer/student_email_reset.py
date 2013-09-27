@@ -139,14 +139,17 @@ class Access:
         return reset_list
 
     def reset_email(self, who):
-        careful = open('/etc/passwd').readlines()
-        path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
+        //careful = open('/etc/passwd').readlines()
+        //path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
+        system_call('echo "{}":changeme | chpasswd'.format(who))
+        """
         for line in careful:
             if ":"+who+":" in line:
                 with open(path, 'a') as f:
                     f.write( re.sub(':x:', ':changeme:', line) )
                 system_call("/usr/sbin/newusers {}".format(path))
                 os.remove(path)
+        """
 
     def reset_dragonnet_only(self, who):
         careful = open('/etc/passwd').readlines()
