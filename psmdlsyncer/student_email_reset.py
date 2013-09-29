@@ -54,10 +54,10 @@ def check_user(powerschoolID):
         raise NoSuchUser
     match = re.match(r'([a-z]*[0-9]{2}) (.*)', result.stdout)
     if not match:
-        raise Exception(result("Whoa, something happened when parsing result from finger command!{NEWLINE}{stdout}")))
+        raise Exception(result("Whoa, something happened when parsing result from finger command!{NEWLINE}{stdout}"))
     result.username = match.group(1)
     if not result.username:
-        raise Exception(result("Did not find a username??!!{NEWLINE}{stdout}")))
+        raise Exception(result("Did not find a username??!!{NEWLINE}{stdout}"))
     return result
 
 class Access:
@@ -194,7 +194,7 @@ class Access:
         try:
             result = check_user(who)
         except NoSuchUser:
-            print(result("No such user returned in call with {}".format(who))))
+            print(result("No such user returned in call with {}".format(who)))
             return
 
         # RESULT NOW HAS username
@@ -210,52 +210,7 @@ class Access:
                 system_call("/usr/sbin/newusers {}".format(path))
                 os.remove(path)
         """
-
-    def reset_dragonnet_only(self, who):
-        finger = "finger {}".format(who)
-        if system_call(finger):
-            
-        
-        careful = open('/etc/passwd').readlines()
-        for line in careful:
-            if ":"+who+":" in line:
-                split = line.split(':')
-                idnumber = split[4]   # by convention the idnumber is stored as the fifth item
-                username = split[0]
-                system_call('/usr/bin/php /var/www/moodle/admin/cli/reset_password_changeme_file.php {}'.format(idnumber))
-
-                email = Email()
-                read_in_templates(reset_password_templates, email)
-                if username.endswith('P'):
-                    # We have a parent account, and the email should be different
-                    email.add_language('parent')
-                    email.define_field('salutation', "Dear SSIS Parent,")
-                else:
-                    email.add_language('student')
-                    email.define_field('salutation', "Dear SSIS Student,")
-                email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
-                email.define_field('password', 'changeme')
-                email.define_field('url', 'http://dragontv.ssis-suzhou.net/podcasts/dragonnet-instruction-how-tos/i-forgot-my-dragonnet-password')
-                email.make_subject('Your DragonNet Password has been reset')
-                email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
-                email.add_to(username + '@student.ssis-suzhou.net')
-                email.send()
-
-    def reset_all_passwords(self, who):
-        print("Resetting {} dragonnet2 and email".format(who))
-        self.reset_email_only(who)
-        self.reset_dragonnet_only(who)
-
-    def scan_and_reset(self):
-        scanned = self.get_list_of_resets()
-        for item in scanned:
-            print("About to try and reset {target}'s {which}.".format(**item))
-            try:
-                getattr(self, item['which'].strip())(item['target'])
-                print("Successfully reset")
-            except AttributeError:
-                print("I do not have a method that goes by the name of {}".format(item['which']))
-
+                
 if __name__ == "__main__":
 
     dnet = Access()
