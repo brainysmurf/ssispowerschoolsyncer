@@ -1,14 +1,64 @@
+"""
+
+PROVIDES AN API TO POLL MOODLE'S DATABASE FOR STUDENT EMAIL PASSWORD RESETS
+
+REQUIRES THE FOLLOWING:
+    user_email_password_reset TABLE
+    finger INSTALLED ON THE EMAIL SERVER
+
+Access IS A WRAPPER TO THE DATABASE CALLS
+
+"""
+
 import postgresql
 import re
 import subprocess
 import os
+import sys
 
 from psmdlsyncer.html_email.Email import Email, read_in_templates
-from psmdlsyncer.utils.Formatter import Smartformatter
+from psmdlsyncer.utils.Formatter import Smartformatter, NS
 from psmdlsyncer.settings import config_get_section_attribute
 
-def system_call(str):
-    subprocess.call(str, shell=True)
+def NoSuchUser(Exception):
+    pass
+
+def system_call(command):
+    """
+    WRAPPER FOR THE Popen CALL
+    TURN RESULT INTO AN OBJECT AND RETURN
+    DOES NOT CHECK FOR ERRORS
+    DO NOT USE WITH USER INPUT
+
+    CONVERTS TO APPROPRIATE ENCODING, RETURNS 'REGULAR' STRINGS
+    """
+    p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    # SKIP CHECK FOR not p
+    # SIMPLY RETURN THE STANDARD OUT
+
+    sf = Smartformatter()
+    encoding = sys.getdefaultencoding()
+    sf.stdout, sf.stderr = p.communicate()
+    sf.stdout = sf.stdout.decode(encoding).strip('\n')
+    sf.stderr = sf.stderr.decode(encoding).strip('\n')
+    return sf
+
+def check_user(powerschoolID):
+    """
+    WRAPPER FOR SYSTEM CALL finger powerschooLID
+    LOOKS AT RESULT AND PUTS username INSIDE RESULT
+    """
+    result = system_call('finger {} | tail -n 1'.format(powerschoolID))
+    finger_returns_when_no_such_user = 'no such user.'
+    if result.endswith(finger_returns_when_no_such_user):
+        raise NoSuchUser
+    match = re.match(r'([a-z]*[0-9]{2}) (.*)', result.stdout)
+    if not match:
+        raise Exception(result("Whoa, something happened when parsing result from finger command!{NEWLINE}{stdout}")))
+    result.username = match.group(1)
+    if not result.username:
+        raise Exception(result("Did not find a username??!!{NEWLINE}{stdout}")))
+    return result
 
 class Access:
 
@@ -141,15 +191,31 @@ class Access:
     def reset_email(self, who):
         careful = open('/etc/passwd').readlines()
         path = '/home/lcssisadmin/database_password_reset/reset_password.txt'
-        #system_call('echo "{}":changeme | chpasswd'.format(who))  
+        try:
+            result = check_user(who)
+        except NoSuchUser:
+            print(result("No such user returned in call with {}".format(who))))
+            return
+
+        # RESULT NOW HAS username
+        result.default_password = 'changeme'
+        result = system_call(result('echo {username}:{default_password} | chpasswd'))
+        print(result)
+
+        """
         for line in careful:
             if ":"+who+":" in line:
                 with open(path, 'a') as f:
                     f.write( re.sub(':x:', ':changeme:', line) )
                 system_call("/usr/sbin/newusers {}".format(path))
                 os.remove(path)
+        """
 
     def reset_dragonnet_only(self, who):
+        finger = "finger {}".format(who)
+        if system_call(finger):
+            
+        
         careful = open('/etc/passwd').readlines()
         for line in careful:
             if ":"+who+":" in line:

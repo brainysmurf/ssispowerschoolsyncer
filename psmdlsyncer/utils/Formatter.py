@@ -58,3 +58,11 @@ class Smartformatter:
         if self._verbose:
             print(result)
         return result
+
+    def __repr__(self):
+        """
+        VERY MEAGER WAY TO OUTPUT THIS DATA
+        """
+        return str(self.__dict__.items())
+
+NS = Smartformatter
