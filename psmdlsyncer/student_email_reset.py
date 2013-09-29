@@ -55,7 +55,7 @@ def system_call(command):
 def check_user(powerschoolID):
     """
     WRAPPER FOR SYSTEM CALL finger powerschooLID
-    LOOKS AT RESULT AND PUTS username INSIDE RESULT
+    PARSES RESULT OF finger -s COMMAND AND EXTRACTS username
     """
     result = system_call('finger -s {}'.format(powerschoolID))
     # OUTPUT FROM finger -s IS USER FOR EACH ITEM
