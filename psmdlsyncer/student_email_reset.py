@@ -69,7 +69,7 @@ def check_user(powerschoolID):
     # (TABS WHICH LOOK LIKE SPACES TO US)
     # username name pts/0 * Jan 23 2001
     # SO, GET THE USERNAME, EVERYTHING BEFORE THE SPACE, THE REST IS JUNK
-    result.username, *_ = result.stdout.split(' ')
+    result.username, *_ = result.stdout.split('\n')[-1].split(' ')
     if not result.username:
         raise Exception(result("Did not find a username??!!{NEWLINE}{stdout}"))
     return result
