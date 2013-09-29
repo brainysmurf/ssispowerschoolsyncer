@@ -56,10 +56,11 @@ def check_user(powerschoolID):
     finger_returns_when_no_such_user = 'no such user.'
     if result.stdout.endswith(finger_returns_when_no_such_user):
         raise NoSuchUser
-    match = re.match(r'([a-z]*[0-9]{2}) (.*)', result.stdout)
-    if not match:
-        raise Exception(result("Whoa, something happened when parsing result from finger command!{NEWLINE}{stdout}{NEWLINE}{powerschoolID}"))
-    result.username = match.group(1)
+    # FINGER RETURNS INFORMATION DELINIATED BY TABS
+    # (TABS WHICH LOOK LIKE SPACES TO US)
+    # username name pts/0 * Jan 23 2001
+    # SO, GET THE USERNAME, EVERYTHING BEFORE THE SPACE, THE REST IS JUNK
+    result.username, *_ = result.stdout.split(' ')
     if not result.username:
         raise Exception(result("Did not find a username??!!{NEWLINE}{stdout}"))
     return result
