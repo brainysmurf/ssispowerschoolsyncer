@@ -85,7 +85,6 @@ class PowerSchoolIntegrator():
             self.build_teachers()
         if self.settings.courses:
             self.build_courses()
-            self.build_student_courses()
         if self.settings.students:
             self.build_students()
         if self.settings.email_list:
@@ -143,13 +142,16 @@ class PowerSchoolIntegrator():
 
 
     def build_teachers(self):
-        self.logger.info("Building teachers")
+        """
+        OUTPUTS A CSV FILE USEFUL FOR BULK UPLOAD TWT FEATURE IN MOODLE
+        """
+        self.logger.info("Building teachers and department heads")
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'teachers_moodle_file.txt')
         output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'maildigest', 'course_', 'cohort_', 'type_'])
 
         # First do heads of department
 
-        heads = {}
+        heads = defaultdict(list)
         for course_key in self.students.get_course_keys():
             course = self.students.get_course(course_key)
             these_heads = course.heads
@@ -157,8 +159,6 @@ class PowerSchoolIntegrator():
                 continue
             for head in these_heads:
                 if head:
-                    if not head in list(heads.keys()):
-                        heads[head] = []
                     heads[head].append(course.moodle_short)        
 
         self.logger.debug("Head list has been built:\n{}".format(heads))
@@ -216,7 +216,7 @@ class PowerSchoolIntegrator():
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
 
-            parent_account = database.sql("select username, email from ssismdl_user where idnumber = '{}'".format(student.family_id))()
+            parent_account = database.call_sql("select username, email from ssismdl_user where idnumber = '{}'".format(student.family_id))
             if not parent_account:
                 continue
             parent_username, parent_email = parent_account[0]
@@ -245,37 +245,6 @@ class PowerSchoolIntegrator():
                 output_file.add_row(row)
 
         output_file.output()
-
-    def build_opening_table(self):
-        open(self.path_to_output + '/' + 'table.txt', 'w').close()
-        for course_key in self.students.get_course_keys():
-            course = self.students.get_course(course_key)
-            teachers = course.teachers()
-            table = """<table border="1" cellpadding="10" cellspacing="10" align="center" style="width: 300px;"><caption>Teacher Contact Information</caption>
-    <tbody>{inside}</tbody></table>"""
-            inside = """<tr><td>{username}@ssis-suzhou.net</td></tr>"""
-            with open(self.path_to_output + "/" + "table.txt", 'a') as f:
-                f.write(course.moodle_short + '\n')
-                body = ""
-                for teacher in teachers:
-                    if teacher == "deadsections":
-                        continue
-                    d = {'username':teacher}
-                    body += inside.format(**d)
-                d['inside'] = body
-                f.write(table.format(**d) + '\n\n')
-
-    def build_student_courses(self):
-        self.logger.info("Now build the student_courses file in the output folder")
-        with open(self.path_to_output + '/' + 'student_courses', 'w') as f:
-            for student_key in self.students.get_student_keys():
-                student = self.students.get_student(student_key)
-                self.logger.debug("Student course info for {}".format(student))
-                d = student.__dict__.copy()
-                d['courses'] = ",".join(student.courses())
-                if student.homeroom in self.students.get_secondary_homerooms():
-                    if student.courses():
-                        f.write("{num}\t{username}\t{courses}\n".format(**d))
 
     def handle_new_student(results, family, student):
         for idnumber, comment in results:
@@ -405,38 +374,37 @@ class PowerSchoolIntegrator():
         #TODO: Incorporate this into the whole thing later
         for family_key in families.families:
             family = families.families[family_key]
-            formatter = Smartformatter()
-            formatter.take_dict(family)
+            ns = NS()
+            ns.take_dict(family)
             try:
-                formatter.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
+                ns.user_id = database.call_sql(ns("select id from {{prefix}}user where idnumber = '{num}'"))[0][0]
             except IndexError:
                 # They don't have an account yet?
                 continue
-            for formatter.extra_profile_field, formatter.value in family.get_extra_profile_fields():
-                formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
-                if not formatter.field_id:
-                    self.logger.warn(formatter("You need to manually add the {extra_profile_field} field!"))
+            for ns.extra_profile_field, ns.value in family.get_extra_profile_fields():
+                ns.field_id = database.call_sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))
+                if not ns.field_id:
+                    self.logger.warn(ns("You need to manually add the {extra_profile_field} field!"))
                     continue
-                formatter.field_id = formatter.field_id[0][0]
-                there_already = database.sql(formatter("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
+                ns.field_id = ns.field_id[0][0]
+                there_already = database.sql(ns("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
                 if there_already:
-                    if not there_already[0][0] == str(int(formatter.value)):
+                    if not there_already[0][0] == str(int(ns.value)):
                         # only call update if it's different
-                        formatter.value = int(formatter.value)
-                        self.logger.debug(formatter('updating record {user_id} in ssis_user'))                        
-                        database.sql(formatter("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))()
+                        ns.value = int(ns.value)
+                        self.logger.debug(ns('updating record {user_id} in ssis_user'))                        
+                        database.call_sql(ns("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))
                     else:
-                        self.logger.debug(formatter("No change in {extra_profile_field}, so didn't call the database"))
+                        self.logger.debug(ns("No change in {extra_profile_field}, so didn't call the database"))
                 else:
-                    self.logger.debug(formatter('inserting {extra_profile_field}'))
-                    database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()            
+                    self.logger.debug(ns('inserting {extra_profile_field}'))
+                    database.sql(ns("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()            
         for teacher_key in self.students.get_teacher_keys():
             teacher = self.students.get_teacher(teacher_key)
-            formatter = Smartformatter()
-            formatter.take_dict(teacher)
-
+            ns = NS(teacher)
+            
             try:
-                formatter.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
+                ns.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
             except IndexError:
                 # They don't have an account yet?
                 continue
