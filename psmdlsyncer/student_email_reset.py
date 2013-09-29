@@ -26,6 +26,12 @@ class NoSuchUser(Exception):
     def __str__(self):
         return repr(self.value)
 
+class MoreThan1User(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
 def system_call(command):
     """
     WRAPPER FOR THE Popen CALL
@@ -51,7 +57,10 @@ def check_user(powerschoolID):
     WRAPPER FOR SYSTEM CALL finger powerschooLID
     LOOKS AT RESULT AND PUTS username INSIDE RESULT
     """
-    result = system_call('finger -s {} | tail -n 1'.format(powerschoolID))
+    result = system_call('finger -s {}'.format(powerschoolID))
+    # OUTPUT FROM finger -s IS USER FOR EACH ITEM
+    if len(result.stdout.split('\n') > 2):
+        raise MoreThan1User
     result.powerschoolID = powerschoolID
     finger_returns_when_no_such_user = 'no such user.'
     if result.stdout.endswith(finger_returns_when_no_such_user):
