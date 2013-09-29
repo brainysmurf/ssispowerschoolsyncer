@@ -60,11 +60,11 @@ def check_user(powerschoolID):
     result = system_call('finger -s {}'.format(powerschoolID))
     # OUTPUT FROM finger -s IS USER FOR EACH ITEM
     if len(result.stdout.split('\n')) > 2:
-        raise MoreThan1User
+        raise MoreThan1User(result.stdout)
     result.powerschoolID = powerschoolID
     finger_returns_when_no_such_user = 'no such user.'
     if result.stdout.endswith(finger_returns_when_no_such_user):
-        raise NoSuchUser
+        raise NoSuchUser(powerschoolID)
     # FINGER RETURNS INFORMATION DELINIATED BY TABS
     # (TABS WHICH LOOK LIKE SPACES TO US)
     # username name pts/0 * Jan 23 2001
