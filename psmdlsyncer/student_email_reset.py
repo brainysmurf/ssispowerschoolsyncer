@@ -17,7 +17,7 @@ import os
 import sys
 
 from psmdlsyncer.html_email.Email import Email, read_in_templates
-from psmdlsyncer.utils.Formatter import Smartformatter, NS
+from psmdlsyncer.utils.Formatter import NS
 from psmdlsyncer.settings import config_get_section_attribute
 
 class NoSuchUser(Exception):
@@ -39,7 +39,7 @@ def system_call(command):
     # SKIP CHECK FOR not p
     # SIMPLY RETURN THE STANDARD OUT
 
-    sf = Smartformatter()
+    sf = NS()
     encoding = sys.getdefaultencoding()
     sf.stdout, sf.stderr = p.communicate()
     sf.stdout = sf.stdout.decode(encoding).strip('\n')
@@ -51,13 +51,14 @@ def check_user(powerschoolID):
     WRAPPER FOR SYSTEM CALL finger powerschooLID
     LOOKS AT RESULT AND PUTS username INSIDE RESULT
     """
-    result = system_call('finger {} | tail -n 1'.format(powerschoolID))
+    result = system_call('finger -s {} | tail -n 1'.format(powerschoolID))
+    result.powerschoolID = powerschoolID
     finger_returns_when_no_such_user = 'no such user.'
     if result.stdout.endswith(finger_returns_when_no_such_user):
         raise NoSuchUser
     match = re.match(r'([a-z]*[0-9]{2}) (.*)', result.stdout)
     if not match:
-        raise Exception(result("Whoa, something happened when parsing result from finger command!{NEWLINE}{stdout}"))
+        raise Exception(result("Whoa, something happened when parsing result from finger command!{NEWLINE}{stdout}{NEWLINE}{powerschoolID}"))
     result.username = match.group(1)
     if not result.username:
         raise Exception(result("Did not find a username??!!{NEWLINE}{stdout}"))
@@ -67,7 +68,7 @@ class Access:
 
     prefix = 'ssismdl_'
     def __init__(self):
-        sf = Smartformatter()
+        sf = NS()
         sf.db_name = config_get_section_attribute('MOODLE', 'db_name')
         sf.db_username = config_get_section_attribute('MOODLE', 'db_username')
         sf.db_password = config_get_section_attribute('MOODLE', 'db_password')
@@ -124,7 +125,7 @@ class Access:
         """
         SELECT table WHERE kwargs
         """
-        sf = Smartformatter()
+        sf = NS()
         sf.table = self.convert_to_table(table)
         wheres = []
         for i in range(len(list(kwargs.keys()))):
@@ -221,7 +222,7 @@ if __name__ == "__main__":
     # COLLAPSE SO WE ARE GUARENTEED TO BE WORKING WITH JUST ONE AT A TIME
     results = set(results)
     for row in results:
-        sf = Smartformatter()
+        sf = NS()
         sf.userid, sf.num, sf.fullname, sf.email = row
         print(sf('About to reset {fullname} ({num}) email password to changeme'))
         dnet.reset_email(str(sf.num))
