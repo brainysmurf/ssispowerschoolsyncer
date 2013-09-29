@@ -20,8 +20,11 @@ from psmdlsyncer.html_email.Email import Email, read_in_templates
 from psmdlsyncer.utils.Formatter import Smartformatter, NS
 from psmdlsyncer.settings import config_get_section_attribute
 
-def NoSuchUser(Exception):
-    pass
+class NoSuchUser(Exception):
+    def __init__(self, value):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
 
 def system_call(command):
     """
@@ -50,7 +53,7 @@ def check_user(powerschoolID):
     """
     result = system_call('finger {} | tail -n 1'.format(powerschoolID))
     finger_returns_when_no_such_user = 'no such user.'
-    if result.endswith(finger_returns_when_no_such_user):
+    if result.stdout.endswith(finger_returns_when_no_such_user):
         raise NoSuchUser
     match = re.match(r'([a-z]*[0-9]{2}) (.*)', result.stdout)
     if not match:
