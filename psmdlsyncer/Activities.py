@@ -1,7 +1,7 @@
 from psmdlsyncer.Students import Students, put_in_order
 
-from psmdlsyncer.utils.Formatter import Smartformatter
-from psmdlsyncer.utils.DB import DragonNetDBConnection
+from psmdlsyncer.utils.Namespace import NS
+from psmdlsyncer.utils.database.MoodleDatabase import MoodleDBConnection
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.utils.FilesFolders import clear_folder
 
@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     students = Students()
     
-    db = DragonNetDBConnection()
-    sf = Smartformatter()
+    db = MoodleDBConnection()
+    sf = NS()
 
     results = db.get_all_users_activity_enrollments()
     sf.domain = 'student.ssis-suzhou.net'
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         students_sorted.sort(key=lambda x: x[0])
         for item in students_sorted:
             lastfirst, student = item
-            s = Smartformatter()
+            s = NS()
             s.take_dict(student)
             s.activities = ", ".join( homerooms[homeroom][(lastfirst, student)] )
             print(s('{lastfirst}{COLON}{SPACE}{activities}'))
@@ -62,7 +62,7 @@ if __name__ == "__main__":
     for activity in activities_sorted:
         print('\n' + activity)
         for student in activities[activity]:
-            s = Smartformatter()
+            s = NS()
             s.take_dict(student)
             print(s('{lastfirst}{TAB}{homeroom}'))
 

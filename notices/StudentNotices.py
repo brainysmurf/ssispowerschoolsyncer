@@ -7,7 +7,7 @@ from psmdlsyncer.utils.Dates import custom_strftime, today
 from psmdlsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
 from Samples import student_notices_samples, student_notices_tag_samples
 import datetime
-
+from psmdlsyncer.settings import define_command_line_arguments
 class Nothing(Exception): pass
 
 k_record_id = 2
@@ -23,6 +23,10 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.verbose = False
         self.end_of_item = ""
         super().__init__('Secondary Notices Database')
+        self.settings = define_command_line_arguments('email', 'wordpress',
+                                                      *self.shared_command_line_args_switches,
+                                                      **self.shared_command_line_args_strings)
+        self.init()
         #self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'
 
     def define(self):
@@ -53,7 +57,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
             self.verbose and print("Sending notices to {}".format(self.agents))
             message_to_staff = """<p>Edit these notices by <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d=5">going here</a>.</p>"""
             self.format_for_email()
-            if self.no_emails:
+            if self.settings.no_emails:
                 print("NOT sending email... but this is what would have been sent:")
                 self.print_email(self.agents)
             else:
@@ -83,14 +87,13 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
 
 if __name__ == "__main__":
-    from psmdlsyncer.settings import settings
     notices = Student_Notices()
     # TURN ON THE ABILITY TO CLICK "EDIT" NEXT TO EACH ONE.
     # THIS REQUIRES THAN A dbid FIELD BE CREATED ON THE SERVER SIDE
     # TODO: STREAMLINE THIS BETTER
-    if settings.arguments.em_only:
+    if notices.settings.email:
         notices.email_editing = True
         notices.email_to_agents()
-    if settings.arguments.wp_only:
+    if notices.settings.wordpress:
         notices.email_editing = False
         notices.post_to_wordpress('secondarystudentannouncements', datetime.time(hour=19,minute=5,second=0), date=today())

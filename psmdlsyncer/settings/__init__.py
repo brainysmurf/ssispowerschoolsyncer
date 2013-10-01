@@ -21,15 +21,16 @@ class HoldPassedArguments:
         switches are used for boolean values
         strings are usef for passed values
         """
-
         parser = argparse.ArgumentParser()
         for switch in switches:
             parser.add_argument('--' + switch, action='store_true')
         for string in strings.keys():
             parser.add_argument('-' + string, action='store', dest=string, default=strings[string])
         self.arguments = parser.parse_args(sys.argv[1:])
-        #for key, value in vars(parser.parse_args(sys.argv[1:])).items():
-        #    setattr(self.arguments, key, value)
+        self.arguments.courses = True
+        self.arguments.teachers = True
+        self.arguments.students = True
+        #TODO: Read in info from settings.ini file if necessary
 
 current_working_list = os.path.abspath(os.path.join(__file__, os.pardir)).split(os.sep)
 
@@ -42,12 +43,8 @@ while current_working_list:
     settings_list.append( here + '/settings.ini' )
     current_working_list.pop(-1)
 
-settings = HoldPassedArguments('verbose', 'log_level', 'dry_run', 'teachers', 'courses',
-                               'students', 'email_list', 'families', 'parents',
-                               'automagic_emails', 'profiles', 'input_okay', 'updaters',
-                               'enroll_cohorts', 'enroll_courses', 'remove_enrollments',
-                               'wp_only', 'em_only',
-                                inspect_student=False)
+def define_command_line_arguments(*switches, **strings):
+    return HoldPassedArguments(*switches, **strings).arguments
 
 config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
 results = config.read(settings_list)
@@ -60,17 +57,8 @@ if config.has_section('ARGUMENTS'):
     for key in config_arguments.keys():
         setattr(settings.arguments, key, config['ARGUMENTS'][key])
 
-# SET UP ASSUMPTIONS GIVEN PASSED ARGUMENTS AT COMMAND LINE
-settings.arguments.courses = True
-settings.arguments.teachers = True
-settings.arguments.students = True
-
 verbose = config.getboolean('DEFAULTS', 'verbose')
 dry_run = config.getboolean('DEFAULTS', 'dry_run')
-
-if 'DEFAULTS' in config.sections():
-    for key in config['DEFAULTS']:
-        setattr(settings, key, config.getboolean('DEFAULTS', key))
 
 email_server = None
 if config.has_section("EMAIL"):
@@ -115,4 +103,4 @@ if numeric_level is None:
 
 logging.basicConfig(filename=path_to_logger, level=numeric_level)
 
-__all__ = [verbose, verbosity, dry_run, email_server, config, settings, requires_setting, logging]
+__all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments, logging]

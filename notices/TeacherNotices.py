@@ -3,7 +3,7 @@
 from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
 from Samples import teacher_notices_samples, teacher_notices_tag_samples
-from psmdlsyncer.settings import settings
+from psmdlsyncer.settings import define_command_line_arguments
 
 class Nothing(Exception): pass
 
@@ -21,6 +21,10 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
     def __init__(self):
         super().__init__('Teacher Notices Database')
+        self.settings = define_command_line_arguments('group_sec_all',
+                                                      *self.shared_command_line_args_switches,
+                                                      **self.shared_command_line_args_strings)
+        self.init()
         self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/secondarystudentannouncements/">Click here Secondary Student Notices</i></a></p>'
 
     def define(self):
@@ -71,7 +75,7 @@ if __name__ == "__main__":
     try:
         notices = Teacher_Notices()
         notices.email_editing = True
-        if settings.arguments.em_only:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
+        if notices.settings.group_sec_all:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
             notices.email_editing = False
             notices.agent_map = {
                 'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']

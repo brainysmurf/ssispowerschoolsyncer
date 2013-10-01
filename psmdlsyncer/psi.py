@@ -1,35 +1,18 @@
-#!/usr/bin/env python3
-
-from psmdlsyncer.Students import Students
-from psmdlsyncer.Families import Families
-from psmdlsyncer.utils.Bulk import MoodleCSVFile
-from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, convert_short_long, Categories, department_heads, department_email_names
-from psmdlsyncer.utils.FilesFolders import clear_folder
-from psmdlsyncer.utils.ServerInfo import ServerInfo, NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, \
+from psmdlsyncer.Tree import Tree
+from psmdlsyncer.sql import MoodleDBConnection, ServerInfo
+from psmdlsyncer.files import clear_folder, AutoSendFile, MoodleCSVFile
+from psmdlsyncer.exceptions import NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, \
     GroupDoesNotExist, StudentNotInGroup, ParentAccountNotAssociated, ParentNotInGroup, MustExit
-from psmdlsyncer.utils.AutoSendFile import File
-from psmdlsyncer.Inform import inform_new_parent, inform_new_student, reinform_new_parent
-from psmdlsyncer.ModifyDragonNet import DragonNetModifier
+from psmdlsyncer.inform import inform_new_parent, inform_new_student, reinform_new_parent
+from psmdlsyncer.php import ModUserEnrollments, CallPHP
+from psmdlsyncer.utils import NS, convert_short_long, Categories, department_email_names, department_heads
+from psmdlsyncer.html_email import Email, read_in_templates
+from psmdlsyncer.settings import config, config_get_section_attribute, logging
+
 import re
 import datetime
-import os
-from psmdlsyncer.utils.Formatter import Smartformatter
-
-from psmdlsyncer.ModifyDragonNet import DragonNetModifier
-
-from psmdlsyncer.utils.DB import DragonNetDBConnection
-
 import subprocess
 from collections import defaultdict
-
-from psmdlsyncer.utils.PHPMoodleLink import CallPHP
-from psmdlsyncer.html_email.Email import Email, read_in_templates
-
-from psmdlsyncer.settings import config, settings, config_get_section_attribute, logging
-import datetime
-
-class DragonNet(DragonNetDBConnection):
-    pass
 
 class InfiniteLoop(Exception):
     pass
@@ -51,15 +34,11 @@ class PowerSchoolIntegrator():
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.warn('Started at {}'.format( datetime.datetime.now() ) )
 
-        self.config = config
-        self.settings = settings.arguments
+        self.students = Tree()
 
-        if self.settings.automagic_emails:
-            # Set up dependencies
-            self.settings.courses = True
-            self.settings.teachers = True
-            self.settings.students = True
-        self.dry_run = self.settings.dry_run
+        self.config = config
+
+        self.dry_run = self.students.settings.dry_run
 
         if 'DEFAULTS' in self.config.sections():
             for key in self.config['DEFAULTS']:
@@ -79,29 +58,28 @@ class PowerSchoolIntegrator():
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
-        self.students = Students()
 
-        if self.settings.teachers:
+        if self.students.settings.teachers:
             self.build_teachers()
-        if self.settings.courses:
+        if self.students.settings.courses:
             self.build_courses()
-        if self.settings.students:
+        if self.students.settings.students:
             self.build_students()
-        if self.settings.email_list:
+        if self.students.settings.email_list:
             self.build_email_list()
-        if self.settings.families:
+        if self.students.settings.families:
             self.build_families()
-        if self.settings.parents:
+        if self.students.settings.parents:
             self.build_parents()
-        if self.settings.automagic_emails:
+        if self.students.settings.automagic_emails:
             self.build_automagic_emails()
-        if self.settings.profiles:
+        if self.students.settings.profiles:
             self.build_profiles()
-        if self.settings.updaters:
+        if self.students.settings.updaters:
             self.build_updates()
-        if self.settings.remove_enrollments:
+        if self.students.settings.remove_enrollments:
             self.remove_enrollments()
-        if self.settings.enroll_cohorts:
+        if self.students.settings.enroll_cohorts:
             self.enroll_cohorts()
             
         self.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
@@ -114,15 +92,14 @@ class PowerSchoolIntegrator():
         ############
         """
         self.logger.info("Building courses")
-        source = File('sec', 'courseinfo')
-        raw = source.content()
+        source = AutoSendFile('sec', 'courseinfo')
         courses = {}
         summaries = {}
         with open(self.path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
             f.write('fullname,shortname,category,summary,groupmode\n')
             self.logger.debug("Go through the file with course information, set up summaries and other info")
-            for line in raw:
-                orig_short, orig_long = line.strip('\n').split('\t')
+            for line in source.content():
+                orig_short, orig_long, _ = line
                 self.logger.debug("Building course: {}".format(orig_long))
                 short, long = convert_short_long(orig_short, orig_long)
                 courses[short] = long
@@ -208,26 +185,27 @@ class PowerSchoolIntegrator():
         Builds a manual file that can be imported in... horrible
         """
         self.logger.info("Building parents")
-        database = DragonNetDBConnection()
+        database = MoodleDBConnection()
 
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_parents.txt')
         output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
 
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-
-            parent_account = database.call_sql("select username, email from ssismdl_user where idnumber = '{}'".format(student.family_id))
+        
+            parent_account = database.get_unique_row("user",
+                                                "username", "email",
+                                                idnumber = student.family_id)
             if not parent_account:
                 continue
-            parent_username, parent_email = parent_account[0]
 
             if student.courses():
                 row = output_file.factory()
-                row.build_username(parent_username)
+                row.build_username(parent_account.username)
                 row.build_firstname('Parent of ')
                 row.build_lastname(student.first + student.last)
                 row.build_password('changeme')
-                row.build_email(parent_email)
+                row.build_email(parent_account.email)
                 row.build_course_(student.courses())
                 row.build_group_(student.groups())
                 cohorts = []
@@ -363,7 +341,7 @@ class PowerSchoolIntegrator():
             self.logger.warn("No moodle config available, cannot build profiles")
             return
 
-        database = DragonNetDBConnection()
+        database = MoodleDBConnection()
 
         families = Families()
 
@@ -374,22 +352,27 @@ class PowerSchoolIntegrator():
         #TODO: Incorporate this into the whole thing later
         for family_key in families.families:
             family = families.families[family_key]
-            ns = NS()
-            ns.take_dict(family)
+            ns = NS(family)
             try:
-                ns.user_id = database.call_sql(ns("select id from {{prefix}}user where idnumber = '{num}'"))[0][0]
+                ns.user_id = database.get_unique_row('user',
+                                                     'id',
+                                                     idnumber = family.num)
             except IndexError:
                 # They don't have an account yet?
                 continue
+            
             for ns.extra_profile_field, ns.value in family.get_extra_profile_fields():
-                ns.field_id = database.call_sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))
+                ns.field_id = database.get_unique_row("user_info_field",
+                                                      "id",
+                                                      shortname=ns.extra_profile_field)
                 if not ns.field_id:
                     self.logger.warn(ns("You need to manually add the {extra_profile_field} field!"))
                     continue
-                ns.field_id = ns.field_id[0][0]
-                there_already = database.sql(ns("select data from ssismdl_user_info_data where fieldid = {field_id} and userid = {user_id}"))()
+                there_already = database.get_unique_row("user_info_data", "data",
+                                                        fieldid = ns.field_id,
+                                                        userid = ns.user_id)
                 if there_already:
-                    if not there_already[0][0] == str(int(ns.value)):
+                    if there_already == str(int(ns.value)):
                         # only call update if it's different
                         ns.value = int(ns.value)
                         self.logger.debug(ns('updating record {user_id} in ssis_user'))                        
@@ -432,7 +415,7 @@ class PowerSchoolIntegrator():
         for student_key in self.students.get_student_keys(secondary=True):
             student = self.students.get_student(student_key)
 
-            formatter = Smartformatter()
+            formatter = NS()
             formatter.take_dict(student)
 
             try:
@@ -543,7 +526,7 @@ class PowerSchoolIntegrator():
                     f.write(student.email + '\n')
 
     def enroll_cohorts(self):
-        dnet = DragonNetModifier()
+        dnet = ModUserEnrollments()
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             if student.is_secondary:
@@ -558,8 +541,8 @@ class PowerSchoolIntegrator():
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             self.logger.info("Got to this one here: \n{}".format(student))
-            dnet = DragonNetDBConnection()
-            modify = DragonNetModifier()
+            dnet = MoodleDBConnection()
+            modify = ModUserEnrollments()
 
             # First handle secondary students
             if student.is_secondary and int(student.num) > 30000:
@@ -597,14 +580,14 @@ class PowerSchoolIntegrator():
                     modify.unenrol_user_from_course(family.idnumber, course)
             
 
-    def build_students(self, verify=False):
+    def build_students(self):
         """
         Go through each student and do what is necessary to actually sync powerschool data
         """
         self.logger.debug("Building csv file for moodle")
         path_to_cli = self.config['MOODLE'].get('path_to_cli') if self.config.has_section('MOODLE') else None
         path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
-        modify = DragonNetModifier()
+        modify = ModUserEnrollments()
 
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_users.txt')
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
@@ -738,9 +721,6 @@ class PowerSchoolIntegrator():
                 row.build_group_(student.groups())
                 row.build_cohort_(student.cohorts())
                 row.build_type_(["1" for c in student.courses()])
-                if verify:
-                    if len(student.groups()) != len(student.courses()):
-                        self.students.document_error('verification_failed', student)
                 output_file.add_row(row)
 
             # Now process elementary
@@ -751,7 +731,8 @@ class PowerSchoolIntegrator():
                 times_through = 0
                 while continue_until_no_errors:
                     try:
-                        self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress', 'ParentAccountNotAssociated', 'NoStudentInMoodle'))
+                        self.server_information.check_student(student, onlyraise=('NoParentAccount', 'NoEmailAddress',
+                                                                                  'ParentAccountNotAssociated', 'NoStudentInMoodle'))
 
                     except NoStudentInMoodle:
                         self.logger.warn("Student does not have a Moodle account:\n{}".format(student))
@@ -893,7 +874,7 @@ class PowerSchoolIntegrator():
         if not path:
             path = self.output_path + '/postfix'
 
-        ns = Smartformatter()
+        ns = NS()
         ns.PATH = path
         ns.EXT = '.txt'
         ns.INCLUDE = ' :include:'
@@ -1252,7 +1233,7 @@ class PowerSchoolIntegrator():
 
     def build_student_list(self):
 
-        from utils.DB import DragonNetDBConnection as DNET
+        from utils.DB import MoodleDBConnection as DNET
         dn = DNET()
         # id_map is needed because I need to know the id in the database
         id_map = dn.prepare_id_username_map()
@@ -1263,8 +1244,7 @@ class PowerSchoolIntegrator():
         indexes = []
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            f = Smartformatter()
-            f.take_dict(student)
+            f = NS(student)
             f(newline='\n')
             result.append( f("{first} {last} ({homeroom} {num})") )
 

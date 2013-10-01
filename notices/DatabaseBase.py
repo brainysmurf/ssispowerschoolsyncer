@@ -1,8 +1,9 @@
 #!/usr/local/bin/python3
 import postgresql
+from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.mod.database import FieldObject
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
-from psmdlsyncer.html_email.Email import Email
-from psmdlsyncer.utils.DB import FieldObject, DragonNetDBConnection
+from psmdlsyncer.html_email import Email
 from psmdlsyncer.settings import config_get_section_attribute
 from Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
@@ -24,6 +25,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
     """
     #TODO: Make it simple to get the new kid on the block
     master_username = 'peterfowles'
+    shared_command_line_args_switches = ['verbose', 'use_samples', 'no_emails', 'update_date_fields']
+    shared_command_line_args_strings = {'passed_date':None}
 
     def __init__(self, database_name, server='dragonnet.ssis-suzhou.net'):
         """
@@ -34,27 +37,15 @@ class ExtendMoodleDatabaseToAutoEmailer:
         super().__init__()
         # Setup
         self.database_name = database_name
-        dnet = DragonNetDBConnection()
-        self.database_id = dnet.sql("select id from ssismdl_data where name ='{}'".format(self.database_name))()[0][0]
-        import argparse
-        parser = argparse.ArgumentParser(description="Integrates Moodle Database with emailing system")
-        parser.add_argument('-e', '--no_emails', action="store_true", help="Do NOT send emails")
-        parser.add_argument('-x', '--use_samples', action="store_true", help="Use included samples")
-        parser.add_argument('-v', '--verbose', action="store_true", help="Tell you what I'm doing")
-        parser.add_argument('-d', '--passed_date', help="DD-MM-YYYY format")
-        parser.add_argument('-s', '--smtp', action="store", help="Which smtp server to use")
-        parser.add_argument('-w', '--wp_only', action="store_true", help="only execute a wordpress")
-        parser.add_argument('-m', '--em_only', action="store_true", help="only execute an email")
-        
-        args = parser.parse_args()
-        self.use_samples = args.use_samples
-        self.no_emails = args.no_emails
-        self.verbose = args.verbose
-        self.passed_date = args.passed_date
+        dnet = MoodleDBConnection()
+        self.database_id = dnet.get_unique_row("data", "id", name=self.database_name)
+
+    def init(self):
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
         # Also, since it goes to an email, CSS is avoided
+        self.verbose = self.settings.verbose
         self.start_html_tag    = '<html>'
         self.end_html_tag      = "</html>"
         self.header_pre_tag    = '<h3>'
@@ -83,7 +74,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         year  = self.date.year
 
         if self.section_field:
-            if self.use_samples:
+            if self.settings.use_samples:
                 # Testing/Debugging use
                 self.section_field_object = FieldObject(self.database_name, self.section_field,
                                         samples=self.section_samples())
@@ -99,8 +90,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.start_date_field = StartDateField(self.database_name, 'Start Date')
         self.end_date_field   = EndDateField(self.database_name, 'End Date')
         self.process()
-        self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
-        self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
+
+        if self.settings.update_date_fields:
+            self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
+            self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
+
         self.edit_word = "Edit"
 
     def process(self):
@@ -128,7 +122,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         Returns a generator object that represents the potential rows in the database
         If we are doing a dry-run then return a testing sample
         """
-        if self.use_samples:
+        if self.settings.use_samples:
             # Testing / Debugging use
             return DatabaseObjects(self.database_name, samples=self.samples(), verbose=self.verbose)
         else:
@@ -139,8 +133,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         """
         Responsible for setting up date variables, self.date and self.custom_date
         """
-        if self.passed_date:
-            split = self.passed_date.split('-')
+        if self.settings.passed_date:
+            split = self.settings.passed_date.split('-')
             if not len(split) == 3:
                 raise Exception("Date needs to be in the right format")
             day = int(split[0])
@@ -380,7 +374,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         if self.agents:
             self.verbose and print("Sending {} to {}".format(self.name, self.agents))
             self.format_for_email()
-            if self.no_emails:
+            if self.settings.no_emails:
                 self.print_email(self.agents)
             else:
                 self.email(self.agents)
@@ -390,7 +384,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 sections = self.agent_map[agent]
                 self.format_for_email(sections)
                 self.verbose and print("Sending {} to {}".format(self.name, agent))
-                if self.no_emails:
+                if self.settings.no_emails:
                     self.print_email(agent)
                 else:
                     self.email(agent)

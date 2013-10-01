@@ -1,5 +1,5 @@
-from psmdlsyncer.utils.RelativeDateFieldUpdater import RelativeDateFieldUpdater
-from psmdlsyncer.utils.DB import DragonNetDBConnection
+from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.mod.database import RelativeDateFieldUpdater
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday, day_after_tomorrow, timestamp_to_python_date
 import datetime
 import re
@@ -9,11 +9,11 @@ class NoticesRelativeDateFieldUpdater(RelativeDateFieldUpdater):
 
 class StartDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return tomorrow()
+        return day_after_tomorrow()
 
 class EndDateField(NoticesRelativeDateFieldUpdater):
     def first(self):
-        return tomorrow()
+        return day_after_tomorrow()
 
 class DatabaseObject:
     """
@@ -155,7 +155,7 @@ class DatabaseObject:
     def __str__(self):
         return ", ".join( ["{}: {}".format(key, self.__dict__[key]) for key in self.__dict__ if self.__dict__[key] and not key.startswith('_') ] )
 
-class DatabaseObjects(DragonNetDBConnection):
+class DatabaseObjects(MoodleDBConnection):
     """
     Defines the objects for use by the application
     """
