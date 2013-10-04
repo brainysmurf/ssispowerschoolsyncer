@@ -7,6 +7,7 @@ from copy import copy
 from psmdlsyncer.files import AutoSendFile
 from psmdlsyncer.models import Student, Teacher, Course, Schedule2, Enrollment
 from collections import defaultdict
+import re
 
 class Tree:
     """
@@ -72,11 +73,11 @@ class Tree:
         self.tree['families'][family_id]['parent'].append(family_id)
 
     def add_teacher(self, teacher):
-        self.teachers[teacher.ID] = defaultdict(list)
+        self.teachers[teacher.ID] = teacher
         self.add_teacher_to_family(teacher)
 
     def add_course(self, course):
-        self.courses[course.ID] = defaultdict(list)
+        self.courses[course.ID] = course
 
     def add_support_staff(self, staff):
         self.support_staff[staff.ID] = staff
@@ -89,6 +90,11 @@ class Tree:
 
     def get_student(self, key):
         return self.students.get(key)
+
+    def get_student_like(self, id):
+        print(id)
+        return [person for person in self.ALL \
+                if hasattr(person, 'ID') and person.ID.startswith(id)]
 
     def get_teacher(self, key):
         return self.teachers.get(key)
@@ -157,7 +163,6 @@ class AutoSend(AbstractClass):
         for course in self.courses.content():
             self.add(Course(*course))
         for schedule in self.schedule.content():
-            print(schedule)
             self.add(Schedule2(*schedule))
 
 class PowerSchoolDatabase(AbstractClass):
@@ -177,6 +182,6 @@ if __name__ == "__main__":
     elif powerschool_database:
         klass = PowerSchoolDatabase()
 
-    klass.output()
+    #klass.output()
 
-    
+    print(klass.tree.get_student_like('4221'))

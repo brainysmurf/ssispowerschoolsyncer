@@ -7,30 +7,29 @@ from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.models.Entry import Entry
 import os
-
-class Object:
-    """
-    Very general object, kwarg arguments are just set to itself, useful for simple data manipulation
-    And makes code readable
-    """
-    def __init__(self, *args,**kwargs):
-        if not kwargs:
-            return
-        for key in kwargs.keys():
-            setattr(self, key, kwargs[key])
+import datetime
 
 class Student(Entry):
 
-    def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, parent_emails, entry_date,
-                 nationality,
+    def __init__(self, num, stuid,
+                 grade, homeroom,
+                 lastfirst, parent_emails, entry_date, nationality,
                  user_data = {}):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
+        self.ID = self.num
+        self.kind = 'student'
+        self.powerschoolID = self.ID
         self.stuid = stuid
-        self.entry_date = entry_date
+        self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
+        try:
+            grade = int(grade)
+        except ValueError:
+            self.logger.warning("This student has a non-integer grade: {}".format(self.ID))
+            grade = 0
         self.grade = grade
         self.profile_extra_isstudent = True
         self.is_secondary = grade >= 6
@@ -46,7 +45,6 @@ class Student(Entry):
         self.database_id = already_exists.id if already_exists else None
 
         self.determine_first_and_last()
-        #self.determine_preferred_name()  # this is derived from preferred.txt
         
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
@@ -61,15 +59,20 @@ class Student(Entry):
         self.is_western = self.is_big5 or self.is_european
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
+        if homeroom:
+            self.homeroom = homeroom.upper().strip()
+        else:
+            self.logger.warning("This student doesn't have a homeroom: {}".format(self.ID))
+            self.homeroom = 'No HR'
         self.homeroom = homeroom.upper().strip()
-        self.homeroom_sortable = homeroom_sortable
+        self.homeroom_sortable = 0   # TODO: What's the put_in_order thing for then?
         
-        self.profile_existing_department = self.homeroom   # This is actually details that go on front page
-                                                           #self.profile_existing_address = self.bus_int
-                                                           #self.profile_existing_phone1 = self.bus_morning
-                                                           #self.profile_existing_phone2 = self.bus_afternoon
+        self.profile_existing_department = self.homeroom
+        #self.profile_existing_address = self.bus_int
+        #self.profile_existing_phone1 = self.bus_morning
+        #self.profile_existing_phone2 = self.bus_afternoon
 
-        self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
+        self.parent_emails = [p.lower() for p in re.split('[;,]', parent_emails) if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
         self.email = self.email.lower()
@@ -132,17 +135,12 @@ class Student(Entry):
     def update(self, key, value):
         self.key = value
 
-    def update_preferred(self, value):
-        self.preferred_first, self.preferred_last = value
-        self.has_preferred_name = True
-        self.determine_preferred_name()
-        self.determine_username()
-
     def update_courses(self, course_obj, teacher_obj):
         # Sometimes PowerSchool's AutoSend has two course entries in order to take care of the scheduling (or something)
         self._courses.append(course_obj.moodle_short)
-        d = {'username':teacher_obj.username,'name':course_obj.moodle_short}
-        self.update_groups(course_obj.moodle_short, "{username}{name}".format(**d) )
+        ns = NS(username=teacher_obj.username,
+                name=course_obj.moodle_short)
+        self.update_groups(course_obj.moodle_short, ns("{username}{name}"))
 
     def courses(self):
         return self._courses

@@ -4,5 +4,8 @@ from psmdlsyncer.models.Allocation import Allocation
 from psmdlsyncer.models.Controller import Controller
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.models.Course import Course
+from psmdlsyncer.models.Schedule import Schedule
+from psmdlsyncer.models.Schedule2 import Schedule2
+from psmdlsyncer.models.Enrollment import Enrollment
 
-__all__ = [Student, Teacher, Allocation, Controller, Entry, Course]
+__all__ = [Student, Teacher, Allocation, Controller, Entry, Course, Schedule, Schedule2, Enrollment]

@@ -2,8 +2,6 @@
 Every Student data type represents a student.
 Does context-specific processing
 """
-import re
-from psmdlsyncer.utils.Dates import get_year_of_graduation
 from psmdlsyncer.models.Entry import Entry
 
 class Schedule(Entry):
@@ -13,9 +11,6 @@ class Schedule(Entry):
         self.course_teacher = teacher
         self.studentID = studentID
         self._students = []
-
-    def update_students(self, s):
-        self._teachers.append(s.username)
 
     def __repr__(self):
         return self.format_string("{first}{course_number}:{studentID}{last}", first="(", last=") ")
