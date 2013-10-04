@@ -950,7 +950,7 @@ class PowerSchoolIntegrator():
             ns.grade = student.grade
 
             # TODO: Check for now grade or homeroom and warn
-            if not student.grade:
+            if student.grade is "" or student.grade is None:
                 self.logger.warn("This student does not have a grade:\n{}".format(student))
             if not student.homeroom:
                 self.logger.warn("This student does not have a homeroom:\n{}".format(student))
