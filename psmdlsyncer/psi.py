@@ -999,6 +999,15 @@ class PowerSchoolIntegrator():
                 student.is_elementary and usebccparentsJAPANESEELEM.extend( student.guardian_emails )
                 usebccparentsJAPANESEGRADE[ns.grade].extend( student.guardian_emails )
 
+        for ns.email in set(usebccparentsALL):
+            write_db('student_email_info', list='usebccparentsALL', email=ns.email)
+
+        for ns.email in set(usebccparentsSEC):
+            write_db('student_email_info', list='usebccparentsSEC', email=ns.email)
+
+        for ns.email in set(usebccparentsELEM):
+            write_db('student_email_info', list='usebccparentsELEM', email=ns.email)
+
         for ns.grade in usebccparentsGRADE:
             for ns.email in set(usebccparentsGRADE[ns.grade]):
                 write_db('student_email_info', list=ns('usebccparents{grade}'), email=ns('{email}'))
