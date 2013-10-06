@@ -142,7 +142,7 @@ class Tree:
         for line in self.student_info_file.content():
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality, _ = line
+                stunum, stuid, grade, homeroom, firstlast, DOB, parent_emails, entry_date, nationality = line
             except ValueError:
                 self.logger.warn(line)
                 self.logger.warn("Skipping above line... did one of the fields have a newline character in there?")
@@ -156,12 +156,11 @@ class Tree:
             except ValueError:
                 self.logger.warn('This student has a non-integer grade {}: {}'.format(stunum, firstlast))
                 grade = 0
-
             new_student = self.add(stunum,
                 stuid, grade,
                 homeroom,
                 self.convert_hr_to_sortable(homeroom),
-                firstlast,
+                firstlast,DOB,                                   
                 re.split('[;,]', parent_emails),
                 datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
                 nationality,
@@ -216,7 +215,7 @@ class Tree:
 
     def read_in_courses(self):
         for line in AutoSendFile('sec', 'courseinfo').content():
-            course_number, full_name, _ = line
+            course_number, full_name = line
             moodle_short, moodle_long = convert_short_long(course_number, full_name)
             self.add_course(course_number, full_name, moodle_short, moodle_long)
             
@@ -231,7 +230,7 @@ class Tree:
         raw = allocations.content()
         self.allocation_table = defaultdict(list)
         for line in raw:
-            course_number, course_name, teacher_name, status, termID, _ = line
+            course_number, course_name, teacher_name, status, termID = line
             teacher = self.teacher_info_controller.get(teacher_name)
             if not teacher:
                 self.logger.info("No teacher by this name?: {}".format(teacher_name))
@@ -259,7 +258,7 @@ class Tree:
         raw = teachers.content()
         for line in raw:
             try:
-                num, lastfirst, email, title, schoolid, staff_status, _ = line
+                num, lastfirst, email, title, schoolid, staff_status = line
             except ValueError:
                 self.logger.info("This teacher wasn't added to database: {}".format(line))
                 continue
@@ -277,7 +276,7 @@ class Tree:
         raw = schedule.content()
         self.schedule = defaultdict(list)
         for line in schedule.content():
-            course_number, course_name, periods, teacher, teacherID, student, studentID, _ = line
+            course_number, periods, session_number, teacher, teacherID, student, studentID = line
             self.schedule[course_number].append((teacher, studentID))
 
     def sync_schedule(self):

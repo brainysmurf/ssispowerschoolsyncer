@@ -30,7 +30,8 @@ class AutoSendFile:
     def content(self):
         with open(self.path) as f:
             for line in csv.reader(f, delimiter='\t'):
-                yield line
+                # autosend annoyingly has extra tab at the end
+                yield line[:-1]
 
 
 if __name__ == "__main__":

@@ -110,7 +110,7 @@ class PowerSchoolIntegrator():
             f.write('fullname,shortname,category,summary,groupmode\n')
             self.logger.debug("Go through the file with course information, set up summaries and other info")
             for line in source.content():
-                orig_short, orig_long, _ = line
+                orig_short, orig_long = line
                 self.logger.debug("Building course: {}".format(orig_long))
                 short, long = convert_short_long(orig_short, orig_long)
                 courses[short] = long

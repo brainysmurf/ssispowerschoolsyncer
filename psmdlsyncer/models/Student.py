@@ -7,6 +7,7 @@ from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.models.Entry import Entry
 import os
+import datetime
 
 class Object:
     """
@@ -21,14 +22,15 @@ class Object:
 
 class Student(Entry):
 
-    def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, parent_emails, entry_date,
-                 nationality,
+    def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, dob, parent_emails,
+                 entry_date, nationality,
                  user_data = {}):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
         self.stuid = stuid
         self.entry_date = entry_date
+        self.birthday = datetime.datetime.strptime(dob, '%m/%d/%Y')
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
         self.grade = grade

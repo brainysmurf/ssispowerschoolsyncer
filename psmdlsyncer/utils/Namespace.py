@@ -80,7 +80,7 @@ class NS:
         return [item for item in self.__dict__.items() if not item[0].startswith('_')]
 
     def __str__(self):
-        return str(self.__dict__.items())
+        return str([item for item in self.__dict__.items() if not item[0].isupper()])
 
     def __call__(self, s, **kwargs):
         self.define(**kwargs)
@@ -91,7 +91,7 @@ class NS:
         """
         VERY MEAGER WAY TO OUTPUT THIS DATA
         """
-        return str(self.__dict__.items())
+        return str([item for item in self.__dict__.items() if not item[0].isupper()])
 
 Smartformmater = NS  # depreciated name
 
