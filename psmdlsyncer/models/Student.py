@@ -1,11 +1,12 @@
 """
 Every student represents a student
 """
-import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.models.Entry import Entry
+from psmdlsyncer.utils import NS
+import re
 import os
 import datetime
 
@@ -43,9 +44,7 @@ class Student(Entry):
         self.is_new_student = self.entry_date >= get_academic_start_date()
         already_exists = user_data.get(self.num)
         self.database_id = already_exists.id if already_exists else None
-
-        self.determine_first_and_last()
-        
+        self.determine_first_and_last()        
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
         #self.bus_afternoon = bus_afternoon
@@ -78,6 +77,8 @@ class Student(Entry):
         self.email = self.email.lower()
         self.other_defaults()
         self._courses = []
+        self._teachers = []
+        self._groups = []
         if self.is_secondary:
             self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_issecstudent = True
@@ -96,8 +97,7 @@ class Student(Entry):
         if not self._cohorts:
             self._cohorts = []
         self._groups = []
-        self._groups_courses = {}
-        self._teachers = {}
+        self._teachers = []
 
     def get_existing_profile_fields(self):
         return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
@@ -131,29 +131,30 @@ class Student(Entry):
             while self.username in taken_usernames:
                 self.logger.warn("Looking for a new name for student:\n{}".format(self.username))
                 self.username = first_half + ('_' * times_through) + second_half
-
     def update(self, key, value):
         self.key = value
-
-    def update_courses(self, course_obj, teacher_obj):
-        # Sometimes PowerSchool's AutoSend has two course entries in order to take care of the scheduling (or something)
-        self._courses.append(course_obj.moodle_short)
-        ns = NS(username=teacher_obj.username,
-                name=course_obj.moodle_short)
-        self.update_groups(course_obj.moodle_short, ns("{username}{name}"))
-
+    def add_course(self, course):
+        if course.ID not in self._courses:
+            self._courses.append(course.ID)
+    def add_group(self, group):
+        if group.group_id not in self._groups:
+            self._groups.append(group.group_id)
+    def add_teacher(self, teacher):
+        if not teacher:
+            return
+        if teacher.ID not in self._teachers:
+            self._teachers.append(teacher.ID)
+    @property
     def courses(self):
         return self._courses
-
+    @property
     def cohorts(self):
         return self._cohorts
-
+    @property
     def groups(self):
         return self._groups
-
     def get_teachers_classes(self):
         return [ re.match('([a-z]+)([^a-z]+)', item).groups() for item in self.groups() ]
-
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
@@ -252,6 +253,10 @@ class Student(Entry):
         return [teachers[k]+"@ssis-suzhou.net" for k in teachers.keys()]
 
     @property
+    def teachers(self):
+        return self._teachers
+
+    @property
     def homeroom_teacher_email(self):
         homeroom = self.get_homeroom_teacher()
         return homeroom and homeroom + '@ssis-suzhou.net'
@@ -269,9 +274,17 @@ class Student(Entry):
         return True
     
     def __repr__(self):
-        return self.format_string("{firstrow}{num}: {email}, {homeroom}{midrow}{lastfirst}{lastrow}{_courses}\n",
-                                  firstrow="+ ",
-                                  midrow="\n| ",
-                                  lastrow="\n| ")
-
+        ns = NS()
+        ns.ID = self.ID
+        ns.firstrow = "+ "
+        ns.midrow = "\n| "
+        ns.lastrow="\n| "
+        ns.lastfirst = self.lastfirst
+        ns.email = self.email
+        ns.homeroom = self.homeroom
+        ns.teachers = self.teachers
+        ns.courses = self.courses
+        ns.groups = self.groups
+        return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
+        "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}\n")
     

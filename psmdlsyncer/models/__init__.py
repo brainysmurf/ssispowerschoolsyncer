@@ -7,5 +7,6 @@ from psmdlsyncer.models.Course import Course
 from psmdlsyncer.models.Schedule import Schedule
 from psmdlsyncer.models.Schedule2 import Schedule2
 from psmdlsyncer.models.Enrollment import Enrollment
-
-__all__ = [Student, Teacher, Allocation, Controller, Entry, Course, Schedule, Schedule2, Enrollment]
+from psmdlsyncer.models.Group import Group
+from psmdlsyncer.models.Parents import ParentFactory, Parent
+__all__ = [Student, Teacher, Allocation, Controller, Entry, Course, Schedule, Schedule2, Enrollment, ParentFactory, Parent]

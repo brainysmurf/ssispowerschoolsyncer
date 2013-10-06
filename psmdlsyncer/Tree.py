@@ -68,13 +68,11 @@ class Tree:
         self.allocation_info_controller = Controller(Allocation)
         self.user_data = ServerInfo().get_student_info()
         self.read_in()
-        self._homerooms = None
+        homerooms = None
         self._secondary_homerooms = None
         self._elementary_homerooms = None
         self.get_homerooms()
         self.get_secondary_homerooms()
-
-
     def get_homerooms(self):
         if not self._homerooms:
             self._homerooms = []
