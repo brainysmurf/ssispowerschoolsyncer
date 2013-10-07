@@ -16,6 +16,7 @@ Note: There is a standardized subpackage found in mod/database that improves han
 database modules in Moodle
 """
 from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.Tree import Tree
 from psmdlsyncer.utils import NS
 from collections import defaultdict
@@ -69,6 +70,9 @@ class ProbeDB(MoodleDBConnection):
                             "join ssismdl_user usr on dr.userid = usr.id " +
                        "join ssismdl_data_fields df on dc.fieldid = df.id " + "join ssismdl_data d on df.dataid = 4 order by dc.recordid")()
         record_ids = []
+        path_to_probe = config_get_section_attribute("DIRECTORIES", 'path_to_output')
+        path_to_probe += '/probe/'
+        
         for line in self.raw:
             r_id = line[k_record_id]
             if not r_id in record_ids:
@@ -113,7 +117,6 @@ class ProbeDB(MoodleDBConnection):
                         entry.set = row[k_content]
                         if not entry.set:
                             print(this_entry)
-                            input('hey')
                         entry.reading_age = reading_age_from_set.get(entry.set)
 
                 # gets the student class that has autosend data
@@ -125,17 +128,16 @@ class ProbeDB(MoodleDBConnection):
                     # no longer in the system (left) just skip it
                     # what about that dude's data!?
                     print("Something wrong with the data of this student")
-                    input(entry)
                     continue
                 date_to_age = lambda x: float(x.days) / 365.25
                 entry.age = date_to_age(entry.test_date - student.birthday)
                 entry.differential = round(entry.reading_age - entry.age, 2)
                 teachers[entry.teacher].append( entry )
                 powerschool.append( entry('{powerschoolid}{TAB}{test_date_output}{TAB}{grade}{TAB}{reading_age}{TAB}{percent}{TAB}{type}{TAB}{analysis}{TAB}{differential}') )
-        with open('../../../output/probe/powerschool.txt', 'w') as f:
+        with open(path_to_probe + 'powerschool.txt', 'w') as f:
             f.write( "\n".join(powerschool) )
         for teacher in teachers:
-            with open('../../../output/probe/{}.txt'.format(teacher), 'w') as f:
+            with open(path_to_probe + '{}.txt'.format(teacher), 'w') as f:
                 entries = teachers[teacher]
                 entries.sort(key=lambda x: x.student)
                 for entry in entries:
