@@ -936,6 +936,16 @@ class PowerSchoolIntegrator():
         usebccparentsJAPANESEELEM = []
         usebccparentsJAPANESESEC = []
         usebccparentsJAPANESEGRADE = defaultdict(list)
+        # SWA DISTRIBUTION LISTS
+        usebccparentsSWA = []
+        usebccstudentsSWA = []
+        usebccparentsSWAMS = []
+        usebccstudentsSWAMS = []
+        usebccparentsSWAHS = []
+        usebccparentsSWAHS = []
+        usebccparentsSWAGRADE = defaultdict(list)
+        usebccstudentsSWAGRADE = defaultdict(list)
+        # HR AND GRADE
         usebccparentsHOMEROOM = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
         usebccparentsHOMEROOM = defaultdict(list)
@@ -1010,6 +1020,17 @@ class PowerSchoolIntegrator():
                 student.is_secondary and usebccparentsJAPANESESEC.extend( student.guardian_emails )
                 student.is_elementary and usebccparentsJAPANESEELEM.extend( student.guardian_emails )
                 usebccparentsJAPANESEGRADE[ns.grade].extend( student.guardian_emails )
+            if student.is_SWA:
+                usebccparentsSWA.extend( student.guardian_emails )
+                usebccstudentsSWA.append( student.email )
+                usebccparentsSWAGRADE[ns.grade].extend( student.guardian_emails )
+                usebccstudentsSWAGRADE[ns.grade].append( student.email )
+                if student.is_high_school:
+                    usebccstudentsSWAHS.append( student.email)
+                    usebccparentsSWAHS.extend( student.guardian_emails )
+                if student.is_middle_school:
+                    usebccstudentsSWAMS.append( student.email )
+                    usebccparentsSWAMS.extend( student.guardian_emails )
 
         for ns.email in set(usebccparentsALL):
             write_db('student_email_info', list='usebccparentsALL', email=ns.email)
