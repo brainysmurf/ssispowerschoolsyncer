@@ -74,6 +74,7 @@ class Student(Entry):
         self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
+        self.parent_link_email = self.username + 'PARENTS' + '@student.ssis-suzhou.net'
         self.email = self.email.lower()
         self.other_defaults()
         self._courses = []
@@ -83,17 +84,15 @@ class Student(Entry):
         if self.grade in range(6, 8):
             self.profile_extra_ismsstudent = True
             self._cohorts.append('studentsMS')
-        if self.grade == 10:
-            self._cohorts.append('students10')
-        if self.grade in range(9, 12):
+        if self.grade in range(9, 13):
             self.profile_extra_ishsstudent = True
             self._cohorts.append('studentsHS')
-        elif self.is_elementary:
+        if self.grade in range(11, 13):
+            self._cohorts.append('students1112')
+        if self.is_elementary:
             self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
             self.profile_existing_department = 'HOME4ES'
-        if not self._cohorts:
-            self._cohorts = []
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}
