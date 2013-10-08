@@ -538,12 +538,14 @@ class PowerSchoolIntegrator():
 
     def enroll_cohorts(self):
         dnet = ModUserEnrollments()
-        for student_key in self.students.get_student_keys():
-            student = self.students.get_student(student_key)
+        for student in self.students:
             if student.is_secondary:
                 for cohort in student._cohorts:
                     dnet.add_user_to_cohort(student.num, cohort)
-                
+        for parent in self.parents:
+            if parent.is_secondary:
+                for cohort in parent._cohorts:
+                    dnet.add_user_to_cohort(parent.num, cohort)
 
     def remove_enrollments(self):
         """
@@ -1241,14 +1243,16 @@ class PowerSchoolIntegrator():
         ns = NS()
         ns.domain = 'student.ssis-suzhou.net'
         activities_postfix = defaultdict(list)
+        activities_postfix_parents = defaultdict(list)
         for result in results:
             activity_name, student_key = result
             student = self.students.get_student(student_key)
             if not student:
                 self.logger.warning('This student is listed as having enrolled into an activity, ' + \
-                                    'but no longer seems to be available at school. Ignored. {}'.format(student))
+                                    'but no longer seems to be available at school. Ignored. {}'.format(student_key))
                 continue
             activities_postfix[activity_name].append(student.email)
+            activities_postfix_parents[activity_name].append(student.parent_link_email)
 
         # DO THE ACTIVITY EMAILS
         ns.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
@@ -1269,6 +1273,15 @@ class PowerSchoolIntegrator():
             with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
                 f.write("\n".join(activities_postfix[activity_name]))
 
+        ns.SUFFIX = "ACTPARENTS"
+        for activity_name in activities_postfix_parents:
+            ns.handle = name_to_email(activity_name)
+            ns.full_email = ns('{handle}{SUFFIX}')
+            with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
+                f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
+                           '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
+            with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
+                f.write("\n".join(activities_postfix_parents[activity_name]))
         
         # run newaliases command on exit if we're on the server
         newaliases_path = False
