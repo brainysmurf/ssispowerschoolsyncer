@@ -9,7 +9,7 @@ def out(line):
     with open(output + '/account_stats.txt', 'a') as f:
         f.write(str(line) + '\n')
 
-out(datetime.datetime.now())
+out(datetime.datetime.today())
 
 has = 0
 cannot = 0
