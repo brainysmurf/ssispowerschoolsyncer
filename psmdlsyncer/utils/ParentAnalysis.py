@@ -7,9 +7,9 @@ convert = datetime.datetime.fromtimestamp
 output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
 def out(line):
     with open(output + '/account_stats.txt', 'w') as f:
-        f.write(line)
+        f.write(str(line))
 
-out(str(datetime.datetime.now()))
+out(datetime.datetime.now())
 
 has = 0
 cannot = 0
@@ -33,13 +33,10 @@ for line in raw:
                 last_week += 1
         if lastlogin_date > onemonthago:
                 last_month += 1
-print()
-print("{} total DragonNet parent accounts".format(total))
-print()
-print("{} ({}%) have successfully logged in".format(has, round((has / total) * 100,1)))
-print("{} ({}%) have tried but cannot log in".format(cannot, round((cannot / total) * 100, 1)))
-print()
-print("{} ({}%) have logged in within the last week".format(last_week, round((last_week / total) * 100, 1)))
-print("{} ({}%) have logged in within the last month".format(last_month, round((last_month / total) * 100, 1)))
-print()
+out("{} total DragonNet parent accounts".format(total))
+out("{} ({}%) have successfully logged in".format(has, round((has / total) * 100,1)))
+out("{} ({}%) have tried but cannot log in".format(cannot, round((cannot / total) * 100, 1)))
+out("{} ({}%) have logged in within the last week".format(last_week, round((last_week / total) * 100, 1)))
+out("{} ({}%) have logged in within the last month".format(last_month, round((last_month / total) * 100, 1)))
+out('---------')
 
