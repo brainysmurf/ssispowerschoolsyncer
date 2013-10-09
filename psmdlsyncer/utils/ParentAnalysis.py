@@ -6,7 +6,7 @@ convert = datetime.datetime.fromtimestamp
 
 output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
 def out(line):
-    with open(output + '/account_stats.txt', 'w') as f:
+    with open(output + '/account_stats.txt', 'a') as f:
         f.write(str(line))
 
 out(datetime.datetime.now())
