@@ -15,8 +15,22 @@ import re
 import datetime
 import subprocess
 from collections import defaultdict
-class InfiniteLoop(Exception):
-    pass
+
+def name_to_email(long_name):
+    """
+    USED FOR ACTIVITIES EMAIL GENERATION
+    TODO: MOVE TO utils
+    """
+    try:
+        where = long_name.index(')')
+    except ValueError:
+        where = -1
+    where += 1
+    long_name = long_name[where:].strip().lower()
+    return re.sub('[^a-z]', '', long_name)
+
+
+>>>>>>> 801fd6627718360eb2c2e54c31ef57b3dc4078ec
 class PowerSchoolIntegrator():
     """
     Class that runs a script that automagically syncs PowerSchool data with the dnet server
@@ -469,7 +483,10 @@ class PowerSchoolIntegrator():
             if student.is_secondary:
                 for cohort in student._cohorts:
                     dnet.add_user_to_cohort(student.num, cohort)
-                
+        for parent in self.parents:
+            if parent.is_secondary:
+                for cohort in parent._cohorts:
+                    dnet.add_user_to_cohort(parent.num, cohort)
 
     def remove_enrollments(self):
         """
@@ -782,7 +799,7 @@ class PowerSchoolIntegrator():
         if not path:
             path = self.output_path + '/postfix'
 
-        ns = NS()
+        ns = NS(33)
         ns.PATH = path
         ns.EXT = '.txt'
         ns.INCLUDE = ' :include:'
@@ -792,11 +809,8 @@ class PowerSchoolIntegrator():
         # if you delete the .db files then postfix won't work. That is bad.
         # So, tell clear_folder to exclude them
         exclude_db_files = lambda x: x.endswith('.db')
-
         self.logger.debug("Clearing folders in postfix")
-        clear_folder( ns.PATH, exclude=exclude_db_files) 
-        #
-
+        clear_folder( ns.PATH, exclude=exclude_db_files)
         clear_folder(ns('{PATH}/grades'))
         clear_folder(ns('{PATH}/homerooms'))
         clear_folder(ns('{PATH}/classes'))
@@ -804,6 +818,7 @@ class PowerSchoolIntegrator():
         clear_folder(ns('{PATH}/teacherlink'))
         clear_folder(ns('{PATH}/special'))
         clear_folder(ns('{PATH}/departments'))
+        clear_folder(ns('{PATH}/activities'))
 
         special_directory = []
 
@@ -847,17 +862,18 @@ class PowerSchoolIntegrator():
         classesPARENTS = defaultdict(list)
         special = defaultdict(list)
 
+        self.logger.debug('Clearing the table on moodle')
         self.server_information.create_temp_storage('student_email_info', 'list', 'email')
         self.server_information.empty_temp_storage('student_email_info')
         write_db = self.server_information.add_temp_storage
-
-        self.logger.debug("Setting up elementary email lists")
-        for student in self.students:
+        self.logger.debug("Setting email lists")
+        for student in self.accounts.students:
+            student = self.students.get_student(student_key)
             ns.homeroom = student.homeroom
             ns.grade = student.grade
 
             # TODO: Check for now grade or homeroom and warn
-            if not student.grade:
+            if student.grade is "" or student.grade is None:
                 self.logger.warn("This student does not have a grade:\n{}".format(student))
             if not student.homeroom:
                 self.logger.warn("This student does not have a homeroom:\n{}".format(student))
@@ -905,6 +921,15 @@ class PowerSchoolIntegrator():
                 student.is_secondary and usebccparentsJAPANESESEC.extend( student.guardian_emails )
                 student.is_elementary and usebccparentsJAPANESEELEM.extend( student.guardian_emails )
                 usebccparentsJAPANESEGRADE[ns.grade].extend( student.guardian_emails )
+
+        for ns.email in set(usebccparentsALL):
+            write_db('student_email_info', list='usebccparentsALL', email=ns.email)
+
+        for ns.email in set(usebccparentsSEC):
+            write_db('student_email_info', list='usebccparentsSEC', email=ns.email)
+
+        for ns.email in set(usebccparentsELEM):
+            write_db('student_email_info', list='usebccparentsELEM', email=ns.email)
 
         for ns.grade in usebccparentsGRADE:
             for ns.email in set(usebccparentsGRADE[ns.grade]):
@@ -1048,7 +1073,7 @@ class PowerSchoolIntegrator():
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESESEC{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsKOREANSEC) )
 
-        for ns.grade in usebccparentsKOREANGRADE:
+        for ns.grade in usebccparentsJAPANESEGRADE:
             with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}'), 'w') as f:
                 f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
 
@@ -1123,7 +1148,51 @@ class PowerSchoolIntegrator():
             with open(setup_postfix, 'w') as f:
                 f.write( "\n".join(depart_dict[ns.department]) )
 
-                
+        # SETUP SECONDARY ACTIVITIES
+        results = self.server_information.get_all_users_activity_enrollments()
+        ns = NS()
+        ns.domain = 'student.ssis-suzhou.net'
+        activities_postfix = defaultdict(list)
+        activities_postfix_parents = defaultdict(list)
+        for result in results:
+            activity_name, student_key = result
+            student = self.students.get_student(student_key)
+            if not student:
+                self.logger.warning('This student is listed as having enrolled into an activity, ' + \
+                                    'but no longer seems to be available at school. Ignored. {}'.format(student_key))
+                continue
+            activities_postfix[activity_name].append(student.email)
+            activities_postfix_parents[activity_name].append(student.parent_link_email)
+
+        # DO THE ACTIVITY EMAILS
+        ns.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
+        ns.base = 'activities'
+        ns.SUFFIX = "ACT"
+        ns.EXT = '.txt'
+        ns.INCLUDE = ':include:'
+        ns.activities_path = ns('{path}{SLASH}activities')
+        with open(ns('{path}{SLASH}{base}{EXT}'), 'w'):
+            pass
+
+        for activity_name in activities_postfix:
+            ns.handle = name_to_email(activity_name)
+            ns.full_email = ns('{handle}{SUFFIX}')
+            with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
+                f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
+                           '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
+            with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
+                f.write("\n".join(activities_postfix[activity_name]))
+
+        ns.SUFFIX = "ACTPARENTS"
+        for activity_name in activities_postfix_parents:
+            ns.handle = name_to_email(activity_name)
+            ns.full_email = ns('{handle}{SUFFIX}')
+            with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
+                f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
+                           '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
+            with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
+                f.write("\n".join(activities_postfix_parents[activity_name]))
+        
         # run newaliases command on exit if we're on the server
         newaliases_path = False
         if self.config.has_section('EMAIL'):
@@ -1135,6 +1204,7 @@ class PowerSchoolIntegrator():
         else:
             self.logger.warn("newaliases not run!")
         #TODO: If received error, should email admin
+
 
 
     def build_student_list(self):

@@ -187,6 +187,7 @@ def map_codes(short, grade, higher_lower):
 		'CNLHONSH1112': 'CHILLSH1112',  # Chinese
 		'CNBHONSH1112': 'LBCHISH1112',  # Mandarin
 		'KRLHONSH1112': 'KORLISH1112',  # Korean
+		'KORLISH11': 'KORLISH1112', # Korean Hons
 		'CNIHONSH1112': 'LBCHISH1112',  # Chinese ab initio
 		'ARVHONSH1112': 'ARVISSH1112',  # Visual Arts
 		'JPLHONSH1112': 'JAPLISH1112',   # Japanese

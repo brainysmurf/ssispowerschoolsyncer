@@ -76,7 +76,7 @@ class NS:
         return [item for item in self.__dict__.items() if not item[0].startswith('_')]
 
     def __str__(self):
-        return str( [(key, value) for key, value in self.__dict__.items() if not key.isupper()] )
+        return str([item for item in self.__dict__.items() if not item[0].isupper()])
 
     def __call__(self, s, **kwargs):
         self.define(**kwargs)

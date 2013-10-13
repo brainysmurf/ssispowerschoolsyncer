@@ -138,18 +138,27 @@ class Tree:
         for line in self.student_info_file.content():
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, grade, homeroom, firstlast, parent_emails, entry_date, nationality = line
+                stunum, stuid, grade, homeroom, firstlast, DOB, parent_emails, entry_date, nationality = line
             except ValueError:
                 self.logger.warn(line)
                 self.logger.warn("Skipping above line... did one of the fields have a newline character in there?")
                 continue
 
+            if not homeroom:
+                self.logger.warn('This student does not have a homeroom {}: {}'.format(stunum, firstlast))
+            
+            try:
+                grade = int(grade)
+            except ValueError:
+                self.logger.warn('This student has a non-integer grade {}: {}'.format(stunum, firstlast))
+                grade = 0
             new_student = self.add(stunum,
                 stuid, grade,
                 homeroom,
-                firstlast,
-                parent_emails,
-                entry_date,
+                self.convert_hr_to_sortable(homeroom),
+                firstlast,DOB,                                   
+                re.split('[;,]', parent_emails),
+                datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
                 nationality,
                 user_data=self.user_data)
 
@@ -263,7 +272,7 @@ class Tree:
         raw = schedule.content()
         self.schedule = defaultdict(list)
         for line in schedule.content():
-            course_number, course_name, periods, teacher, teacherID, student, studentID = line
+            course_number, periods, session_number, teacher, teacherID, student, studentID = line
             self.schedule[course_number].append((teacher, studentID))
 
     def sync_schedule(self):

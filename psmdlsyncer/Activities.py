@@ -1,9 +1,9 @@
-from psmdlsyncer.Students import Students, put_in_order
+from psmdlsyncer.Tree import Tree, put_in_order
 
-from psmdlsyncer.utils.Namespace import NS
-from psmdlsyncer.utils.database.MoodleDatabase import MoodleDBConnection
+from psmdlsyncer.utils import NS
+from psmdlsyncer.sql import MoodleDBConnection
 from psmdlsyncer.settings import config_get_section_attribute
-from psmdlsyncer.utils.FilesFolders import clear_folder
+from psmdlsyncer.files import clear_folder
 
 import re
 
@@ -20,7 +20,7 @@ def name_to_email(long_name):
 
 if __name__ == "__main__":
 
-    students = Students()
+    students = Tree()
     
     db = MoodleDBConnection()
     sf = NS()

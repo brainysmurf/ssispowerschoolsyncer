@@ -7,16 +7,17 @@ Bascially, PowerSchool's internal student photo format exported out to format Mo
 
 import os, shutil
 
-path_to_ps_photos = '../photos'
-path_to_ps_data   = '../photos/db.txt'
-
+# who knows where this might be, so let's not use settings.ini for this
+# TODO: make this a command line argument
+path_to_ps_photos = '../../../powerschool/photos/faculty'
+path_to_ps_data   = '../../../powerschool/id_idnumber.txt'
 from psmdlsyncer.files import TextFileReader
 
 ps_data = TextFileReader(path_to_ps_data)
 
 id_to_num = {}
 for item in ps_data.generate():
-    id_to_num[item.id] = item.student_number
+    id_to_num[item.id] = item.powerschoolid
 
 new_folder = os.path.join(path_to_ps_photos, 'flat')
 for folder in os.listdir(path_to_ps_photos):

@@ -12,10 +12,8 @@ import datetime
 
 class Student(Entry):
 
-    def __init__(self, num, stuid,
-                 grade, homeroom,
-                 lastfirst, parent_emails, entry_date, nationality,
-                 user_data = {}):
+    def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, dob, parent_emails,
+                 entry_date, nationality)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
@@ -23,7 +21,8 @@ class Student(Entry):
         self.kind = 'student'
         self.powerschoolID = self.ID
         self.stuid = stuid
-        self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
+        self.entry_date = entry_date
+        self.birthday = datetime.datetime.strptime(dob, '%m/%d/%Y')
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
         try:
@@ -74,6 +73,7 @@ class Student(Entry):
         self.parent_emails = [p.lower() for p in re.split('[;,]', parent_emails) if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
+        self.parent_link_email = self.username + 'PARENTS' + '@student.ssis-suzhou.net'
         self.email = self.email.lower()
         self.other_defaults()
         self._courses = []
@@ -85,17 +85,15 @@ class Student(Entry):
         if self.grade in range(6, 8):
             self.profile_extra_ismsstudent = True
             self._cohorts.append('studentsMS')
-        if self.grade == 10:
-            self._cohorts.append('students10')
-        if self.grade in range(9, 12):
+        if self.grade in range(9, 13):
             self.profile_extra_ishsstudent = True
             self._cohorts.append('studentsHS')
-        elif self.is_elementary:
+        if self.grade in range(11, 13):
+            self._cohorts.append('students1112')
+        if self.is_elementary:
             self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
             self.profile_existing_department = 'HOME4ES'
-        if not self._cohorts:
-            self._cohorts = []
         self._groups = []
         self._teachers = []
 
