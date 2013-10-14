@@ -1,4 +1,4 @@
-from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
+from psmdlsyncer.notices.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
 from Samples import teacher_notices_samples, teacher_notices_tag_samples
 from psmdlsyncer.settings import define_command_line_arguments

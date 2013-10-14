@@ -1,9 +1,7 @@
-#!/usr/local/bin/python3
-    
 from psmdlsyncer.settings import define_command_line_arguments
 from psmdlsyncer.html_email.Email import Email
 from psmdlsyncer.utils.Dates import custom_strftime, today
-from DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
+from psmdlsyncer.notices.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 from Model import DatabaseObject
 from Samples import student_notices_samples, student_notices_tag_samples
 import datetime
