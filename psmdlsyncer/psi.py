@@ -939,10 +939,6 @@ class PowerSchoolIntegrator():
         # SWA DISTRIBUTION LISTS
         usebccparentsSWA = []
         usebccstudentsSWA = []
-        usebccparentsSWAMS = []
-        usebccstudentsSWAMS = []
-        usebccparentsSWAHS = []
-        usebccstudentsSWAHS = []
         usebccparentsSWAGRADE = defaultdict(list)
         usebccstudentsSWAGRADE = defaultdict(list)
         # HR AND GRADE
@@ -1025,12 +1021,6 @@ class PowerSchoolIntegrator():
                 usebccstudentsSWA.append( student.email )
                 usebccparentsSWAGRADE[ns.grade].extend( student.guardian_emails )
                 usebccstudentsSWAGRADE[ns.grade].append( student.email )
-                if student.is_high_school:
-                    usebccstudentsSWAHS.append( student.email)
-                    usebccparentsSWAHS.extend( student.guardian_emails )
-                if student.is_middle_school:
-                    usebccstudentsSWAMS.append( student.email )
-                    usebccparentsSWAMS.extend( student.guardian_emails )
 
         for ns.email in set(usebccparentsALL):
             write_db('student_email_info', list='usebccparentsALL', email=ns.email)
@@ -1180,22 +1170,27 @@ class PowerSchoolIntegrator():
                 f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{EXT}'), 'w') as f:
-            f.write( '\n'.join(usebccparentsKOREAN) )
+            f.write( '\n'.join(usebccparentsJAPANESE) )
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESESEC{EXT}'), 'w') as f:
-            f.write( '\n'.join(usebccparentsKOREANSEC) )
+            f.write( '\n'.join(usebccparentsJAPANESESEC) )
 
         for ns.grade in usebccparentsJAPANESEGRADE:
             with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}'), 'w') as f:
-                f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
+                f.write( '\n'.join(set(usebccparentsJAPANESEGRADE[ns.grade])) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSWA{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsSWA) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsSWA) )
+                
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
             for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
                             'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM', 
-                            'usebccparentsSWA', 'usebccstudentsSWA', 'usebccparentsSWAMS', 'usebccstudentsSWAMS', 
-                            'usebccparentsSWAHS', 'usebccstudentsSWAMS']:
+                            'usebccparentsSWA', 'usebccstudentsSWA']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
                 f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
