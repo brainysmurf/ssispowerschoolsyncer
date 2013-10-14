@@ -64,6 +64,7 @@ class Student(Entry):
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
         self.homeroom = homeroom.upper().strip()
+        self.is_SWA = 'SWA' in self.homeroom
         self.homeroom_sortable = homeroom_sortable
         
         self.profile_existing_department = self.homeroom   # This is actually details that go on front page
@@ -81,7 +82,7 @@ class Student(Entry):
         if self.is_secondary:
             self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_issecstudent = True
-        if self.grade in range(6, 8):
+        if self.grade in range(6, 9):
             self.profile_extra_ismsstudent = True
             self._cohorts.append('studentsMS')
         if self.grade in range(9, 13):
@@ -93,6 +94,8 @@ class Student(Entry):
             self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
             self.profile_existing_department = 'HOME4ES'
+        self.is_middle_school = self.grade in range (6, 9)
+        self.is_high_school = self.grade in range(10, 13)
         self._groups = []
         self._groups_courses = {}
         self._teachers = {}
