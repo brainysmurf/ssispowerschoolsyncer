@@ -942,7 +942,7 @@ class PowerSchoolIntegrator():
         usebccparentsSWAMS = []
         usebccstudentsSWAMS = []
         usebccparentsSWAHS = []
-        usebccparentsSWAHS = []
+        usebccstudentsSWAHS = []
         usebccparentsSWAGRADE = defaultdict(list)
         usebccstudentsSWAGRADE = defaultdict(list)
         # HR AND GRADE
@@ -1098,6 +1098,8 @@ class PowerSchoolIntegrator():
         with open( ns('{PATH}{SLASH}grades{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
+            #HS
+
         # HOMEROOMS
         directory_write = []
         for ns.homeroom in usebccparentsHOMEROOM:
@@ -1191,7 +1193,9 @@ class PowerSchoolIntegrator():
             for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
-                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM']:
+                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM', 
+                            'usebccparentsSWA', 'usebccstudentsSWA', 'usebccparentsSWAMS', 'usebccstudentsSWAMS', 
+                            'usebccparentsSWAHS', 'usebccstudentsSWAMS']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
                 f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
