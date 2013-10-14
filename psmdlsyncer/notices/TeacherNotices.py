@@ -1,6 +1,5 @@
 from psmdlsyncer.notices.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 import re
-from Samples import teacher_notices_samples, teacher_notices_tag_samples
 from psmdlsyncer.settings import define_command_line_arguments
 
 class Nothing(Exception): pass
@@ -61,13 +60,6 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
     def section_not_found(self, tag):
         """ What to do? """
         pass
-
-    def samples(self):
-        return teacher_notices_samples
-
-    def section_samples(self):
-        return teacher_notices_tag_samples
-
 
 if __name__ == "__main__":
     try:

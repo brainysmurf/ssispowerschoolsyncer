@@ -2,8 +2,7 @@ from psmdlsyncer.settings import define_command_line_arguments
 from psmdlsyncer.html_email.Email import Email
 from psmdlsyncer.utils.Dates import custom_strftime, today
 from psmdlsyncer.notices.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
-from Model import DatabaseObject
-from Samples import student_notices_samples, student_notices_tag_samples
+from psmdlsyncer.notices.Model import DatabaseObject
 import datetime
 class Nothing(Exception): pass
 
@@ -39,12 +38,6 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.section_field = 'School Section'
 
         self.priority_ids = [32]
-
-    def samples(self):
-        return student_notices_samples
-
-    def section_samples(self):
-        return student_notices_tag_samples
 
     def email_to_agents(self):
         if self.agents:
