@@ -4,7 +4,7 @@ from psmdlsyncer.mod.database import FieldObject
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
 from psmdlsyncer.html_email import Email
 from psmdlsyncer.settings import config_get_section_attribute
-from psmdlsyncer.Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
+from psmdlsyncer.notices.Model import DatabaseObjects, DatabaseObject, StartDateField, EndDateField
 import re
 import datetime
 import smtplib
