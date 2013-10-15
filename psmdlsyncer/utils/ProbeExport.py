@@ -150,3 +150,9 @@ class ProbeDB(MoodleDBConnection):
 
 if __name__ == "__main__":
     probe = ProbeDB()   
+    for item in probe.raw:
+        if item[4] == 18:
+            print(item)
+            name = item[3]
+            newname = re.sub(r'\([0-9]{1,2}[A-Z] ', '(', name)
+            probe.call_sql("update ssismdl_data_content set content = '{}' where fieldid={} and recordid={}".format(newname, item[4], item[5]))
