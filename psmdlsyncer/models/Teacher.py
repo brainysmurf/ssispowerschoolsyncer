@@ -93,5 +93,6 @@ class Teacher(Entry):
        return self._departments
    def __repr__(self):
        return self.format_string("{first}{preferred_name}:{username}{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([a for a in self._courses if a]))
+
 if __name__ == "__main__":
    pass
