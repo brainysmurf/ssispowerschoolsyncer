@@ -6,7 +6,7 @@ from psmdlsyncer.files import AutoSendFile
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.settings import define_command_line_arguments
-from psmdlsyncer.models import Student, Teacher, Course, Schedule, Enrollment, ParentFactory, Group
+from psmdlsyncer.models import StudentFactory, Teacher, Course, Schedule, Enrollment, ParentFactory, Group
 from psmdlsyncer.utils import NS
 from collections import defaultdict
 
@@ -185,8 +185,7 @@ class AutoSend(AbstractClass):
         self.init()
     def init(self):
         for student in self.student_info.content():
-            print(student)
-            self.add(Student(*student))
+            self.add(StudentFactory.make(*student))
         for teacher in self.teacher_info.content():
             self.add(Teacher(*teacher))
         for course in self.course_info.content():

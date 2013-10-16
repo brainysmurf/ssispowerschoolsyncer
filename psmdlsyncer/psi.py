@@ -38,7 +38,6 @@ class PowerSchoolIntegrator():
     temp_table_column_comment = lambda: 'comment'    
     def __init__(self):
         """
-        
         """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.warn('Started at {}'.format( datetime.datetime.now() ) )
@@ -56,14 +55,14 @@ class PowerSchoolIntegrator():
         have_moodle_section = self.config.has_section('MOODLE')
         self.server_information = ServerInfo()
 
-        from psmdlsyncer.settings import config_get_section_attribute
+        
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
 
-        if self.accounts.settings.teachers:
+        if self.settings.teachers:
             self.build_teachers()
-        if self.accounts.settings.courses:
+        if self.settings.courses:
             self.build_courses()
         if self.accounts.settings.students:
             self.build_students()
@@ -81,7 +80,6 @@ class PowerSchoolIntegrator():
             self.remove_enrollments()
         if self.accounts.settings.enroll_cohorts:
             self.enroll_cohorts()
-            
         self.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
 
     def build_courses(self):
