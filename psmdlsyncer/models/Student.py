@@ -1,38 +1,65 @@
 """
 Every student represents a student
 """
-import re
+from psmdlsyncer.sql import MoodleDBConnection
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.models.Entry import Entry
+from psmdlsyncer.utils import NS, Singleton
+import re
 import os
 import datetime
-
-class Object:
+_user_data = {}
+def object_already_exists(key):
+    return key in _user_data
+class StudentFactory:
     """
-    Very general object, kwarg arguments are just set to itself, useful for simple data manipulation
-    And makes code readable
+    MAKES A NEW STUDENT, RESPONSIBLE FOR FILLING IN THE INFORMATION THAT ALREADY
+    EXISTS WITHIN MOODLE.
+    
     """
-    def __init__(self, *args,**kwargs):
-        if not kwargs:
-            return
-        for key in kwargs.keys():
-            setattr(self, key, kwargs[key])
-
+    @classmethod
+    def make(cls, *student):
+        """
+        IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
+        OTHERWISE, MAKES A NEW ONE
+        """
+        if _user_data is {}:
+            dnet = MoodleDBConnection()
+            # any fields selected in next call means that moodle has the cononical version of that data
+            # changing the email address on Moodle will automatically update psmdlsyncer, too
+            # TODO: Make this more portable
+            for row in dnet.call_sql('select id, idnumber, username, email'):
+                ns = NS()
+                ns.id, ns.idnumber, ns.username, ns.email = row
+                _user_data[ns.idnumber] = ns
+        student_id = student[0]  # first argument passed is assumed to be the id
+        student_obj = Student(*student)
+        user_data = _user_data.get(student_id)
+        if user_data:
+            student_obj.database_id = user_data.id
+            student_obj.username = user_data.username
+        return student_obj
 class Student(Entry):
-
-    def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, dob, parent_emails,
-                 entry_date, nationality,
-                 user_data = {}):
+    def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails,
+                 entry_date, nationality, user_data={}):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
+        self.ID = self.num
+        self.kind = 'student'
+        self.powerschoolID = self.ID
         self.stuid = stuid
-        self.entry_date = entry_date
+        self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
         self.birthday = datetime.datetime.strptime(dob, '%m/%d/%Y')
         self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
+        try:
+            grade = int(grade)
+        except ValueError:
+            self.logger.warning("This student has a non-integer grade: {}".format(self.ID))
+            grade = 0
         self.grade = grade
         self.profile_extra_isstudent = True
         self.is_secondary = grade >= 6
@@ -46,10 +73,7 @@ class Student(Entry):
         self.is_new_student = self.entry_date >= get_academic_start_date()
         already_exists = user_data.get(self.num)
         self.database_id = already_exists.id if already_exists else None
-
-        self.determine_first_and_last()
-        #self.determine_preferred_name()  # this is derived from preferred.txt
-        
+        self.determine_first_and_last()        
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
         #self.bus_afternoon = bus_afternoon
@@ -63,22 +87,29 @@ class Student(Entry):
         self.is_western = self.is_big5 or self.is_european
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
+        if homeroom:
+            self.homeroom = homeroom.upper().strip()
+        else:
+            self.logger.warning("This student doesn't have a homeroom: {}".format(self.ID))
+            self.homeroom = 'No HR'
         self.homeroom = homeroom.upper().strip()
         self.is_SWA = 'SWA' in self.homeroom
-        self.homeroom_sortable = homeroom_sortable
+        self.homeroom_sortable = 0   # TODO: What's the put_in_order thing for then?
         
-        self.profile_existing_department = self.homeroom   # This is actually details that go on front page
-                                                           #self.profile_existing_address = self.bus_int
-                                                           #self.profile_existing_phone1 = self.bus_morning
-                                                           #self.profile_existing_phone2 = self.bus_afternoon
+        self.profile_existing_department = self.homeroom
+        #self.profile_existing_address = self.bus_int
+        #self.profile_existing_phone1 = self.bus_morning
+        #self.profile_existing_phone2 = self.bus_afternoon
 
-        self.parent_emails = [p.lower() for p in parent_emails if p.strip()]
+        self.parent_emails = [p.lower() for p in re.split('[;,]', parent_emails) if p.strip()]
         self.determine_username()
         self.email = self.username + "@student.ssis-suzhou.net"
         self.parent_link_email = self.username + 'PARENTS' + '@student.ssis-suzhou.net'
         self.email = self.email.lower()
         self.other_defaults()
         self._courses = []
+        self._teachers = []
+        self._groups = []
         if self.is_secondary:
             self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_issecstudent = True
@@ -97,8 +128,7 @@ class Student(Entry):
         self.is_middle_school = self.grade in range (6, 9)
         self.is_high_school = self.grade in range(10, 13)
         self._groups = []
-        self._groups_courses = {}
-        self._teachers = {}
+        self._teachers = []
 
     def get_existing_profile_fields(self):
         return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
@@ -132,34 +162,30 @@ class Student(Entry):
             while self.username in taken_usernames:
                 self.logger.warn("Looking for a new name for student:\n{}".format(self.username))
                 self.username = first_half + ('_' * times_through) + second_half
-
     def update(self, key, value):
         self.key = value
-
-    def update_preferred(self, value):
-        self.preferred_first, self.preferred_last = value
-        self.has_preferred_name = True
-        self.determine_preferred_name()
-        self.determine_username()
-
-    def update_courses(self, course_obj, teacher_obj):
-        # Sometimes PowerSchool's AutoSend has two course entries in order to take care of the scheduling (or something)
-        self._courses.append(course_obj.moodle_short)
-        d = {'username':teacher_obj.username,'name':course_obj.moodle_short}
-        self.update_groups(course_obj.moodle_short, "{username}{name}".format(**d) )
-
+    def add_course(self, course):
+        if course.ID not in self._courses:
+            self._courses.append(course.ID)
+    def add_group(self, group):
+        if group.group_id not in self._groups:
+            self._groups.append(group.group_id)
+    def add_teacher(self, teacher):
+        if not teacher:
+            return
+        if teacher.ID not in self._teachers:
+            self._teachers.append(teacher.ID)
+    @property
     def courses(self):
         return self._courses
-
+    @property
     def cohorts(self):
         return self._cohorts
-
+    @property
     def groups(self):
         return self._groups
-
     def get_teachers_classes(self):
         return [ re.match('([a-z]+)([^a-z]+)', item).groups() for item in self.groups() ]
-
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
@@ -258,6 +284,10 @@ class Student(Entry):
         return [teachers[k]+"@ssis-suzhou.net" for k in teachers.keys()]
 
     @property
+    def teachers(self):
+        return self._teachers
+
+    @property
     def homeroom_teacher_email(self):
         homeroom = self.get_homeroom_teacher()
         return homeroom and homeroom + '@ssis-suzhou.net'
@@ -275,9 +305,17 @@ class Student(Entry):
         return True
     
     def __repr__(self):
-        return self.format_string("{firstrow}{num}: {email}, {homeroom}{midrow}{lastfirst}{lastrow}{_courses}\n",
-                                  firstrow="+ ",
-                                  midrow="\n| ",
-                                  lastrow="\n| ")
-
+        ns = NS()
+        ns.ID = self.ID
+        ns.firstrow = "+ "
+        ns.midrow = "\n| "
+        ns.lastrow="\n| "
+        ns.lastfirst = self.lastfirst
+        ns.email = self.email
+        ns.homeroom = self.homeroom
+        ns.teachers = self.teachers
+        ns.courses = self.courses
+        ns.groups = self.groups
+        return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
+        "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}\n")
     

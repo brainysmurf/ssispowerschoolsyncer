@@ -44,7 +44,10 @@ while current_working_list:
     current_working_list.pop(-1)
 
 def define_command_line_arguments(*switches, **strings):
-    return HoldPassedArguments(*switches, **strings).arguments
+    if switches or strings:
+        return HoldPassedArguments(*switches, **strings).arguments
+    else:
+        return None
 
 config = configparser.ConfigParser(defaults={'dry_run':True, 'verbose':True})
 results = config.read(settings_list)

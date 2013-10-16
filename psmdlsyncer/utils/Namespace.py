@@ -32,7 +32,6 @@ class NS:
     
     """
     def __init__(self, *args, **kwargs):
-        self.sep = ""
         self.init()
         self.define(*args, **kwargs)
 
@@ -73,9 +72,6 @@ class NS:
         for key in d.__dict__.keys():
             setattr(self, key, d.__dict__[key])
 
-    def sep(self, sep):
-        self.sep = sep
-
     def items(self):
         return [item for item in self.__dict__.items() if not item[0].startswith('_')]
 
@@ -91,7 +87,7 @@ class NS:
         """
         VERY MEAGER WAY TO OUTPUT THIS DATA
         """
-        return str([item for item in self.__dict__.items() if not item[0].isupper()])
+        return str( [(key, value) for key, value in self.__dict__.items() if not key.isupper()] )
 
 Smartformmater = NS  # depreciated name
 

@@ -10,8 +10,6 @@ from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.utils import NS
 
 import datetime
-
-from psmdlsyncer.utils.Utilities import convert_short_long
 from psmdlsyncer.files import clear_folder
 
 from psmdlsyncer.settings import define_command_line_arguments, config_get_section_attribute, logging
@@ -70,13 +68,11 @@ class Tree:
         self.allocation_info_controller = Controller(Allocation)
         self.user_data = ServerInfo().get_student_info()
         self.read_in()
-        self._homerooms = None
+        homerooms = None
         self._secondary_homerooms = None
         self._elementary_homerooms = None
         self.get_homerooms()
         self.get_secondary_homerooms()
-
-
     def get_homerooms(self):
         if not self._homerooms:
             self._homerooms = []
