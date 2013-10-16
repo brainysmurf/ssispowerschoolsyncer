@@ -13,7 +13,7 @@ SECONDARYSCHOOLID = 112
 
 class Teacher(Entry):
 
-    def __init__(self, lastfirst, num, email, title, schoolid, **kwargs):
+    def __init__(self, lastfirst, num, email, title, status, schoolid, **kwargs):
         self.num = num
         self.idnumber = self.num
         self.lastfirst = lastfirst
@@ -36,6 +36,8 @@ class Teacher(Entry):
         self.is_primary = False
         self.is_secondary = False
         self.homeroom = None
+        self.schoolid = schoolid
+        self.status = int(status)
         if schoolid == str(PRIMARYSCHOOLID):
             self.is_primary = True
             self.profile_bool_iselemteacher = True

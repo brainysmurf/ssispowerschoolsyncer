@@ -1031,6 +1031,12 @@ class PowerSchoolIntegrator():
         for ns.email in set(usebccparentsELEM):
             write_db('student_email_info', list='usebccparentsELEM', email=ns.email)
 
+        for ns.email in set(usebccparentsSWA):
+            write_db('student_email_info', list='usebccparentsSWA', email=ns.email)
+
+        for ns.email in set(usebccstudentsSWA):
+            write_db('student_email_info', list='usebccstudentsSWA', email=ns.email)
+
         for ns.grade in usebccparentsGRADE:
             for ns.email in set(usebccparentsGRADE[ns.grade]):
                 write_db('student_email_info', list=ns('usebccparents{grade}'), email=ns('{email}'))

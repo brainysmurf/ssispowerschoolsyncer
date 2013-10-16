@@ -263,7 +263,7 @@ class Tree:
                 self.logger.info("This teacher wasn't added to database: {}".format(line))
                 continue
             if 1 == int(staff_status):
-                self.add_teacher(lastfirst, num, email, title, schoolid)
+                self.add_teacher(lastfirst, num, email, title, staff_status, schoolid)
 
     def sync_teachers(self):
         """
