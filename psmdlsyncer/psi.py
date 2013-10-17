@@ -11,6 +11,7 @@ from psmdlsyncer.utils import NS, convert_short_long, Categories, \
      department_email_names, department_heads
 from psmdlsyncer.html_email import Email, read_in_templates
 from psmdlsyncer.settings import config, config_get_section_attribute, logging
+from psmdlsyncer.model import Families
 import re
 import datetime
 import subprocess
