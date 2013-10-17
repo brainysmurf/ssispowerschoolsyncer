@@ -4,6 +4,7 @@ Does context-specific processing
 """
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils import NS
+from psmdlsyncer.utils import weak_reference
 _parent_dict = {}
 def object_already_exists(key):
     return key in _parent_dict
@@ -36,32 +37,55 @@ class Parent(Entry):
         self.family_id = student.family_id
         self.ID = student.family_id
         self.kind = 'parent'
-        self.grades = []
-        self._emails = []
-        self.homerooms = []
         self.children = []
-        self.courses = []
-        self.groups = []
-        self.teachers = []
         self.add_child(student)
-    def add_child(self, child):
-        """ SET ATTRIBUTES THAT DEPEND ON child HERE """
-        self.children.append(child.ID)
-        self.grades.append(child.grade)
-        self._emails.extend(child.parent_emails)
-        self.homerooms.append(child.homeroom)
-    def add_course(self, course):
-        if course.ID not in self.courses:
-            self.courses.append(course.ID)
-    def add_group(self, group):
-        if group.ID not in self.groups:
-            self.groups.append(group.ID)
-    def add_teacher(self, teacher):
-        if teacher.ID not in self.teachers:
-            self.teachers.append(teacher.ID)
+    @property
+    def grades(self):
+        return [child.grade for child in self.children]
+    @property
+    def homerooms(self):
+        result = []
+        for child in self.children:
+            this_child = child()
+            result.append(this_child.homeroom)
+        return set( result )
     @property
     def emails(self):
-        return list(set(self._emails))
+        result = []
+        for child in self.children:
+            this_child = child()
+            result.extend(this_child.guardian_emails)
+        return set(result)
+    @property
+    def courses(self):
+        result = []
+        for child in self.children:
+            this_child = child()
+            result.extend(this_child.courses)
+        return set(result)
+    @property
+    def groups(self):
+        result = []
+        for child in self.children:
+            this_child = child()
+            result.extend(this_child.groups)
+        return set( result )
+    def teachers(self):
+        result = []
+        for child in self.children:
+            this_child = child()
+            result.extend(this_child.teachers)
+        return result
+    def add_child(self, child):
+        """ SET ATTRIBUTES THAT DEPEND ON child HERE """
+        self.children.append( weak_reference(child) )
+    @property
+    def children_ids(self):
+        result = []
+        for child in self.children:
+            this_child = child()
+            result.append( this_child.ID )
+        return result
     @property
     def number_courses(self):
         return len(self.courses)
@@ -72,7 +96,7 @@ class Parent(Entry):
         ns = NS()
         ns.homerooms = " ".join(self.homerooms)
         ns.emails = ", ".join(self.emails)
-        ns.parents_of = "Parents of " + ", ".join(self.children)
+        ns.parents_of = "Parents of " + ", ".join(self.children_ids)
         ns.family_id = self.family_id
         ns.ID = self.ID
         ns.homerooms = "(" + ", ".join(self.homerooms) + ")"

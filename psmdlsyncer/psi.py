@@ -55,7 +55,6 @@ class PowerSchoolIntegrator():
         have_email_section = self.config.has_section('EMAIL')
         have_moodle_section = self.config.has_section('MOODLE')
         self.server_information = ServerInfo()
-
         
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')

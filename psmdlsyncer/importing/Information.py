@@ -105,12 +105,7 @@ class Tree:
                              "but excluded from creation internally: {}".format(schedule.course_id))
             return
         group = Group(course, teacher)
-        # parent
-        if parent:
-            parent.add_course(course)
-            parent.add_teacher(teacher)
-            parent.add_group(group)
-        # parent.add_student handled in ParentFactory
+        # parent is handled by adding the student, everything is derived from the student
         # teacher
         teacher.add_student(student)
         teacher.add_parent(parent)
