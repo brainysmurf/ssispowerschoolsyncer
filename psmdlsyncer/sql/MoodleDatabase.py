@@ -138,7 +138,7 @@ class MoodleDBConnection(SQLWrapper):
             ))
 
     def get_all_users_activity_enrollments(self):
-        return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'self'")
+        return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'self' and not usr.idnumber = ''")
         
         return self.call_sql("select usr.idnumber, crs.idnumber from ssismdl_user usr join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id IN (idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id I{})".format(
             ",".join(self.get_activities_courses())

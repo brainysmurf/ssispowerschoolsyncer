@@ -1,3 +1,4 @@
+from psmdlsyncer.settings import logging
 import re
 import os
 import csv
@@ -26,13 +27,12 @@ class AutoSendFile:
         candidates = sorted(candidates)
         final = candidates[-1]
         self.path = path_to_powerschool + '/' + final
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.logger.warning('{}_{} parsing this file:\n\t{}'.format(school, unique, self.path))
 
     def content(self):
         with open(self.path) as f:
-            for line in csv.reader(f, delimiter='\t'):
-                # autosend annoyingly has extra tab at the end
-                yield line[:-1]
-
+            yield from csv.reader(f, delimiter='\t')
 
 if __name__ == "__main__":
 

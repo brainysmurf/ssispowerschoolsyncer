@@ -11,7 +11,7 @@ from psmdlsyncer.utils import NS, convert_short_long, Categories, \
      department_email_names, department_heads
 from psmdlsyncer.html_email import Email, read_in_templates
 from psmdlsyncer.settings import config, config_get_section_attribute, logging
-from psmdlsyncer.model import Families
+from psmdlsyncer.models import Families
 import re
 import datetime
 import subprocess
@@ -60,26 +60,8 @@ class PowerSchoolIntegrator():
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
 
-        if self.settings.teachers:
-            self.build_teachers()
-        if self.settings.courses:
-            self.build_courses()
-        if self.accounts.settings.students:
-            self.build_students()
-        if self.accounts.settings.email_list:
-            self.build_email_list()
-        if self.accounts.settings.families:
-            self.build_families()
-        if self.accounts.settings.parents:
-            self.build_parents()
-        if self.accounts.settings.automagic_emails:
-            self.build_automagic_emails()
-        if self.accounts.settings.profiles:
-            self.build_profiles()
-        if self.accounts.settings.remove_enrollments:
-            self.remove_enrollments()
-        if self.accounts.settings.enroll_cohorts:
-            self.enroll_cohorts()
+
+
         self.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
 
     def build_courses(self):
@@ -795,7 +777,7 @@ class PowerSchoolIntegrator():
         if not path:
             path = self.output_path + '/postfix'
 
-        ns = NS(33)
+        ns = NS()
         ns.PATH = path
         ns.EXT = '.txt'
         ns.INCLUDE = ' :include:'

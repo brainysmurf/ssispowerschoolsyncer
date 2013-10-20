@@ -6,10 +6,9 @@ from psmdlsyncer.files import AutoSendFile
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.settings import define_command_line_arguments
-from psmdlsyncer.models import StudentFactory, Teacher, Course, Schedule, Enrollment, ParentFactory, Group
+from psmdlsyncer.models import StudentFactory, TeacherFactory, CourseFactory, ScheduleFactory, ParentFactory, GroupFactory
 from psmdlsyncer.utils import NS
 from collections import defaultdict
-
 import re
 class Tree:
     """
@@ -18,11 +17,6 @@ class Tree:
     """
     exclusion_list = ['Sections, Dead', 'User, Drews Test']
     def __init__(self):
-        self.settings = define_command_line_arguments(
-                               'verbose', 'log_level', 'dry_run', 'teachers', 'courses',
-                               'students', 'email_list', 'families', 'parents',
-                               'automagic_emails', 'profiles', 'input_okay', 'updaters',
-                               'enroll_cohorts', 'enroll_courses', 'remove_enrollments', inspect_student=False)
         #TODO: self.user_data = ServerInfo().get_student_info()
         self.logger = logging.getLogger(self.__class__.__name__)
         self._tree = {'families': defaultdict(lambda : defaultdict(list)),
@@ -101,10 +95,10 @@ class Tree:
         course = self.get_course(schedule.course_id)
         if not course:
             # course must have been excluded from creation, probably not a problem
-            self.logger.info("Course associated with student in schedule " + \
+            self.logger.info("Course associated with student {} in schedule ".format(schedule.student_id) + \
                              "but excluded from creation internally: {}".format(schedule.course_id))
             return
-        group = Group(course, teacher)
+        group = GroupFactory.make(course, teacher)
         # parent is handled by adding the student, everything is derived from the student
         # teacher
         teacher.add_student(student)
@@ -182,11 +176,11 @@ class AutoSend(AbstractClass):
         for student in self.student_info.content():
             self.add(StudentFactory.make(*student))
         for teacher in self.teacher_info.content():
-            self.add(Teacher(*teacher))
+            self.add(TeacherFactory.make(*teacher))
         for course in self.course_info.content():
-            self.add(Course(*course))
+            self.add(CourseFactory.make(*course))
         for schedule in self.schedule_info.content():
-            self.add(Schedule(*schedule))
+            self.add(ScheduleFactory.make(*schedule))
 class PowerSchoolDatabase(AbstractClass):
     """
     CONNECT TO SOME DATABASE AND EXTRACT THE TEXT

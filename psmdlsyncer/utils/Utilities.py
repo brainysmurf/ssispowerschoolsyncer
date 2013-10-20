@@ -236,6 +236,7 @@ def map_codes_names(short):
 		}.get(short)
 
 def convert_short_long(short, long):
+	print(short)
 	# First do blanket conversions
 	short = re.sub(r'[^a-zA-Z0-9]', '', short)    # take out nonalpha
 	short = re.sub(r'0([1-9]+)$', '\\1', short)   # take out leading zeroes
@@ -273,6 +274,7 @@ def convert_short_long(short, long):
 	change = map_codes_names(short)
 	if change:
 		long = change
+	print(short)
 	return short, long
 
 

@@ -1,4 +1,29 @@
 from psmdlsyncer.cli.CommandLine import CommandLine
+from psmdlsyncer.settings import config_get_section_attribute
+from psmdlsyncer.files import clear_folder
+from collections import defaultdict
+from psmdlsyncer.utils import department_email_names, department_heads, NS
+import re
+
+def name_to_email(long_name):
+    """
+    USED FOR ACTIVITIES EMAIL GENERATION
+    TODO: MOVE TO utils
+    """
+    try:
+        where = long_name.index(')')
+    except ValueError:
+        where = -1
+    where += 1
+    long_name = long_name[where:].strip().lower()
+    return re.sub('[^a-z]', '', long_name)
+
+def do_nothing(*args, **kwargs):
+    """
+    Just a nothing routine that does literally nothing
+    """
+    pass
+
 class AutomagicEmails(CommandLine):
     switches = ['update_moodle']
     def go(self):
@@ -8,7 +33,7 @@ class AutomagicEmails(CommandLine):
         if not path:
             path = self.output_path + '/postfix'
 
-        ns = NS(33)
+        ns = self.make_ns()
         ns.PATH = path
         ns.EXT = '.txt'
         ns.INCLUDE = ' :include:'
@@ -57,6 +82,12 @@ class AutomagicEmails(CommandLine):
         usebccparentsJAPANESEELEM = []
         usebccparentsJAPANESESEC = []
         usebccparentsJAPANESEGRADE = defaultdict(list)
+        # SWA DISTRIBUTION LISTS
+        usebccparentsSWA = []
+        usebccstudentsSWA = []
+        usebccparentsSWAGRADE = defaultdict(list)
+        usebccstudentsSWAGRADE = defaultdict(list)
+        # HR AND GRADE
         usebccparentsHOMEROOM = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
         usebccparentsHOMEROOM = defaultdict(list)
@@ -74,11 +105,12 @@ class AutomagicEmails(CommandLine):
         self.logger.debug('Clearing the table on moodle')
         self.server_information.create_temp_storage('student_email_info', 'list', 'email')
         self.server_information.empty_temp_storage('student_email_info')
-        write_db = self.server_information.add_temp_storage
+        if self.arguments.update_moodle:
+            write_db = self.server_information.add_temp_storage
+        else:
+            write_db = do_nothing
         self.logger.debug("Setting email lists")
-        
-        for student_key in self.students.get_student_keys():
-            student = self.students.get_student(student_key)
+        for student in self.tree.students:
             ns.homeroom = student.homeroom
             ns.grade = student.grade
 
@@ -112,7 +144,7 @@ class AutomagicEmails(CommandLine):
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
                 hrlink[student.username].append(student.homeroom_teacher_email)
-                for group in student.groups():
+                for group in student.group_names:
                     classes[group].append(student.email)
                     classesPARENTS[group].extend(student.guardian_emails)
 
@@ -131,6 +163,11 @@ class AutomagicEmails(CommandLine):
                 student.is_secondary and usebccparentsJAPANESESEC.extend( student.guardian_emails )
                 student.is_elementary and usebccparentsJAPANESEELEM.extend( student.guardian_emails )
                 usebccparentsJAPANESEGRADE[ns.grade].extend( student.guardian_emails )
+            if student.is_SWA:
+                usebccparentsSWA.extend( student.guardian_emails )
+                usebccstudentsSWA.append( student.email )
+                usebccparentsSWAGRADE[ns.grade].extend( student.guardian_emails )
+                usebccstudentsSWAGRADE[ns.grade].append( student.email )
 
         for ns.email in set(usebccparentsALL):
             write_db('student_email_info', list='usebccparentsALL', email=ns.email)
@@ -140,6 +177,12 @@ class AutomagicEmails(CommandLine):
 
         for ns.email in set(usebccparentsELEM):
             write_db('student_email_info', list='usebccparentsELEM', email=ns.email)
+
+        for ns.email in set(usebccparentsSWA):
+            write_db('student_email_info', list='usebccparentsSWA', email=ns.email)
+
+        for ns.email in set(usebccstudentsSWA):
+            write_db('student_email_info', list='usebccstudentsSWA', email=ns.email)
 
         for ns.grade in usebccparentsGRADE:
             for ns.email in set(usebccparentsGRADE[ns.grade]):
@@ -197,6 +240,8 @@ class AutomagicEmails(CommandLine):
                 f.write( '\n'.join(set(teachersGRADE[ns.grade])) )
         with open( ns('{PATH}{SLASH}grades{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
+
+            #HS
 
         # HOMEROOMS
         directory_write = []
@@ -278,20 +323,27 @@ class AutomagicEmails(CommandLine):
                 f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{EXT}'), 'w') as f:
-            f.write( '\n'.join(usebccparentsKOREAN) )
+            f.write( '\n'.join(usebccparentsJAPANESE) )
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESESEC{EXT}'), 'w') as f:
-            f.write( '\n'.join(usebccparentsKOREANSEC) )
+            f.write( '\n'.join(usebccparentsJAPANESESEC) )
 
         for ns.grade in usebccparentsJAPANESEGRADE:
             with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}'), 'w') as f:
-                f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
+                f.write( '\n'.join(set(usebccparentsJAPANESEGRADE[ns.grade])) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSWA{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsSWA) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsSWA) )
+                
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
             for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
-                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM']:
+                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM', 
+                            'usebccparentsSWA', 'usebccstudentsSWA']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
                 f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
@@ -321,8 +373,7 @@ class AutomagicEmails(CommandLine):
         ##  SETUP DEPARTMENTS, including by homeroom teachers
         depart_dict = {}
         homeroom_teachers_dict = {}
-        for teacher_key in self.students.get_teacher_keys():
-            teacher = self.students.get_teacher(teacher_key)
+        for teacher in self.tree.teachers:
             departments = teacher.get_departments()
             for department in departments:
                 d_email_name = department_email_names.get(department)
@@ -364,14 +415,19 @@ class AutomagicEmails(CommandLine):
         ns = NS()
         ns.domain = 'student.ssis-suzhou.net'
         activities_postfix = defaultdict(list)
+        activities_postfix_parents = defaultdict(list)
         for result in results:
             activity_name, student_key = result
-            student = self.students.get_student(student_key)
+            student = self.tree.student_from_ID(student_key)
+            if not student:
+                # in case of outlyer
+                continue
             if not student:
                 self.logger.warning('This student is listed as having enrolled into an activity, ' + \
-                                    'but no longer seems to be available at school. Ignored. {}'.format(student))
+                                    'but no longer seems to be available at school. Ignored. {}'.format(student_key))
                 continue
             activities_postfix[activity_name].append(student.email)
+            activities_postfix_parents[activity_name].append(student.parent_link_email)
 
         # DO THE ACTIVITY EMAILS
         ns.path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
@@ -392,6 +448,15 @@ class AutomagicEmails(CommandLine):
             with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
                 f.write("\n".join(activities_postfix[activity_name]))
 
+        ns.SUFFIX = "ACTPARENTS"
+        for activity_name in activities_postfix_parents:
+            ns.handle = name_to_email(activity_name)
+            ns.full_email = ns('{handle}{SUFFIX}')
+            with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
+                f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
+                           '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
+            with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
+                f.write("\n".join(activities_postfix_parents[activity_name]))
         
         # run newaliases command on exit if we're on the server
         newaliases_path = False
@@ -406,4 +471,5 @@ class AutomagicEmails(CommandLine):
         #TODO: If received error, should email admin
 
 if __name__ == "__main__":
-    pass
+    automagic_emails = AutomagicEmails()
+    automagic_emails.go()

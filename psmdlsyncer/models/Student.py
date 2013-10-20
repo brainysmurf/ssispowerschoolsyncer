@@ -6,18 +6,18 @@ from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enro
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.models.Entry import Entry
-from psmdlsyncer.utils import NS, Singleton
+from psmdlsyncer.utils import NS, weak_reference
 import re
 import os
 import datetime
 _user_data = {}
+_taken_usernames = []
 def object_already_exists(key):
     return key in _user_data
 class StudentFactory:
     """
     MAKES A NEW STUDENT, RESPONSIBLE FOR FILLING IN THE INFORMATION THAT ALREADY
-    EXISTS WITHIN MOODLE.
-    
+    EXISTS WITHIN MOODLE.    
     """
     @classmethod
     def make(cls, *student):
@@ -34,6 +34,8 @@ class StudentFactory:
                 ns = NS()
                 ns.id, ns.idnumber, ns.username, ns.email = row
                 _user_data[ns.idnumber] = ns
+            # list of usernames
+            _taken_usernames = [_user_data[student].username for student in _user_data]
         student_id = student[0]  # first argument passed is assumed to be the id
         student_obj = Student(*student)
         user_data = _user_data.get(student_id)
@@ -71,8 +73,6 @@ class Student(Entry):
         self.lastfirst = lastfirst
         self.user_data = user_data
         self.is_new_student = self.entry_date >= get_academic_start_date()
-        already_exists = user_data.get(self.num)
-        self.database_id = already_exists.id if already_exists else None
         self.determine_first_and_last()        
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
@@ -110,6 +110,7 @@ class Student(Entry):
         self._courses = []
         self._teachers = []
         self._groups = []
+        self._homeroom_teacher = None
         if self.is_secondary:
             self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_issecstudent = True
@@ -137,55 +138,62 @@ class Student(Entry):
         #TODO: Delete this is_in_preferred later
         self.is_in_preferred_list = False
 
-    def get_homeroom_teacher(self):
-        grade_name = self.grade if self.grade <= 10 else 'SH1112'
-        try:
-            teacher_name = self._teachers['HROOM{}'.format(grade_name)]
-        except KeyError:
+    @property
+    def homeroom_teacher(self):
+        if self._homeroom_teacher:
+            return self._homeroom_teacher()
+        else:
             return None
-        return teacher_name
 
     def determine_username(self):
         """
         DETERMINES THIS USERNAME TAKING INTO ACCOUNT EXISTING USERNAMES
-        MAKES A NEW ONE IF CURRENT USERNAME IS TAKEN
         """
-        username_already_exists = self.user_data.get(self.num)
-        if username_already_exists:
-            self.username = username_already_exists.username
-        else:
-            taken_usernames = [self.user_data[item].username for item in self.user_data]
-            first_half = no_whitespace_all_lower(self.first + self.last)[:20]
-            second_half = str(get_year_of_graduation(self.grade))
-            self.username = first_half + second_half
-            times_through = 1
-            while self.username in taken_usernames:
-                self.logger.warn("Looking for a new name for student:\n{}".format(self.username))
-                self.username = first_half + ('_' * times_through) + second_half
+        first_half = no_whitespace_all_lower(self.first + self.last)[:20]
+        second_half = str(get_year_of_graduation(self.grade))
+        self.username = first_half + second_half
+        times_through = 1
+        while self.username in _taken_usernames:
+            self.logger.warning("Username {} already taken".format(self.username))
+            self.logger.warning("Looking for a new name for student:\n{}".format(self.username))
+            self.username = first_half + ('_' * times_through) + second_half
     def update(self, key, value):
         self.key = value
+    def associate(self, teacher, course, group):
+        self.add_teacher(teacher)
+        self.add_course(course)
+        self.add_group(group)
+        if 'HROOM' in course.ID:
+            self.add_homeroom_teacher(teacher)
+    def add_homeroom_teacher(self, teacher):
+        reference = weak_reference(teacher)
+        if self._homeroom_teacher:
+            input("Two homeroom teachers?")
+        self._homeroom_teacher = reference
     def add_course(self, course):
-        if course.ID not in self._courses:
-            self._courses.append(course.ID)
+        reference = weak_reference(course)
+        if not reference in self._courses:
+            self._courses.append( reference )
     def add_group(self, group):
-        if group.group_id not in self._groups:
-            self._groups.append(group.group_id)
+        reference = weak_reference(group)
+        if not reference in self._groups:
+            self._groups.append( reference )
     def add_teacher(self, teacher):
-        if not teacher:
-            return
-        if teacher.ID not in self._teachers:
-            self._teachers.append(teacher.ID)
+        reference = weak_reference(teacher)
+        if not reference in self._teachers:
+            self._teachers.append( reference )
     @property
     def courses(self):
-        return self._courses
+        return [course() for course in self._courses]
     @property
     def cohorts(self):
         return self._cohorts
     @property
     def groups(self):
-        return self._groups
-    def get_teachers_classes(self):
-        return [ re.match('([a-z]+)([^a-z]+)', item).groups() for item in self.groups() ]
+        return [group() for group in self._groups]
+    @property
+    def group_names(self):
+        return [group().ID for group in self._groups]
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
@@ -280,17 +288,20 @@ class Student(Entry):
 
     @property
     def teacher_emails(self):
-        teachers = self.teachers()
-        return [teachers[k]+"@ssis-suzhou.net" for k in teachers.keys()]
+        teachers = self.teachers
+        return [teacher().email for teacher in self._teachers]
 
     @property
     def teachers(self):
-        return self._teachers
+        return [teacher() for teacher in self._teachers]
 
     @property
     def homeroom_teacher_email(self):
-        homeroom = self.get_homeroom_teacher()
-        return homeroom and homeroom + '@ssis-suzhou.net'
+        hroom = self._homeroom_teacher
+        if hroom:
+            return hroom.email
+        else:
+            return None
 
     def compare_num(self, num):
         return self.num == str(num)

@@ -1,10 +1,23 @@
 """
 """
 from psmdlsyncer.models.Entry import Entry
+from psmdlsyncer.utils import weak_reference
 import re
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, derive_departments
 PRIMARYSCHOOLID = 111
 SECONDARYSCHOOLID = 112
+_teachers = {}
+class TeacherFactory:
+   @classmethod
+   def make(cls, *teacher):
+      teacherID = teacher[0]
+      if teacherID in _teachers:
+         return _teachers[teacherID]
+      else:
+         teacher = Teacher(*teacher)
+         _teachers[teacherID] = teacher
+         return teacher
+
 class Teacher(Entry):
    def __init__(self, num, lastfirst, email, title, schoolid, status, **kwargs):
        self.num = num
@@ -42,42 +55,43 @@ class Teacher(Entry):
        if schoolid == str(SECONDARYSCHOOLID):
            self.is_secondary = True
            self.profile_bool_issecteacher = True
+       self.status = status
        self.profile_extra_isteacher = True
    def add_course(self, course):
       """ UPDATES INTERNAL AS WELL AS DETECTS HOMEROOM """
-      course_id = course.ID
-      if course_id not in self._courses:
-         if course_id.startswith('HROOM'):
-            self.homeroom = int(re.sub('[A-Z]', '', course_id.upper()))
-         self._courses.append(course_id)
+      reference = weak_reference(course)
+      if not reference in self._courses:
+         if course.ID.startswith('HROOM'):
+            self.homeroom = int(re.sub('[A-Z]', '', course.ID.upper()))
+         self._courses.append(reference)
    def add_student(self, student):
-      if not student:
-         return
-      if student.ID not in self._students:
-         self._students.append(student.ID)
+      reference = weak_reference(student)
+      if not student in self._students:
+         self._students.append(reference)
    def add_group(self, group):
-       if group.ID not in self._groups:
-           self._groups.append(group.ID)
+      reference = weak_reference(group)
+      if not group in self._groups:
+           self._groups.append(reference)
    def add_teacher(self, teacher):
-      if teacher.ID not in self._teachers:
-         self._teachers.append(teacher.ID)
+      reference = weak_reference(teacher)
+      if not teacher in self._teachers:
+         self._teachers.append(reference)
    def add_parent(self, parent):
-      if not parent:
-         return
-      if parent.ID not in self._parents:
-         self._parents.append(parent.ID)
+      reference = weak_reference(parent)
+      if not parent in self._parents:
+         self._parents.append(reference)
    @property
    def students(self):
-       return self._students
+       return [student() for student in self._students]
    @property
    def courses(self):
-       return self._courses
+       return [course() for course in self._courses]
    @property
    def parents(self):
-       return self._parents
+       return [parent() for parent in self._parents]
    @property
    def groups(self):
-       return self._groups
+       return [group() for group in self._groups]
    def derive_cohorts(self):
        """ Returns cohorts, dynamically created """
        l = self.get_departments()
@@ -89,10 +103,10 @@ class Teacher(Entry):
            l.append('teachersALL')
        return l
    def get_departments(self):
-       self._departments = derive_departments([c for c in self.courses()])
+       self._departments = derive_departments([c.ID for c in self.courses])
        return self._departments
    def __repr__(self):
-       return self.format_string("{first}{preferred_name}:{username}{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([a for a in self._courses if a]))
+       return self.format_string("{lastfirst} ({ID}):{username}{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
 
 if __name__ == "__main__":
    pass

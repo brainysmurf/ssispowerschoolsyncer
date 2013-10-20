@@ -1,5 +1,9 @@
 from psmdlsyncer.settings import config, config_get_section_attribute, \
      logging, define_command_line_arguments
+from psmdlsyncer.importing import InfoController
+from psmdlsyncer.utils import NS
+from psmdlsyncer.sql import ServerInfo
+import datetime
 
 class CommandLine:
     switches = []
@@ -7,9 +11,9 @@ class CommandLine:
     def __init__(self):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.logger.warn('Started at {}'.format( datetime.datetime.now() ) )
-        define_command_line_arguments(*self.switches, **self.strings)
+        self.arguments = define_command_line_arguments(*self.switches, **self.strings)
         self.config = config
-        self.dry_run = self.students.settings.dry_run
+        self.tree = InfoController()
         if 'DEFAULTS' in self.config.sections():
             for key in self.config['DEFAULTS']:
                 setattr(self, key, self.config.getboolean('DEFAULTS', key))
@@ -27,5 +31,8 @@ class CommandLine:
         self.path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         self.path_to_output = config_get_section_attribute('DIRECTORIES', 'path_to_output')
         self.path_to_errors = config_get_section_attribute('DIRECTORIES', 'path_to_errors')
-        self.students = Tree()
+
+    @classmethod
+    def make_ns(cls, *args, **kwargs):
+        return NS(*args, **kwargs)
 

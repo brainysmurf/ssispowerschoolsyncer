@@ -27,10 +27,6 @@ class HoldPassedArguments:
         for string in strings.keys():
             parser.add_argument('-' + string, action='store', dest=string, default=strings[string])
         self.arguments = parser.parse_args(sys.argv[1:])
-        self.arguments.courses = True
-        self.arguments.teachers = True
-        self.arguments.students = True
-        #TODO: Read in info from settings.ini file if necessary
 
 current_working_list = os.path.abspath(os.path.join(__file__, os.pardir)).split(os.sep)
 
@@ -54,11 +50,6 @@ results = config.read(settings_list)
 if not results:
     print("Some error occurred when attempting to find settings.ini file...exiting")
     exit()
-
-if config.has_section('ARGUMENTS'):
-    config_arguments = config.items('ARGUMENTS')
-    for key in config_arguments.keys():
-        setattr(settings.arguments, key, config['ARGUMENTS'][key])
 
 verbose = config.getboolean('DEFAULTS', 'verbose')
 dry_run = config.getboolean('DEFAULTS', 'dry_run')
@@ -97,13 +88,19 @@ def verbosity(passed):
     else:
         return False
 
+# setup a few loggers
 import logging
 path_to_logger = config_get_section_attribute('LOGGING', 'path_to_logger')
-log_level = config_get_section_attribute('LOGGING', 'log_level')
-numeric_level = getattr(logging, log_level.upper(), None)
+#used to keep this in a file, let's just set it up right, shall we?
+#log_level = config_get_section_attribute('LOGGING', 'log_level') 
+numeric_level = logging.DEBUG
 if numeric_level is None:
-    raise ValueError('Invalid log level: %s' % loglevel)
+    raise ValueError('Invalid log level: {}'.format(loglevel))
 
 logging.basicConfig(filename=path_to_logger, level=numeric_level)
+root = logging.getLogger()
+stdout_handler = logging.StreamHandler(sys.stdout)
+#stdout_handler.setLevel(logging.WARNING)
+root.addHandler(stdout_handler)
 
 __all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments, logging]
