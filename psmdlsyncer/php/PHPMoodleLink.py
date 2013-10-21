@@ -40,6 +40,19 @@ class CallPHP:
         else:
             return "Dry run enabled: create_account {}".format(to_pass)
 
+    def create_inactive_account(self, username, email, firstname, lastname, idnumber):
+        """
+        CREATE A 'SUSPENDED' ACCOUNT (MAKES MORE SENSE TO CALL IT INACTIVE WHEN CREATING IT)
+        SIMPLY BY PASSING nologin TO THE FUNCTION
+        OTHERWISE, SAME AS create_account
+        """
+        self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber)
+        to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber} nologin")
+        if self.moodle_accounts:
+            return self.command('create_account', to_pass)
+        else:
+            return "Dry run enabled: create_account {}".format(to_pass)
+        
     def enrol_user_in_course(self, idnumber, shortname, group, role="Student"):
         self.sf.define(idnumber=idnumber, shortname=shortname, group=group, role=role)
         to_pass = self.sf("{idnumber} {shortname} {group} {role}")
