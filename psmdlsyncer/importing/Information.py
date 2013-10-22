@@ -173,8 +173,9 @@ class AutoSend(AbstractClass):
         self.schedule_info = AutoSendFile('sec', 'studentschedule')
         self.init()
     def init(self):
+        students = StudentFactory()
         for student in self.student_info.content():
-            self.add(StudentFactory.make(*student))
+            self.add(students.make(*student))
         for teacher in self.teacher_info.content():
             self.add(TeacherFactory.make(*teacher))
         for course in self.course_info.content():

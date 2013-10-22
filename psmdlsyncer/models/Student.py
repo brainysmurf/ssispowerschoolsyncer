@@ -10,35 +10,35 @@ from psmdlsyncer.utils import NS, weak_reference
 import re
 import os
 import datetime
-_user_data = {}
-_taken_usernames = []
 def object_already_exists(key):
     return key in _user_data
+_taken_usernames = []
 class StudentFactory:
+    _user_data = {}
+    _taken_usernames = []
     """
     MAKES A NEW STUDENT, RESPONSIBLE FOR FILLING IN THE INFORMATION THAT ALREADY
     EXISTS WITHIN MOODLE.    
     """
-    @classmethod
-    def make(cls, *student):
+    def __init__(self):
+        dnet = MoodleDBConnection()
+        # any fields selected in next call means that moodle has the cononical version of that data
+        # changing the email address on Moodle will automatically update psmdlsyncer, too
+        # TODO: Make this more portable
+        for row in dnet.get_table('user', 'id', 'idnumber', 'username', 'email'):
+            ns = NS()
+            ns.id, ns.idnumber, ns.username, ns.email = row
+            self._user_data[ns.idnumber] = ns
+        # list of usernames
+        _taken_usernames = [self._user_data[student].username for student in self._user_data]
+    def make(self, *student):
         """
         IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
         OTHERWISE, MAKES A NEW ONE
         """
-        if _user_data is {}:
-            dnet = MoodleDBConnection()
-            # any fields selected in next call means that moodle has the cononical version of that data
-            # changing the email address on Moodle will automatically update psmdlsyncer, too
-            # TODO: Make this more portable
-            for row in dnet.call_sql('select id, idnumber, username, email'):
-                ns = NS()
-                ns.id, ns.idnumber, ns.username, ns.email = row
-                _user_data[ns.idnumber] = ns
-            # list of usernames
-            _taken_usernames = [_user_data[student].username for student in _user_data]
         student_id = student[0]  # first argument passed is assumed to be the id
         student_obj = Student(*student)
-        user_data = _user_data.get(student_id)
+        user_data = self._user_data.get(student_id)
         if user_data:
             student_obj.database_id = user_data.id
             student_obj.username = user_data.username
