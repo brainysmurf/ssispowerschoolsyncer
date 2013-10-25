@@ -25,25 +25,26 @@ class Bounce:
         self.key = ""
     def __repr__(self):
         return self.key + ': ' + str(self.count) + '\n' + str(self.messages)
-        
+
 bounces = defaultdict(Bounce)
 for line in open(path_to_mail_log):
-    if "status=bounced" in line:
-        match = re.search("to=<(.*?)>", line)
-        if match:
-            to_who = match.group(1)
-            where = line.index('status=bounced')
-            message = line[ (where+ len('status=bounced')+1): -1]
-            match = re.search("orig_to=<(.*?)>", line)
+    for search_item in ['status=bounced', 'status=deferred']:
+        if search_item in line:
+            match = re.search("to=<(.*?)>", line)
             if match:
-                orig_to = match.group(1)
-                if args.stdout:
-                    print(to_who)
-                    print(orig_to)
-                bounce = bounces[to_who]
-                bounce.key = escape(to_who)
-                bounce.count += 1
-                bounce.messages.append(escape(message))
+                to_who = match.group(1)
+                where = line.index(search_item)
+                message = line[ (where+ len(search_item)+1): -1]
+                match = re.search("orig_to=<(.*?)>", line)
+                if match:
+                    orig_to = match.group(1)
+                    if args.stdout:
+                        print(to_who)
+                        print(orig_to)
+                    bounce = bounces[to_who]
+                    bounce.key = escape(to_who)
+                    bounce.count += 1
+                    bounce.messages.append(escape(message))
 
 email = Email(domain)
 email.add_to('adammorris@ssis-suzhou.net')
