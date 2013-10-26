@@ -18,3 +18,7 @@ class Entry:
         return s.format(**d)
     def get_extra_profile_fields(self):
         return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
+
+    def __sub__(self, right):
+        from IPython import embed
+        embed()

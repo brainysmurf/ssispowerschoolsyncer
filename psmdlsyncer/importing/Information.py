@@ -175,6 +175,7 @@ class AutoSend(AbstractClass):
     def init(self):
         students = StudentFactory()
         for student in self.student_info.content():
+            print(student)
             self.add(students.make(*student))
         for teacher in self.teacher_info.content():
             self.add(TeacherFactory.make(*teacher))

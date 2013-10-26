@@ -9,7 +9,7 @@ import os, shutil
 
 # who knows where this might be, so let's not use settings.ini for this
 # TODO: make this a command line argument
-path_to_ps_photos = '../../../powerschool/photos/faculty'
+path_to_ps_photos = '../../../powerschool/photos/students'
 path_to_ps_data   = '../../../powerschool/id_idnumber.txt'
 from psmdlsyncer.files import TextFileReader
 
