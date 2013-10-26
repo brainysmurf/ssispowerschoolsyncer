@@ -6,16 +6,16 @@ import re
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, derive_departments
 PRIMARYSCHOOLID = 111
 SECONDARYSCHOOLID = 112
-_teachers = {}
-class TeacherFactory:
-   @classmethod
-   def make(cls, *teacher):
+class Teachers:
+   def __init__(self):
+      self._teachers = {}
+   def make(self, *teacher):
       teacherID = teacher[0]
-      if teacherID in _teachers:
-         return _teachers[teacherID]
+      if teacherID in self._teachers:
+         return self._teachers[teacherID]
       else:
          teacher = Teacher(*teacher)
-         _teachers[teacherID] = teacher
+         self._teachers[teacherID] = teacher
          return teacher
 
 class Teacher(Entry):
@@ -31,6 +31,7 @@ class Teacher(Entry):
        self.last, self.first = self.lastfirst.split(',')
        self.first = self.first.strip()
        self.last = self.last.strip()
+       self.fullname = self.first + ' ' + self.last
        if not self.email:
            self.email = "{}@ssis-suzhou.net".format(re.sub(r'[^a-z]', '', "{}{}".format(self.first, self.last).lower()))
        self.preferred_name = self.first + " " + self.last

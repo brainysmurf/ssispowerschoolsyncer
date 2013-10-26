@@ -5,27 +5,28 @@ Does context-specific processing
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils import NS
 from psmdlsyncer.utils import weak_reference
-_parent_dict = {}
 def object_already_exists(key):
     return key in _parent_dict
-class ParentFactory:
+class Parents:
     """
     PARENTS AS A FIRST CLASS CITIZEN NEEDS TO HAVE DISTINCTIVE BEHAVIOR
     BECAUSE THEY COULD ALSO BE TEACHERS, AND MULTIPLE CHILDREN MEAN WE NEED
     SOME WAY OF PROCESSING THAT CASE
     SO WE USE A FACTORY CLASS WITH A SINGLE CLASS METHOD
     """
-    @classmethod
-    def make(cls, student):
+    def __init__(self):
+        self._parent_dict = {}
+
+    def make(self, student):
         """
         IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
         OTHERWISE, MAKES A NEW ONE
         """
-        if not object_already_exists(student.family_id):
-            _parent_dict[student.family_id] = Parent(student)
-            return _parent_dict[student.family_id]
+        if not student.family_id in self._parent_dict:
+            self._parent_dict[student.family_id] = Parent(student)
+            return self._parent_dict[student.family_id]
         else:
-            parent = _parent_dict[student.family_id]
+            parent = self._parent_dict[student.family_id]
             parent.add_child(student)
             return parent
 class Parent(Entry):

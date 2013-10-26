@@ -8,18 +8,16 @@ from psmdlsyncer.utils.Utilities import derive_depart, department_heads
 from psmdlsyncer.utils import weak_reference
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils.Utilities import convert_short_long
-_courses = {}
-def object_already_exists(key):
-    return key in _courses
-class CourseFactory:
-    @classmethod
-    def make(cls, *course):
+class Courses:
+    def __init__(self):
+        self._courses = {}
+    def make(self, *course):
         course_id = course[0]
-        if object_already_exists(course_id):
-            return _courses[course_id]
+        if course_id in self._courses:
+            return self._courses[course_id]
         else:
             course = Course(*course)
-            _courses[course_id] = course
+            self._courses[course_id] = course
             return course
 class Course(Entry):
     def __init__(self, course_id, course_name=""):

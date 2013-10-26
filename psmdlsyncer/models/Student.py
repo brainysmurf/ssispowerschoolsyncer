@@ -10,17 +10,14 @@ from psmdlsyncer.utils import NS, weak_reference
 import re
 import os
 import datetime
-def object_already_exists(key):
-    return key in _user_data
 _taken_usernames = []
-class StudentFactory:
-    _user_data = {}
-    _taken_usernames = []
+class Students:
     """
     MAKES A NEW STUDENT, RESPONSIBLE FOR FILLING IN THE INFORMATION THAT ALREADY
     EXISTS WITHIN MOODLE.    
     """
     def __init__(self):
+        self._user_data = {}
         dnet = MoodleDBConnection()
         # any fields selected in next call means that moodle has the cononical version of that data
         # changing the email address on Moodle will automatically update psmdlsyncer, too
@@ -186,6 +183,9 @@ class Student(Entry):
     def courses(self):
         return [course() for course in self._courses]
     @property
+    def course_names(self):
+        return sorted(["{} ('{}')".format(course().ID, course().name) for course in self._courses])
+    @property
     def cohorts(self):
         return self._cohorts
     @property
@@ -193,7 +193,7 @@ class Student(Entry):
         return [group() for group in self._groups]
     @property
     def group_names(self):
-        return [group().ID for group in self._groups]
+        return sorted([group().ID for group in self._groups])
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
@@ -296,6 +296,10 @@ class Student(Entry):
         return [teacher() for teacher in self._teachers]
 
     @property
+    def teacher_names(self):
+        return sorted([teacher().fullname for teacher in self._teachers])
+
+    @property
     def homeroom_teacher_email(self):
         hroom = self._homeroom_teacher
         if hroom:
@@ -324,9 +328,9 @@ class Student(Entry):
         ns.lastfirst = self.lastfirst
         ns.email = self.email
         ns.homeroom = self.homeroom
-        ns.teachers = self.teachers
-        ns.courses = self.courses
-        ns.groups = self.groups
+        ns.teachers = ", ".join(self.teacher_names)
+        ns.courses = ", ".join(self.course_names)
+        ns.groups = ", ".join(self.group_names)
         return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
         "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}\n")
     
