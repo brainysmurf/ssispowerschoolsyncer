@@ -46,6 +46,7 @@ class InfoController(AutoSend):
         """ RETURN THE ONE THAT HAS ID == ID """
         return self.tree.students.get(id)
 if __name__ == "__main__":
+    klass = InfoController()
     for parent in klass.parents:
         if parent.number_courses != parent.number_groups:
             for person in klass.get_any_startswith(parent.ID[:4]):

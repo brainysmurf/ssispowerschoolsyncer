@@ -6,10 +6,13 @@ from psmdlsyncer.files import AutoSendFile
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.settings import define_command_line_arguments
-from psmdlsyncer.models import StudentFactory, TeacherFactory, CourseFactory, ScheduleFactory, ParentFactory, GroupFactory
+from psmdlsyncer.models import Students, Teachers, Courses, Scheduler, Parents, Groups
 from psmdlsyncer.utils import NS
 from collections import defaultdict
 import re
+
+_parents = Parents()
+_groups = Groups()
 class Tree:
     """
     HOLDS THE MODEL OF THE INFORMATION THAT IS IMPORTED
@@ -59,7 +62,7 @@ class Tree:
             yield result[key]
     def add_student(self, student):
         self.students[student.ID] = student
-        self.parents[student.family_id] = ParentFactory.make(student)
+        self.parents[student.family_id] = _parents.make(student)
         self.add_student_to_family(student)
         self.add_parent_to_family(student.family_id)
     def add_student_to_family(self, student):
@@ -98,7 +101,7 @@ class Tree:
             self.logger.info("Course associated with student {} in schedule ".format(schedule.student_id) + \
                              "but excluded from creation internally: {}".format(schedule.course_id))
             return
-        group = GroupFactory.make(course, teacher)
+        group = _groups.make(course, teacher)
         # parent is handled by adding the student, everything is derived from the student
         # teacher
         teacher.add_student(student)
@@ -173,16 +176,18 @@ class AutoSend(AbstractClass):
         self.schedule_info = AutoSendFile('sec', 'studentschedule')
         self.init()
     def init(self):
-        students = StudentFactory()
+        students = Students()
+        teachers = Teachers()
+        courses = Courses()
+        scheduler = Scheduler()
         for student in self.student_info.content():
-            print(student)
             self.add(students.make(*student))
         for teacher in self.teacher_info.content():
-            self.add(TeacherFactory.make(*teacher))
+            self.add(teachers.make(*teacher))
         for course in self.course_info.content():
-            self.add(CourseFactory.make(*course))
+            self.add(courses.make(*course))
         for schedule in self.schedule_info.content():
-            self.add(ScheduleFactory.make(*schedule))
+            self.add(scheduler.make(*schedule))
 class PowerSchoolDatabase(AbstractClass):
     """
     CONNECT TO SOME DATABASE AND EXTRACT THE TEXT
