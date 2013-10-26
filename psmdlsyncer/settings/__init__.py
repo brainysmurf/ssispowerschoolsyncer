@@ -100,7 +100,7 @@ if numeric_level is None:
 logging.basicConfig(filename=path_to_logger, level=numeric_level)
 root = logging.getLogger()
 stdout_handler = logging.StreamHandler(sys.stdout)
-#stdout_handler.setLevel(logging.WARNING)
+stdout_handler.setLevel(logging.WARNING)
 root.addHandler(stdout_handler)
 
 __all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments, logging]
