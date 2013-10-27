@@ -50,9 +50,18 @@ class Student(Entry):
         self.kind = 'student'
         self.powerschoolID = self.ID
         self.stuid = stuid
-        self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
-        self.birthday = datetime.datetime.strptime(dob, '%m/%d/%Y')
-        self.years_enrolled = get_years_since_enrolled(self.entry_date)
+        try:
+            self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
+        except ValueError:
+            self.entry_date = None
+        try: 
+            self.birthday = datetime.datetime.strptime(dob, '%m/%d/%Y')
+        except ValueError:
+            self.birthday = None
+        if not self.entry_date:
+            self.years_enrolled = None
+        else:
+            self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
         try:
             grade = int(grade)
@@ -69,7 +78,10 @@ class Student(Entry):
         self.profile_extra_isstudent = self.is_student
         self.lastfirst = lastfirst
         self.user_data = user_data
-        self.is_new_student = self.entry_date >= get_academic_start_date()
+        try:
+            self.is_new_student = self.entry_date >= get_academic_start_date()
+        except TypeError:
+            self.is_new_student = False
         self.determine_first_and_last()        
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning

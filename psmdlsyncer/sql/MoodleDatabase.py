@@ -99,6 +99,22 @@ class MoodleDBConnection(SQLWrapper):
     def get_all_students_name_ids(self):
         return self.call_sql("select idnumber, username, firstname, lastname from ssismdl_user where deleted = 0 and not idnumber like '%P'")
 
+    def those_enrolled_in_cohort(self, cohort_idnumber):
+        return self.enrolled_cohorts_and_or("", cohort_idnumber)
+
+    def those_enrolled_in_one_of_these_cohorts(self, *cohort_idnumbers):
+        return self.enrolled_cohorts_and_or("or", *cohort_idnumbers)
+
+    def enrolled_cohorts_and_or(self, and_or, *cohort_idnumbers):
+        cohort_phrases = []
+        for cohort in cohort_idnumbers:
+            cohort_phrases.append("chrt.idnumber = '{}'".format(cohort))
+        cohort_phrase = (" "+ and_or + " ").join(cohort_phrases)
+        return self.call_sql("select usr.idnumber from ssismdl_cohort_members " + \
+                             "mmbrs join ssismdl_cohort chrt on chrt.id = mmbrs.cohortid " + \
+                             "join ssismdl_user usr on usr.id = mmbrs.userid " + \
+                             "where {}".format(cohort_phrase))
+
     def does_user_exist(self, idnumber):
         """
         We use the idnumber to ascertain if a student or parent account is there or not
@@ -174,12 +190,12 @@ class MoodleDBConnection(SQLWrapper):
         result = self.call_sql("select id from ssismdl_course_categories where path like '/50/%'")
         return { str(value[0]) for value in result }
 
-    def get_teaching_learning_courses(self):
+    def get_teaching_learning_courses(self, select_list=['idnumber']):
         """ Returns a set of id of courses that are in teaching/learning """
-        result = self.sql("select id, idnumber, category from ssismdl_course where category in ({})".format(
+        return self.call_sql("select {} from ssismdl_course where category in ({})".format(
+            ", ".join(select_list),
             ",".join([str(c) for c in self.get_teaching_learning_categories()])
             ))
-        return { str(item[0]) for item in result }
 
     def get_activities_courses(self):
         result = self.call_sql("select id, idnumber, category from ssismdl_course where category = '1'")
@@ -215,7 +231,6 @@ class MoodleDBConnection(SQLWrapper):
 
 
 if __name__ == "__main__":
-
     db = MoodleDBConnection()
     if db.table_exists("blahs"):
         print("EXISTS")
@@ -224,3 +239,5 @@ if __name__ == "__main__":
     print(db.get_unique_row("user", "username", "email", email='happystudent@student.ssis-suzhou.net', idnumber='99999'))
 
     print(db.list_existing_tables('ssismdl_'))
+
+    all = db.get_all_users_enrollments()

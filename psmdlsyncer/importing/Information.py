@@ -3,6 +3,7 @@ LOOKS AT THE SETTINGS AND DECIDES WHAT TO DO
 IMPORTS THE CORRECT CLASSES AND PACKS THE INFO
 """
 from psmdlsyncer.files import AutoSendFile
+from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.settings import define_command_line_arguments
@@ -142,12 +143,26 @@ class Tree:
                 ns = NS(kind=kind,
                              id=ID, obj=self.tree[kind][ID])
                 print(ns("{kind}{TAB}{id}{TAB}{obj}))"))
+
 class AbstractClass:
     """
     DEFINES THE THINGS WE NEED COMMON TO ALL
     """
     def __init__(self):
         self._tree = Tree()
+    def init(self):
+        students = Students()
+        teachers = Teachers()
+        courses = Courses()
+        scheduler = Scheduler()
+        for student in self.student_info.content():
+            self.add(students.make(*student))
+        for teacher in self.teacher_info.content():
+            self.add(teachers.make(*teacher))
+        for course in self.course_info.content():
+            self.add(courses.make(*course))
+        for schedule in self.schedule_info.content():
+            self.add(scheduler.make(*schedule))
     def make_ns(self, *args, **kwargs):
         return NS(*args, **kwargs)
     @property
@@ -164,6 +179,7 @@ class AbstractClass:
         return self.tree.get(key)    
     def output(self):
         self.tree.output()
+
 class AutoSend(AbstractClass):
     """    
     """
@@ -175,24 +191,23 @@ class AutoSend(AbstractClass):
         self.allocations_info = AutoSendFile('sec', 'teacherallocations')
         self.schedule_info = AutoSendFile('sec', 'studentschedule')
         self.init()
-    def init(self):
-        students = Students()
-        teachers = Teachers()
-        courses = Courses()
-        scheduler = Scheduler()
-        for student in self.student_info.content():
-            self.add(students.make(*student))
-        for teacher in self.teacher_info.content():
-            self.add(teachers.make(*teacher))
-        for course in self.course_info.content():
-            self.add(courses.make(*course))
-        for schedule in self.schedule_info.content():
-            self.add(scheduler.make(*schedule))
+            
+class Moodle(AbstractClass):
+    def __init__(self):
+        super().__init__()
+        self.student_info = MoodleImport('dist', 'studentinfo')
+        self.teacher_info = MoodleImport('dist', 'staffinfo')
+        self.course_info = MoodleImport('sec', 'courseinfo')
+        self.allocations_info = MoodleImport('sec', 'teacherallocations')
+        self.schedule_info = MoodleImport('sec', 'studentschedule')
+        self.init()
+
+
 class PowerSchoolDatabase(AbstractClass):
     """
     CONNECT TO SOME DATABASE AND EXTRACT THE TEXT
     """
     pass
 if __name__ == "__main__":
-    pass
+    moodle = Moodle()
 
