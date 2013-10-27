@@ -1,2 +1,2 @@
-from psmdlsyncer.importing.InfoController import InfoController
-__all__ = [InfoController]
+from psmdlsyncer.importing.Information import Moodle, AutoSend, PostFix
+__all__ = [Moodle, AutoSend, PostFix]

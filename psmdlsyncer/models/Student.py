@@ -66,7 +66,7 @@ class Student(Entry):
         try:
             grade = int(grade)
         except ValueError:
-            self.logger.warning("This student has a non-integer grade: {}".format(self.ID))
+            self.logger.info("This student has a non-integer grade: {}".format(self.ID))
             grade = 0
         self.grade = grade
         self.profile_extra_isstudent = True

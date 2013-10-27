@@ -23,6 +23,7 @@ class Schedule(Entry):
     def __init__(self, course_number, course_name, periods, teacher, teacherID, student, studentID):
         self.original_course_number = course_number
         self.course = _courses.make(course_number)
+        self.course_number = self.course.ID
         self.kind = 'schedule'
         self.student_family_id = studentID[:4] + 'P'
         self.periods = periods
@@ -36,4 +37,4 @@ class Schedule(Entry):
         return self.course.course_id
 
     def __repr__(self):
-        return self.format_string("{course_number}:{student}")
+        return self.format_string("Course: {course_number}, Student:{student_id}, Teacher:{teacher_id}")

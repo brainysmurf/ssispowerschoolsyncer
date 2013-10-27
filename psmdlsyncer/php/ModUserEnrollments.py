@@ -3,79 +3,58 @@ HIGHER LEVEL CLASS THAN CALLPHP
 """
 
 from psmdlsyncer.php.PHPMoodleLink import CallPHP
-from psmdlsyncer.utils.Namespace import NS
-
-def test(id, student, extra):
-      sf = NS()
-      if isinstance(student, str):
-            print(student, extra)
-            return
-      sf.take_dict(student)
-      sf.define(extra=extra)
-      print (
-            {
-            'create_account': sf('Create user account'),
-            'add_user_to_cohort': sf('Add user {lastfirst} to cohort {extra}'),
-            'enrol_user_in_course': sf('Add user {lastfirst} to course and group {extra}'),
-            'change_name': sf("Changing name of {lastfirst}"),
-            'no_email': sf("This student {lastfirst} does not have an email account"),
-            }.get(id, None)
-            )
+from psmdlsyncer.utils import NS
+from psmdlsyncer.settings import config_get_section_attribute
 
 class ModUserEnrollments(CallPHP):
 
+      def __init__(self):
+            super().__init__()
+            new_email_cmd = config_get_section_attribute('EMAIL', 'new_student_cmd')
+            path_to_home = config_get_section_attribute('EMAIL', 'path_to_home')
+
       def handle_error(self, error):
             if error and error[0] == '-':  # negative value
-                  self.logger.warn(error)
+                  self.logger.warning(error)
 
       def enrol_student_into_courses(self, student):
             """
             Also sets up groups, and creates them if they don't exist
             """
-            for index in range(0, len(student.courses())):
-                  course = student.courses()[index]
-                  group  = student.groups()[index]
-                  if self.dry_run:
-                        test('enrol_user_in_course', student, course + ' ' + group)
-                  else:
-                        error = self.enrol_user_in_course( student.num, course, group, 'Student' )
-                        self.handle_error(error)
+            from IPython import embed
+            embed()
+            for index in range(0, len(student.courses)):
+                  course = student.courses[index]
+                  group  = student.groups[index]
+                  error = self.enrol_user_in_course( student.num, course, group, 'Student' )
+                  self.handle_error(error)
 
       def enrol_parent_into_courses(self, student):
             for index in range(0, len(student.courses())):
                   course = student.courses()[index]
                   group  = student.groups()[index]
-                  if self.dry_run:
-                        test('enrol_user_in_course', student, course + ' ' + group)
-                  else:
-                        error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
-                        self.handle_error(error)
-                        
-      def new_student(self, student):
-            if self.dry_run:
-                  test('create_account', student, '')
-            else:
-                  error = self.create_account( student.username, student.email, student.first, student.last, student.num )
-                  print(error)
+                  error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
+                  self.handle_error(error)
 
-            #TODO: Test for cohorts, raise error, and move this to seperate function
-            for cohort in student.cohorts():
-                  if self.dry_run:
-                        test('add_user_to_cohort', student, cohort)
-                  else:
-                        error = self.add_user_to_cohort( student.num, cohort )
+      def new_student(self, student):
+            if student.grade < 5:
+                  auth = 'nologin'
+            else:
+                  auth = 'manual'
+            error = self.create_account( student.username, student.email, student.first, student.last, student.num, auth=auth )
+            self.handle_error(error)
+
+            for cohort in student.cohorts:
+                  error = self.add_user_to_cohort( student.num, cohort )
+                  self.handle_error(error)
+
             self.enrol_student_into_courses(student)
 
-            #TODO: Modify profile fields as appropriate
-
       def no_email(self, student):
-            sf = NS()
-            sf.take_dict(student)
-            if self.dry_run:
-                  test('no_email', student, '')
-            else:
-                  error = self.shell( sf("/bin/bash /home/lcssisadmin/ssispowerschoolsync/src/MakeNewStudentAccount.sh {num} {username} '{lastfirst}'") )
-                  self.handle_error(error)
+            sf = NS(student)
+            sf.new_student_cmd = self.new_student_cmd
+            error = self.shell( sf("/bin/bash {new_student_command} {num} {username} '{lastfirst}'") )
+            self.handle_error(error)
 
       def create_groups_for_student(self, student):
             self.verbose and print("create_groups_for_students")
@@ -110,11 +89,8 @@ class ModUserEnrollments(CallPHP):
                   self.verbose and print("No parent email available, not creating parent account for {}\n{}".format(student.family_id, student))
                   return
 
-            if self.dry_run:
-                  test('new_parent', student, student.family_id)
-            else:
-                  error = self.create_account( parent_email, parent_email, 'Parent ', parent_email, student.family_id )
-                  self.handle_error(error)
+            error = self.create_account( parent_email, parent_email, 'Parent ', parent_email, student.family_id )
+            self.handle_error(error)
 
       def new_support_staff(self, staff):
             """
@@ -125,25 +101,15 @@ class ModUserEnrollments(CallPHP):
                     email
                     num
             """
-            if self.dry_run:
-                  test('new_staff', staff, '')
-            else:
-                  error = self.create_account( staff.username, staff.email, staff.first_name, staff.last_name, staff.num )
-                  self.handle_error(error)
+            error = self.create_account( staff.username, staff.email, staff.first_name, staff.last_name, staff.num )
+            self.handle_error(error)
 
-            if self.dry_run:
-                  test('add_user_to_cohort', staff.num, 'adminALL')
-            else:
-                  error = self.add_user_to_cohort( staff.num, 'adminALL' )
-                  print(error)
+            error = self.add_user_to_cohort( staff.num, 'adminALL' )
+            self.handle_error(error)
 
       def parent_account_not_associated(self, student):
-            if self.dry_run:
-                  test('parent_account_not_associated', student, student.family_id)
-                  return
-            else:
-                  error = self.associate_child_to_parent( student.family_id, student.num )
-                  self.handle_error(error)
+            error = self.associate_child_to_parent( student.family_id, student.num )
+            self.handle_error(error)
 
             cohorts = ['parentsALL']
             if student.is_secondary:
@@ -156,20 +122,14 @@ class ModUserEnrollments(CallPHP):
                   cohorts.append('parentsCHINESE')
             
             for cohort in cohorts:
-                  if self.dry_run:
-                        test('add_user_to_cohort', student.family_id, cohort)
-                  else:
-                        error = self.add_user_to_cohort( student.family_id, cohort )
-                        print(error)
+                  error = self.add_user_to_cohort( student.family_id, cohort )
+                  self.handle_error(error)
                         
             for index in range(0, len(student.courses())):
                   course = student.courses()[index]
                   group  = student.groups()[index]
-                  if self.dry_run:
-                        test('enrol_user_in_course', student, course + ' ' + group + ' NOT the student, but the parent {}, '.format(student.family_id), 'Parent')
-                  else:
-                        error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
-                        self.handle_error(error)
+                  error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
+                  self.handle_error(error)
 
 class FakeStudent:
 

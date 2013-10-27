@@ -23,6 +23,19 @@ class MoodleDBConnection(SQLWrapper):
                          config['MOODLE'].get('db_host'),
                          config['MOODLE'].get('db_name'))
 
+    @classmethod
+    def pack_sql_result(cls, row, select_list):
+        """
+        MAKES A Namespace OUT OF THE ROW RESULT, SO I CAN DO DO THINGS LIKE
+        row.idnumber
+        TODO: FIGURE OUT IF I CAN USE A ROW OBJECT TO UNPACK AS WELL
+        THAT WOULD ENABLE ME TO USE 'as' FEATURE OF SQL TO DEFINE NAMES
+        """
+        result = NS()
+        for i in range(len(select_list)):
+            setattr(result, select_list[i].replace('.', '_'), row[i])
+        return result
+
     def create_temp_storage(self, table_name, *args):
         result = self.exists_temp_storage(table_name)
         if not result:
@@ -100,20 +113,23 @@ class MoodleDBConnection(SQLWrapper):
         return self.call_sql("select idnumber, username, firstname, lastname from ssismdl_user where deleted = 0 and not idnumber like '%P'")
 
     def those_enrolled_in_cohort(self, cohort_idnumber):
-        return self.enrolled_cohorts_and_or("", cohort_idnumber)
+        yield from self.enrolled_cohorts_and_or("", cohort_idnumber)
 
     def those_enrolled_in_one_of_these_cohorts(self, *cohort_idnumbers):
-        return self.enrolled_cohorts_and_or("or", *cohort_idnumbers)
+        yield from self.enrolled_cohorts_and_or("or", *cohort_idnumbers)
 
     def enrolled_cohorts_and_or(self, and_or, *cohort_idnumbers):
         cohort_phrases = []
         for cohort in cohort_idnumbers:
             cohort_phrases.append("chrt.idnumber = '{}'".format(cohort))
         cohort_phrase = (" "+ and_or + " ").join(cohort_phrases)
-        return self.call_sql("select usr.idnumber from ssismdl_cohort_members " + \
+        for row in self.call_sql("select usr.idnumber from ssismdl_cohort_members " + \
                              "mmbrs join ssismdl_cohort chrt on chrt.id = mmbrs.cohortid " + \
                              "join ssismdl_user usr on usr.id = mmbrs.userid " + \
-                             "where {}".format(cohort_phrase))
+                             "where {}".format(cohort_phrase)):
+            result = NS()
+            result.idnumber = row[0]
+            yield result
 
     def does_user_exist(self, idnumber):
         """
@@ -147,19 +163,16 @@ class MoodleDBConnection(SQLWrapper):
             user_data[idnumber] = ns
         return user_data
 
-    def get_all_users_enrollments(self):
+    def get_all_users_enrollments(self, select_list=['usr.idnumber', 'grp.name', 'crs.idnumber']):
         """ returns list of tuple (idnumber, groupname, courseidnumber) """
-        return self.call_sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id IN ({})".format(
-            ",".join(self.get_teaching_learning_courses())
-            ))
+        for row in self.call_sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id IN ({})".format(
+            ",".join([str(row.id) for row in self.get_teaching_learning_courses(select_list=['id'])])
+            )):
+            yield self.pack_sql_result(row, select_list)
 
     def get_all_users_activity_enrollments(self):
-        return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'self' and not usr.idnumber = ''")
-        
-        return self.call_sql("select usr.idnumber, crs.idnumber from ssismdl_user usr join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id IN (idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and crs.id I{})".format(
-            ",".join(self.get_activities_courses())
-            ))
-    
+        return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'sedb.lf' and not usr.idnumber = ''")
+            
     def get_user_enrollments(self, idnumber):
         """ returns a list of tuples [(idnumber, groupname, courseidnumber)] """
         return self.call_sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))
@@ -192,14 +205,17 @@ class MoodleDBConnection(SQLWrapper):
 
     def get_teaching_learning_courses(self, select_list=['idnumber']):
         """ Returns a set of id of courses that are in teaching/learning """
-        return self.call_sql("select {} from ssismdl_course where category in ({})".format(
+        for row in self.call_sql("select {} from ssismdl_course where category in ({})".format(
             ", ".join(select_list),
-            ",".join([str(c) for c in self.get_teaching_learning_categories()])
-            ))
+            ",".join(self.get_teaching_learning_categories())
+            )):
+            yield self.pack_sql_result(row, select_list)
 
-    def get_activities_courses(self):
-        result = self.call_sql("select id, idnumber, category from ssismdl_course where category = '1'")
-        return { str(item[0]) for item in result }
+    def get_activities_courses(self, select_list=['id']):
+        select_phrase = ",".join(select_list)
+        for row in self.call_sql("select {} from ssismdl_course where category = '1'"
+                                 .format(select_phrase)):
+            yield self.pack_sql_result(row, select_list)
 
     def prepare_id_username_map(self):
         self.id_username = {}

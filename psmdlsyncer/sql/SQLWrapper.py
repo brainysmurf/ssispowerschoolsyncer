@@ -9,6 +9,7 @@ A SIMPLE WRAPPER FOR USE WITH A MOODLE DATABASE (postgres only at the moment)
 import postgresql
 import os
 from psmdlsyncer.utils.Namespace import NS
+from psmdlsyncer.settings import logging
 
 class SQLWrapper:
     """
@@ -23,6 +24,7 @@ class SQLWrapper:
         self.last_call = None
         self._database = database
         self.db = postgresql.open(ns('pq://{user}:{password}@{server}/{database}'))
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def make_ns(self, *args, **kwargs):
         ns = NS(*args, **kwargs)

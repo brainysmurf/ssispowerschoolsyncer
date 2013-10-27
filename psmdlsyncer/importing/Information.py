@@ -3,6 +3,7 @@ LOOKS AT THE SETTINGS AND DECIDES WHAT TO DO
 IMPORTS THE CORRECT CLASSES AND PACKS THE INFO
 """
 from psmdlsyncer.files import AutoSendFile
+from psmdlsyncer.files import PostFixImport
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
@@ -93,8 +94,9 @@ class Tree:
         teacher = self.get_teacher(schedule.teacher_id)
         student = self.get_student(schedule.student_id)
         if not student:
-            self.logger.warning("This student is listed in the directory but not on the bell schedule: {}"
-                                .format(student))
+            self.logger.warning("This student is listed in bell schedule but not in the roster: {}"
+                                .format(schedule))
+            return
         parent = self.get_parent_of_student(student)
         course = self.get_course(schedule.course_id)
         if not course:
@@ -180,28 +182,117 @@ class AbstractClass:
     def output(self):
         self.tree.output()
 
-class AutoSend(AbstractClass):
-    """    
+class NoClass:
+    def __init__(self, *args, **kwargs):
+        pass
+
+class InfoController(AbstractClass):
     """
+    PROVIDES HIGHER LEVEL ROUTINES THAN AVAILABLE IN TREE
+    EX) DEFINES DIFFERENCES
+    """
+    klass = NoClass
     def __init__(self):
         super().__init__()
-        self.student_info = AutoSendFile('dist', 'studentinfo')
-        self.teacher_info = AutoSendFile('dist', 'staffinfo')
-        self.course_info = AutoSendFile('sec', 'courseinfo')
-        self.allocations_info = AutoSendFile('sec', 'teacherallocations')
-        self.schedule_info = AutoSendFile('sec', 'studentschedule')
-        self.init()
-            
-class Moodle(AbstractClass):
-    def __init__(self):
-        super().__init__()
-        self.student_info = MoodleImport('dist', 'studentinfo')
-        self.teacher_info = MoodleImport('dist', 'staffinfo')
-        self.course_info = MoodleImport('sec', 'courseinfo')
-        self.allocations_info = MoodleImport('sec', 'teacherallocations')
-        self.schedule_info = MoodleImport('sec', 'studentschedule')
+        self.student_info = self.klass('dist', 'studentinfo')
+        self.teacher_info = self.klass('dist', 'staffinfo')
+        self.course_info = self.klass('sec', 'courseinfo')
+        self.allocations_info = self.klass('sec', 'teacherallocations')
+        self.schedule_info = self.klass('sec', 'studentschedule')
         self.init()
 
+    @property
+    def families(self):
+        pass
+    def get_family_emails(self, family_id):
+        parent = self.tree.family
+
+    @property
+    def groups(self):
+        """ TODO: LOOK INSIDE ENROLLMENTS """
+        pass
+
+    @property
+    def grades(self):
+        """ TODO: students? """
+        pass
+
+    @property
+    def students(self):
+        for student in self.tree.students:
+            yield self.tree.students[student]
+
+    @property
+    def teachers(self):
+        for teacher in self.tree.teachers:
+            yield self.tree.teachers[teacher]
+
+    @property
+    def parents(self):
+        for parent in self.tree.parents:
+            yield self.tree.parents[parent]
+
+    @property
+    def secondary_students(self):
+        for person in self.tree.students:
+            student = self.tree.students[student]
+            if student.is_secondary:
+                yield student
+
+    @property
+    def elementary_students(self):
+        for person in self.tree.students:
+            student = self.tree.students[student]
+            if student.is_elementary:
+                yield student
+
+    def get_any_startswith(self, id):
+        return [person for person in self.tree.ALL \
+                if hasattr(person, 'ID') and person.ID.startswith(id)]
+
+    def get_one(self, id):
+        """ RETURN THE ONE THAT HAS ID == ID """
+        for person in self.tree.ALL:
+            if person.ID == id:
+                return person
+
+    def student_from_ID(self, id):
+        """ RETURN THE ONE THAT HAS ID == ID """
+        return self.tree.students.get(id)
+
+    def differences(self, other):
+        """
+        FIRST CHECKS OUT DIFFERENCES IN KEYS
+        """
+        left = self.tree.students.keys()
+        right = other.tree.students.keys()
+        for student_id in left - right:
+            ns = NS(status='new_student')
+            ns.left = self.tree.students.get(student_id)
+            ns.right = None
+            ns.param = [self.tree.students.get(student_id)]
+            yield ns
+        for student_id in right - left:
+            ns = NS(status='departed_student')
+            ns.left = None
+            ns.right = student_id
+            ns.param = [self.tree.students.get(student_id)]
+            yield ns
+
+    __sub__ = differences
+
+class AutoSend(InfoController):
+    """    
+    """
+    klass = AutoSendFile
+ 
+class Moodle(InfoController):
+    """
+    """
+    klass = MoodleImport
+
+class PostFix(InfoController):
+    klass = PostFixImport
 
 class PowerSchoolDatabase(AbstractClass):
     """
@@ -210,4 +301,8 @@ class PowerSchoolDatabase(AbstractClass):
     pass
 if __name__ == "__main__":
     moodle = Moodle()
+    autosend = AutoSend()
 
+    for item in autosend - moodle:
+        if item.status == 'new_student':
+            print(item)
