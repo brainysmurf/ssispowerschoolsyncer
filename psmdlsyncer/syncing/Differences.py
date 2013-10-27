@@ -33,10 +33,10 @@ if __name__ == "__main__":
         dispatcher['new_student'] = mod.no_email
         dispatcher['departed_student'] = None
 
-    for item in autosend - postfix:
-        dispatch = dispatcher.get(item.status)
-        if dispatch:
-            if hasattr(item, 'param') and item.param:
-                if not isinstance(item.param, list):
-                    item.param = [item.param]
-                dispatch(*item.param)
+        for item in autosend - postfix:
+            dispatch = dispatcher.get(item.status)
+            if dispatch:
+                if hasattr(item, 'param') and item.param:
+                    if not isinstance(item.param, list):
+                        item.param = [item.param]
+                    dispatch(*item.param)

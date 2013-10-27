@@ -21,11 +21,14 @@ class ModUserEnrollments(CallPHP):
             """
             Also sets up groups, and creates them if they don't exist
             """
-            from IPython import embed
-            embed()
+            # TODO: This should really be done based on enrollment available in the model
+            if student.is_secondary:
+                  from IPython import embed
+                  embed()
             for index in range(0, len(student.courses)):
                   course = student.courses[index]
                   group  = student.groups[index]
+                  self.logger.warning("Enrolling student {} into course {} in group {}".format(student.num, course, group))
                   error = self.enrol_user_in_course( student.num, course, group, 'Student' )
                   self.handle_error(error)
 
@@ -41,10 +44,12 @@ class ModUserEnrollments(CallPHP):
                   auth = 'nologin'
             else:
                   auth = 'manual'
+            self.logger.warning('Creating {} account for {}'.format(auth, student))
             error = self.create_account( student.username, student.email, student.first, student.last, student.num, auth=auth )
             self.handle_error(error)
 
             for cohort in student.cohorts:
+                  self.logger.warning("Adding {} to cohort {}".format(student.num, cohort))
                   error = self.add_user_to_cohort( student.num, cohort )
                   self.handle_error(error)
 
