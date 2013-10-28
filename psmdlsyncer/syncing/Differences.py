@@ -15,8 +15,20 @@ if __name__ == "__main__":
 
     sync_moodle = config_get_section_attribute('MOODLE', 'sync')
     check_email = config_get_section_attribute('EMAIL', 'check_accounts')
-
     dispatcher = {}
+    
+    if check_email:
+        dispatcher['new_student'] = mod.no_email
+        dispatcher['departed_student'] = None
+
+        for item in autosend - postfix:
+            dispatch = dispatcher.get(item.status)
+            if dispatch:
+                if hasattr(item, 'param') and item.param:
+                    if not isinstance(item.param, list):
+                        item.param = [item.param]
+                    dispatch(*item.param)
+
     if sync_moodle:
         dispatcher['new_student'] = mod.new_student
         dispatcher['departed_student'] = None
@@ -29,14 +41,3 @@ if __name__ == "__main__":
                     item.param = [item.param]
                 dispatch(*item.param)
 
-    if check_email:
-        dispatcher['new_student'] = mod.no_email
-        dispatcher['departed_student'] = None
-
-        for item in autosend - postfix:
-            dispatch = dispatcher.get(item.status)
-            if dispatch:
-                if hasattr(item, 'param') and item.param:
-                    if not isinstance(item.param, list):
-                        item.param = [item.param]
-                    dispatch(*item.param)

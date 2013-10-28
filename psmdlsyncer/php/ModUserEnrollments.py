@@ -10,7 +10,7 @@ class ModUserEnrollments(CallPHP):
 
       def __init__(self):
             super().__init__()
-            new_email_cmd = config_get_section_attribute('EMAIL', 'new_student_cmd')
+            self.new_email_cmd = config_get_section_attribute('EMAIL', 'new_student_cmd')
             path_to_home = config_get_section_attribute('EMAIL', 'path_to_home')
 
       def handle_error(self, error):
@@ -52,13 +52,15 @@ class ModUserEnrollments(CallPHP):
                   self.logger.warning("Adding {} to cohort {}".format(student.num, cohort))
                   error = self.add_user_to_cohort( student.num, cohort )
                   self.handle_error(error)
-
             self.enrol_student_into_courses(student)
-
+            
       def no_email(self, student):
+            if not student.grade in range(5, 13):
+               self.logger.info("Student {} does not need an email account".format(student.username))
             sf = NS(student)
-            sf.new_student_cmd = self.new_student_cmd
-            error = self.shell( sf("/bin/bash {new_student_command} {num} {username} '{lastfirst}'") )
+            sf.new_student_cmd = self.new_email_cmd
+            self.logger.warning("Adding email account for student {}".format(student.username))
+            error = self.shell( sf("/bin/bash {new_student_cmd} {num} {username} '{lastfirst}'") )
             self.handle_error(error)
 
       def create_groups_for_student(self, student):
