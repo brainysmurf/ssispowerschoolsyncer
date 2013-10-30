@@ -14,7 +14,7 @@ class ModUserEnrollments(CallPHP):
             path_to_home = config_get_section_attribute('EMAIL', 'path_to_home')
 
       def handle_error(self, error):
-            if error and error[0] == '-':  # negative value
+            if error and error[0] == '-':  # negative value indicates error
                   self.logger.warning(error)
 
       def enrol_student_into_courses(self, student):
@@ -22,15 +22,16 @@ class ModUserEnrollments(CallPHP):
             Also sets up groups, and creates them if they don't exist
             """
             # TODO: This should really be done based on enrollment available in the model
-            if student.is_secondary:
-                  from IPython import embed
-                  embed()
             for index in range(0, len(student.courses)):
                   course = student.courses[index]
                   group  = student.groups[index]
                   self.logger.warning("Enrolling student {} into course {} in group {}".format(student.num, course, group))
                   error = self.enrol_user_in_course( student.num, course, group, 'Student' )
                   self.handle_error(error)
+
+      def enrol_teacher_into_courses(self, teacher):
+            # TODO: Make an abstract routine for use with teachers, parents, students
+            pass
 
       def enrol_parent_into_courses(self, student):
             for index in range(0, len(student.courses())):
@@ -54,6 +55,9 @@ class ModUserEnrollments(CallPHP):
                   self.handle_error(error)
             self.enrol_student_into_courses(student)
             
+      def new_teacher(self, teacher):
+            pass
+
       def no_email(self, student):
             if not student.grade in range(5, 13):
                self.logger.info("Student {} does not need an email account".format(student.username))

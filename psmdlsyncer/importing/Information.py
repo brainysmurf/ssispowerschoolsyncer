@@ -273,10 +273,24 @@ class InfoController(AbstractClass):
             ns.param = [self.tree.students.get(student_id)]
             yield ns
         for student_id in right - left:
-            ns = NS(status='departed_student')
+            ns = NS(status='old_student')
             ns.left = None
             ns.right = student_id
             ns.param = [self.tree.students.get(student_id)]
+            yield ns
+        left = self.tree.teachers.keys()
+        right = other.tree.teachers.keys()
+        for teacher_id in left - right:
+            ns = NS(status='new_teacher')
+            ns.left = self.tree.teachers.get(teacher_id)
+            ns.right = None
+            ns.param = [self.tree.teachers.get(teacher_id)]
+            yield ns
+        for teacher_id in right - left:
+            ns = NS(status='old_teacher')
+            ns.left = None
+            ns.right = self.tree.teachers.get(teacher_id)
+            ns.param = [self.tree.teachers.get(teacher_id)]
             yield ns
 
     __sub__ = differences
