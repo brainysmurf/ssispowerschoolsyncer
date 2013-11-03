@@ -3,6 +3,9 @@ from collections import namedtuple
 import re
 
 class MoodleImport(MoodleDBConnection):
+    """
+    Class used to import information about students
+    """
     def __init__(self, school, unique):
         self.school = school
         self.unique = unique
@@ -52,10 +55,12 @@ class MoodleImport(MoodleDBConnection):
         MOODLE DOESN'T HAVE CONCEPT OF SITE-WIDE ROLES,
         BUT IT DOES HAVE SITE-WIDE COHORTS, SO LET'S USE THAT
         """
-        student_ids = [row.idnumber for row in self.those_enrolled_in_cohort('studentsALL')]
-        for student_id in student_ids:
-            homeroom = self.get_table('user', 'department', idnumber=student_id)[0][0]
-            yield [student_id, '', '', homeroom, "", "", "", "", ""]
+        students = [ (row.idnumber, row.username, row.homeroom) for row in self.those_enrolled_in_cohort('studentsALL')]
+        for student_id, student_username, student_homeroom in students:
+            yield [student_id, '', '', student_homeroom, "", "", "", "", "",
+                   student_username,
+                   self.get_user_cohort_enrollment_idnumbers(student_id),
+                   self.get_user_group_enrollment_idnumbers(student_id)]
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))

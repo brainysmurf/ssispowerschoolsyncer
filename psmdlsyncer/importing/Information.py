@@ -145,6 +145,9 @@ class Tree:
                 ns = NS(kind=kind,
                              id=ID, obj=self.tree[kind][ID])
                 print(ns("{kind}{TAB}{id}{TAB}{obj}))"))
+    def output_students(self):
+        for student in self.students:
+            input(self.students[student])
 
 class AbstractClass:
     """
@@ -292,6 +295,12 @@ class InfoController(AbstractClass):
             ns.right = self.tree.teachers.get(teacher_id)
             ns.param = [self.tree.teachers.get(teacher_id)]
             yield ns
+
+        teacher_ids = self.tree.teachers.keys() + other.tree.teachers.keys()
+        for teacher_id in teacher_ids:
+            left = self.tree.teachers.get(teacher_id)
+            right = other.teachers.get(teacher_id)
+            yield from left - right
 
     __sub__ = differences
 

@@ -40,9 +40,13 @@ class Students:
             student_obj.database_id = user_data.id
             student_obj.username = user_data.username
         return student_obj
+
 class Student(Entry):
     def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails,
-                 entry_date, nationality, user_data={}):
+                 entry_date, nationality,
+                 username=None,
+                 passed_cohorts=None, passed_groups=None,
+                 user_data={}):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
@@ -99,6 +103,8 @@ class Student(Entry):
         if homeroom:
             self.homeroom = homeroom.upper().strip()
         else:
+            # FIXME: This should raise an error, because we don't have context here
+            #                is this happening when reading in from Moodle, or from AutoSend?
             self.logger.warning("This student doesn't have a homeroom: {}".format(self.ID))
             self.homeroom = 'No HR'
         self.homeroom = homeroom.upper().strip()
@@ -111,8 +117,11 @@ class Student(Entry):
         #self.profile_existing_phone2 = self.bus_afternoon
 
         self.parent_emails = [p.lower() for p in re.split('[;,]', parent_emails) if p.strip()]
-        self.determine_username()
-        self.email = self.username + "@student.ssis-suzhou.net"
+        if username is None:
+            self.determine_username_email()
+        else:
+            self.username = username
+            self.email = username + '@student.ssis-suzhou.net'
         self.parent_link_email = self.username + 'PARENTS' + '@student.ssis-suzhou.net'
         self.email = self.email.lower()
         self.other_defaults()
@@ -140,6 +149,12 @@ class Student(Entry):
         self._groups = []
         self._teachers = []
 
+        # Now look at anything that has been passed and set accordingly
+        if not passed_cohorts is None:
+            self._cohorts = passed_cohorts
+        if not passed_groups is None:
+            self._groups = passed_groups
+
     def get_existing_profile_fields(self):
         return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
 
@@ -154,7 +169,7 @@ class Student(Entry):
         else:
             return None
 
-    def determine_username(self):
+    def determine_username_email(self):
         """
         DETERMINES THIS USERNAME TAKING INTO ACCOUNT EXISTING USERNAMES
         """
@@ -166,6 +181,8 @@ class Student(Entry):
             self.logger.warning("Username {} already taken".format(self.username))
             self.logger.warning("Looking for a new name for student:\n{}".format(self.username))
             self.username = first_half + ('_' * times_through) + second_half
+        self.email = self.username + '@student.ssis-suzhou.net'
+
     def update(self, key, value):
         self.key = value
     def associate(self, teacher, course, group):
@@ -330,7 +347,27 @@ class Student(Entry):
         else:
             return False
         return True
+
+    def differences(self, other):
+        if not self.cohorts is other.cohorts:
+            for to_add in self.cohorts - other.cohorts:
+                ns = NS()
+                ns.status = 'add_to_cohort'
+                ns.left = self.cohorts
+                ns.right = other.cohorts
+                ns.param = to_add
+                yield ns
+            for to_remove in self.cohorts - other.cohorts:
+                ns = NS()
+                ns.status = 'remove_from_cohort'
+                ns.left = self.cohorts
+                ns.right = other.cohorts
+                ns.param = to_add
+                yield ns
+                
     
+    __sub__ = differences
+
     def __repr__(self):
         ns = NS()
         ns.ID = self.ID
@@ -343,6 +380,7 @@ class Student(Entry):
         ns.teachers = ", ".join(self.teacher_names)
         ns.courses = ", ".join(self.course_names)
         ns.groups = ", ".join(self.group_names)
+        ns.cohorts = ", ".join(self.cohorts)
         return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
-        "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}\n")
+        "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
     

@@ -123,12 +123,14 @@ class MoodleDBConnection(SQLWrapper):
         for cohort in cohort_idnumbers:
             cohort_phrases.append("chrt.idnumber = '{}'".format(cohort))
         cohort_phrase = (" "+ and_or + " ").join(cohort_phrases)
-        for row in self.call_sql("select usr.idnumber from ssismdl_cohort_members " + \
+        for row in self.call_sql("select usr.idnumber, usr.username, usr.department from ssismdl_cohort_members " + \
                              "mmbrs join ssismdl_cohort chrt on chrt.id = mmbrs.cohortid " + \
                              "join ssismdl_user usr on usr.id = mmbrs.userid " + \
                              "where {}".format(cohort_phrase)):
             result = NS()
             result.idnumber = row[0]
+            result.username = row[1]
+            result.homeroom = row[2]
             yield result
 
     def does_user_exist(self, idnumber):
@@ -173,12 +175,18 @@ class MoodleDBConnection(SQLWrapper):
     def get_all_users_activity_enrollments(self):
         return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'sedb.lf' and not usr.idnumber = ''")
             
-    def get_user_enrollments(self, idnumber):
+    def get_user_group_enrollments(self, idnumber):
         """ returns a list of tuples [(idnumber, groupname, courseidnumber)] """
         return self.call_sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))
 
-    def get_user_cohort_enrollments(self):
-        return self.call_sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where LENGTH(usr.idnumber)>0")
+    def get_user_group_enrollment_idnumbers(self, idnumber):
+        return [row[1] for row in self.get_user_group_enrollments(idnumber)]
+
+    def get_user_cohort_enrollments(self, idnumber):
+        return self.call_sql("select usr.idnumber, cht.idnumber from ssismdl_cohort_members chtm join ssismdl_user usr on chtm.userid=usr.id join ssismdl_cohort cht on chtm.cohortid = cht.id where usr.idnumber = '{}'".format(idnumber))
+
+    def get_user_cohort_enrollment_idnumbers(self, idnumber):
+        return [row[1] for row in self.get_user_cohort_enrollments(idnumber)]
 
     def get_user_profile_data(self):
         """
