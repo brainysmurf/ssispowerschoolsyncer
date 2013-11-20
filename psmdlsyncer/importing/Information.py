@@ -153,12 +153,13 @@ class AbstractClass:
     """
     DEFINES THE THINGS WE NEED COMMON TO ALL
     """
+    convert_course = True   # by default, convert the course shortname
     def __init__(self):
         self._tree = Tree()
     def init(self):
         students = Students()
         teachers = Teachers()
-        courses = Courses()
+        courses = Courses(convert_course=self.convert_course)
         scheduler = Scheduler()
         for student in self.student_info.content():
             self.add(students.make(*student))
@@ -313,6 +314,7 @@ class Moodle(InfoController):
     """
     """
     klass = MoodleImport
+    convert_course = False   # do not convert course short, because Moodle's contents are already converted
 
 class PostFix(InfoController):
     klass = PostFixImport

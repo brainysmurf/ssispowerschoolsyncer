@@ -262,6 +262,6 @@ if __name__ == "__main__":
         print("DOESN'T EXIST")
     print(db.get_unique_row("user", "username", "email", email='happystudent@student.ssis-suzhou.net', idnumber='99999'))
 
-    print(db.list_existing_tables('ssismdl_'))
-
     all = db.get_all_users_enrollments()
+    for item in all:
+        print(item)

@@ -9,19 +9,29 @@ from psmdlsyncer.utils import weak_reference
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils.Utilities import convert_short_long
 class Courses:
-    def __init__(self):
+    def __init__(self, convert_course=True):
+        """
+        convert_course IS USED IN ORDER TO TELL THE CLASS WHETHER OR NOT
+        CONVERSION USING convert_short_long IN UTILS/UTILTIIES.PHP
+        THIS IS NECESSARY BECAUSE THERE IS NOT A 1:1 COORESPONDANCE
+        BETWEEN COURSES IN POWERSCHOOL AND IN MOODLE
+        """
         self._courses = {}
+        self.convert_course = convert_course
     def make(self, *course):
         course_id = course[0]
         if course_id in self._courses:
             return self._courses[course_id]
         else:
-            course = Course(*course)
+            course = Course(*course, convert_course=self.convert_course)
             self._courses[course_id] = course
             return course
 class Course(Entry):
-    def __init__(self, course_id, course_name=""):
-        self.ID, self.name = convert_short_long(course_id, course_name)
+    def __init__(self, course_id, course_name="", convert_course=True):
+        if convert_course:
+            self.ID, self.name = convert_short_long(course_id, course_name)
+        else:
+            self.ID, self.name = course_id, course_name
         self.kind = 'course'
         self.course_id = course_id = self.ID
         self.department = derive_depart(self.name)

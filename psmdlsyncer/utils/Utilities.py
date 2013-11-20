@@ -174,7 +174,10 @@ def map_codes(short, grade, higher_lower):
 		# SWA Study Skills are really just learning support stuff
 		'STUDYSWA10': 'STDSKL10',
 		'STUDYSWA9': 'STDSKL9',
-
+		'STUDYSWA9': 'STDSKL08',
+        'STUDYSWA9': 'STDSKL07',
+		'STUDYSWA9': 'STDSKL9',
+        
 		'ENBSWA9': 'ENGBA9',
 		'ENBSWA8': 'ENGBA8',
 		'ENBSWA7': 'ENGBA7',
@@ -329,6 +332,7 @@ class Categories:
 		self.ssg = self.academics(hm)
 		self.ssb = self.academics(hm)
 		self.ssa = self.academics(hm)
+		self.gbs = self.academics(hm)
 		self.las = self.academics(en)
 		self.lbe = self.academics(en)
 		self.eng = self.academics(en)
@@ -344,6 +348,7 @@ class Categories:
 		self.phy = self.academics(pe)
 		self.phe = self.academics(pe)
 		self.peh = self.academics(pe)
+		self.com = self.academics(ds)
 		self.tef = self.academics(ds)
 		self.des = self.academics(ds)
 		self.tem = self.academics(ds)

@@ -6,8 +6,9 @@ tree = Tree()
 # TODO: Need to output an example for ease of use
 
 output = []
-for student_key in tree.get_student_keys():
-    student = tree.get_student(student_key)
+print('idnumber,username,fullname,shortname,category,backup')
+for student in tree.students():
+    print(student)
     if student.is_secondary:
         ns = NS(student)
-        print(ns(args.format))
+        print(ns('{ID}{COMMA}{username}{lastfirst}{COMMA}OLP{ID}{COMMA}"Invisible / Online Portfolios"{COMMA}backup-moodle2-course-1489-olptemplate-20131101-1225.mbz'))
