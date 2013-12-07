@@ -4,6 +4,7 @@ from psmdlsyncer.files import clear_folder, AutoSendFile, MoodleCSVFile
 from psmdlsyncer.exceptions import NoStudentInMoodle, StudentChangedName, NoEmailAddress, NoParentAccount, \
     GroupDoesNotExist, StudentNotInGroup, ParentAccountNotAssociated, ParentNotInGroup, MustExit
 from psmdlsyncer.inform import inform_new_parent, inform_new_student, reinform_new_parent
+from psmdlsyncer.models import Families
 from psmdlsyncer.php import ModUserEnrollments, CallPHP
 from psmdlsyncer.utils import NS, convert_short_long, Categories, department_email_names, department_heads
 from psmdlsyncer.html_email import Email, read_in_templates
@@ -235,7 +236,7 @@ class PowerSchoolIntegrator():
 
         output_file.output()
 
-    def handle_new_student(results, family, student):
+    def handle_new_student(self, results, family, student):
         for idnumber, comment in results:
             if 'newstudent' == comment:
                 self.logger.info("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(student))
@@ -275,7 +276,7 @@ class PowerSchoolIntegrator():
                 results = self.server_information.get_temp_storage('to_be_informed',
                                                                    idnumber = child.num)
                 if results:
-                    handle_new_student(results, family, child)
+                    self.handle_new_student(results, family, child)
                     self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = child.num)
 
@@ -286,7 +287,7 @@ class PowerSchoolIntegrator():
             results = self.server_information.get_temp_storage('to_be_informed',
                                                                idnumber = student.num)
             if results:
-                handle_new_student(results, family, student, server=self.email_server)
+                self.handle_new_student(results, family, student, server=self.email_server)
                 self.server_information.clear_temp_storage('to_be_informed',
                                                            idnumber = student.num)
 

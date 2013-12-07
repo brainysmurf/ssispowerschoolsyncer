@@ -155,4 +155,7 @@ if __name__ == "__main__":
             print(item)
             name = item[3]
             newname = re.sub(r'\([0-9]{1,2}[A-Z] ', '(', name)
+            if not newname == name:
+                continue
+            newname = newname.replace("'", "\'")
             probe.call_sql("update ssismdl_data_content set content = '{}' where fieldid={} and recordid={}".format(newname, item[4], item[5]))
