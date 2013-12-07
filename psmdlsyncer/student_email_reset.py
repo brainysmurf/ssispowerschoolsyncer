@@ -213,7 +213,7 @@ class Access:
 
         # RESULT NOW HAS username
         result.default_password = 'changeme'
-        result = system_call(result('echo {username}:{default_password} | chpasswd'))
+        result = system_call(result('echo {username}:{default_password} | /usr/sbin/chpasswd'))
         print(result)
 
         """
