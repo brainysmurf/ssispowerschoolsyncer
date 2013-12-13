@@ -31,7 +31,7 @@ class AutoSendFile:
         with open(self.path) as f:
             for line in csv.reader(f, delimiter='\t'):
                 # autosend annoyingly has extra tab at the end
-                yield line[:-1]
+                yield line
 
 
 if __name__ == "__main__":
