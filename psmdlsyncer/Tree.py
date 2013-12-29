@@ -73,6 +73,7 @@ class Tree:
         self._elementary_homerooms = None
         self.get_homerooms()
         self.get_secondary_homerooms()
+        
     def get_homerooms(self):
         if not self._homerooms:
             self._homerooms = []
@@ -150,7 +151,7 @@ class Tree:
             try:
                 grade = int(grade)
             except ValueError:
-                self.logger.warn('This student has a non-integer grade {}: {}'.format(stunum, firstlast))
+                self.logger.warn('This student has a non-integer grade {} {}: {}'.format(stunum, firstlast, grade))
                 grade = 0
             new_student = self.add(stunum,
                 stuid, grade,

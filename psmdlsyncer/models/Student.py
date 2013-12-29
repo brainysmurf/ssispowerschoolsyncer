@@ -11,6 +11,7 @@ import re
 import os
 import datetime
 _taken_usernames = []
+
 class Students:
     """
     MAKES A NEW STUDENT, RESPONSIBLE FOR FILLING IN THE INFORMATION THAT ALREADY
@@ -28,6 +29,7 @@ class Students:
             self._user_data[ns.idnumber] = ns
         # list of usernames
         _taken_usernames = [self._user_data[student].username for student in self._user_data]
+
     def make(self, *student):
         """
         IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
@@ -42,16 +44,26 @@ class Students:
         return student_obj
 
 class Student(Entry):
-    def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails,
-                 entry_date, nationality,
-                 username=None,
-                 passed_cohorts=None, passed_groups=None,
-                 user_data={}):
+    """
+    A student
+    self.kind = student
+    """ 
+
+    kind = 'student'
+
+    def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails, 
+        entry_date, nationality,
+        username=None,
+        passed_cohorts=None, passed_groups=None,
+        user_data={}):
+        """
+        @param grade Pass None to derive from homeroom
+        """
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
         self.ID = self.num
-        self.kind = 'student'
+        #self.kind = 'student'
         self.powerschoolID = self.ID
         self.stuid = stuid
         try:
@@ -67,10 +79,19 @@ class Student(Entry):
         else:
             self.years_enrolled = get_years_since_enrolled(self.entry_date)
         self.family_id = num[:4] + 'P'
+        if grade is None:
+            # If nothing was passed for grade, derive from homeroom
+            # check first and handle case for no homeroom
+            if not homeroom:
+                self.logger.info("This student {} ({}) has None for grade but no homeroom".format(username, self.ID))
+                homeroom = "00"
+                grade = 0
+            else:
+                grade = re.sub('[^0-9]', '', homeroom)
         try:
             grade = int(grade)
         except ValueError:
-            self.logger.info("This student has a non-integer grade: {}".format(self.ID))
+            self.logger.info("This student {} ({}) has a non-integer grade: '{}'".format(username, self.ID, grade))
             grade = 0
         self.grade = grade
         self.profile_extra_isstudent = True

@@ -1,4 +1,5 @@
 from psmdlsyncer.importing.Information import AutoSend, Moodle   # adjust this to Tree later
+
 class InfoController(Moodle):
     """
     PROVIDES HIGHER LEVEL ROUTINES THAN AVAILABLE IN TREE
@@ -55,6 +56,7 @@ class InfoController(Moodle):
     def student_from_ID(self, id):
         """ RETURN THE ONE THAT HAS ID == ID """
         return self.tree.students.get(id)
+        
 if __name__ == "__main__":
     klass = InfoController()
     for parent in klass.parents:

@@ -57,7 +57,8 @@ class MoodleImport(MoodleDBConnection):
         """
         students = [ (row.idnumber, row.username, row.homeroom) for row in self.those_enrolled_in_cohort('studentsALL')]
         for student_id, student_username, student_homeroom in students:
-            yield [student_id, '', '', student_homeroom, "", "", "", "", "",
+            # pass grade as None tells the model to use the homeroom
+            yield [student_id, '', None, student_homeroom, "", "", "", "", "",
                    student_username,
                    self.get_user_cohort_enrollment_idnumbers(student_id),
                    self.get_user_group_enrollment_idnumbers(student_id)]

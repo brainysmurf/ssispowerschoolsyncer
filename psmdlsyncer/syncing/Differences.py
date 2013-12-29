@@ -34,12 +34,17 @@ class DefineDispatcher:
 
 class MainDispatcher:
     def __init__(self):
-        moodle = Moodle()
-        autosend = AutoSend()
-        moodle.tree.output_students()
-        postfix = PostFix()
-        mod = ModUserEnrollments()
         self.logger = logging.getLogger('Differences')
+        self.logger.debug('Initiating Moodle')
+        moodle = Moodle()
+        self.logger.debug('Initiating Autosend')
+        autosend = AutoSend()
+        self.logger.debug('Initiating moodle.tre.output_students')
+        moodle.tree.output_students()
+        self.logger.debug('Initiating Postfix')
+        postfix = PostFix()
+        self.logger.debug('Initiating ModUserEnrollments')
+        mod = ModUserEnrollments()
 
         sync_moodle = config_get_section_attribute('MOODLE', 'sync')
         check_email = config_get_section_attribute('EMAIL', 'check_accounts')

@@ -98,9 +98,14 @@ if numeric_level is None:
     raise ValueError('Invalid log level: {}'.format(loglevel))
 
 logging.basicConfig(filename=path_to_logger, level=numeric_level)
-root = logging.getLogger()
-stdout_handler = logging.StreamHandler(sys.stdout)
-stdout_handler.setLevel(logging.WARNING)
-root.addHandler(stdout_handler)
+
+if sys.stdout.isatty():
+    # running with an attached terminal, automatically 
+    # set stdout debugging to full verbosity
+    root = logging.getLogger()
+    stdout_level = logging.DEBUG
+    stdout_handler = logging.StreamHandler(sys.stdout)
+    stdout_handler.setLevel(logging.DEBUG)
+    root.addHandler(stdout_handler)
 
 __all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments, logging]
