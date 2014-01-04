@@ -35,10 +35,10 @@ class DefineDispatcher:
 class MainDispatcher:
     def __init__(self):
         self.logger = logging.getLogger('Differences')
-        self.logger.debug('Initiating Moodle')
-        moodle = Moodle()
         self.logger.debug('Initiating Autosend')
         autosend = AutoSend()
+        self.logger.debug('Initiating Moodle')
+        moodle = Moodle()
         self.logger.debug('Initiating moodle.tre.output_students')
         moodle.tree.output_students()
         self.logger.debug('Initiating Postfix')

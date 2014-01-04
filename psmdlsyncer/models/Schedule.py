@@ -6,7 +6,6 @@ from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.models.Course import Courses
 from psmdlsyncer.utils.Utilities import convert_short_long
 
-# Do I really need this 
 _courses = Courses()
 
 class Scheduler:
@@ -20,8 +19,7 @@ class Schedule(Entry):
     """
     REALLY JUST MOSTLY A NAMESPACE
     """
-    def __init__(self, course_number, course_name, periods, teacher, teacherID, student, studentID):
-        
+    def __init__(self, course_number, course_name, periods, teacher, teacherID, student, studentID):        
         self.original_course_number = course_number
         self.course = _courses.make(course_number)
         self.course_number = self.course.ID
