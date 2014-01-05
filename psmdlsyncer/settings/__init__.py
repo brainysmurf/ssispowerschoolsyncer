@@ -105,7 +105,7 @@ if sys.stdout.isatty():
     root = logging.getLogger()
     stdout_level = logging.DEBUG
     stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.DEBUG)
+    stdout_handler.setLevel(logging.INFO)
     root.addHandler(stdout_handler)
 
 __all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments, logging]

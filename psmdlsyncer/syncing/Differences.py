@@ -17,6 +17,7 @@ class DefineDispatcher:
     def __init__(self, left, right, **kwargs):
         self.left = left
         self.right = right
+        self.logger = logging.getLogger("Dispatcher")
         self.define(**kwargs)
                 
     def define(self, **kwargs):
@@ -27,6 +28,7 @@ class DefineDispatcher:
                     if hasattr(item, 'param') and item.param:
                         if not isinstance(item.param, list):
                             item.param = [item.param]
+                        self.logger.info('Dispatching to {} with param {}'.format(dispatch.__name__, str(item.param)))
                         dispatch(*item.param)
 
     def subtract(self):
@@ -35,37 +37,37 @@ class DefineDispatcher:
 class MainDispatcher:
     def __init__(self):
         self.logger = logging.getLogger('Differences')
-        self.logger.debug('Initiating Autosend')
+        self.logger.info('Initiating Autosend')
         autosend = AutoSend()
-        self.logger.debug('Initiating Moodle')
+        self.logger.info('Initiating Moodle')
         moodle = Moodle()
-        self.logger.debug('Initiating moodle.tre.output_students')
-        moodle.tree.output_students()
-        self.logger.debug('Initiating Postfix')
+        self.logger.info('Initiating Postfix')
         postfix = PostFix()
-        self.logger.debug('Initiating ModUserEnrollments')
+        self.logger.info('Initiating ModUserEnrollments')
         mod = ModUserEnrollments()
 
         sync_moodle = config_get_section_attribute('MOODLE', 'sync')
         check_email = config_get_section_attribute('EMAIL', 'check_accounts')
 
         if check_email:
+            self.logger.info('Defining dispatcher for postfix and autosend')
             DefineDispatcher(postfix, autosend,
-                             new_student=mod.no_email,
-                             old_student=self.email_no_longer_needed)
+                             old_student=mod.no_email)
 
         if sync_moodle:
+            self.logger.info('Defining dispatcher for moodle and autosend')
             DefineDispatcher(moodle, autosend,
                              new_student=mod.new_student,
                              old_student=self.moodle_no_longer_needed,
                              new_teacher=mod.new_teacher,
                              old_teacher=None)
-            
+
     def moodle_no_longer_needed(self, student):
         self.logger.warning("Delete this moodle account {} ({})".format(student.ID, student.username))
 
     def email_no_longer_needed(self, student):
-        self.logger.warning("Delete this email account {}".format(student.username))
+        if student:
+            self.logger.warning("Delete this email account {}".format(student.username))
 
 
 if __name__ == "__main__":

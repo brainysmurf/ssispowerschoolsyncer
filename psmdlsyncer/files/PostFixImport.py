@@ -5,13 +5,14 @@ class PostFixImport:
     def __init__(self, school, unique):
         self.school = school
         self.unique = unique
-        self.path_to_home = config_get_section_attribute('EMAIL', 'path_to_home')
+        self.path_to_passwd = config_get_section_attribute('EMAIL', 'path_to_passwd')
 
     def content(self):
-        if not (self.school == 'dist' and self.unique == 'studentinfo'):
+        if self.school != 'dist' or self.unique != 'studentinfo':
             return ()
+        
+        with open(self.path_to_passwd) as f:
+            for account in f:
+                username, _, _, _, idnumber, _, _ = account.split(':')
+                yield [idnumber, '', None, "", "", "", "", "", "", username]
 
-        for account in os.listdir(self.path_to_home):
-            if account.startswith('.'):
-                continue
-            yield [account, '', '', "", "", "", "", "", ""]

@@ -29,12 +29,14 @@ class MoodleImport(MoodleDBConnection):
             yield row.shortname, row.fullname
             
     def content_sec_studentschedule(self):
+        input("Doing content_sec_studentschedule")
         users_enrollments = list(self.get_all_users_enrollments())
         usernames = {}
         for row in self.get_table('user', 'idnumber', 'username', deleted=0):
             idnumber = row[0]
             username = row[1]
             usernames[username] = idnumber
+        input(usernames)
         
         student_ids = [row.idnumber for row in self.those_enrolled_in_cohort('studentsSEC')]
         only_lowercase = re.compile(r'[^a-z]')
@@ -48,6 +50,7 @@ class MoodleImport(MoodleDBConnection):
                     self.logger.info("no idnumber for {}, how am I supposed to know what's what?".format(username))
                     continue
                 results.add( (filtered.crs_idnumber, "", "", "", teacher_id, "", student_id) )
+        input(results)
         return results
 
     def content_dist_studentinfo(self):
@@ -58,7 +61,7 @@ class MoodleImport(MoodleDBConnection):
         students = [ (row.idnumber, row.username, row.homeroom) for row in self.those_enrolled_in_cohort('studentsALL')]
         for student_id, student_username, student_homeroom in students:
             # pass grade as None tells the model to use the homeroom
-            yield [student_id, '', None, student_homeroom, "", "", "", "", "",
+            yield [student_id, None, None, student_homeroom, "", "", "", "", "",
                    student_username,
                    self.get_user_cohort_enrollment_idnumbers(student_id),
                    self.get_user_group_enrollment_idnumbers(student_id)]
@@ -69,7 +72,6 @@ class MoodleImport(MoodleDBConnection):
         for enrollment in enrollments:
             #do we really need the teacher id here?, yes that's how the group name is derived!!
             teacher_username = only_lowercase.sub('', enrollment.grp_name)
-            print(teacher_username)
             self.get_table('user', 'idnumber', username=teacher_username)
             periods = ''
             section = ''

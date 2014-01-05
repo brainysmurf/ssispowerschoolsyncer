@@ -59,11 +59,9 @@ class ModUserEnrollments(CallPHP):
             pass
 
       def no_email(self, student):
-            if not student.grade in range(5, 13):
-               self.logger.info("Student {} does not need an email account".format(student.username))
             sf = NS(student)
             sf.new_student_cmd = self.new_email_cmd
-            self.logger.warning("Adding email account for student {}".format(student.username))
+
             error = self.shell( sf("/bin/bash {new_student_cmd} {num} {username} '{lastfirst}'") )
             self.handle_error(error)
 

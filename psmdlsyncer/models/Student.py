@@ -30,13 +30,13 @@ class Students:
         # list of usernames
         _taken_usernames = [self._user_data[student].username for student in self._user_data]
 
-    def make(self, *student):
+    def make(self, *args, **kwargs):
         """
         IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
         OTHERWISE, MAKES A NEW ONE
         """
-        student_id = student[0]  # first argument passed is assumed to be the id
-        student_obj = Student(*student)
+        student_id = args[0]  # first argument passed is assumed to be the id
+        student_obj = Student(*args, **kwargs)
         user_data = self._user_data.get(student_id)
         if user_data:
             student_obj.database_id = user_data.id
@@ -63,7 +63,6 @@ class Student(Entry):
         self.num = num
         self.idnumber = self.num
         self.ID = self.num
-        #self.kind = 'student'
         self.powerschoolID = self.ID
         self.stuid = stuid
         try:
@@ -83,7 +82,7 @@ class Student(Entry):
             # If nothing was passed for grade, derive from homeroom
             # check first and handle case for no homeroom
             if not homeroom:
-                self.logger.info("This student {} ({}) has None for grade but no homeroom".format(username, self.ID))
+                self.logger.debug("This student {} ({}) has None for grade but no homeroom".format(username, self.ID))
                 homeroom = "00"
                 grade = 0
             else:
@@ -126,7 +125,7 @@ class Student(Entry):
         else:
             # FIXME: This should raise an error, because we don't have context here
             #                is this happening when reading in from Moodle, or from AutoSend?
-            self.logger.warning("This student doesn't have a homeroom: {}".format(self.ID))
+            self.logger.debug("This student doesn't have a homeroom: {}".format(self.ID))
             self.homeroom = 'No HR'
         self.homeroom = homeroom.upper().strip()
         self.is_SWA = 'SWA' in self.homeroom
@@ -240,10 +239,10 @@ class Student(Entry):
         return self._cohorts
     @property
     def groups(self):
-        return [group() for group in self._groups]
+        return [group for group in self._groups]
     @property
     def group_names(self):
-        return sorted([group().ID for group in self._groups])
+        return sorted([group.ID for group in self.groups])
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
@@ -397,11 +396,12 @@ class Student(Entry):
         ns.lastrow="\n| "
         ns.lastfirst = self.lastfirst
         ns.email = self.email
+        ns.username = self.username
         ns.homeroom = self.homeroom
         ns.teachers = ", ".join(self.teacher_names)
         ns.courses = ", ".join(self.course_names)
         ns.groups = ", ".join(self.group_names)
         ns.cohorts = ", ".join(self.cohorts)
-        return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
-        "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
-    
+        #return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
+        #"{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
+        return ns("Student {username} ({ID} {homeroom})")

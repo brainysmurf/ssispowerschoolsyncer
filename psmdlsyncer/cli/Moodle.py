@@ -1,4 +1,5 @@
 from psmdlsyncer.php import ModUserEnrollments
+from psmdlsyncer.cli import CommandLine
 
 class Moodle(CommandLine):
     # for ease in testing
@@ -10,7 +11,6 @@ class Moodle(CommandLine):
     def go(self):
         self.logger.debug("Building csv file for moodle")
         path_to_cli = self.config['MOODLE'].get('path_to_cli') if self.config.has_section('MOODLE') else None
-        
 
         for account in self.tree.ALL:
             this_id = account.ID

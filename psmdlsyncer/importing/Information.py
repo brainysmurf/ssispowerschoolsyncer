@@ -108,37 +108,42 @@ class Tree:
         """
         # setup, group is the only previously unknown in this instance
         teacher = self.get_teacher(schedule.teacher_id)
-        if not teacher:
-            print(schedule)
         student = self.get_student(schedule.student_id)
         if not student:
-            self.logger.warning("This student is listed in bell schedule but not in the roster: {}"
-                                .format(schedule))
+            # no student found, so no point continuing
             return
         parent = self.get_parent_of_student(student)
         course = self.get_course(schedule.course_id)
         if not course:
             # course must have been excluded from creation, probably not a problem
-            self.logger.info("Course associated with student {} in schedule ".format(schedule.student_id) + \
+            self.logger.debug("Course associated with student {} in schedule ".format(schedule.student_id) + \
                              "but excluded from creation internally: {}".format(schedule.course_id))
             return
-        group = _groups.make(course, teacher)
+        if not teacher:
+            group = None
+        else:
+            group = _groups.make(course, teacher)
         # parent is handled by adding the student, everything is derived from the student
-        # teacher
-        teacher.add_student(student)
-        teacher.add_parent(parent)
-        teacher.add_course(course)
-        teacher.add_group(group)
+        if teacher:
+            teacher.add_student(student)
+            teacher.add_parent(parent)
+            teacher.add_course(course)
+            if group:
+                teacher.add_group(group)
         # student
         if student:
-            student.add_teacher(teacher)
+            if teacher:
+                student.add_teacher(teacher)
             student.add_course(course)
-            student.add_group(group)
+            if group:
+                student.add_group(group)
         # course
         course.add_student(student)
         course.add_parent(parent)
-        course.add_teacher(teacher)
-        course.add_group(group)
+        if teacher:
+            course.add_teacher(teacher)
+        if group:
+            course.add_group(group)
         
     def get(self, key):
         """
@@ -187,14 +192,14 @@ class AbstractClass:
         teachers = Teachers()
         courses = Courses(convert_course=self.convert_course)
         scheduler = Scheduler()
-        for student in self.student_info.content():
-            self.add(students.make(*student))
-        for teacher in self.teacher_info.content():
-            self.add(teachers.make(*teacher))
-        for course in self.course_info.content():
-            self.add(courses.make(*course))
-        for schedule in self.schedule_info.content():
-            self.add(scheduler.make(*schedule))
+        for params in self.student_info.content():
+            self.add(students.make(*params))
+        for params in self.teacher_info.content():
+            self.add(teachers.make(*params))
+        for params in self.course_info.content():
+            self.add(courses.make(*params))
+        for params in self.schedule_info.content():
+            self.add(scheduler.make(*params))
 
     def make_ns(self, *args, **kwargs):
         return NS(*args, **kwargs)
@@ -311,8 +316,9 @@ class InfoController(AbstractClass):
             ns = NS(status='old_student')
             ns.left = None
             ns.right = student_id
-            ns.param = [self.tree.students.get(student_id)]
+            ns.param = [other.tree.students.get(student_id)]
             yield ns
+
         left = self.tree.teachers.keys()
         right = other.tree.teachers.keys()
         for teacher_id in left - right:
@@ -325,14 +331,15 @@ class InfoController(AbstractClass):
             ns = NS(status='old_teacher')
             ns.left = None
             ns.right = self.tree.teachers.get(teacher_id)
-            ns.param = [self.tree.teachers.get(teacher_id)]
+            ns.param = [other.tree.teachers.get(teacher_id)]
             yield ns
 
-        teacher_ids = self.tree.teachers.keys() + other.tree.teachers.keys()
-        for teacher_id in teacher_ids:
-            left = self.tree.teachers.get(teacher_id)
-            right = other.teachers.get(teacher_id)
-            yield from left - right
+        # not sure what this is supposed to be doing...
+        # teacher_ids = self.tree.teachers.keys() + other.tree.teachers.keys()
+        # for teacher_id in teacher_ids:
+        #    left = self.tree.teachers.get(teacher_id)
+        #    right = other.teachers.get(teacher_id)
+        #    yield from left - right
 
     __sub__ = differences
 
