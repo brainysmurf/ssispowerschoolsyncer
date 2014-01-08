@@ -87,8 +87,8 @@ class DatabaseObject:
             else:
                 split = this_date.split(' ')
                 try:
-                    remove_digits = lambda x: int(re.sub(r'[^0-9]', '', x))
-                    this_day   = remove_digits(split[0])
+                    remove_non_digits = lambda x: int(re.sub(r'[^0-9]', '', x))
+                    this_day   = remove_non_digits(split[0])
                 except ValueError:
                     return (None, None)
                 try:
@@ -97,7 +97,10 @@ class DatabaseObject:
                     return (None, None)
                 if not this_month:
                     return (None, None)
-                this_year  = today().year
+                try:
+                    this_year = int(split[2])
+                except (IndexError, ValueError):
+                    this_year  = today().year - 1
                 date_objects.append( datetime.date(this_year, this_month, this_day) )
 
         if not date_objects:

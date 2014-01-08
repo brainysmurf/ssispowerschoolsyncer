@@ -1,4 +1,4 @@
-from psmdlsyncer.importing import InfoController
+from psmdlsyncer.importing.InfoController import InfoController
 from psmdlsyncer.sql import MoodleDBConnection, ServerInfo
 from psmdlsyncer.files import clear_folder, AutoSendFile, MoodleCSVFile
 from psmdlsyncer.exceptions import NoStudentInMoodle, StudentChangedName, \
