@@ -97,7 +97,10 @@ class DatabaseObject:
                     return (None, None)
                 if not this_month:
                     return (None, None)
-                this_year  = today().year
+                try:
+                    this_year = int(split[2])
+                except (ValueError, IndexError):
+                    this_year = today().year - 1
                 date_objects.append( datetime.date(this_year, this_month, this_day) )
 
         if not date_objects:
