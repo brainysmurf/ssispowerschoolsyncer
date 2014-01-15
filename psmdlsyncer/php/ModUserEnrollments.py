@@ -74,7 +74,7 @@ class ModUserEnrollments(CallPHP):
             if self.dry_run:
                   test('no_email', student, '')
             else:
-                  error = self.shell( sf("/bin/bash /home/lcssisadmin/ssispowerschoolsync/src/MakeNewStudentAccount.sh {num} {username} '{lastfirst}'") )
+                  error = self.shell( sf("/bin/bash /home/lcssisadmin/src/ssispowerschoolsyncer/MakeNewStudentAccount.sh {num} {username} '{lastfirst}'") )
                   self.handle_error(error)
 
       def create_groups_for_student(self, student):
