@@ -4,15 +4,7 @@ from email.generator import Generator
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-try:
-    import html2text
-    # Used for the plaintext portion of the email
-except ImportError:
-    # If html2text isn't available (boo) use a simple html tag extractor using a (very basic) regular expression
-    # Better yet, install html2text (http://www.aaronsw.com/2002/html2text/)
-    import re
-    class html2text:
-        html2text = lambda html: re.sub(r'<.*?>', '', html)
+import html2text
 import smtplib
 
 def read_in_templates(path, email_object=None):
@@ -38,7 +30,6 @@ class Recipient:
 
     def __init__(self, email="", name="", lang="en", **kwargs):
         if not email or not '@' in email:
-            print("NO EMAIL")
             self.email = ""
             email = "noemailprovided@example.org"
         if not name:
@@ -223,7 +214,7 @@ class Email:
         msg = MIMEMultipart('alternative')
 
         # Headers
-        msg['Subject'] = Header(self.subject.encode('utf-8'), 'UTF-8').encode()
+        msg['Subject'] = Header(self.subject, 'UTF-8').encode()
         msg['From'] = self.from_who
 
         for recipient in self.recipients:
@@ -239,9 +230,8 @@ class Email:
         plaintext = html2text.html2text(template)
 
         # Record the MIME types of both parts - text/plain and text/html.
-        part1 = MIMEText(plaintext.encode('utf-8'), 'plain', 'utf-8')
-        part2 = MIMEText(template.encode('utf-8'), 'html', 'utf-8')
-
+        part1 = MIMEText(plaintext, 'plain', 'utf-8')
+        part2 = MIMEText(template, 'html', 'utf-8')
         # Attach parts into message container.
         # According to RFC 2046, the last part of a multipart message, in this case
         # the HTML message, is best and preferred.

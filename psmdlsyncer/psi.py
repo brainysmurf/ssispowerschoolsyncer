@@ -639,6 +639,7 @@ class PowerSchoolIntegrator():
                                                                  idnumber=student.num,
                                                                  comment='newstudent')
 
+
                     except NoEmailAddress:
                         self.logger.warn("Student does not have an email address:\n{}".format(student))
                         modify.no_email(student)
@@ -1131,7 +1132,7 @@ class PowerSchoolIntegrator():
                     try:
                         f.write( '\n'.join(set(hrlink[ns.student])) )
                     except TypeError:
-                        pass
+                        password
         with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
         

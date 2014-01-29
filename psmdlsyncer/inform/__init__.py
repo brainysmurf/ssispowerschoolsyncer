@@ -21,10 +21,9 @@ def inform_new_student(family, student):
     email.make_subject(sf("New Student in Homeroom {homeroom}, {lastfirst}"))
     homeroom_teacher = student.get_homeroom_teacher()
     if homeroom_teacher:
-          email.add_to(homeroom_teacher)
-    """
-    for family_email in family.emails:
-          email.add_to(family_email)
+          email.add_to(homeroom_teacher + '@ssis-suzhou.net')
+    #for family_email in family.emails:
+    #      email.add_to(family_email)
     for class_teacher in student.get_teachers_as_list():
           email.add_to(class_teacher + '@ssis-suzhou.net')
     if student.grade in [11, 12]:
@@ -32,8 +31,9 @@ def inform_new_student(family, student):
           email.add_cc('matthewmarshall@ssis-suzhou.net')
     elif student.grade in [6, 7, 8, 9, 10]:
           email.add_cc('aubreycurran@ssis-suzhou.net')
-    """
-    email.add_cc(get_head_of_grade(student.grade))
+
+    for head_of_grade in get_head_of_grade(student.grade):
+        email.add_cc(head_of_grade + '@ssis-suzhou.net')
     email.define_fields(sf)
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')    
     email.send()
