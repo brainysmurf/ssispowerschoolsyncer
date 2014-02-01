@@ -39,7 +39,7 @@ class MainDispatcher:
         autosend = AutoSend()
         self.logger.debug('Initiating Moodle')
         moodle = Moodle()
-        self.logger.debug('Initiating moodle.tre.output_students')
+        self.logger.debug('Initiating moodle.tree.output_students')
         moodle.tree.output_students()
         self.logger.debug('Initiating Postfix')
         postfix = PostFix()

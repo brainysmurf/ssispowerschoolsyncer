@@ -1,12 +1,18 @@
 """
 """
 from psmdlsyncer.models.Entry import Entry
+unknown_teacher = "<unknown teacher>"
+unknown_course = "<unknown course>"
 
 class Groups:
+
     def __init__(self):
         self._groups = {}
+
     def make(self, course, teacher):
-        group_id = teacher.username + course.ID
+        teacher_username = teacher.username if teacher else unknown_teacher
+        course_id = course.ID if course else unknown_course
+        group_id = teacher_username + course_id
         if group_id in self._groups:
             return self._groups[group_id]
         else:
@@ -17,10 +23,15 @@ class Groups:
 class Group(Entry):
     """
     """
+    kind = "group"
+
     def __init__(self, course, teacher):
-        self.group_id = teacher.username + course.course_id
-        self.course_number = course.course_id
-        self.teacher_username = teacher.username
+        teacher_username = teacher.username if teacher else unknown_teacher
+        course_id = course.course_id if course else unknown_course
+        self.group_id = teacher_username + course_id
+        self.course_number = course_id
+        self.teacher_username = teacher_username
         self.ID = self.group_id
+
     def __repr__(self):
         return self.format_string("{group_id}")

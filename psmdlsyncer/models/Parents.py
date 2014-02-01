@@ -5,8 +5,10 @@ Does context-specific processing
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils import NS
 from psmdlsyncer.utils import weak_reference
+
 def object_already_exists(key):
     return key in _parent_dict
+    
 class Parents:
     """
     PARENTS AS A FIRST CLASS CITIZEN NEEDS TO HAVE DISTINCTIVE BEHAVIOR
@@ -29,20 +31,23 @@ class Parents:
             parent = self._parent_dict[student.family_id]
             parent.add_child(student)
             return parent
+
 class Parent(Entry):
     """
     DERIVED PRETTY MUCH FROM PROVIDED student OBJECT
     """
+    kind = 'parent'
+
     def __init__(self, student):
         """ SETS COMMON ATTRIBUTES, CALLS add_child """
         self.family_id = student.family_id
         self.ID = student.family_id
-        self.kind = 'parent'
         self.children = []
         self.add_child(student)
     @property
     def grades(self):
         return [child.grade for child in self.children]
+
     @property
     def homerooms(self):
         result = []
@@ -50,6 +55,7 @@ class Parent(Entry):
             this_child = child()
             result.append(this_child.homeroom)
         return set( result )
+
     @property
     def emails(self):
         result = []
@@ -57,6 +63,7 @@ class Parent(Entry):
             this_child = child()
             result.extend(this_child.guardian_emails)
         return set(result)
+
     @property
     def courses(self):
         result = []
@@ -64,6 +71,7 @@ class Parent(Entry):
             this_child = child()
             result.extend(this_child.courses)
         return set(result)
+
     @property
     def groups(self):
         result = []
@@ -71,6 +79,7 @@ class Parent(Entry):
             this_child = child()
             result.extend(this_child.groups)
         return set( result )
+
     def teachers(self):
         result = []
         for child in self.children:
@@ -87,12 +96,15 @@ class Parent(Entry):
             this_child = child()
             result.append( this_child.ID )
         return result
+
     @property
     def number_courses(self):
         return len(self.courses)
+
     @property
     def number_groups(self):
         return len(self.groups)
+
     def __repr__(self):
         ns = NS()
         ns.homerooms = " ".join(self.homerooms)

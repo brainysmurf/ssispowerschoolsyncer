@@ -206,44 +206,54 @@ class Student(Entry):
 
     def update(self, key, value):
         self.key = value
+
     def associate(self, teacher, course, group):
         self.add_teacher(teacher)
         self.add_course(course)
         self.add_group(group)
         if 'HROOM' in course.ID:
             self.add_homeroom_teacher(teacher)
+
     def add_homeroom_teacher(self, teacher):
         reference = weak_reference(teacher)
-        if self._homeroom_teacher:
-            input("Two homeroom teachers?")
         self._homeroom_teacher = reference
+
     def add_course(self, course):
         reference = weak_reference(course)
         if not reference in self._courses:
             self._courses.append( reference )
+
     def add_group(self, group):
         reference = weak_reference(group)
         if not reference in self._groups:
             self._groups.append( reference )
+
     def add_teacher(self, teacher):
         reference = weak_reference(teacher)
         if not reference in self._teachers:
             self._teachers.append( reference )
+
     @property
     def courses(self):
         return [course() for course in self._courses]
+
     @property
     def course_names(self):
         return sorted(["{} ('{}')".format(course().ID, course().name) for course in self._courses])
+
     @property
     def cohorts(self):
         return self._cohorts
+
     @property
     def groups(self):
+        """ undoes the weakreference """
         return [group() for group in self._groups]
+
     @property
     def group_names(self):
-        return sorted([group().ID for group in self._groups])
+        return sorted([group.ID for group in self.groups])
+
     def get_english(self):
         # Returns the first English... 
         englishes = [course for course in self._courses if 'ENG' in course]
@@ -279,29 +289,6 @@ class Student(Entry):
                 return "Unknown Maths!"
             
         return "No Maths?"
-
-    def update_groups(self, shortcode, group):
-        """
-        Processes the group information, as necessary
-        """
-        # Need to process it because the group code = moodlecode
-        # But in cases where it ends with '1112' I need to actually tell it '11' or '12'
-        # Because if a teacher has a grade 11 and grade 12, there'll be in the same group
-
-        if group.endswith('1112'):
-            newgroup = group[:-4]
-            newgroup += str(self.grade)
-            group = newgroup
-        
-        if group:
-            self._groups.append(group)
-            self._groups_courses[shortcode] = group
-
-    def update_teachers(self, course, teacher):
-        if teacher and course not in self._teachers:
-            self._teachers[course.moodle_short] = teacher.username
-        else:
-            pass
 
     def teachers(self):
         return self._teachers

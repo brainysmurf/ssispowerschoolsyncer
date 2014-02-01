@@ -30,13 +30,13 @@ class Courses:
             return course
 
 class Course(Entry):
+    kind = "course"
 
     def __init__(self, course_id, course_name="", convert_course=True):
         if convert_course:
             self.ID, self.name = convert_short_long(course_id, course_name)
         else:
             self.ID, self.name = course_id, course_name
-        self.kind = 'course'
         self.course_id = course_id = self.ID
         self.department = derive_depart(self.name)
         self.heads = department_heads.get(self.department)
@@ -48,6 +48,8 @@ class Course(Entry):
         self._parents = []
         
     def add_teacher(self, teacher):
+        if not teacher:
+            return
         reference = weak_reference(teacher)
         if not reference in self._teachers:
             self._teachers.append( reference )

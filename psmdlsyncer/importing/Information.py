@@ -16,6 +16,21 @@ import re
 _parents = Parents()
 _groups = Groups()
 
+
+def add_link(left, right):
+    """
+    Wrapper function that calls the add_<x> method on left passing right as a parameter
+    """
+    if not left:
+        # Can add some dugging tool here if necessary
+        return
+    if not right:
+        # Can add some debugging tool here if necessary
+        return
+    right_kind = right.kind
+    method = getattr(left, "add_{}".format(right_kind))
+    method(right)
+
 class Tree:
     """
     HOLDS THE MODEL OF THE INFORMATION THAT IS IMPORTED
@@ -108,37 +123,25 @@ class Tree:
         """
         # setup, group is the only previously unknown in this instance
         teacher = self.get_teacher(schedule.teacher_id)
-        if not teacher:
-            print(schedule)
         student = self.get_student(schedule.student_id)
-        if not student:
-            self.logger.warning("This student is listed in bell schedule but not in the roster: {}"
-                                .format(schedule))
-            return
         parent = self.get_parent_of_student(student)
         course = self.get_course(schedule.course_id)
-        if not course:
-            # course must have been excluded from creation, probably not a problem
-            self.logger.info("Course associated with student {} in schedule ".format(schedule.student_id) + \
-                             "but excluded from creation internally: {}".format(schedule.course_id))
-            return
         group = _groups.make(course, teacher)
+
         # parent is handled by adding the student, everything is derived from the student
-        # teacher
-        teacher.add_student(student)
-        teacher.add_parent(parent)
-        teacher.add_course(course)
-        teacher.add_group(group)
-        # student
-        if student:
-            student.add_teacher(teacher)
-            student.add_course(course)
-            student.add_group(group)
-        # course
-        course.add_student(student)
-        course.add_parent(parent)
-        course.add_teacher(teacher)
-        course.add_group(group)
+        add_link(student, teacher)
+        add_link(student, course)
+        add_link(student, group)
+    
+        add_link(teacher, student)
+        add_link(teacher, parent)
+        add_link(teacher, course)
+        add_link(teacher, group)
+
+        add_link(course, student)
+        add_link(course, parent)
+        add_link(course, teacher)
+        add_link(course, group)
         
     def get(self, key):
         """
@@ -301,18 +304,21 @@ class InfoController(AbstractClass):
         """
         left = self.tree.students.keys()
         right = other.tree.students.keys()
+
         for student_id in left - right:
             ns = NS(status='new_student')
             ns.left = self.tree.students.get(student_id)
             ns.right = None
             ns.param = [self.tree.students.get(student_id)]
             yield ns
+
         for student_id in right - left:
             ns = NS(status='old_student')
             ns.left = None
             ns.right = student_id
             ns.param = [self.tree.students.get(student_id)]
             yield ns
+
         left = self.tree.teachers.keys()
         right = other.tree.teachers.keys()
         for teacher_id in left - right:
@@ -321,6 +327,7 @@ class InfoController(AbstractClass):
             ns.right = None
             ns.param = [self.tree.teachers.get(teacher_id)]
             yield ns
+
         for teacher_id in right - left:
             ns = NS(status='old_teacher')
             ns.left = None

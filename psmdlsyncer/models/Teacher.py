@@ -19,13 +19,14 @@ class Teachers:
          return teacher
 
 class Teacher(Entry):
+   kind = "teacher"  
+
    def __init__(self, num, lastfirst, email, title, schoolid, status, **kwargs):
        self.num = num
        self.ID = num
        self.powerschool_id = num
        self.idnumber = self.num
        self.family_id = self.ID[:4] + 'P'
-       self.kind = 'teacher'
        self.lastfirst = lastfirst
        self.email = email if email.strip() else None
        self.last, self.first = self.lastfirst.split(',')
@@ -58,6 +59,7 @@ class Teacher(Entry):
            self.profile_bool_issecteacher = True
        self.status = status
        self.profile_extra_isteacher = True
+
    def add_course(self, course):
       """ UPDATES INTERNAL AS WELL AS DETECTS HOMEROOM """
       reference = weak_reference(course)
@@ -65,34 +67,43 @@ class Teacher(Entry):
          if course.ID.startswith('HROOM'):
             self.homeroom = int(re.sub('[A-Z]', '', course.ID.upper()))
          self._courses.append(reference)
+
    def add_student(self, student):
       reference = weak_reference(student)
       if not student in self._students:
          self._students.append(reference)
+
    def add_group(self, group):
       reference = weak_reference(group)
       if not group in self._groups:
            self._groups.append(reference)
+
    def add_teacher(self, teacher):
       reference = weak_reference(teacher)
       if not teacher in self._teachers:
          self._teachers.append(reference)
+
    def add_parent(self, parent):
       reference = weak_reference(parent)
       if not parent in self._parents:
          self._parents.append(reference)
+
    @property
    def students(self):
        return [student() for student in self._students]
+
    @property
    def courses(self):
        return [course() for course in self._courses]
+
    @property
    def parents(self):
        return [parent() for parent in self._parents]
+
    @property
    def groups(self):
        return [group() for group in self._groups]
+
    def derive_cohorts(self):
        """ Returns cohorts, dynamically created """
        l = self.get_departments()
@@ -103,9 +114,11 @@ class Teacher(Entry):
        if self.is_secondary or self.is_primary:
            l.append('teachersALL')
        return l
+
    def get_departments(self):
        self._departments = derive_departments([c.ID for c in self.courses])
        return self._departments
+
    def __repr__(self):
        return self.format_string("{lastfirst} ({ID}):{username}{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
 

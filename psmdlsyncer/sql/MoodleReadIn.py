@@ -69,7 +69,6 @@ class MoodleImport(MoodleDBConnection):
         for enrollment in enrollments:
             #do we really need the teacher id here?, yes that's how the group name is derived!!
             teacher_username = only_lowercase.sub('', enrollment.grp_name)
-            print(teacher_username)
             self.get_table('user', 'idnumber', username=teacher_username)
             periods = ''
             section = ''
