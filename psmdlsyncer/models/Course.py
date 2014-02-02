@@ -10,7 +10,7 @@ from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils.Utilities import convert_short_long
 
 class Courses:
-    def __init__(self, convert_course=True):
+    def __init__(self):
         """
         convert_course IS USED IN ORDER TO TELL THE CLASS WHETHER OR NOT
         CONVERSION USING convert_short_long IN UTILS/UTILTIIES.PHP
@@ -18,26 +18,30 @@ class Courses:
         BETWEEN COURSES IN POWERSCHOOL AND IN MOODLE
         """
         self._courses = {}
-        self.convert_course = convert_course
+
+    def make_with_conversion(self, *course):
+        course_ID, course_name = course
+        course_ID, course_name = convert_short_long(course_ID, course_name)
+        return self.make(course_ID, course_name)
+
+    def make_without_conversion(self, *course):
+        return self.make(*course)
 
     def make(self, *course):
         course_id = course[0]
         if course_id in self._courses:
             return self._courses[course_id]
         else:
-            course = Course(*course, convert_course=self.convert_course)
+            course = Course(*course)
             self._courses[course_id] = course
             return course
 
 class Course(Entry):
     kind = "course"
 
-    def __init__(self, course_id, course_name="", convert_course=True):
-        if convert_course:
-            self.ID, self.name = convert_short_long(course_id, course_name)
-        else:
-            self.ID, self.name = course_id, course_name
-        self.course_id = course_id = self.ID
+    def __init__(self, course_id, course_name=""):
+        self.ID, self.name = course_id, course_name
+        self.course_id = self.idnumber = self.ID
         self.department = derive_depart(self.name)
         self.heads = department_heads.get(self.department)
         if not self.heads:
@@ -87,4 +91,4 @@ class Course(Entry):
 
     def __repr__(self):
         teacher_txt = ", ".join([teacher.username for teacher in self.teachers])
-        return self.format_string("{ID} ({name}) : {teachers}", first="(", mid="| ", last=") ", teachers=teacher_txt)
+        return self.format_string("<Course: {ID} ({name})>") #" : {teachers}", first="(", mid="| ", last=") ", teachers=teacher_txt)

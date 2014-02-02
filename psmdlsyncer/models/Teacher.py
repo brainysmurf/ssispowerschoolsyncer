@@ -29,6 +29,7 @@ class Teacher(Entry):
        self.family_id = self.ID[:4] + 'P'
        self.lastfirst = lastfirst
        self.email = email if email.strip() else None
+       self.email_address = self.email
        self.last, self.first = self.lastfirst.split(',')
        self.first = self.first.strip()
        self.last = self.last.strip()
@@ -120,7 +121,7 @@ class Teacher(Entry):
        return self._departments
 
    def __repr__(self):
-       return self.format_string("{lastfirst} ({ID}):{username}{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
+       return self.format_string("{lastfirst} ({ID}): {username}") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
 
 if __name__ == "__main__":
    pass

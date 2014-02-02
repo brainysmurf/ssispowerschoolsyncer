@@ -16,7 +16,6 @@ import re
 _parents = Parents()
 _groups = Groups()
 
-
 def add_link(left, right):
     """
     Wrapper function that calls the add_<x> method on left passing right as a parameter
@@ -37,7 +36,8 @@ class Tree:
     TODO: USE ServerInfo OBJECT TO CHECK RECORDS AGAINST DRAGONNET
     """
     exclusion_list = ['Sections, Dead', 'User, Drews Test']
-    def __init__(self):
+    def __init__(self, name):
+        self.name = name
         #TODO: self.user_data = ServerInfo().get_student_info()
         self.logger = logging.getLogger(self.__class__.__name__)
         self._tree = {'families': defaultdict(lambda : defaultdict(list)),
@@ -121,6 +121,7 @@ class Tree:
         TAKES THE RAW INFORMATION IN SCHEDULE AND UPDATES THE FIELDS FOR ALL
         THE INSTANCES
         """
+
         # setup, group is the only previously unknown in this instance
         teacher = self.get_teacher(schedule.teacher_id)
         student = self.get_student(schedule.student_id)
@@ -137,7 +138,7 @@ class Tree:
         add_link(teacher, parent)
         add_link(teacher, course)
         add_link(teacher, group)
-
+        
         add_link(course, student)
         add_link(course, parent)
         add_link(course, teacher)
@@ -174,28 +175,32 @@ class Tree:
                 print(ns("{kind}{TAB}{id}{TAB}{obj}))"))
 
     def output_students(self):
-        for student in self.students:
-            input(self.students[student])
+        for student_id in self.students:
+            student = self.students[student_id]
 
 class AbstractClass:
     """
     DEFINES THE THINGS WE NEED COMMON TO ALL
     """
     convert_course = True   # by default, convert the course shortname
+
     def __init__(self):
-        self._tree = Tree()
+        self._tree = Tree(self.__class__.__name__)
 
     def init(self):
         students = Students()
         teachers = Teachers()
-        courses = Courses(convert_course=self.convert_course)
-        scheduler = Scheduler()
+        courses = Courses()
+        scheduler = Scheduler(convert=self.convert_course)
         for student in self.student_info.content():
             self.add(students.make(*student))
         for teacher in self.teacher_info.content():
             self.add(teachers.make(*teacher))
         for course in self.course_info.content():
-            self.add(courses.make(*course))
+            if self.convert_course:
+                self.add(courses.make_with_conversion(*course))
+            else:
+                self.add(courses.make_without_conversion(*course))
         for schedule in self.schedule_info.content():
             self.add(scheduler.make(*schedule))
 
@@ -305,46 +310,48 @@ class InfoController(AbstractClass):
         left = self.tree.students.keys()
         right = other.tree.students.keys()
 
-        for student_id in left - right:
+        for student_id in right - left:
             ns = NS(status='new_student')
             ns.left = self.tree.students.get(student_id)
-            ns.right = None
-            ns.param = [self.tree.students.get(student_id)]
+            ns.right = other.tree.students.get(student_id)
+            ns.param = [ns.right]
             yield ns
 
-        for student_id in right - left:
+        for student_id in left - right:
             ns = NS(status='old_student')
-            ns.left = None
-            ns.right = student_id
-            ns.param = [self.tree.students.get(student_id)]
+            ns.left = self.tree.students.get(student_id)
+            ns.right = other.tree.students.get(student_id)
+            ns.param = [ns.left]
             yield ns
 
         left = self.tree.teachers.keys()
         right = other.tree.teachers.keys()
-        for teacher_id in left - right:
-            ns = NS(status='new_teacher')
-            ns.left = self.tree.teachers.get(teacher_id)
-            ns.right = None
-            ns.param = [self.tree.teachers.get(teacher_id)]
-            yield ns
 
         for teacher_id in right - left:
-            ns = NS(status='old_teacher')
-            ns.left = None
-            ns.right = self.tree.teachers.get(teacher_id)
-            ns.param = [self.tree.teachers.get(teacher_id)]
+            ns = NS(status='new_teacher')
+            ns.left = self.tree.teachers.get(teacher_id)
+            ns.right = other.tree.teachers.get(teacher_id)
+            ns.param = [ns.right]
             yield ns
 
-        teacher_ids = self.tree.teachers.keys() + other.tree.teachers.keys()
-        for teacher_id in teacher_ids:
-            left = self.tree.teachers.get(teacher_id)
-            right = other.teachers.get(teacher_id)
-            yield from left - right
+        for teacher_id in left - right:
+            ns = NS(status='old_teacher')
+            ns.left = self.tree.teachers.get(teacher_id)
+            ns.right = other.tree.teachers.get(teacher_id)
+            ns.param = [ns.left]
+            yield ns
+
+        # Now look at the individual information.
+        for student_id in self.tree.students.keys():
+            left = self.tree.students.get(student_id)
+            right = other.tree.students.get(student_id)
+            if left and right:
+                yield from left - right
 
     __sub__ = differences
 
 class AutoSend(InfoController):
-    """    
+    """
     """
     klass = AutoSendFile
  
@@ -362,6 +369,7 @@ class PowerSchoolDatabase(AbstractClass):
     CONNECT TO SOME DATABASE AND EXTRACT THE TEXT
     """
     pass
+
 if __name__ == "__main__":
     moodle = Moodle()
     autosend = AutoSend()

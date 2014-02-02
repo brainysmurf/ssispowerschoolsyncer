@@ -20,6 +20,9 @@ class AutoSendFile:
         if not path_to_powerschool:
             raise NotImplemented("Something wrong with the powerschool directory information")
 
+        self.school = school
+        self.unique = unique
+
         # Dynamically look at the directory and use the latest version
         path = path_to_powerschool + '/' + version_format.format(minor_version='', **locals())
         path = path.split(os.path.sep)[-1]
@@ -32,7 +35,13 @@ class AutoSendFile:
 
     def content(self):
         with open(self.path) as f:
-            yield from csv.reader(f, delimiter='\t')
+            # special handling for the staffinfo file, which has some status marks we have to filter out
+            if self.school == 'dist' and self.unique == 'staffinfo':
+                for row in csv.reader(f, delimiter='\t'):
+                    if row[-1] == '1':
+                        yield row
+            else:
+                yield from csv.reader(f, delimiter='\t')
 
 if __name__ == "__main__":
 

@@ -3,6 +3,8 @@
 from psmdlsyncer.models.Entry import Entry
 unknown_teacher = "<unknown teacher>"
 unknown_course = "<unknown course>"
+import re
+from psmdlsyncer.utils import NS
 
 class Groups:
 
@@ -20,6 +22,14 @@ class Groups:
             self._groups[group_id] = group
             return group
 
+    @classmethod
+    def make_from_idnumber(cls, idnumber):
+        _, teacher_username, course_id, _ = re.split('([a-z]*)([^a-z]*)', idnumber)
+        # make dummy 'objects'
+        course = NS(course_id=course_id)
+        teacher = NS(username=teacher_username)
+        return Group(course, teacher)
+
 class Group(Entry):
     """
     """
@@ -34,4 +44,4 @@ class Group(Entry):
         self.ID = self.group_id
 
     def __repr__(self):
-        return self.format_string("{group_id}")
+        return self.format_string("<Group>: {group_id}")

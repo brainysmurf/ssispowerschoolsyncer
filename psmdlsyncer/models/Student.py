@@ -10,7 +10,39 @@ from psmdlsyncer.utils import NS, weak_reference
 import re
 import os
 import datetime
+from psmdlsyncer.models.Group import Groups
 _taken_usernames = []
+
+class ProxyCourseWrapper:
+    def __init__(self, idnumber):
+        self.idnumber = idnumber
+        self.wrapped = ProxyCourse(self.idnumber)
+
+    def __call__(self):
+        return self.wrapped
+
+    def __str__(self):
+        return str(self.wrapped)
+
+    def __repr__(self):
+        return str(self.wrapped)
+
+class ProxyCourse:
+    """
+    Acts as a Course object that can go inside a student, without actually being a Course object
+    This way we can define courses that students must be enrolled in
+    And we know what we're getting
+    """
+    def __init__(self, idnumber):
+        self.idnumber = self.ID = idnumber
+        self.name = str(self)
+
+    def __str__(self):
+        return "<ProxyCourse {}>".format(self.idnumber)
+
+    def __repr__(self):
+        return str(self)
+
 
 class Students:
     """
@@ -50,11 +82,11 @@ class Student(Entry):
     """ 
 
     kind = 'student'
+    excluded_courses = ['XSTUDYSH1112']  #TODO: Make this a setting
 
     def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails, 
         entry_date, nationality,
         username=None,
-        passed_cohorts=None, passed_groups=None,
         user_data={}):
         """
         @param grade Pass None to derive from homeroom
@@ -107,7 +139,7 @@ class Student(Entry):
             self.is_new_student = self.entry_date >= get_academic_start_date()
         except TypeError:
             self.is_new_student = False
-        self.determine_first_and_last()        
+        self.determine_first_and_last()
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
         #self.bus_afternoon = bus_afternoon
@@ -145,6 +177,7 @@ class Student(Entry):
             self.email = username + '@student.ssis-suzhou.net'
         self.parent_link_email = self.username + 'PARENTS' + '@student.ssis-suzhou.net'
         self.email = self.email.lower()
+        self.email_address = self.email
         self.other_defaults()
         self._courses = []
         self._teachers = []
@@ -167,14 +200,6 @@ class Student(Entry):
             self.profile_existing_department = 'HOME4ES'
         self.is_middle_school = self.grade in range (6, 9)
         self.is_high_school = self.grade in range(10, 13)
-        self._groups = []
-        self._teachers = []
-
-        # Now look at anything that has been passed and set accordingly
-        if not passed_cohorts is None:
-            self._cohorts = passed_cohorts
-        if not passed_groups is None:
-            self._groups = passed_groups
 
     def get_existing_profile_fields(self):
         return [(key.split('profile_existing_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_existing_')]
@@ -219,6 +244,8 @@ class Student(Entry):
         self._homeroom_teacher = reference
 
     def add_course(self, course):
+        if course.idnumber in self.excluded_courses:
+            return
         reference = weak_reference(course)
         if not reference in self._courses:
             self._courses.append( reference )
@@ -235,15 +262,31 @@ class Student(Entry):
 
     @property
     def courses(self):
+        if self.grade in [11, 12]:
+            for force_enrol in ['IBTOKSH1112', 'IBCAS1112', 'LIBRASH1112']:
+                if force_enrol not in [course().idnumber for course in self._courses]:
+                    self._courses.append(ProxyCourseWrapper(force_enrol))
         return [course() for course in self._courses]
 
     @property
     def course_names(self):
-        return sorted(["{} ('{}')".format(course().ID, course().name) for course in self._courses])
+        return sorted(["{} ('{}')".format(course.ID, course.name) for course in self.courses])
+
+    @property
+    def courses_sort(self):
+        return sorted([course.ID for course in self.courses])
+
+    @property
+    def course_idnumbers(self):
+        return set([course.ID for course in self.courses])
 
     @property
     def cohorts(self):
         return self._cohorts
+
+    @property
+    def cohort_idnumbers(self):
+        return set(self.cohorts)
 
     @property
     def groups(self):
@@ -357,28 +400,58 @@ class Student(Entry):
         return True
 
     def differences(self, other):
-        if not self.cohorts is other.cohorts:
-            for to_add in self.cohorts - other.cohorts:
-                ns = NS()
-                ns.status = 'add_to_cohort'
-                ns.left = self.cohorts
-                ns.right = other.cohorts
-                ns.param = to_add
-                yield ns
-            for to_remove in self.cohorts - other.cohorts:
-                ns = NS()
-                ns.status = 'remove_from_cohort'
-                ns.left = self.cohorts
-                ns.right = other.cohorts
-                ns.param = to_add
-                yield ns
-                
-    
+        for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
+            ns = NS()
+            ns.status = 'add_to_cohort'
+            ns.left = self.cohorts
+            ns.right = other.cohorts
+            self._operation_target = to_add
+            ns.param = self
+            yield ns
+        for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
+            ns = NS()
+            ns.status = 'remove_from_cohort'
+            ns.left = self.cohorts
+            ns.right = other.cohorts
+            self._operation_target = to_remove
+            ns.param = self
+            yield ns
+
+        for to_add in other.course_idnumbers - self.course_idnumbers:
+            ns = NS()
+            ns.status = 'enrol_in_course'
+            ns.left = self.courses
+            ns.right = other.courses
+            self._operation_target = to_add
+            ns.param = self
+            yield ns
+        for to_remove in self.course_idnumbers - other.course_idnumbers:
+            if self.username == 'szukaiyang14':
+                from IPython import embed
+                embed()
+            ns = NS()
+            ns.status = 'deenrol_from_course'
+            ns.left = self.courses
+            ns.right = other.courses
+            self._operation_target = to_remove
+            ns.param = self
+            yield ns
+
+        if not self.homeroom == other.homeroom:
+            ns = NS()
+            ns.status = 'homeroom_changed'
+            ns.left = self
+            ns.right = other
+            self._operation_target = other.homeroom
+            ns.param = self
+            yield ns
+
     __sub__ = differences
 
     def __repr__(self):
         ns = NS()
         ns.ID = self.ID
+        ns.username = self.username
         ns.firstrow = "+ "
         ns.midrow = "\n| "
         ns.lastrow="\n| "
@@ -389,6 +462,6 @@ class Student(Entry):
         ns.courses = ", ".join(self.course_names)
         ns.groups = ", ".join(self.group_names)
         ns.cohorts = ", ".join(self.cohorts)
-        return ns("{firstrow}{ID}: {email}, {homeroom}{midrow}{lastfirst}" \
-        "{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
+        return ns("<Student {ID}: {username}>") #, {homeroom}{midrow}{lastfirst}") # \
+        #"{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
     

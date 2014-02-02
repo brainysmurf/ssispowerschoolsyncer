@@ -1,7 +1,10 @@
+import re, os
+
 comma="&#44"  # moodle knows this is a comma
 exclude = ['PEHEAH', 'MAHIGH', 'IBCAS']
+grade11n12 = re.compile(r'(11|12)$')
+eleven_twelve = re.compile(r'(11|12)')	
 
-import re, os
 
 depart_dict = {
 	'hro': 'departHROOM',
@@ -133,17 +136,6 @@ def derive_departments(courses):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 def map_codes(short, grade, higher_lower):
 	"""
 	Meeting department needs requires an elaborate mapping system applied to some courses
@@ -162,6 +154,7 @@ def map_codes(short, grade, higher_lower):
 		#In place of IB Maths Studies SL/HL (11/12) there should be IB Maths Studies SL (11) and IB Maths Studies SL (12). For the same reason as above. There is no HL course for Studies Hon Math Studies (11/12) can be removed. It is used to distinguish those students taking the IB exam. The course is exactly the same as Maths Studies.
 
 		# Convert hon maths studies to maths studies, respecting H/L, grade divisions
+		'LIBRA00': 'LIBRASH1112',   # LIBRA00 is HSD Library for some reason
 		'MADHONSH1112': 'MASTUS'+grade,
 		'MASHONSH1112': 'MASTAS'+grade,
 		# Divide IB maths by H/L, grade
@@ -250,34 +243,22 @@ def convert_short_long(short, long):
         # The following logic ensures that by adjusting the short and long name.
         # This works because in powerschool the only difference in name and ID is
         # their ending.
-	grade11n12 = r'(.*)(11|12)$'
 	standard_higher = None   # we need to know which standard and higher later
-	if re.match(grade11n12, short):
-		short = re.sub(grade11n12, '\\1',   short)
-		if not short in exclude:
-			# Take out the last S (standard) or H (high)
-			standard_higher = re.sub(r'.*([SH])$', '\\1', short)
-			if standard_higher == short:
-				# special case where a course code looks like it's an IB course
-				# doesn't have a standard or higher level indicator
-				# checking with head of maths, he says you can assume standard level
-				standard_higher = "S"
-			short = re.sub(r'(.*)[SH]$', '\\1', short)
-			short += 'SH1112'
-		else:
-			# But don't take them out for specific courses
-			standard_higher = re.sub(r'.*([SH])$', '\\1', short)
-			short += '1112'
-		long  = re.sub(r'(.*)\(1[12]\)', '\\1 (11/12)', long).strip()
-		long  = long.replace(" SL ", " SL/HL").replace(" HL ", " SL/HL").replace('  ', ' ').replace(',', comma)
-
+	if grade11n12.search(short):
+		stem, suffix, _ = re.split('(S?11|H?11|S?12|H?12)$', short)
+		standard_higher = re.sub(r'[0-9]', '', suffix)
+		grade = int(re.sub(r'[A-Z]', '', suffix))
+		if not standard_higher:
+			standard_higher = "S"
+		long  = eleven_twelve.sub('11/12', long)
+		long  = long.replace(",", comma).replace('  ', ' ')
+		short = stem + 'SH1112'
 
 	short = map_codes(short, grade, standard_higher)
 	change = map_codes_names(short)
 	if change:
 		long = change
 	return short, long
-
 
 def no_whitespace_all_lower(base):
 	return re.sub(r'[^a-z]', '', base.replace(' ', '').lower())
@@ -390,29 +371,16 @@ def put_in_order(what):
 
 if __name__ == "__main__":
 
-	print('new one')
-	courses = os.listdir('/home/helpdesk/groups/classes')
-	catch = []
-	for course in courses:
-		short, long = convert_short_long(course, "")
-		catch.append(short)
+	courses = [
+	('PEHEAH12', 'Some PE class I dunno'),
+	('MASHON11', 'Maths Honors something'),
+	('SSBIOHS1', 'I dunno'),
+	('MASTAS12', "Mathematics Amazing (12)"),
+	('ENGA__11', 'English for Adults (11)'),
+	('PYISCI_08', 'Physical Science 8'),
+	]
 
-	print
-	print(catch)
-	print
-
-	raw = open('/home/powerschool/courseinfosec').readlines()
-	catch = []
-	courses = []
-	for r in raw:
-		courses.append(r.strip('\n').split('\t')[0])	
-	catch = []
-	for course in courses:
-		short, long = convert_short_long(course, "")
-		catch.append(course)
-
-	print()
-	print(catch)
-	print()
-	print(derive_departments(catch))
-	
+	for short, long in courses:
+		print('start {} {}'.format(short, long))
+		short, long = convert_short_long(short, long)
+		print('end {} {}'.format(short, long))		

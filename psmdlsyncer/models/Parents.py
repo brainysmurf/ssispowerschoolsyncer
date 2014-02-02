@@ -115,8 +115,8 @@ class Parent(Entry):
         ns.homerooms = "(" + ", ".join(self.homerooms) + ")"
         ns.courses = "{} courses".format(len(self.courses))
         ns.groups = "{} groups".format(len(self.groups))
-        return ns("{firstrow}{ID}: {emails}, {parents_of} {homerooms}{midrow}" \
-                  "{courses}{midrow}{groups}{lastrow}{NEWLINE}",
-                                  firstrow="+ ",
-                                  midrow="\n| ",
-                                  lastrow="\n| ")
+        return ns("<Parent {ID}: {emails}, {parents_of} {homerooms}>") #{midrow}" \
+                  #"{courses}{midrow}{groups}{lastrow}{NEWLINE}",
+                  #                firstrow="+ ",
+                  #                midrow="\n| ",
+                  #                lastrow="\n| ")
