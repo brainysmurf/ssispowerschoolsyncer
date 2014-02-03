@@ -1,6 +1,6 @@
 from psmdlsyncer.settings import config, config_get_section_attribute, \
      logging, define_command_line_arguments
-from psmdlsyncer.importing import InfoController
+from psmdlsyncer.importing.InfoController import InfoController
 from psmdlsyncer.utils import NS
 from psmdlsyncer.sql import ServerInfo
 import datetime

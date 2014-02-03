@@ -164,6 +164,7 @@ class Tree:
         add_link(course, parent)
         add_link(course, teacher)
         add_link(course, group)
+
         
     def get(self, key):
         """

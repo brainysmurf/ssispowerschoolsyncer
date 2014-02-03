@@ -98,6 +98,7 @@ class DefineDispatcher:
     def __init__(self, left, right, **kwargs):
         self.left = left
         self.right = right
+        self.logger = logging.getLogger("Dispatcher")
         self.define(**kwargs)
 
     def define(self, **kwargs):
@@ -108,6 +109,7 @@ class DefineDispatcher:
                     if hasattr(item, 'param') and item.param:
                         if not isinstance(item.param, list):
                             item.param = [item.param]
+                        self.logger.info('Dispatching to {} with param {}'.format(dispatch.__name__, str(item.param)))
                         dispatch(*item.param)
                 else:
                     #TODO: Handle unrecognized statuses here
@@ -121,13 +123,13 @@ class DefineDispatcher:
 class MainDispatcher:
     def __init__(self):
         self.logger = logging.getLogger('Differences')
-        self.logger.debug('Initiating Autosend')
+        self.logger.info('Initiating Autosend')
         autosend = AutoSend()
-        self.logger.debug('Initiating Moodle')
+        self.logger.info('Initiating Moodle')
         moodle = Moodle()
-        #moodle.tree.output_students()
-        #self.logger.debug('Initiating Postfix')
-        #postfix = PostFix()
+        moodle.tree.output_students()
+        self.logger.debug('Initiating Postfix')
+        postfix = PostFix()
 
         dispatch_target = Dispatched()
 
@@ -135,6 +137,7 @@ class MainDispatcher:
         check_email = config_get_section_attribute('EMAIL', 'check_accounts')
 
         if check_email:
+            self.logger.info('Defining dispatcher for postfix and autosend')
             DefineDispatcher(postfix, autosend,
                 new_student=log_item('no_email'),
                 old_student=log_item('email_no_longer_needed')
@@ -143,6 +146,7 @@ class MainDispatcher:
                 #old_student=self.email_no_longer_needed)
 
         if sync_moodle:
+            self.logger.info('Defining dispatcher for moodle and autosend')
             DefineDispatcher(moodle, autosend,
                 new_student=dispatch_target.add_to_moodle,
                 old_student=log_item('moodle_no_longer_needed'),
@@ -163,16 +167,14 @@ class MainDispatcher:
                 #new_teacher=mod.new_teacher,
                 #old_teacher=None)
 
-        from IPython import embed
-        embed()
-
     def moodle_no_longer_needed(self, student):
         if student is None:
             self.logger.warning('How did I get a None student here in moodle_no_longer_needed?')
         self.logger.warning("Delete this moodle account {} ({})".format(student.ID, student.username))
 
     def email_no_longer_needed(self, student):
-        self.logger.warning("Delete this email account {}".format(student.username))
+        if student:
+            self.logger.warning("Delete this email account {}".format(student.username))
 
 
 if __name__ == "__main__":
