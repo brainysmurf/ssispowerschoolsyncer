@@ -349,7 +349,6 @@ class Categories:
 	def academics(self, code):
 		return "Teaching & Learning / {0}".format(code)
 
-
 def put_in_order(what):
     trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7}
     if '6' in what:
@@ -372,6 +371,9 @@ def put_in_order(what):
 if __name__ == "__main__":
 
 	courses = [
+	('SSBAML11', 'BAM?'),
+	('SSECOH12', 'something or other'),
+	('LIBRA00', 'LIbrary!'),
 	('PEHEAH12', 'Some PE class I dunno'),
 	('MASHON11', 'Maths Honors something'),
 	('SSBIOHS1', 'I dunno'),

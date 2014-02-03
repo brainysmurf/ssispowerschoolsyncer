@@ -75,7 +75,7 @@ class Course(Entry):
 
     @property
     def teachers(self):
-        return [teacher() for teacher in self._teachers]
+        return [teacher() for teacher in self._teachers if teacher]
 
     @property
     def students(self):
@@ -90,5 +90,4 @@ class Course(Entry):
         return self._parents
 
     def __repr__(self):
-        teacher_txt = ", ".join([teacher.username for teacher in self.teachers])
         return self.format_string("<Course: {ID} ({name})>") #" : {teachers}", first="(", mid="| ", last=") ", teachers=teacher_txt)

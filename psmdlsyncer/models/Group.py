@@ -12,7 +12,9 @@ class Groups:
         self._groups = {}
 
     def make(self, course, teacher):
-        teacher_username = teacher.username if teacher else unknown_teacher
+        if not course or not teacher:
+            return None
+        teacher_username = teacher.username
         course_id = course.ID if course else unknown_course
         group_id = teacher_username + course_id
         if group_id in self._groups:
@@ -38,7 +40,7 @@ class Group(Entry):
     def __init__(self, course, teacher):
         teacher_username = teacher.username if teacher else unknown_teacher
         course_id = course.course_id if course else unknown_course
-        self.group_id = teacher_username + course_id
+        self.group_id = self.idnumber = teacher_username + course_id
         self.course_number = course_id
         self.teacher_username = teacher_username
         self.ID = self.group_id

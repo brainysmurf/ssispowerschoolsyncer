@@ -47,16 +47,14 @@ class MoodleImport(MoodleDBConnection):
 
     def content_sec_studentschedule(self):
         enrollments = self.get_all_users_enrollments()
-        only_lowercase = re.compile(r'[^a-z]')
         for enrollment in enrollments:
             #do we really need the teacher id here?, yes that's how the group name is derived!!
-            teacher_username = only_lowercase.sub('', enrollment.grp_name)
             periods = ''
             section = ''
             teacher_name = ''
             teacher_id = ''
             student_name = ''
-            yield [enrollment.crs_idnumber, periods, section, teacher_name, teacher_id, student_name, enrollment.usr_idnumber]
+            yield [enrollment.crs_idnumber, periods, section, teacher_name, teacher_id, student_name, enrollment.usr_idnumber, enrollment.grp_name]
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))

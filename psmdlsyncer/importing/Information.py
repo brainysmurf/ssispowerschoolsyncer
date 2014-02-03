@@ -8,13 +8,27 @@ from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.settings import define_command_line_arguments
-from psmdlsyncer.models import Students, Teachers, Courses, Scheduler, Parents, Groups
+from psmdlsyncer.models import Students, Teachers, Teacher, Courses, Scheduler, Parents, Groups
 from psmdlsyncer.utils import NS
 from collections import defaultdict
 import re
 
 _parents = Parents()
 _groups = Groups()
+
+class TeacherWrapper:
+    def __init__(self, username):
+        self.username = username
+        self.wrapped = Teacher('', ' , ', username + '@', '', '', '1')
+
+    def __call__(self):
+        return self.wrapped
+
+    def __str__(self):
+        return str(self.wrapped)
+
+    def __repr__(self):
+        return str(self.wrapped)
 
 def add_link(left, right):
     """
@@ -56,6 +70,7 @@ class Tree:
     @property
     def parents(self):
         return self.tree['parents']
+
     def families(self):
         return self.tree['families']
 
@@ -121,9 +136,15 @@ class Tree:
         TAKES THE RAW INFORMATION IN SCHEDULE AND UPDATES THE FIELDS FOR ALL
         THE INSTANCES
         """
-
         # setup, group is the only previously unknown in this instance
-        teacher = self.get_teacher(schedule.teacher_id)
+        if schedule.group_name:
+            teacher_username = re.sub(r'[^a-z]', '', schedule.group_name)
+            teacher = self.get_teacher_from_username(teacher_username)
+            if not teacher:
+                # a teacher of status 1 with the username, enough to get us a decent group, eh?
+                teacher = Teacher('', ' , ', teacher_username + '@', '', '', '1')
+        else:
+            teacher = self.get_teacher(schedule.teacher_id)
         student = self.get_student(schedule.student_id)
         parent = self.get_parent_of_student(student)
         course = self.get_course(schedule.course_id)
@@ -160,6 +181,13 @@ class Tree:
 
     def get_teacher(self, key):
         return self.teachers.get(key)
+
+    def get_teacher_from_username(self, username):
+        for teacher_key in self.teachers:
+            teacher = self.get_teacher(teacher_key)
+            if teacher.username == username:
+                return teacher
+        return None
 
     def get_support_staff(self, key):
         return self.support_staff.get(key)

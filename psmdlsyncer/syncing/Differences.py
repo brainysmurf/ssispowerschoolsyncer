@@ -56,6 +56,8 @@ class Dispatched:
                 # really not in moodle
                 log_item('really needs to be added in moodle')(item)
 
+
+
     def enrol_in_course(self, *items):
         for item in items:
             log_item('enrol in course {}'.format(item._operation_target))(item)
@@ -71,6 +73,14 @@ class Dispatched:
     def remove_from_cohort(self, *items):
         for item in items:
             log_item('remove from cohort {}'.format(item._operation_target))(item)
+
+    def add_to_group(self, *items):
+        for item in items:
+            log_item('add to group {}'.format(item._operation_target))(item)
+
+    def remove_from_group(self, *items):
+        for item in items:
+            log_item('remove from group {}'.format(item._operation_target))(item)
 
     def homeroom_changed(self, *items):
         for item in items:
@@ -89,7 +99,7 @@ class DefineDispatcher:
         self.left = left
         self.right = right
         self.define(**kwargs)
-                
+
     def define(self, **kwargs):
         if kwargs:
             for item in self.subtract():
@@ -102,7 +112,6 @@ class DefineDispatcher:
                 else:
                     #TODO: Handle unrecognized statuses here
                     print('unrecognized status')
-                    input(item)
                     pass
 
     def subtract(self):
@@ -144,6 +153,8 @@ class MainDispatcher:
                 deenrol_from_course=dispatch_target.deenrol_from_course,
                 add_to_cohort=dispatch_target.add_to_cohort,
                 remove_from_cohort=dispatch_target.remove_from_cohort,
+                add_to_group=dispatch_target.add_to_group,
+                remove_from_group=dispatch_target.remove_from_group,
 
                 homeroom_changed=dispatch_target.homeroom_changed,
                 )
@@ -151,6 +162,9 @@ class MainDispatcher:
                 #old_student=self.moodle_no_longer_needed,
                 #new_teacher=mod.new_teacher,
                 #old_teacher=None)
+
+        from IPython import embed
+        embed()
 
     def moodle_no_longer_needed(self, student):
         if student is None:
@@ -164,3 +178,4 @@ class MainDispatcher:
 if __name__ == "__main__":
 
     main = MainDispatcher()
+    from psmdlsyncer.importing.Information import _groups

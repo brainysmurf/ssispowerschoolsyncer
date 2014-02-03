@@ -294,6 +294,10 @@ class Student(Entry):
         return [group() for group in self._groups]
 
     @property
+    def group_idnumbers(self):
+        return set([group.idnumber for group in self.groups])
+
+    @property
     def group_names(self):
         return sorted([group.ID for group in self.groups])
 
@@ -373,7 +377,7 @@ class Student(Entry):
 
     @property
     def teachers(self):
-        return [teacher() for teacher in self._teachers]
+        return [teacher() for teacher in self._teachers if teacher]
 
     @property
     def teacher_names(self):
@@ -400,6 +404,7 @@ class Student(Entry):
         return True
 
     def differences(self, other):
+
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
             ns = NS()
             ns.status = 'add_to_cohort'
@@ -426,9 +431,6 @@ class Student(Entry):
             ns.param = self
             yield ns
         for to_remove in self.course_idnumbers - other.course_idnumbers:
-            if self.username == 'szukaiyang14':
-                from IPython import embed
-                embed()
             ns = NS()
             ns.status = 'deenrol_from_course'
             ns.left = self.courses
@@ -436,6 +438,24 @@ class Student(Entry):
             self._operation_target = to_remove
             ns.param = self
             yield ns
+
+        for to_add in other.group_idnumbers - self.group_idnumbers:
+            ns = NS()
+            ns.status = 'add_to_group'
+            ns.left = self.groups
+            ns.right = other.groups
+            self._operation_target = to_add
+            ns.param = self
+            yield ns
+        for to_remove in self.group_idnumbers - other.group_idnumbers:
+            ns = NS()
+            ns.status = 'remove_from_group'
+            ns.left = self.groups
+            ns.right = other.groups
+            self._operation_target = to_remove
+            ns.param = self
+            yield ns
+
 
         if not self.homeroom == other.homeroom:
             ns = NS()
@@ -446,22 +466,24 @@ class Student(Entry):
             ns.param = self
             yield ns
 
+    
+
     __sub__ = differences
 
     def __repr__(self):
         ns = NS()
         ns.ID = self.ID
         ns.username = self.username
-        ns.firstrow = "+ "
-        ns.midrow = "\n| "
-        ns.lastrow="\n| "
-        ns.lastfirst = self.lastfirst
-        ns.email = self.email
-        ns.homeroom = self.homeroom
-        ns.teachers = ", ".join(self.teacher_names)
-        ns.courses = ", ".join(self.course_names)
-        ns.groups = ", ".join(self.group_names)
-        ns.cohorts = ", ".join(self.cohorts)
+        #ns.firstrow = "+ "
+        #ns.midrow = "\n| "
+        #ns.lastrow="\n| "
+        #ns.lastfirst = self.lastfirst
+        #ns.email = self.email
+        #ns.homeroom = self.homeroom
+        #ns.teachers = ", ".join(self.teacher_names)
+        #ns.courses = ", ".join(self.course_names)
+        #ns.groups = ", ".join(self.group_names)
+        #ns.cohorts = ", ".join(self.cohorts)
         return ns("<Student {ID}: {username}>") #, {homeroom}{midrow}{lastfirst}") # \
         #"{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
     
