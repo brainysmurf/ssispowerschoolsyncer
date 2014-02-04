@@ -13,6 +13,38 @@ import datetime
 from psmdlsyncer.models.Group import Groups
 _taken_usernames = []
 
+class ProxyScheduleWrapper:
+    def __init__(self, student_id, teacher_id, course_id):
+        self.wrapped = ProxySchedule(student_id, teacher_id, course_id)
+
+    def __call__(self):
+        return self.wrapped
+
+    def __str__(self):
+        return str(self.wrapped)
+
+    def __repr__(self):
+        return str(self.wrapped)
+
+class ProxySchedule:
+    """
+    Acts as a Course object that can go inside a student, without actually being a Course object
+    This way we can define courses that students must be enrolled in
+    And we know what we're getting
+    """
+    def __init__(self, student_id, teacher_id, course_id):
+        self.student_id = student_id
+        self.teacher_id = teacher_id
+        self.course_id = course_id
+        self.ID = self.student_id + self.teacher_id + self.course_number
+        self.name = str(self)
+
+    def __str__(self):
+        return "<ProxySchedule {}>".format(self.idnumber)
+
+    def __repr__(self):
+        return str(self)
+
 class ProxyCourseWrapper:
     def __init__(self, idnumber):
         self.idnumber = idnumber
@@ -179,6 +211,7 @@ class Student(Entry):
         self.email_address = self.email
         self.other_defaults()
         self._courses = []
+        self._schedule = []
         self._teachers = []
         self._groups = []
         self._homeroom_teacher = None
@@ -242,6 +275,10 @@ class Student(Entry):
         reference = weak_reference(teacher)
         self._homeroom_teacher = reference
 
+    def add_schedule(self, schedule):
+        # no weak reference, because they is nothing holding on to them
+        self._schedule.append( schedule )
+
     def add_course(self, course):
         if course.idnumber in self.excluded_courses:
             return
@@ -266,6 +303,16 @@ class Student(Entry):
                 if force_enrol not in [course().idnumber for course in self._courses]:
                     self._courses.append(ProxyCourseWrapper(force_enrol))
         return [course() for course in self._courses]
+
+    @property
+    def schedule(self):
+        return self._schedule
+
+    @property
+    def schedule_idnumbers(self):
+        # not really their idnumbers, but the naming is consistent
+        # this really does work, since schedule implmenets a __hash__ and __eq__ operators
+        return set(self._schedule)
 
     @property
     def course_names(self):
@@ -404,40 +451,35 @@ class Student(Entry):
 
     def differences(self, other):
 
-        for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
+
+        # We aren't going to remove things through looking at the scheduler
+        # Since unenrolling automatically takes them out of the group, that's enough
+        # Besides, might be some strange bugs creeping in, let us not let that happen
+
+        for to_add in other.schedule_idnumbers - self.schedule_idnumbers:
+            if to_add in self.course_idnumbers:
+                # we're already enrolled in the course, probably in the wrong group 
+                # "add_group" will handle this below
+                continue
             ns = NS()
-            ns.status = 'add_to_cohort'
-            ns.left = self.cohorts
-            ns.right = other.cohorts
-            self._operation_target = to_add
-            ns.param = self
-            yield ns
-        for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
-            ns = NS()
-            ns.status = 'remove_from_cohort'
-            ns.left = self.cohorts
-            ns.right = other.cohorts
-            self._operation_target = to_remove
-            ns.param = self
+            ns.status = 'enrol_student_into_course'
+            ns.left = self.schedule
+            ns.right = other.schedule
+            to_add._operation_target = to_add
+            ns.param = to_add
             yield ns
 
-        for to_add in other.course_idnumbers - self.course_idnumbers:
-            ns = NS()
-            ns.status = 'enrol_in_course'
-            ns.left = self.courses
-            ns.right = other.courses
-            self._operation_target = to_add
-            ns.param = self
-            yield ns
-        for to_remove in self.course_idnumbers - other.course_idnumbers:
-            ns = NS()
-            ns.status = 'deenrol_from_course'
-            ns.left = self.courses
-            ns.right = other.courses
-            self._operation_target = to_remove
-            ns.param = self
-            yield ns
+        #for to_remove in self.schedule_idnumbers - other.schedule_idnumbers:
+        #    ns = NS()
+        #    ns.status = 'remove_from_schedule'
+        #    ns.left = self.schedule
+        #    ns.right = other.schedule
+        #    self._operation_target = to_remove
+        #    ns.param = self
+        #    yield ns
 
+        # HANDLE MEMBERSHIP IN GROUPS HERE
+        # We do this first before enrollments because unenrolling also removes user from group
         for to_add in other.group_idnumbers - self.group_idnumbers:
             ns = NS()
             ns.status = 'add_to_group'
@@ -455,7 +497,46 @@ class Student(Entry):
             ns.param = self
             yield ns
 
+        # HANDLE ENROLLMENTS INTO COURSES HERE
+        #for to_add in other.course_idnumbers - self.course_idnumbers:
+        #    ns = NS()
+        #    ns.status = 'enrol_student_in_course'
+        #    ns.left = self.courses
+        #    ns.right = other.courses
+        #    self._operation_target = to_add
+        #    ns.param = self
+        #    yield ns
 
+        # Allow de-enrolling to be handled here
+        # Should be careful that's what we want, however
+        for to_remove in self.course_idnumbers - other.course_idnumbers:
+            ns = NS()
+            ns.status = 'deenrol_from_course'
+            ns.left = self.courses
+            ns.right = other.courses
+            self._operation_target = to_remove
+            ns.param = self
+            yield ns
+
+        # Handle cohorts (site-wide groups)
+        for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
+            ns = NS()
+            ns.status = 'add_to_cohort'
+            ns.left = self.cohorts
+            ns.right = other.cohorts
+            self._operation_target = to_add
+            ns.param = self
+            yield ns
+        for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
+            ns = NS()
+            ns.status = 'remove_from_cohort'
+            ns.left = self.cohorts
+            ns.right = other.cohorts
+            self._operation_target = to_remove
+            ns.param = self
+            yield ns
+
+        # Other things
         if not self.homeroom == other.homeroom:
             ns = NS()
             ns.status = 'homeroom_changed'
@@ -465,6 +546,9 @@ class Student(Entry):
             ns.param = self
             yield ns
 
+        if self.username == 'tingyuzheng14':
+            from IPython import embed
+            embed()
     
 
     __sub__ = differences

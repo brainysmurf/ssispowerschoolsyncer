@@ -6,9 +6,6 @@ from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils import NS
 from psmdlsyncer.utils import weak_reference
 
-def object_already_exists(key):
-    return key in _parent_dict
-    
 class Parents:
     """
     PARENTS AS A FIRST CLASS CITIZEN NEEDS TO HAVE DISTINCTIVE BEHAVIOR
@@ -16,19 +13,19 @@ class Parents:
     SOME WAY OF PROCESSING THAT CASE
     SO WE USE A FACTORY CLASS WITH A SINGLE CLASS METHOD
     """
-    def __init__(self):
-        self._parent_dict = {}
+    _parent_dict = {}
 
-    def make(self, student):
+    @classmethod
+    def make(cls, student):
         """
         IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
         OTHERWISE, MAKES A NEW ONE
         """
-        if not student.family_id in self._parent_dict:
-            self._parent_dict[student.family_id] = Parent(student)
-            return self._parent_dict[student.family_id]
+        if not student.family_id in cls._parent_dict:
+            cls._parent_dict[student.family_id] = Parent(student)
+            return cls._parent_dict[student.family_id]
         else:
-            parent = self._parent_dict[student.family_id]
+            parent = cls._parent_dict[student.family_id]
             parent.add_child(student)
             return parent
 
@@ -44,6 +41,7 @@ class Parent(Entry):
         self.ID = student.family_id
         self.children = []
         self.add_child(student)
+
     @property
     def grades(self):
         return [child.grade for child in self.children]

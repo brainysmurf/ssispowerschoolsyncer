@@ -16,6 +16,8 @@ class AutoSendFile:
         """
         Main task here is to set self.path
         """
+        self.logger = logging.getLogger(self.__class__.__name__)
+
         path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
         if not path_to_powerschool:
             raise NotImplemented("Something wrong with the powerschool directory information")
@@ -28,10 +30,13 @@ class AutoSendFile:
         path = path.split(os.path.sep)[-1]
         candidates = [g for g in [f.split(os.path.sep)[-1] for f in os.listdir(path_to_powerschool)] if path in g]
         candidates = sorted(candidates)
+        if not candidates:
+            self.logger.critical("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
+            self.content = lambda *args, **kwargs: []
+            return
         final = candidates[-1]
         self.path = path_to_powerschool + '/' + final
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self.logger.warning('{}_{} parsing this file:\n\t{}'.format(school, unique, self.path))
+        self.logger.info('Autosend: {}_{}\nParsing this file: {}'.format(school, unique, self.path))
 
     def content(self):
         with open(self.path) as f:

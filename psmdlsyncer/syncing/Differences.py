@@ -2,17 +2,23 @@ from psmdlsyncer.importing import InfoController, Moodle, AutoSend, PostFix
 from psmdlsyncer.php import ModUserEnrollments
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.settings import logging
+log = logging.getLogger(__name__)
 
 # Used in Dispatched:
 from psmdlsyncer.sql.MoodleDatabase import MoodleDBConnection
 
-def log_item(kind):
-    def _log(*items):
-        for item in items:
-            print('{}: {}'.format(kind, item))
-    return _log
+class expose:
+    def __init__(self, debug=False):
+        self.debug = debug
+    def __call__(self, what):
+        if not self.debug:
+            return what
+        else:
+            return lambda *args, **kwargs: log.warning('{} called, but debugging on.'.format(what))
 
-class Dispatched:
+
+
+class MoodleAutosend:
     """
     Holds the methods that are called by the dispatcher
     Wrapper around modification methods
@@ -21,7 +27,10 @@ class Dispatched:
     def __init__(self):
         self.moodle = MoodleDBConnection()
         self.moodle_mod = ModUserEnrollments()
+        self.logging = logging.getLogger(self.__class__.__name__)
+        self.log = self.logging.warn
 
+    @expose()
     def add_to_moodle(self, *items):
         """
         """
@@ -29,62 +38,111 @@ class Dispatched:
         #for example, an account with item.email_address
 
         for item in items:
+            self.log('+moodle  {}'.format(item))
             result = self.moodle.get_table('user', 'idnumber', email=item.email)            
 
             # potentially the same email address could be registered in moodle, for staff who are also parents
             # annoying
             if result:
                 if len(result) > 1:
-                    log_item('got more than one account with this email')(item)
+                    self.log('got more than one account with this email: {}'.format(item.email))
                 else:
                     idnumber_in_moodle = result[0][0]
                     if idnumber_in_moodle == "":
                         # we can be sure that this is an account that doesn't have an idnumber associated yet
                         # if the syncing code is working perfectly this shouldn't happen
                         # but sometimes people don't get powerschool numbers? or whatever
-                        log_item('idnumber updated in moodle')(item)
+                        self.log('!moodle idnumber updated in moodle: {}'.format(item))
                         self.moodle.update_table('user', 
                             where={'email': item.email_address},
                             idnumber=item.idnumber)
                     elif not idnumber_in_moodle == item.idnumber:
-                        log_item('idnumber CHANGED?? {}'.format(idnumber_in_moodle))(item)
+                        self.log('!moodle idnumber changed {}'.format(item))
                     elif idnumber_in_moodle == item.idnumber:
-                        log_item('Account already exists, maybe not in cohort {}?'.format(idnumber_in_moodle))(item)
+                        self.log('!moodle Account already exists, maybe not in cohort {}?'.format(item))
                     else:
-                        log_item('No idea how I got here')(item)
+                        self.log('?moodle No idea how I got here {}'.format(item))
             else:
                 # really not in moodle
-                log_item('really needs to be added in moodle')(item)
+                which_handler = 'new_' + item.kind
+                handler = getattr(self.moodle_mod, which_handler)
+                # handler is either new student, new teacher, or ?
+                # TODO: add 'new staff' eventually
+                print(handler)
+                handler(item)
 
+    @expose(debug=True)
+    def new_student(self, *items):
+        self.add_to_moodle(*items)
 
+    @expose(debug=True)
+    def old_student(self, *items):
+        self.remove_from_moodle(*items)
 
-    def enrol_in_course(self, *items):
+    @expose(debug=True)
+    def new_teacher(self, *items):
+        self.add_to_moodle(*items)
+
+    @expose(debug=True)
+    def old_teacher(self, *items):
+        self.remove_from_moodle(*items)
+
+    @expose(debug=True)
+    def remove_from_moodle(self, *items):
         for item in items:
-            log_item('enrol in course {}'.format(item._operation_target))(item)
+            self.log('-moodle   <not completed> {}'.format(item))
 
+    @expose(debug=True)
+    def enrol_student_into_course(self, *items):
+        for item in items:
+            self.log('+course    {} {}'.format(item._operation_target, item))
+            self.moodle_mod.enrol_student_into_course(item) # just pass the whole schedule object itself
+
+    @expose(debug=True)
     def deenrol_from_course(self, *items):
         for item in items:
-            log_item('deenrol from course {}'.format(item._operation_target))(item)
+            self.log('-course    <not implemented> {} {}'.format(item._operation_target, item))
 
+    @expose(debug=True)
     def add_to_cohort(self, *items):
         for item in items:
-            log_item('add to cohort {}'.format(item._operation_target))(item)
+            self.log('+cohort    {} {}'.format(item._operation_target, item))
+            self.moodle_mod.add_user_to_cohort(item.idnumber, item._operation_target)
 
+    @expose(debug=True)
     def remove_from_cohort(self, *items):
         for item in items:
-            log_item('remove from cohort {}'.format(item._operation_target))(item)
+            self.log('-cohort    {} {}'.format(item._operation_target, item))
+            self.moodle_mod.remove_user_from_cohort(item.idnumber, item._operation_target)
 
+    @expose(debug=True)
     def add_to_group(self, *items):
         for item in items:
-            log_item('add to group {}'.format(item._operation_target))(item)
+            self.log('+group     {} {}'.format(item._operation_target, item))
+            self.moodle_mod.remove_user_from_group(item.idnumber, item._operation_target)
 
+    @expose(debug=True)
     def remove_from_group(self, *items):
         for item in items:
-            log_item('remove from group {}'.format(item._operation_target))(item)
+            self.log('-group     {} {}'.format(item._operation_target, item))
+            self.moodle_mod.remove_user_from_group(item.idnumber, item._operation_target)
 
+    @expose(debug=True)
+    def add_to_schedule(self, *items):
+        """ defunct """
+        for item in items:
+            self.log('+schedule  {}'.format(item))
+
+    @expose(debug=True)
+    def remove_from_schedule(self, *items):
+        """ defunct """
+        for item in items:
+            self.log('-schedule {} {}'.format(item._operation_target, item))
+
+    @expose(debug=True)
     def homeroom_changed(self, *items):
         for item in items:
-            log_item('homeroom_changed {}'.format(item._operation_target))(item)
+            self.log('!homeroom {} {}'.format(item._operation_target, item))
             self.moodle.update_table('user',
                 where={'idnumber': item.idnumber},
                 department=item._operation_target)
@@ -95,26 +153,31 @@ class DefineDispatcher:
     LEFT IS "HAVE"
     RIGHT IS "NEED"
     """
-    def __init__(self, left, right, **kwargs):
+    def __init__(self, left, right, template=None, **kwargs):
         self.left = left
         self.right = right
         self.logger = logging.getLogger("Dispatcher")
-        self.define(**kwargs)
-
-    def define(self, **kwargs):
+        if template:
+            self.template = template
+            self.define_dispatcher = lambda item : getattr(self.template, item.status)
         if kwargs:
-            for item in self.subtract():
-                dispatch = kwargs.get(item.status) if hasattr(item, 'status') else None
-                if dispatch:
-                    if hasattr(item, 'param') and item.param:
-                        if not isinstance(item.param, list):
-                            item.param = [item.param]
-                        self.logger.info('Dispatching to {} with param {}'.format(dispatch.__name__, str(item.param)))
-                        dispatch(*item.param)
-                else:
-                    #TODO: Handle unrecognized statuses here
-                    print('unrecognized status')
-                    pass
+            self.define_dispatcher = lambda item : self.kwargs.get(item.status)
+            self.defined(**kwargs)
+        self.go()
+
+    def go(self, **kwargs):
+        for item in self.subtract():
+            dispatch = self.define_dispatcher(item) if hasattr(item, 'status') else None
+            if dispatch:
+                if hasattr(item, 'param') and item.param:
+                    if not isinstance(item.param, list):
+                        item.param = [item.param]
+                    self.logger.debug('Dispatching to {} with param {}'.format(dispatch.__name__, str(item.param)))
+                    dispatch(*item.param)
+            else:
+                #TODO: Handle unrecognized statuses here
+                print('unrecognized status')
+                pass
 
     def subtract(self):
         # Invokes the __sub__ method
@@ -128,10 +191,10 @@ class MainDispatcher:
         self.logger.info('Initiating Moodle')
         moodle = Moodle()
         moodle.tree.output_students()
-        self.logger.debug('Initiating Postfix')
-        postfix = PostFix()
+        #self.logger.debug('Initiating Postfix')
+        #postfix = PostFix()
 
-        dispatch_target = Dispatched()
+        moodle_autosend = MoodleAutosend()
 
         sync_moodle = config_get_section_attribute('MOODLE', 'sync')
         check_email = config_get_section_attribute('EMAIL', 'check_accounts')
@@ -147,25 +210,7 @@ class MainDispatcher:
 
         if sync_moodle:
             self.logger.info('Defining dispatcher for moodle and autosend')
-            DefineDispatcher(moodle, autosend,
-                new_student=dispatch_target.add_to_moodle,
-                old_student=log_item('moodle_no_longer_needed'),
-                new_teacher=dispatch_target.add_to_moodle,
-                old_teacher=log_item('teacher_no_longer_needed'),
-
-                enrol_in_course=dispatch_target.enrol_in_course,
-                deenrol_from_course=dispatch_target.deenrol_from_course,
-                add_to_cohort=dispatch_target.add_to_cohort,
-                remove_from_cohort=dispatch_target.remove_from_cohort,
-                add_to_group=dispatch_target.add_to_group,
-                remove_from_group=dispatch_target.remove_from_group,
-
-                homeroom_changed=dispatch_target.homeroom_changed,
-                )
-                #new_student=mod.new_student,
-                #old_student=self.moodle_no_longer_needed,
-                #new_teacher=mod.new_teacher,
-                #old_teacher=None)
+            DefineDispatcher(moodle, autosend, template=moodle_autosend)
 
     def moodle_no_longer_needed(self, student):
         if student is None:

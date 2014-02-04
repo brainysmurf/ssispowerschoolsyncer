@@ -30,31 +30,6 @@ class MoodleImport(MoodleDBConnection):
         """ RETURN ALL THE STUFF IN TEACHING & LEARNING TAB """
         for row in self.get_teaching_learning_courses(select_list=['shortname', 'fullname']):
             yield row.shortname, row.fullname
-            
-    def content_sec_studentschedule(self):
-        input("Doing content_sec_studentschedule")
-        users_enrollments = list(self.get_all_users_enrollments())
-        usernames = {}
-        for row in self.get_table('user', 'idnumber', 'username', deleted=0):
-            idnumber = row[0]
-            username = row[1]
-            usernames[username] = idnumber
-        input(usernames)
-        
-        student_ids = [row.idnumber for row in self.those_enrolled_in_cohort('studentsSEC')]
-        only_lowercase = re.compile(r'[^a-z]')
-
-        results = set()
-        for student_id in student_ids:
-            for filtered in [row for row in users_enrollments if row.usr_idnumber == student_id]:
-                username = only_lowercase.sub('', filtered.grp_name)
-                teacher_id = usernames.get(username)
-                if not teacher_id:
-                    self.logger.info("no idnumber for {}, how am I supposed to know what's what?".format(username))
-                    continue
-                results.add( (filtered.crs_idnumber, "", "", "", teacher_id, "", student_id) )
-        input(results)
-        return results
 
     def content_dist_studentinfo(self):
         """

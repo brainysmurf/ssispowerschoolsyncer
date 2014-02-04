@@ -14,6 +14,8 @@ class CallPHP:
         self.dry_run = config_get_section_attribute('DEFAULTS', 'dry_run')
         self.path_to_cli = config_get_section_attribute('MOODLE', 'path_to_cli')
         self.path_to_php = config_get_section_attribute('MOODLE', 'path_to_php')
+        if not self.path_to_php:
+            self.path_to_php = '/usr/bin/php'
         self.email_accounts = config_get_section_attribute('EMAIL', 'check_accounts')
         self.moodle_accounts = config_get_section_attribute('MOODLE', 'sync')
 
@@ -30,7 +32,7 @@ class CallPHP:
                 self.logger.warn(result)
             return result
         else:
-            print("Command sent in to CallPHP: {}".format(cmd))
+            return "Dry run enabled: {}".format(cmd)
 
     def create_account(self, username, email, firstname, lastname, idnumber, auth='manual'):
         self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber, auth=auth)
@@ -51,8 +53,8 @@ class CallPHP:
         if self.moodle_accounts:
             return self.command('create_account', to_pass)
         else:
-            return "Dry run enabled: create_account {}".format(to_pass)
-        
+            return "Moodle updating disabled: create_account {}".format(to_pass)
+
     def enrol_user_in_course(self, idnumber, shortname, group, role="Student"):
         self.sf.define(idnumber=idnumber, shortname=shortname, group=group, role=role)
         to_pass = self.sf("{idnumber} {shortname} {group} {role}")
@@ -89,6 +91,14 @@ class CallPHP:
         to_pass = self.sf("{userid} '{group_name}'")
         if self.moodle_accounts:
             return self.command('add_user_to_group', to_pass)
+        else:
+            return "Dry run enabled: add_user_to_group ".format(to_pass)
+
+    def remove_user_from_group(self, userid, group_name):
+        self.sf.define(userid=userid, group_name=group_name)
+        to_pass = self.sf("{userid} '{group_name}'")
+        if self.moodle_accounts:
+            return self.command('remove_user_from_group', to_pass)
         else:
             return "Dry run enabled: add_user_to_group ".format(to_pass)
 

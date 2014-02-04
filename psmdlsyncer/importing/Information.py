@@ -13,9 +13,6 @@ from psmdlsyncer.utils import NS
 from collections import defaultdict
 import re
 
-_parents = Parents()
-_groups = Groups()
-
 class TeacherWrapper:
     def __init__(self, username):
         self.username = username
@@ -57,7 +54,8 @@ class Tree:
         self._tree = {'families': defaultdict(lambda : defaultdict(list)),
                       'schedule': defaultdict(lambda : defaultdict(list)),
                       'students':{}, 'teachers': {}, 'parents':{},'senior_teachers':{}, 'developers': {},
-                      'support_staff':{}, 'courses':{}}
+                      'support_staff':{}, 'courses':{}, 'groups':{}
+                      }
 
     @property
     def tree(self):
@@ -77,6 +75,10 @@ class Tree:
     @property
     def teachers(self):
         return self.tree['teachers']
+
+    @property
+    def groups(self):
+        return self.tree['groups']
 
     @property
     def support_staff(self):
@@ -120,6 +122,9 @@ class Tree:
         self.teachers[teacher.ID] = teacher
         self.add_teacher_to_family(teacher)
 
+    def add_group(self, group):
+        input(group)
+
     def add_course(self, course):
         if "Lab" in course.name:
             # TODO: Make this a setting somewhere
@@ -143,17 +148,25 @@ class Tree:
             if not teacher:
                 # a teacher of status 1 with the username, enough to get us a decent group, eh?
                 teacher = Teacher('', ' , ', teacher_username + '@', '', '', '1')
+            schedule.setup_teacher(teacher)
         else:
             teacher = self.get_teacher(schedule.teacher_id)
+
         student = self.get_student(schedule.student_id)
         parent = self.get_parent_of_student(student)
         course = self.get_course(schedule.course_id)
         group = _groups.make(course, teacher)
 
+        # Set up schedule, now that we know a bit more
+        #schedule.setup_student(student)
+        #schedule.setup_teacher(teacher)
+        #schedule.setup_group(group)
+
         # parent is handled by adding the student, everything is derived from the student
         add_link(student, teacher)
         add_link(student, course)
         add_link(student, group)
+        add_link(student, schedule)
     
         add_link(teacher, student)
         add_link(teacher, parent)
@@ -220,11 +233,14 @@ class AbstractClass:
         students = Students()
         teachers = Teachers()
         courses = Courses()
+        groups = Groups()
         scheduler = Scheduler(convert=self.convert_course)
         for student in self.student_info.content():
             self.add(students.make(*student))
         for teacher in self.teacher_info.content():
             self.add(teachers.make(*teacher))
+        for group in self.group_info.content():
+            self.add(groups.make(*group))
         for course in self.course_info.content():
             if self.convert_course:
                 self.add(courses.make_with_conversion(*course))
@@ -270,6 +286,7 @@ class InfoController(AbstractClass):
         self.teacher_info = self.klass('dist', 'staffinfo')
         self.course_info = self.klass('sec', 'courseinfo')
         self.allocations_info = self.klass('sec', 'teacherallocations')
+        self.group_info = self.klass('sec', 'groups')
         self.schedule_info = self.klass('sec', 'studentschedule')
         self.init()
 
@@ -389,6 +406,17 @@ class Moodle(InfoController):
     """
     klass = MoodleImport
     convert_course = False   # do not convert course short, because Moodle's contents are already converted
+
+    def __sub__(self, other):
+        """
+        Looks at the differences in groups
+        """
+        # This should happen first before things like students are added so in case there are groups to add
+        # They do get deleted but then added again as per below
+
+        from IPython import embed
+        embed()
+        super().__sub__(self, other)
 
 class PostFix(InfoController):
     klass = PostFixImport

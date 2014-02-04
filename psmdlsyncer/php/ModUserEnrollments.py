@@ -17,6 +17,15 @@ class ModUserEnrollments(CallPHP):
             if error and error[0] == '-':  # negative value indicates error
                   self.logger.warning(error)
 
+      def enrol_student_into_course(self, schedule_object):
+            student = schedule_object.student
+            course = schedule_object.course
+            group = schedule_object.group
+            if not group:
+                  return
+            error = self.enrol_user_in_course( student.idnumber, course.idnumber, group.name, "student" )
+            self.handle_error(error)
+
       def enrol_student_into_courses(self, student):
             """
             Also sets up groups, and creates them if they don't exist

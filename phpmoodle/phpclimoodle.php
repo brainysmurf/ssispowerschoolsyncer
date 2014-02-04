@@ -93,7 +93,7 @@ class moodlephp
 	}
       else
 	{
-	  return "-1 Could not find cohort ".$cohortName;
+	  return "-1 Could not find cohort ".$cohortidnumber;
 	}
      
       $r = cohort_remove_member($cohortID, $userID);
@@ -109,23 +109,20 @@ class moodlephp
       $lastname = $args[3];
       $idnumber = $args[4];
 
-      if( $this->user_does_exist(array($username)) )
-	{
-	  return "0 This username is already taken: ".$username;
-	}
+      if ( $this->user_does_exist(array($username)) ) { 
+        return "0 This username is already taken: ".$username;
+      }
 
       global $DB, $CFG;
 
-      try
-	{
-	  $user = create_user_record( $username, "changeme" );  // changeme forces password reset 
-	}
+      try {
+	        $user = create_user_record( $username, "changeme" );  // changeme forces password reset 
+      }
 
-      catch( Exception $e )
-	{
-	  var_dump($e);
-	  return "-1 Could not create account for ".$username;
-        }
+      catch( Exception $e ) {
+          var_dump($e);
+          return "-1 Could not create account for ".$username;
+      }
 
       $user->email = trim($email);
       $user->firstname = trim($firstname);
@@ -176,15 +173,20 @@ class moodlephp
       return "0";
     }
 
+    private function get_group_from_name($group_name) {
+      // this only works properly because in draognnet group names are guaranteed to be unique
+      // ( teacher username + course idnumber )
+      global $DB;
+      return $DB->get_record('groups', array('name'=>$group_name), '*', MUST_EXIST);
+    }
+
     private function add_user_to_group($args)
     {
       $user_idnum = $args[0];
       $group_name = $args[1];
 
-      global $DB;
-
       $user = $this->getUserByIDNumber($user_idnum);
-      $group = $DB->get_record('groups', array('name'=>$group_name), '*', MUST_EXIST);
+      $group = $this->get_group_from_name($group_name);
 
       groups_add_member($group, $user);
     }
@@ -197,7 +199,7 @@ class moodlephp
       global $DB;
 
       $user = $this->getUserByIDNumber($user_idnum);
-      $group = $DB->get_record('groups', array('name'=>$group_name), '*', MUST_EXIST);
+      $group = $this->get_group_from_name($group_name);
 
       groups_remove_member($group, $user);
     }
@@ -206,8 +208,9 @@ class moodlephp
     {
       $short_name = $args[0];
       $group_name = $args[1];
-      if( !$course = $DB->get_record('course', array('shortname'=>$short_name), '*') ) {
-	return "-1 Course does not exist!... ".$short_name;
+      
+      if ( !$course = $DB->get_record('course', array('shortname'=>$short_name), '*') ) {
+        return "-1 Course does not exist!... ".$short_name;
       }
 
       $group_data = new stdClass;
@@ -215,9 +218,9 @@ class moodlephp
       $group_data->name = $group_name;
 
       if (groups_create_group($group_data)) {
-	echo "PHP says Created group ".$group_name;
+        echo "PHP says Created group ".$group_name;
       } else {
-	return "-1 Cannot create group, OH NO!";
+        return "-1 Cannot create group, OH NO!";
       }
     }
 
@@ -228,75 +231,73 @@ class moodlephp
       $group_name = $args[2];
       $role = $args[3];
 
-      switch ($role) {
-      case "Student":
-	$roleid = $this->STUDENT_ROLE_ID;
-	break;
-      case "Parent":
-	$roleid = $this->PARENT_ROLE_ID;
-	break;
-      default :
-	return "-1 No viable role ID was passed ".$role;
+      switch (strtolower($role)) {
+        case "student":
+          $roleid = $this->STUDENT_ROLE_ID;
+          break;
+        case "parent":
+          $roleid = $this->PARENT_ROLE_ID;
+          break;
+        default :
+          return "-1 No viable role ID was passed ".$role;
       }
 
       global $DB, $PAGE;
 
-      if( !$user = $this->getUserByIDnumber($useridnumber) )
-	{
-	  return "-1 Could not find user ".$useridnumber." when enrolling in course".$short_name;
-	}
+      if( !$user = $this->getUserByIDnumber($useridnumber) ) {
+        return "-1 Could not find user ".$useridnumber." when enrolling in course".$short_name;
+      }
 
-      if( !$course = $DB->get_record('course', array('idnumber'=>$short_name), '*') ) {
-	return "-1 Course does not exist!... ".$short_name;
+      if ( !$course = $DB->get_record('course', array('idnumber'=>$short_name), '*') ) {
+        return "-1 Course does not exist!... ".$short_name;
       }
+
       if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
-	return "-1 Could not get context for course ".$short_name." with ID ".$course->id;
+        return "-1 Could not get context for course ".$short_name." with ID ".$course->id;
       }
+
       $manager = new course_enrolment_manager($PAGE, $course);
 
-      if( !is_enrolled($context, $user->id) )
-	{
-	  $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
-	  $enrolid = $enrolMethod->id;
+      if( !is_enrolled($context, $user->id) ) {
+    	  $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
+    	  $enrolid = $enrolMethod->id;
 
-	  $instances = $manager->get_enrolment_instances();
-	  $plugins = $manager->get_enrolment_plugins();
+    	  $instances = $manager->get_enrolment_instances();
+    	  $plugins = $manager->get_enrolment_plugins();
 
-	  if (!array_key_exists($enrolid, $instances))
-	    {
-	      throw new enrol_ajax_exception('invalidenrolinstance');
-	    }
-	  
-	  $instance = $instances[$enrolid];
-	  $plugin = $plugins[$instance->enrol];
+    	  if (!array_key_exists($enrolid, $instances))
+    	    {
+    	      throw new enrol_ajax_exception('invalidenrolinstance');
+    	    }
+    	  
+    	  $instance = $instances[$enrolid];
+    	  $plugin = $plugins[$instance->enrol];
 
-	  $today = time();
+    	  $today = time();
 
-	  $today = make_timestamp(date('Y', $today), date('m', $today), date('d', $today), 0, 0, 0);
-	  $timestart = $today;
-	  $timeend = 0;
+    	  $today = make_timestamp(date('Y', $today), date('m', $today), date('d', $today), 0, 0, 0);
+    	  $timestart = $today;
+    	  $timeend = 0;
 
-	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
-	  echo "PHP says Enrolled ".$useridnumber." into class ".$short_name." as a ".$roleid.".";
-	}
+    	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
+    	  echo "PHP says Enrolled ".$useridnumber." into class ".$short_name." as a ".$roleid.".";
+    	}
       
-      if( !($group = groups_get_group_by_name($course->id, $group_name)) )
-	{
-	  //create the group first
-          $group_data = new stdClass;
-          $group_data->courseid = $course->id;
-          $group_data->name = $group_name;
+      if ( !($group = $this->get_group_from_name($group_name)) ) {
+	      //create the group first
+        $group_data = new stdClass;
+        $group_data->courseid = $course->id;
+        $group_data->name = $group_name;
 
-          if (groups_create_group($group_data)) {
+        if (groups_create_group($group_data)) {
     	    echo "PHP says Created group ".$group_name;
-          } else {
-	    return "-1 Cannot create group, OH NO!";
-          }
+        } else {
+          return "-1 Cannot create group, OH NO!";
+        }
+      } 
 
-	} 
-
-      if ( !($group) ) {
-	  $group = groups_get_group_by_name($course->id, $group_name);
+      if ( !($group) ) { 
+        $group = $this->get_group_from_name($group_name);
       }
 
        if( groups_add_member($group, $user) ) {
@@ -306,30 +307,29 @@ class moodlephp
        }
     }
 
-    private function deenrol_user_in_course($args)
-    {
+    private function deenrol_user_in_course($args) {
       $useridnumber = $args[0];
       $short_name = $args[1];
 
       global $DB, $PAGE;
 
-      if( !$user = $this->getUserByIDnumber($useridnumber) )
-	{
-	  return "-1 Could not find user ".$useridnumber." when deenrolling from course".$short_name;
-	}
+      if( !$user = $this->getUserByIDnumber($useridnumber) ) {
+        return "-1 Could not find user ".$useridnumber." when deenrolling from course".$short_name;
+      }
 
       if( !$course = $DB->get_record('course', array('idnumber'=>$short_name), '*') ) {
-	return "-1 Course does not exist!... ".$short_name;
+	       return "-1 Course does not exist!... ".$short_name;
       }
+
       if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
-	return "-1 Could not get context for course ".$short_name." with ID ".$course->id;
+	       return "-1 Could not get context for course ".$short_name." with ID ".$course->id;
       }
+
       $manager = new course_enrolment_manager($PAGE, $course);
 
-      if( !is_enrolled($context, $user->id) )
-	{
-	  return "-1 Already not enrolled";
-	}
+      if( !is_enrolled($context, $user->id) ) {
+    	  return "-1 Already not enrolled";
+	    }
 
       $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
       $enrolid = $enrolMethod->id;
@@ -337,9 +337,8 @@ class moodlephp
       $instances = $manager->get_enrolment_instances();
       $plugins = $manager->get_enrolment_plugins();
 
-      if (!array_key_exists($enrolid, $instances))
-      {
-	 throw new enrol_ajax_exception('invalidenrolinstance');
+      if (!array_key_exists($enrolid, $instances)) {
+	      throw new enrol_ajax_exception('invalidenrolinstance');
       }
 
       $instance = $instances[$enrolid];

@@ -40,7 +40,7 @@ class Group(Entry):
     def __init__(self, course, teacher):
         teacher_username = teacher.username if teacher else unknown_teacher
         course_id = course.course_id if course else unknown_course
-        self.group_id = self.idnumber = teacher_username + course_id
+        self.group_id = self.name = self.idnumber = teacher_username + course_id
         self.course_number = course_id
         self.teacher_username = teacher_username
         self.ID = self.group_id

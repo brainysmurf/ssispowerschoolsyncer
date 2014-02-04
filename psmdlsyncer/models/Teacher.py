@@ -121,7 +121,7 @@ class Teacher(Entry):
        return self._departments
 
    def __repr__(self):
-       return self.format_string("{lastfirst} ({ID}): {username}") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
+       return self.format_string("<Teacher: {lastfirst} ({ID}): {username}>") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
 
 if __name__ == "__main__":
    pass
