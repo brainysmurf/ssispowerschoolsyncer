@@ -1,33 +1,18 @@
-"""
-Every Student data type represents a student.
-Does context-specific processing
-"""
 from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils import NS
 from psmdlsyncer.utils import weak_reference
+from psmdlsyncer.models.meta import AbstractFactoryDataStore
 
-class Parents:
+class Parents(AbstractFactoryDataStore):
     """
     PARENTS AS A FIRST CLASS CITIZEN NEEDS TO HAVE DISTINCTIVE BEHAVIOR
     BECAUSE THEY COULD ALSO BE TEACHERS, AND MULTIPLE CHILDREN MEAN WE NEED
     SOME WAY OF PROCESSING THAT CASE
     SO WE USE A FACTORY CLASS WITH A SINGLE CLASS METHOD
     """
-    _parent_dict = {}
-
     @classmethod
-    def make(cls, student):
-        """
-        IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
-        OTHERWISE, MAKES A NEW ONE
-        """
-        if not student.family_id in cls._parent_dict:
-            cls._parent_dict[student.family_id] = Parent(student)
-            return cls._parent_dict[student.family_id]
-        else:
-            parent = cls._parent_dict[student.family_id]
-            parent.add_child(student)
-            return parent
+    def klass(cls):
+        return Parent
 
 class Parent(Entry):
     """

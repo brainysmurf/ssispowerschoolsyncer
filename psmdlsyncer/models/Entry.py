@@ -1,4 +1,4 @@
-class Entry:
+class BaseModel:
     def update(self, key, value):
         self.key = value
     def compare_kwargs(self, **kwargs):
@@ -9,6 +9,7 @@ class Entry:
         else:
             return False
         return True
+
     def format_string(self, s, **kwargs):
         d = self.__dict__.copy()
         for key in kwargs.keys():
