@@ -31,6 +31,10 @@ class MoodleImport(MoodleDBConnection):
         for row in self.get_teaching_learning_courses(select_list=['shortname', 'fullname']):
             yield row.shortname, row.fullname
 
+    def content_sec_groups(self):
+        for row in self.get_table('groups', 'name'):
+            yield row[0]
+
     def content_dist_studentinfo(self):
         """
         MOODLE DOESN'T HAVE CONCEPT OF SITE-WIDE ROLES,
@@ -43,15 +47,9 @@ class MoodleImport(MoodleDBConnection):
                    student_username]
 
     def content_sec_studentschedule(self):
-        enrollments = self.get_all_users_enrollments()
+        enrollments = self.get_all_students_enrollments()
         for enrollment in enrollments:
-            #do we really need the teacher id here?, yes that's how the group name is derived!!
-            periods = ''
-            section = ''
-            teacher_name = ''
-            teacher_id = ''
-            student_name = ''
-            yield [enrollment.crs_idnumber, periods, section, teacher_name, teacher_id, student_name, enrollment.usr_idnumber, enrollment.grp_name]
+            yield [enrollment.usr_idnumber, enrollment.crs_idnumber, enrollment.grp_name]
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))

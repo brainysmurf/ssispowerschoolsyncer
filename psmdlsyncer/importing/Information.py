@@ -2,13 +2,11 @@
 LOOKS AT THE SETTINGS AND DECIDES WHAT TO DO
 IMPORTS THE CORRECT CLASSES AND PACKS THE INFO
 """
-from psmdlsyncer.files import AutoSendFile
-from psmdlsyncer.files import PostFixImport
-from psmdlsyncer.sql import MoodleImport
+
 from psmdlsyncer.settings import logging
 from psmdlsyncer.sql import ServerInfo
 from psmdlsyncer.settings import define_command_line_arguments
-from psmdlsyncer.models import Students, Teachers, Teacher, Courses, Scheduler, Parents, Groups
+from psmdlsyncer.models.datastores import MetaDataStore
 from psmdlsyncer.utils import NS
 from collections import defaultdict
 import re
@@ -41,91 +39,59 @@ def add_link(left, right):
     method = getattr(left, "add_{}".format(right_kind))
     method(right)
 
-class Tree:
+
+
+class BaseInformation(MetaDataStore):
     """
-    HOLDS THE MODEL OF THE INFORMATION THAT IS IMPORTED
-    TODO: USE ServerInfo OBJECT TO CHECK RECORDS AGAINST DRAGONNET
+    DEFINES THE THINGS WE NEED COMMON TO ALL
     """
-    exclusion_list = ['Sections, Dead', 'User, Drews Test']
-    def __init__(self, name):
-        self.name = name
-        #TODO: self.user_data = ServerInfo().get_student_info()
-        self.logger = logging.getLogger(self.__class__.__name__)
-        self._tree = {'families': defaultdict(lambda : defaultdict(list)),
-                      'schedule': defaultdict(lambda : defaultdict(list)),
-                      'students':{}, 'teachers': {}, 'parents':{},'senior_teachers':{}, 'developers': {},
-                      'support_staff':{}, 'courses':{}, 'groups':{}
-                      }
+    convert_course = True   # by default, convert the course shortname
 
-    @property
-    def tree(self):
-        return self._tree
+    def init(self):
+        # Some of this stuff is pretty magical
+        # The self.students, self.teachers, etc objects come from MetaDataStore
+        # They actually return the new (or old) object, but we don't care about them here
 
-    @property
-    def students(self):
-        return self.tree['students']
+        for student in self.student_info.content():
+            self.students.make(*student)
+        for teacher in self.teacher_info.content():
+            self.teachers.make(*teacher)
+        for group in self.group_info.content():
+            self.groups.make(*group)
+        for course in self.course_info.content():
+            if self.convert_course:
+                self.courses.make_with_conversion(*course)
+            else:
+                self.courses.make_without_conversion(*course)
+        for schedule in self.schedule_info.content():
+            schedules.make(*schedule)
 
-    @property
-    def parents(self):
-        return self.tree['parents']
+    def make_ns(self, *args, **kwargs):
+        return NS(*args, **kwargs)
 
-    def families(self):
-        return self.tree['families']
-
-    @property
-    def teachers(self):
-        return self.tree['teachers']
-
-    @property
-    def groups(self):
-        return self.tree['groups']
-
-    @property
-    def support_staff(self):
-        return self.tree['support_staff']
-
-    @property
-    def courses(self):
-        return self.tree['courses']
-
-    @property
-    def ALL(self):
-        """
-        RETURNS AN ITERABLE LIST OF ALL KEYS
-        (AS LONG AS THE OBJECT HAS AN id FIELD)
-        """
-        result = {}
-        for key in self.tree:
-            for item in self.tree[key]:
-                this = self.tree[key][item]
-                if hasattr(this, 'ID'):
-                    result[item] = this
-        for key in result:
-            yield result[key]
-
-    def add_student(self, student):
+    def process_student(self, student):
         self.students[student.ID] = student
         self.parents[student.family_id] = _parents.make(student)
-        self.add_student_to_family(student)
-        self.add_parent_to_family(student.family_id)
+        self.process_student_to_family(student)
+        self.process_parent_to_family(student.family_id)
 
-    def add_student_to_family(self, student):
+    def process_student_to_family(self, student):
         self.tree['families'][student.family_id]['children'].append(student)
 
-    def add_teacher_to_family(self, teacher):
+    def process_teacher_to_family(self, teacher):
         self.tree['families'][teacher.family_id]['teacher'].append(teacher)
 
-    def add_parent_to_family(self, family_id):
+    def process_parent_to_family(self, family_id):
         self.tree['families'][family_id]['parent'].append(family_id)
 
-    def add_teacher(self, teacher):
+    def process_teacher(self, teacher):
         self.teachers[teacher.ID] = teacher
-        self.add_teacher_to_family(teacher)
+        self.process_teacher_to_family(teacher)
 
-    def add_group(self, group):
+    def process_group(self, group):
         input(group)
 
-    def add_course(self, course):
+    def process_course(self, course):
         if "Lab" in course.name:
             # TODO: Make this a setting somewhere
             # TODO: Also make it a regex, because there may be a course someday named "Labortory studies"
@@ -133,10 +99,10 @@ class Tree:
             return
         self.courses[course.ID] = course
 
-    def add_support_staff(self, staff):
+    def process_support_staff(self, staff):
         self.support_staff[staff.ID] = staff
 
-    def add_schedule(self, schedule):
+    def process_schedule(self, schedule):
         """
         TAKES THE RAW INFORMATION IN SCHEDULE AND UPDATES THE FIELDS FOR ALL
         THE INSTANCES
@@ -152,10 +118,10 @@ class Tree:
         else:
             teacher = self.get_teacher(schedule.teacher_id)
 
-        student = self.get_student(schedule.student_id)
-        parent = self.get_parent_of_student(student)
-        course = self.get_course(schedule.course_id)
-        group = _groups.make(course, teacher)
+        student = self.students.make(schedule.student_id)
+        parent = self.parents.make(student.family_id)
+        course = self.courses.make(schedule.course_id)
+        group = self.groups.make(course, teacher)
 
         # Set up schedule, now that we know a bit more
         #schedule.setup_student(student)
@@ -178,103 +144,12 @@ class Tree:
         add_link(course, teacher)
         add_link(course, group)
 
-        
-    def get(self, key):
-        """
-        LOOKS IN ALL OF THEM
-        """
-        return self.ALL[zkey]
-
-    def get_student(self, key):
-        return self.students.get(key)
-
-    def get_parent_of_student(self, student):
-        if not student:
-            return None
-        return self.parents.get(student.family_id)
-
-    def get_teacher(self, key):
-        return self.teachers.get(key)
-
-    def get_teacher_from_username(self, username):
-        for teacher_key in self.teachers:
-            teacher = self.get_teacher(teacher_key)
-            if teacher.username == username:
-                return teacher
-        return None
-
-    def get_support_staff(self, key):
-        return self.support_staff.get(key)
-
-    def get_course(self, key):
-        return self.courses.get(key)
-
-    def output(self):
-        for kind in self.tree:
-            for ID in self.tree[kind]:
-                ns = NS(kind=kind,
-                             id=ID, obj=self.tree[kind][ID])
-                print(ns("{kind}{TAB}{id}{TAB}{obj}))"))
-
-    def output_students(self):
-        for student_id in self.students:
-            student = self.students[student_id]
-
-class AbstractClass:
-    """
-    DEFINES THE THINGS WE NEED COMMON TO ALL
-    """
-    convert_course = True   # by default, convert the course shortname
-
-    def __init__(self):
-        self._tree = Tree(self.__class__.__name__)
-
-    def init(self):
-        students = Students()
-        teachers = Teachers()
-        courses = Courses()
-        groups = Groups()
-        scheduler = Scheduler(convert=self.convert_course)
-        for student in self.student_info.content():
-            self.add(students.make(*student))
-        for teacher in self.teacher_info.content():
-            self.add(teachers.make(*teacher))
-        for group in self.group_info.content():
-            self.add(groups.make(*group))
-        for course in self.course_info.content():
-            if self.convert_course:
-                self.add(courses.make_with_conversion(*course))
-            else:
-                self.add(courses.make_without_conversion(*course))
-        for schedule in self.schedule_info.content():
-            self.add(scheduler.make(*schedule))
-
-    def make_ns(self, *args, **kwargs):
-        return NS(*args, **kwargs)
-
-    @property    
-    def tree(self):
-        return self._tree
-
-    def add(self, obj):
-        if obj is None:
-            return
-        # determine the routine to dispatch to, get the attribute, and call it
-        dispatch = 'add_' + obj.kind
-        add_method = getattr(self.tree, dispatch)
-        add_method(obj)
-
-    def get(self, key):
-        return self.tree.get(key)    
-
-    def output(self):
-        self.tree.output()
 
 class NoClass:
     def __init__(self, *args, **kwargs):
         pass
 
-class InfoController(AbstractClass):
+class InfoController(BaseInformation):
     """
     PROVIDES HIGHER LEVEL ROUTINES THAN AVAILABLE IN TREE
     EX) DEFINES DIFFERENCES
@@ -290,64 +165,6 @@ class InfoController(AbstractClass):
         self.schedule_info = self.klass('sec', 'studentschedule')
         self.init()
 
-    @property
-    def families(self):
-        pass
-    def get_family_emails(self, family_id):
-        parent = self.tree.family
-
-    @property
-    def groups(self):
-        """ TODO: LOOK INSIDE ENROLLMENTS """
-        pass
-
-    @property
-    def grades(self):
-        """ TODO: students? """
-        pass
-
-    @property
-    def students(self):
-        for student in self.tree.students:
-            yield self.tree.students[student]
-
-    @property
-    def teachers(self):
-        for teacher in self.tree.teachers:
-            yield self.tree.teachers[teacher]
-
-    @property
-    def parents(self):
-        for parent in self.tree.parents:
-            yield self.tree.parents[parent]
-
-    @property
-    def secondary_students(self):
-        for person in self.tree.students:
-            student = self.tree.students[student]
-            if student.is_secondary:
-                yield student
-
-    @property
-    def elementary_students(self):
-        for person in self.tree.students:
-            student = self.tree.students[student]
-            if student.is_elementary:
-                yield student
-
-    def get_any_startswith(self, id):
-        return [person for person in self.tree.ALL \
-                if hasattr(person, 'ID') and person.ID.startswith(id)]
-
-    def get_one(self, id):
-        """ RETURN THE ONE THAT HAS ID == ID """
-        for person in self.tree.ALL:
-            if person.ID == id:
-                return person
-
-    def student_from_ID(self, id):
-        """ RETURN THE ONE THAT HAS ID == ID """
-        return self.tree.students.get(id)
 
     def differences(self, other):
         """
@@ -396,41 +213,10 @@ class InfoController(AbstractClass):
 
     __sub__ = differences
 
-class AutoSend(InfoController):
-    """
-    """
-    klass = AutoSendFile
- 
-class Moodle(InfoController):
-    """
-    """
-    klass = MoodleImport
-    convert_course = False   # do not convert course short, because Moodle's contents are already converted
 
-    def __sub__(self, other):
-        """
-        Looks at the differences in groups
-        """
-        # This should happen first before things like students are added so in case there are groups to add
-        # They do get deleted but then added again as per below
 
-        from IPython import embed
-        embed()
-        super().__sub__(self, other)
-
-class PostFix(InfoController):
-    klass = PostFixImport
-
-class PowerSchoolDatabase(AbstractClass):
-    """
-    CONNECT TO SOME DATABASE AND EXTRACT THE TEXT
-    """
-    pass
 
 if __name__ == "__main__":
-    moodle = Moodle()
-    autosend = AutoSend()
 
-    for item in autosend - moodle:
-        if item.status == 'new_student':
-            print(item)
+    moodle = Moodle()
+

@@ -1,24 +1,12 @@
-"""
-"""
-from psmdlsyncer.models.Entry import Entry
+from psmdlsyncer.models.meta import BaseModel
 from psmdlsyncer.utils import weak_reference
 import re
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, derive_departments
+
 PRIMARYSCHOOLID = 111
 SECONDARYSCHOOLID = 112
-class Teachers:
-   def __init__(self):
-      self._teachers = {}
-   def make(self, *teacher):
-      teacherID = teacher[0]
-      if teacherID in self._teachers:
-         return self._teachers[teacherID]
-      else:
-         teacher = Teacher(*teacher)
-         self._teachers[teacherID] = teacher
-         return teacher
 
-class Teacher(Entry):
+class Teacher(BaseModel):
    kind = "teacher"  
 
    def __init__(self, num, lastfirst, email, title, schoolid, status, **kwargs):
@@ -122,6 +110,3 @@ class Teacher(Entry):
 
    def __repr__(self):
        return self.format_string("<Teacher: {lastfirst} ({ID}): {username}>") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
-
-if __name__ == "__main__":
-   pass

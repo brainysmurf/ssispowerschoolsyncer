@@ -1,16 +1,12 @@
-"""
-Every student represents a student
-"""
+from psmdlsyncer.models.meta import BaseModel
 from psmdlsyncer.sql import MoodleDBConnection
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
-from psmdlsyncer.models.Entry import Entry
 from psmdlsyncer.utils import NS, weak_reference
 import re
 import os
 import datetime
-from psmdlsyncer.models.Group import Groups
 _taken_usernames = []
 
 class ProxyScheduleWrapper:
@@ -75,39 +71,7 @@ class ProxyCourse:
     def __repr__(self):
         return str(self)
 
-
-class Students:
-    """
-    MAKES A NEW STUDENT, RESPONSIBLE FOR FILLING IN THE INFORMATION THAT ALREADY
-    EXISTS WITHIN MOODLE.    
-    """
-    def __init__(self):
-        self._user_data = {}
-        dnet = MoodleDBConnection()
-        # any fields selected in next call means that moodle has the cononical version of that data
-        # changing the email address on Moodle will automatically update psmdlsyncer, too
-        # TODO: Make this more portable
-        for row in dnet.get_table('user', 'id', 'idnumber', 'username', 'email'):
-            ns = NS()
-            ns.id, ns.idnumber, ns.username, ns.email = row
-            self._user_data[ns.idnumber] = ns
-        # list of usernames
-        _taken_usernames = [self._user_data[student].username for student in self._user_data]
-
-    def make(self, *args, **kwargs):
-        """
-        IF THE PARENT CLASS HAS ALREADY BEEN CREATED, PROCESSES AND RETURNS THAT
-        OTHERWISE, MAKES A NEW ONE
-        """
-        student_id = args[0]  # first argument passed is assumed to be the id
-        student_obj = Student(*args, **kwargs)
-        user_data = self._user_data.get(student_id)
-        if user_data:
-            student_obj.database_id = user_data.id
-            student_obj.username = user_data.username
-        return student_obj
-
-class Student(Entry):
+class Student(BaseModel):
     """
     A student
     self.kind = student
@@ -569,4 +533,3 @@ class Student(Entry):
         #ns.cohorts = ", ".join(self.cohorts)
         return ns("<Student {ID}: {username}>") #, {homeroom}{midrow}{lastfirst}") # \
         #"{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
-

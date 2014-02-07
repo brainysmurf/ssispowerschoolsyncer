@@ -1,4 +1,6 @@
-from psmdlsyncer.importing import InfoController, Moodle, AutoSend, PostFix
+from psmdlsyncer.models.datastores import MoodleTree
+from psmdlsyncer.models.datastores import AutoSendTree
+from psmdlsyncer.models.datastores import PostfixTree
 from psmdlsyncer.php import ModUserEnrollments
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.settings import logging
@@ -15,8 +17,6 @@ class expose:
             return what
         else:
             return lambda *args, **kwargs: log.warning('{} called, but debugging on.'.format(what))
-
-
 
 class MoodleAutosend:
     """
@@ -224,5 +224,18 @@ class MainDispatcher:
 
 if __name__ == "__main__":
 
-    main = MainDispatcher()
-    from psmdlsyncer.importing.Information import _groups
+    first = MoodleTree.students.make('33', '333', '8', '8L', 'Moris, Adam', '', '', '', 'American')
+    second = MoodleTree.students.make('12', '5555', '8', '8L', 'Moris, Adam', '', '', '', 'American')
+    third = MoodleTree.students.make('33', '333', '8', '8L', 'Moris, Adam', '', '', '', 'American')
+    fourth = AutoSendTree.students.make('33', '333', '8', '8L', 'Moris, Adam', '', '', '', 'American')
+
+    from IPython import embed
+    embed()
+
+    assert(first == third)
+    assert(first != second)
+    assert(first != fourth)
+
+
+
+    MainDispatcher()    

@@ -1,42 +1,11 @@
-"""
-Every Student data type represents a student.
-Does context-specific processing
-"""
 import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation
 from psmdlsyncer.utils.Utilities import derive_depart, department_heads
 from psmdlsyncer.utils import weak_reference
-from psmdlsyncer.models.Entry import Entry
+from psmdlsyncer.models.meta import BaseModel
 from psmdlsyncer.utils.Utilities import convert_short_long
 
-class Courses:
-    def __init__(self):
-        """
-        convert_course IS USED IN ORDER TO TELL THE CLASS WHETHER OR NOT
-        CONVERSION USING convert_short_long IN UTILS/UTILTIIES.PHP
-        THIS IS NECESSARY BECAUSE THERE IS NOT A 1:1 COORESPONDANCE
-        BETWEEN COURSES IN POWERSCHOOL AND IN MOODLE
-        """
-        self._courses = {}
-
-    def make_with_conversion(self, *course):
-        course_ID, course_name = course
-        course_ID, course_name = convert_short_long(course_ID, course_name)
-        return self.make(course_ID, course_name)
-
-    def make_without_conversion(self, *course):
-        return self.make(*course)
-
-    def make(self, *course):
-        course_id = course[0]
-        if course_id in self._courses:
-            return self._courses[course_id]
-        else:
-            course = Course(*course)
-            self._courses[course_id] = course
-            return course
-
-class Course(Entry):
+class Course(BaseModel):
     kind = "course"
 
     def __init__(self, course_id, course_name=""):

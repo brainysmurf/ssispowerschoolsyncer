@@ -172,6 +172,13 @@ class MoodleDBConnection(SQLWrapper):
             )):
             yield self.pack_sql_result(row, select_list)
 
+    def get_all_students_enrollments(self, select_list=['usr.idnumber', 'grp.name', 'crs.idnumber']):
+        """ returns list of tuple (idnumber, groupname, courseidnumber) """
+        for row in self.call_sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where LENGTH(usr.idnumber)>0 and not usr.idnumber like '%P' and crs.id IN ({})".format(
+            ",".join([str(row.id) for row in self.get_teaching_learning_courses(select_list=['id'])])
+            )):
+            yield self.pack_sql_result(row, select_list)
+
     def get_all_users_activity_enrollments(self):
         return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'sedb.lf' and not usr.idnumber = ''")
             
