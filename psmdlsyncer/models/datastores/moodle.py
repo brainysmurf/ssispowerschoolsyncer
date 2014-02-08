@@ -1,8 +1,12 @@
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.models.datastores.abstract import AbstractTree
+import re
+import logging
+log = logging.getLogger(__name__)
 
-class MoodleTree(AbstractTree):
+class MoodleAbstractTree(AbstractTree):
     klass = MoodleImport
+    convert_course = False
 
     def process_schedules(self):
         for schedule in self.schedule_info.content():
@@ -20,15 +24,14 @@ class MoodleTree(AbstractTree):
 
             student = self.students.get_key(student_idnumber)
             if not teacher or not course:
-                log.warning("Could not get group: {} {}".format(teacher, course))
+                log.warning("Could not get group: {} {}".format(teacher_username, course_idnumber))
             else:
                 group = self.groups.get_key(teacher.username + course.idnumber)
 
             self.schedules.make(student, teacher, course)
 
     def process_groups(self):
-        for info in self.group_info.content():
-            group_name = info
+        for group_name in self.group_info.content():
             if not group_name:
                 continue
             teacher_username = re.sub(r'[^a-z]', '', group_name)
@@ -38,8 +41,7 @@ class MoodleTree(AbstractTree):
             if not teacher or not course:
                 continue
 
-            idnumber = teacher.username + course.idnumber
-            self.groups.make(idnumber, teacher, course)
+            self.groups.make(teacher, course)
 
     def __sub__(self, other):
         """

@@ -1,6 +1,6 @@
 """
 """
-from psmdlsyncer.models.meta import BaseModel
+from psmdlsyncer.models.base import BaseModel
 unknown_teacher = "<unknown teacher>"
 unknown_course = "<unknown course>"
 import re

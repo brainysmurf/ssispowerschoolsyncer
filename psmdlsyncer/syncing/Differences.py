@@ -1,6 +1,4 @@
-from psmdlsyncer.models.datastores import MoodleTree
-from psmdlsyncer.models.datastores import AutoSendTree
-from psmdlsyncer.models.datastores import PostfixTree
+from psmdlsyncer.models.datastores.tree import MoodleTree, AutoSendTree, PostfixTree
 from psmdlsyncer.php import ModUserEnrollments
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.settings import logging
@@ -186,13 +184,10 @@ class DefineDispatcher:
 class MainDispatcher:
     def __init__(self):
         self.logger = logging.getLogger('Differences')
-        self.logger.info('Initiating Autosend')
-        autosend = AutoSend()
         self.logger.info('Initiating Moodle')
-        moodle = Moodle()
-        moodle.tree.output_students()
-        #self.logger.debug('Initiating Postfix')
-        #postfix = PostFix()
+        MoodleTree()
+        self.logger.info('Initiating Autosend')
+        AutoSendTree()
 
         moodle_autosend = MoodleAutosend()
 
@@ -210,7 +205,7 @@ class MainDispatcher:
 
         if sync_moodle:
             self.logger.info('Defining dispatcher for moodle and autosend')
-            DefineDispatcher(moodle, autosend, template=moodle_autosend)
+            DefineDispatcher(MoodleTree, AutoSendTree, template=moodle_autosend)
 
     def moodle_no_longer_needed(self, student):
         if student is None:
@@ -228,9 +223,6 @@ if __name__ == "__main__":
     second = MoodleTree.students.make('12', '5555', '8', '8L', 'Moris, Adam', '', '', '', 'American')
     third = MoodleTree.students.make('33', '333', '8', '8L', 'Moris, Adam', '', '', '', 'American')
     fourth = AutoSendTree.students.make('33', '333', '8', '8L', 'Moris, Adam', '', '', '', 'American')
-
-    from IPython import embed
-    embed()
 
     assert(first == third)
     assert(first != second)

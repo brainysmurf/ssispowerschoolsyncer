@@ -1,4 +1,4 @@
-from psmdlsyncer.models.meta import BaseModel
+from psmdlsyncer.models.base import BaseModel
 from psmdlsyncer.utils import weak_reference
 import re
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, derive_departments

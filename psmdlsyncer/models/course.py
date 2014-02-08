@@ -2,7 +2,7 @@ import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation
 from psmdlsyncer.utils.Utilities import derive_depart, department_heads
 from psmdlsyncer.utils import weak_reference
-from psmdlsyncer.models.meta import BaseModel
+from psmdlsyncer.models.base import BaseModel
 from psmdlsyncer.utils.Utilities import convert_short_long
 
 class Course(BaseModel):

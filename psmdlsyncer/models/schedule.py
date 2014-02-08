@@ -1,5 +1,5 @@
 import re
-from psmdlsyncer.models.meta import BaseModel
+from psmdlsyncer.models.base import BaseModel
 
 class Schedule(BaseModel):
     """
