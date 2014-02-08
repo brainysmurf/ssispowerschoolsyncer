@@ -13,6 +13,10 @@ class DataStore:
 	__set_outerclass__ = True
 
 	@classmethod
+	def _resolve(cls):
+		return cls.outer_store()[cls.fullname()]
+
+	@classmethod
 	def klass(cls):
 		"""
 		Override in subclass
@@ -35,19 +39,19 @@ class DataStore:
 
 	@classmethod
 	def get_keys(cls):
-		return cls.outer_store()[cls.fullname()].keys()
+		return cls._resolve().keys()
 
 	@classmethod
 	def get_items(cls):
-		return cls.outer_store()[cls.fullname()].items()
+		return cls._resolve().items()
 
 	@classmethod
 	def get_values(cls):
-		return cls.outer_store()[cls.fullname()].values()
+		return cls._resolve().values()
 
 	@classmethod
 	def get_key(cls, key):
-		return cls.outer_store()[cls.fullname()].get(key)
+		return cls._resolve().get(key)
 
 	@classmethod
 	def get_from_attribute(cls, attr, value):
