@@ -32,6 +32,14 @@ class AbstractTree():
         """
         raise NotImplemented
 
+    @staticmethod
+    def derive_group_idnumber(teacher, course):
+        return "{}{}".format(teacher.username, course.idnumber)
+
+    @staticmethod
+    def derive_schedule_idnumber(student, teacher, course):
+        return "{}.{}.{}".format(student and student.idnumber or "", teacher and teacher.idnumber or "", course and course.idnumber or "")
+
     def process_students(self):
         for student in self.student_info.content():
             self.students.make(*student)

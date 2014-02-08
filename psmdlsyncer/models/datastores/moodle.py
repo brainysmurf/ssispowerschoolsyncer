@@ -37,7 +37,8 @@ class MoodleAbstractTree(AbstractTree):
                 continue
 
             # Okay, all clear, let's register it in the schedule
-            self.schedules.make(student, teacher, course)
+            self.schedules.make(self.derive_schedule_idnumber,
+                student, teacher, course)
 
     def process_groups(self):
         for group_name in self.group_info.content():
@@ -53,7 +54,8 @@ class MoodleAbstractTree(AbstractTree):
             if not teacher or not course:
                 continue
 
-            self.groups.make(teacher, course)
+            self.groups.make(self.derive_group_idnumber,
+                teacher, course)
 
     def __sub__(self, other):
         """
