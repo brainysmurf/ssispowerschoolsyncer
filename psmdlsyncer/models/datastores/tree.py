@@ -7,6 +7,8 @@ import logging
 log = logging.getLogger(__name__)
 from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, groups, schedules, courses
 from psmdlsyncer.models.datastores.abstract import AbstractTree
+from psmdlsyncer.models.datastores.moodle import MoodleAbstractTree
+from psmdlsyncer.models.datastores.autosend import AutoSendAbstractTree
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
 
@@ -41,11 +43,11 @@ class DataStoreCollection(type):
 						pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
 	
 
-class MoodleTree(AbstractTree, metaclass=DataStoreCollection):
+class MoodleTree(MoodleAbstractTree, metaclass=DataStoreCollection):
 	klass = MoodleImport
 	pickup = DataStore
 
-class AutoSendTree(AbstractTree, metaclass=DataStoreCollection):
+class AutoSendTree(AutoSendAbstractTree, metaclass=DataStoreCollection):
 	klass = AutoSendImport
 	pickup = DataStore
 

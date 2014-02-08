@@ -1,7 +1,7 @@
 from psmdlsyncer.models.datastores.abstract import AbstractTree
 from psmdlsyncer.files import AutoSendImport
 
-class AutoSendTree(AbstractTree):
+class AutoSendAbstractTree(AbstractTree):
     klass = AutoSendImport
 
     def process_groups(self):
@@ -28,7 +28,12 @@ class AutoSendTree(AbstractTree):
                 course = self.courses.get_without_conversion(course_number)
 
             student = self.students.get_key(studentID)
-            group = self.groups.get_key(teacher.username + course.idnumber)
+
+            # wait a minute, why am I getting group here anyway?
+            if not teacher or not course:
+                group = None
+            else:
+                group = self.groups.get_key(teacher.username + course.idnumber)
 
             self.schedules.make(student, teacher, course)
 

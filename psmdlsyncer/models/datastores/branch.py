@@ -3,8 +3,9 @@ from psmdlsyncer.models.teacher import Teacher
 from psmdlsyncer.models.course import Course
 from psmdlsyncer.models.group import Group
 from psmdlsyncer.models.schedule import Schedule
-
 from psmdlsyncer.utils.Utilities import convert_short_long
+import logging
+log = logging.getLogger(__name__)
 
 class DataStore:
 	"""
@@ -81,7 +82,7 @@ class DataStore:
 		Can be overridden if desired
 		"""
 		if cls.is_new(idnumber):
-			# Instantiate the klass
+			# Instantiate the instance
 			new = cls.klass(idnumber, *args, **kwargs)
 			cls.set_key(idnumber, new)
 			cls.did_make_new(new)
@@ -100,6 +101,20 @@ class teachers(DataStore):
 class groups(DataStore):
 	klass = Group
 
+	@classmethod
+	def make(cls, teacher, course):
+		idnumber = "{}{}".format(teacher and teacher.username or "", course and course.idnumber or "")
+		if cls.is_new(idnumber):
+			# Instantiate the instance
+			new = cls.klass(idnumber, teacher, course)
+			cls.set_key(idnumber, new)
+			cls.did_make_new(new)
+			return new
+		else:
+			old = cls.get_key(idnumber)
+			cls.will_return_old(old)
+			return old
+
 class courses(DataStore):
 	klass = Course
 
@@ -112,6 +127,29 @@ class courses(DataStore):
 	def make_without_conversion(cls, idnumber, name=""):
 		return cls.make(idnumber, name)
 
+	@classmethod
+	def get_with_conversion(cls, idnumber):
+		short, _ = convert_short_long(idnumber, "")
+		return cls.get_key(short)
+
+	@classmethod
+	def get_without_conversion(cls, idnumber):
+		return cls.get_key(idnumber)
+
 class schedules(DataStore):
 	klass = Schedule
+
+	@classmethod
+	def make(cls, student, teacher, course):
+		idnumber = "{}.{}.{}".format(student and student.idnumber or "", teacher and teacher.idnumber or "", course and course.idnumber or "")
+		if cls.is_new(idnumber):
+			# Instantiate the instance
+			new = cls.klass(idnumber, student, teacher, course)
+			cls.set_key(idnumber, new)
+			cls.did_make_new(new)
+			return new
+		else:
+			old = cls.get_key(idnumber)
+			cls.will_return_old(old)
+			return old
 

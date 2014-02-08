@@ -1,6 +1,6 @@
 from psmdlsyncer.models.datastores.abstract import AbstractTree
 
-class PostfixTree(AbstractTree):
+class PostfixAbstractTree(AbstractTree):
 
     pass
 

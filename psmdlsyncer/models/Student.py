@@ -1,4 +1,4 @@
-from psmdlsyncer.models.meta import BaseModel
+from psmdlsyncer.models.base import BaseModel
 from psmdlsyncer.sql import MoodleDBConnection
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
