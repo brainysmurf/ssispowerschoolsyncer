@@ -13,7 +13,9 @@ class AutoSendAbstractTree(AbstractTree):
                 course = self.courses.get_with_conversion(course_number)
             else:
                 course = self.courses.get_without_conversion(course_number)
-            self.groups.make(teacher, course)
+            self.groups.make(
+                self.derive_group_idnumber, 
+                teacher, course)
 
     def process_schedules(self):
         for info in self.schedule_info.content():
@@ -35,6 +37,8 @@ class AutoSendAbstractTree(AbstractTree):
             else:
                 group = self.groups.get_key(teacher.username + course.idnumber)
 
-            self.schedules.make(student, teacher, course)
+            self.schedules.make(
+                self.derive_schedule_idnumber, 
+                student, teacher, course)
 
 
