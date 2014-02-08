@@ -14,6 +14,8 @@ class MoodleAbstractTree(AbstractTree):
             # TODO: Figure out a way to handle this in the model
                 # special case for Moodle
             student_idnumber, course_idnumber, group_name = schedule
+
+            # With Moodle we only use the group name to derive everything
             teacher_username = re.sub('[^a-z]*', '', group_name)
             teacher = self.teachers.get_from_attribute('username', teacher_username)
 
@@ -23,11 +25,18 @@ class MoodleAbstractTree(AbstractTree):
                 course = self.courses.get_without_conversion(course_idnumber)
 
             student = self.students.get_key(student_idnumber)
-            if not teacher or not course:
-                log.warning("Could not get group: {} {}".format(teacher_username, course_idnumber))
-            else:
-                group = self.groups.get_key(teacher.username + course.idnumber)
+            if not teacher:
+                log.warning("Teacher must have left, but his/her group remains: {}".format(group_name, teacher, course))
+                continue
+            if not course:
+                log.warning("Course found in schedule but does not exist in Moodle {}.".format(course_idnumber))
+                continue
+            group = self.groups.get_key(teacher.username + course.idnumber)
+            if not group:
+                log.warning("Schedule has this group but doesn't exist in Moodle {}".format(group_name))
+                continue
 
+            # Okay, all clear, let's register it in the schedule
             self.schedules.make(student, teacher, course)
 
     def process_groups(self):
@@ -37,7 +46,10 @@ class MoodleAbstractTree(AbstractTree):
             teacher_username = re.sub(r'[^a-z]', '', group_name)
             course_idnumber = re.sub(r'[a-z]', '', group_name)
             teacher = self.teachers.get_from_attribute('username', teacher_username)
-            course = self.courses.get_key(course_idnumber)
+            if self.convert_course:
+                course = self.courses.get_with_conversion(course_idnumber)
+            else:
+                course = self.courses.get_without_conversion(course_idnumber)
             if not teacher or not course:
                 continue
 

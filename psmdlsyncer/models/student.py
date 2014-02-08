@@ -509,10 +509,6 @@ class Student(BaseModel):
             self._operation_target = other.homeroom
             ns.param = self
             yield ns
-
-        if self.username == 'tingyuzheng14':
-            from IPython import embed
-            embed()
     
 
     __sub__ = differences

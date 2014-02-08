@@ -47,11 +47,7 @@ class DataStore:
 
 	@classmethod
 	def get_key(cls, key):
-		try:
-			return cls.outer_store()[cls.fullname()][key]
-		except KeyError:
-			log.warning("No {} in {}{}".format(key, cls.__base__, cls.__qualname__))
-			return None
+		return cls.outer_store()[cls.fullname()].get(key)
 
 	@classmethod
 	def get_from_attribute(cls, attr, value):
