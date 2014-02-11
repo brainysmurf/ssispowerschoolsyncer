@@ -1,17 +1,10 @@
 from psmdlsyncer.utils import NS
-from psmdlsyncer.models.parent import Parent
-from psmdlsyncer.models.teacher import Teacher
-from psmdlsyncer.models.student import Student
-from psmdlsyncer.models.group import Group
-from psmdlsyncer.models.course import Course
-from psmdlsyncer.models.schedule import Schedule
-from psmdlsyncer.utils.Utilities import convert_short_long
-
+from psmdlsyncer.models.datastores.tree import DataStoreCollection
 import logging
-log = logging.getLogger(__name__)
 import re
+log = logging.getLogger(__name__)
 
-class AbstractTree():
+class AbstractTree(metaclass=DataStoreCollection):
     convert_course = True   # by default, convert the course shortname
 
     def __init__(self):
