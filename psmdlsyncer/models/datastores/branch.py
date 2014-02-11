@@ -13,6 +13,10 @@ class DataStore:
 	__set_outerclass__ = True
 
 	@classmethod
+	def _resolve(cls):
+		return cls.outer_store()[cls.fullname()]
+
+	@classmethod
 	def klass(cls):
 		"""
 		Override in subclass
@@ -35,23 +39,19 @@ class DataStore:
 
 	@classmethod
 	def get_keys(cls):
-		return cls.outer_store()[cls.fullname()].keys()
+		return cls._resolve().keys()
 
 	@classmethod
 	def get_items(cls):
-		return cls.outer_store()[cls.fullname()].items()
+		return cls._resolve().items()
 
 	@classmethod
 	def get_values(cls):
-		return cls.outer_store()[cls.fullname()].values()
+		return cls._resolve().values()
 
 	@classmethod
 	def get_key(cls, key):
-		try:
-			return cls.outer_store()[cls.fullname()][key]
-		except KeyError:
-			log.warning("No {} in {}{}".format(key, cls.__base__, cls.__qualname__))
-			return None
+		return cls._resolve().get(key)
 
 	@classmethod
 	def get_from_attribute(cls, attr, value):
@@ -80,7 +80,11 @@ class DataStore:
 		"""
 		Returns the object if already created, otherwise makes a new one
 		Can be overridden if desired
+		idnumber should the identifying idnumber, otherwise a callable to derive it
 		"""
+		if callable(idnumber):
+			# TODO handle passing errors
+			idnumber = idnumber(*args, **kwargs)
 		if cls.is_new(idnumber):
 			# Instantiate the instance
 			new = cls.klass(idnumber, *args, **kwargs)
@@ -100,20 +104,6 @@ class teachers(DataStore):
 
 class groups(DataStore):
 	klass = Group
-
-	@classmethod
-	def make(cls, teacher, course):
-		idnumber = "{}{}".format(teacher and teacher.username or "", course and course.idnumber or "")
-		if cls.is_new(idnumber):
-			# Instantiate the instance
-			new = cls.klass(idnumber, teacher, course)
-			cls.set_key(idnumber, new)
-			cls.did_make_new(new)
-			return new
-		else:
-			old = cls.get_key(idnumber)
-			cls.will_return_old(old)
-			return old
 
 class courses(DataStore):
 	klass = Course
@@ -138,18 +128,4 @@ class courses(DataStore):
 
 class schedules(DataStore):
 	klass = Schedule
-
-	@classmethod
-	def make(cls, student, teacher, course):
-		idnumber = "{}.{}.{}".format(student and student.idnumber or "", teacher and teacher.idnumber or "", course and course.idnumber or "")
-		if cls.is_new(idnumber):
-			# Instantiate the instance
-			new = cls.klass(idnumber, student, teacher, course)
-			cls.set_key(idnumber, new)
-			cls.did_make_new(new)
-			return new
-		else:
-			old = cls.get_key(idnumber)
-			cls.will_return_old(old)
-			return old
 
