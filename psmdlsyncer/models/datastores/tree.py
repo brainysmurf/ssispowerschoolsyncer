@@ -12,6 +12,9 @@ log = logging.getLogger(__name__)
 
 class DataStoreCollection(type):
 	_store = defaultdict(dict)
+	qual_name_delimiter = "."
+	qual_name_format = "{branch}{delim}{subbranch}"
+
 	def __init__(cls, name, bases, attrs):
 		if attrs.get('pickup'):
 			datastore = attrs.get('pickup')
@@ -20,7 +23,11 @@ class DataStoreCollection(type):
 			# TODO: Workaround?
 			get_all_module_classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 			for class_name, class_reference in get_all_module_classes:
-					nested_class_name = "{}.{}".format(cls.__name__, class_reference.__name__)
+					nested_class_name = cls.qual_name_format.format(
+						branch=cls.__name__,
+						delim=cls.qual_name_delimiter,
+						subbranch=class_reference.__name__
+						)
 					if class_name in attrs.keys():   # first check to see if the programmer declared something else by the same name
 						declared_class = attrs[class_name]  # this is now whatever the programmer declared
 						if inspect.isclass(declared_class) and issubclass(declared_class, datastore):
@@ -40,6 +47,22 @@ class DataStoreCollection(type):
 					else:
 						pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
 
+	@classmethod
+	def get_keys(cls):
+		return cls._store.keys()
+
+	@classmethod
+	def get_branch(cls, key):
+		return key.split(cls.qual_name_delimiter)[-1]
+
+	@classmethod
+	def my_subbranch(cls, subbranch):
+		return cls._store[cls.qual_name_format.format(
+			branch=cls.__name__,
+			delim=cls.qual_name_delimiter,
+			subbranch=subbranch
+			)]
+
 
 class AbstractTree(metaclass=DataStoreCollection):
 	convert_course = True   # by default, convert the course shortname
@@ -54,13 +77,6 @@ class AbstractTree(metaclass=DataStoreCollection):
 		self.schedule_info = self.klass('sec', 'studentschedule')
 		self.init()
 
-	def __sub__(self, other):
-		"""
-		Should override to describe the behavor of what happens when the instance is on the left side
-		of the subtraction (differences)
-		Should use the classes' methods for example self.students and self.teachers to access the information
-		"""
-		raise NotImplemented
 
 	def process_students(self):
 		for student in self.student_info.content():
