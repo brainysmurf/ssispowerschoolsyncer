@@ -65,7 +65,11 @@ class DataStore:
 		cls.outer_store()[cls.fullname()][key] = value
 
 	@classmethod
-	def did_make_new(self, new):
+	def will_make_new(cls, new):
+		pass
+		
+	@classmethod
+	def did_make_new(cls, new):
 		"""
 		HOOK METHOD CALLED AFTER `make` MAKES A NEW ONE
 		"""
@@ -88,6 +92,7 @@ class DataStore:
 		if cls.is_new(idnumber):
 			# Instantiate the instance
 			new = cls.klass(idnumber, *args, **kwargs)
+			cls.will_make_new(new)
 			cls.set_key(idnumber, new)
 			cls.did_make_new(new)
 			return new

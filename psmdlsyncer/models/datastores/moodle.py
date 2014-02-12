@@ -3,6 +3,10 @@ from psmdlsyncer.models.datastores.abstract import AbstractTree
 import re
 import logging
 log = logging.getLogger(__name__)
+from psmdlsyncer.utils import NS2
+
+def log_warning(astring, *args, **kwargs):
+    log.warning(NS2.string(astring, *args, **kwargs))
 
 class MoodleAbstractTree(AbstractTree):
     klass = MoodleImport
@@ -26,14 +30,17 @@ class MoodleAbstractTree(AbstractTree):
 
             student = self.students.get_key(student_idnumber)
             if not teacher:
-                log.warning("Teacher must have left, but his/her group remains: {}".format(group_name, teacher, course))
+                log_warning("Teacher must have left (because his or her PowerSchool idnumber isn't in the table?), but his/her group remains: {group}",
+                    group=group_name)
                 continue
             if not course:
-                log.warning("Course found in schedule but does not exist in Moodle {}.".format(course_idnumber))
+                log_warning("Course found in schedule but does not exist in Moodle {course}.", course=course.idnumber)
                 continue
             group = self.groups.get_key(teacher.username + course.idnumber)
             if not group:
-                log.warning("Schedule has this group but doesn't exist in Moodle {}".format(group_name))
+                log_warning("Schedule has this group {group1} {NEWLINE}{TAB}but looked for {group2} instead", 
+                    group1=group_name, 
+                    group2=teacher.username + course.idnumber)
                 continue
 
             # Okay, all clear, let's register it in the schedule

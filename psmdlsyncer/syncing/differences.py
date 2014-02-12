@@ -179,6 +179,12 @@ class DefineDispatcher:
 
     def subtract(self):
         # Invokes the __sub__ method
+        sub_branches = []
+        delim = self.left.qual_name_delimiter
+        for key in self.left.keys():
+            this_subbranch = self.left.get_branch(key)
+            if this_subbranch not in sub_branches:
+                sub_branches.append(this_subbranch)
         return self.left - self.right
 
 class MainDispatcher:
@@ -193,7 +199,7 @@ class MainDispatcher:
 
         sync_moodle = config_get_section_attribute('MOODLE', 'sync')
         check_email = config_get_section_attribute('EMAIL', 'check_accounts')
-
+        check_email = check_email == "True"
         if check_email:
             self.logger.info('Defining dispatcher for postfix and autosend')
             DefineDispatcher(postfix, autosend,

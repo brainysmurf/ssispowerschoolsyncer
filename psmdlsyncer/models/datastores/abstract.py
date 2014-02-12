@@ -24,13 +24,9 @@ class AbstractTree():
         self.schedule_info = self.klass('sec', 'studentschedule')
         self.init()
 
-    def __sub__(self, other):
-        """
-        Should override to describe the behavor of what happens when the instance is on the left side
-        of the subtraction (differences)
-        Should use the classes' methods for example self.students and self.teachers to access the information
-        """
-        raise NotImplemented
+    @classmethod
+    def get_students(cls):
+        return cls._store[cls.__name__]
 
     @staticmethod
     def derive_group_idnumber(teacher, course):
@@ -39,6 +35,14 @@ class AbstractTree():
     @staticmethod
     def derive_schedule_idnumber(student, teacher, course):
         return "{}.{}.{}".format(student and student.idnumber or "", teacher and teacher.idnumber or "", course and course.idnumber or "")
+
+    def init(self):
+        self.process_students()
+        self.process_teachers()
+        self.process_courses()
+
+        self.process_groups()
+        self.process_schedules()
 
     def process_students(self):
         for student in self.student_info.content():
@@ -63,19 +67,55 @@ class AbstractTree():
         # no good standard way to do this, quite yet
         pass
 
-    def init(self):
-        # Some of this stuff is pretty magical
-        # The self.students, self.teachers, etc objects come from MetaDataStore
-        # They actually return the new (or old) object, but we don't care about them here
 
-        self.process_students()
-        self.process_teachers()
-        self.process_courses()
+    def __sub__(self, other):
+        """
 
-        self.process_groups()
-        self.process_schedules()
+        """
+        input('yay')
+        left = self.tree.students.keys()
+        right = other.tree.students.keys()
+
+        for student_id in right - left:
+            ns = NS(status='new_student')
+            ns.left = self.tree.students.get(student_id)
+            ns.right = other.tree.students.get(student_id)
+            ns.param = [ns.right]
+            yield ns
+
+        for student_id in left - right:
+            ns = NS(status='old_student')
+            ns.left = self.tree.students.get(student_id)
+            ns.right = other.tree.students.get(student_id)
+            ns.param = [ns.left]
+            yield ns
+
+        left = self.tree.teachers.keys()
+        right = other.tree.teachers.keys()
+
+        for teacher_id in right - left:
+            ns = NS(status='new_teacher')
+            ns.left = self.tree.teachers.get(teacher_id)
+            ns.right = other.tree.teachers.get(teacher_id)
+            ns.param = [ns.right]
+            yield ns
+
+        for teacher_id in left - right:
+            ns = NS(status='old_teacher')
+            ns.left = self.tree.teachers.get(teacher_id)
+            ns.right = other.tree.teachers.get(teacher_id)
+            ns.param = [ns.left]
+            yield ns
+
+        # Now look at the individual information.
+        for student_id in self.tree.students.keys():
+            left = self.tree.students.get(student_id)
+            right = other.tree.students.get(student_id)
+            if left and right:
+                yield from left - right
 
 
+    
 
 if __name__ == "__main__":
 

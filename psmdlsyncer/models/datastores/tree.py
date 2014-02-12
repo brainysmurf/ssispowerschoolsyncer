@@ -11,18 +11,27 @@ from psmdlsyncer.models.datastores.moodle import MoodleAbstractTree
 from psmdlsyncer.models.datastores.autosend import AutoSendAbstractTree
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
+from psmdlsyncer.utils import NS2
 
 class DataStoreCollection(type):
 	_store = defaultdict(dict)
+	qual_name_format = "{branch}{delim}{subbranch}"
+	qual_name_delimiter = "."
+
 	def __init__(cls, name, bases, attrs):
 		if attrs.get('pickup'):
 			datastore = attrs.get('pickup')
 			# Cycle through all the classes that have been declared in this module, so we can augment this class with those ones
 			# Limitation: You have to declare your branches in the same place as this module
-			# TODO: Workaround?
+			# TODO: Get around above limitation by passing a string and importing that way
 			get_all_module_classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 			for class_name, class_reference in get_all_module_classes:
-					nested_class_name = "{}.{}".format(cls.__name__, class_reference.__name__)
+					nested_class_name = NS2.string(
+						cls.qual_name_format,
+						branch=cls.__name__, 
+						delim=cls.qual_name_delimiter,
+						subbranch=class_reference.__name__
+						)
 					if class_name in attrs.keys():   # first check to see if the programmer declared something else by the same name
 						declared_class = attrs[class_name]  # this is now whatever the programmer declared
 						if inspect.isclass(declared_class) and issubclass(declared_class, datastore):
@@ -41,11 +50,33 @@ class DataStoreCollection(type):
 							setattr(cls, class_reference.__name__, copied_class)
 					else:
 						pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
-	
+
+	@classmethod
+	def keys(cls):
+		return cls._store.keys()
+
+	@classmethod
+	def my_key_endwith(cls, endswith):
+		return self._store[cls.qual_name_format.format(cls.__name__, key)]
+
+	@classmethod
+	def get_branch(cls, key):
+		return key.split(cls.qual_name_delimiter)[-1]
+
+	def __sub__(self, other):
+		print("NOT HERE!")
+
+
+
+		return []
+
 
 class MoodleTree(MoodleAbstractTree, metaclass=DataStoreCollection):
 	klass = MoodleImport
 	pickup = DataStore
+
+	def __sub__(self):
+		input('not quite')
 
 class AutoSendTree(AutoSendAbstractTree, metaclass=DataStoreCollection):
 	klass = AutoSendImport
