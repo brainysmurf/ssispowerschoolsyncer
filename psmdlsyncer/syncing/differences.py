@@ -2,6 +2,7 @@ from psmdlsyncer.models.datastores.tree import MoodleTree, AutoSendTree, Postfix
 from psmdlsyncer.php import ModUserEnrollments
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.settings import logging
+from psmdlsyncer.utils.modifications import ModificationStatement
 log = logging.getLogger(__name__)
 
 # Used in Dispatched:
@@ -177,15 +178,38 @@ class DefineDispatcher:
                 print('unrecognized status')
                 pass
 
+    def get_subbranch(self, tree, subbranch):
+        return tree._store[tree.qual_name_format.format(
+                branch=tree__name__,
+                delim=tree.left.qual_name_delimiter,
+                subbranch=subbranch)]
+
     def subtract(self):
         # Invokes the __sub__ method
-        sub_branches = []
-        delim = self.left.qual_name_delimiter
-        for key in self.left.keys():
-            this_subbranch = self.left.get_branch(key)
-            if this_subbranch not in sub_branches:
-                sub_branches.append(this_subbranch)
-        return self.left - self.right
+
+        subbranches = ['teachers', 'students', 'group']
+        for subbranch in subbranches:
+            left_branch = self.get_subbranch(left, subbranch)
+            right_branch = self.get_subbranch(right, subbranch)
+
+            # Loop through missing stuff and do with it what we must
+            for key in right_branch.keys() - left_branch.keys():
+                yield ModificationStatement(
+                    left = left_branch.get(key),
+                    right = right_branch.get(key),
+                    status = NS2.string("new_{term}", term=subbranch[:-1]),
+                    param = [right_branch.get(key)]
+                    )
+
+            for key in left_branch.keys() - right_branch.keys():
+                yield ModificationStatement(
+                    left = left_branch.get(key),
+                    right = right_branch.get(key),
+                    status = NS2.string("old_{term}", term=subbranch[:-1]),
+                    param = [left_branch.get(key)]
+                    )
+
+
 
 class MainDispatcher:
     def __init__(self):
