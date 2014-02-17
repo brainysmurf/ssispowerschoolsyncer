@@ -214,10 +214,11 @@ class Tree:
                 pass
 
     def read_in_courses(self):
-        for line in AutoSendFile('sec', 'courseinfo').content():
-            course_number, full_name = line
-            moodle_short, moodle_long = convert_short_long(course_number, full_name)
-            self.add_course(course_number, full_name, moodle_short, moodle_long)
+        for school in ['elem', 'sec']:
+            for line in AutoSendFile(school, 'courseinfo').content():
+                course_number, full_name = line
+                moodle_short, moodle_long = convert_short_long(course_number, full_name)
+                self.add_course(course_number, full_name, moodle_short, moodle_long)
             
     def sync_courses(self):
         """
@@ -272,12 +273,18 @@ class Tree:
         pass
 
     def read_in_schedule(self):
-        schedule = AutoSendFile('sec', 'studentschedule')
-        raw = schedule.content()
         self.schedule = defaultdict(list)
-        for line in schedule.content():
+
+        elem_schedule = AutoSendFile('elem', 'studentschedule')
+        for line in elem_schedule.content():
             course_number, periods, session_number, teacher, teacherID, teacher_email, student, studentID = line
             self.schedule[course_number].append((teacher, studentID))
+
+        sec_schedule = AutoSendFile('sec', 'studentschedule')
+        for line in sec_schedule.content():
+            course_number, periods, session_number, teacher, teacherID, teacher_email, student, studentID = line
+            self.schedule[course_number].append((teacher, studentID))
+
 
     def sync_schedule(self):
         """

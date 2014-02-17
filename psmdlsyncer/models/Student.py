@@ -49,7 +49,7 @@ class Student(Entry):
 
         self.determine_first_and_last()
         #self.determine_preferred_name()  # this is derived from preferred.txt
-        
+
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
         #self.bus_afternoon = bus_afternoon
@@ -66,7 +66,7 @@ class Student(Entry):
         self.homeroom = homeroom.upper().strip()
         self.is_SWA = 'SWA' in self.homeroom
         self.homeroom_sortable = homeroom_sortable
-        
+
         self.profile_existing_department = self.homeroom   # This is actually details that go on front page
                                                            #self.profile_existing_address = self.bus_int
                                                            #self.profile_existing_phone1 = self.bus_morning
@@ -112,12 +112,11 @@ class Student(Entry):
         self.is_in_preferred_list = False
 
     def get_homeroom_teacher(self):
-        grade_name = self.grade if self.grade <= 10 else 'SH1112'
-        try:
-            teacher_name = self._teachers['HROOM{}'.format(grade_name)]
-        except KeyError:
+        teacher = [self._teachers[key] for key in self._teachers if re.match(r'^HROOM.*', key)]
+        if teacher:
+            return teacher[0]
+        else:
             return None
-        return teacher_name
 
     def determine_username(self):
         """
@@ -165,7 +164,7 @@ class Student(Entry):
         return [ re.match('([a-z]+)([^a-z]+)', item).groups() for item in self.groups() ]
 
     def get_english(self):
-        # Returns the first English... 
+        # Returns the first English...
         englishes = [course for course in self._courses if 'ENG' in course]
         for english in englishes:
             if 'BS' in english:
@@ -197,7 +196,7 @@ class Student(Entry):
                 return "Math Extended"
             else:
                 return "Unknown Maths!"
-            
+
         return "No Maths?"
 
     def update_groups(self, shortcode, group):
@@ -212,7 +211,7 @@ class Student(Entry):
             newgroup = group[:-4]
             newgroup += str(self.grade)
             group = newgroup
-        
+
         if group:
             self._groups.append(group)
             self._groups_courses[shortcode] = group
@@ -277,11 +276,11 @@ class Student(Entry):
         else:
             return False
         return True
-    
+
     def __repr__(self):
         return self.format_string("{firstrow}{num}: {email}, {homeroom}{midrow}{lastfirst}{lastrow}{_courses}\n",
                                   firstrow="+ ",
                                   midrow="\n| ",
                                   lastrow="\n| ")
 
-    
+
