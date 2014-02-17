@@ -989,6 +989,7 @@ class PowerSchoolIntegrator():
 
             if student.is_elementary:
                 usebccparentsELEM.extend(student.guardian_emails)
+                parentlink[student.username].extend( student.guardian_emails )
 
             if student.is_secondary:
                 usebccparentsSEC.extend(student.guardian_emails)
