@@ -120,6 +120,22 @@ class ServerInfo(MoodleDBConnection):
         idnumber = student.num
         username = student.username
         self.logger.debug("Checking current server information for student:\n{}".format(student))
+        if student.is_elementary and student.grade >= 5:
+            # Account-based checks
+            if self.moodle_config and self.sync_moodle:
+                if self.students.get(idnumber):
+                    if not username == self.students[idnumber]:
+                        # Use the one that we know from DragonNet
+                        # This error will not happen again
+                        student.username = self.students[idnumber]
+                        if not 'StudentChangedName' in dontraise:
+                            self.logger.debug("Raising StudentChangedName")
+                            raise StudentChangedName
+                else:
+                    if not 'NoStudentInMoodle' in dontraise:
+                        self.logger.debug("Raising NoStudentInMoodle")
+                        raise NoStudentInMoodle
+
         if student.is_secondary:
             # Account-based checks
             if self.moodle_config and self.sync_moodle:

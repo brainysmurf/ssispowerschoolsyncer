@@ -616,6 +616,7 @@ class PowerSchoolIntegrator():
         
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
+
             self.logger.debug("Got to this one here: \n{}".format(student))
 
             # First handle secondary students
@@ -742,7 +743,7 @@ class PowerSchoolIntegrator():
             # Now process elementary
             # At the moment, elementary kids don't have dragonnet accounts nor do they have any email
             # Parents only need to have an account is all, and done.
-            if student.homeroom in elementary_homerooms and int(student.num) > 30000:
+            if student.is_elementary and int(student.num) > 30000:
                 continue_until_no_errors = True
                 times_through = 0
                 while continue_until_no_errors:
