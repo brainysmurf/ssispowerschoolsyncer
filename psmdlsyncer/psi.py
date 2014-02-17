@@ -136,7 +136,7 @@ class PowerSchoolIntegrator():
         """
         self.logger.info("Building teachers and department heads")
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'teachers_moodle_file.txt')
-        output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'maildigest', 'course_', 'cohort_', 'type_'])
+        output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'idnumber', 'maildigest', 'course_', 'cohort_', 'type_'])
 
         # First do heads of department
 
@@ -177,6 +177,7 @@ class PowerSchoolIntegrator():
             row.build_lastname(teacher.last)
             row.build_password('changeme')
             row.build_email(teacher.email)
+            row.build_idnumber(teacher.idnumber)
             row.build_maildigest('1')
             if teacher.courses:
                 row.build_course_([c for c in teacher.courses()])

@@ -217,10 +217,5 @@ class MoodleDBConnection(SQLWrapper):
 if __name__ == "__main__":
 
     db = MoodleDBConnection()
-    if db.table_exists("blahs"):
-        print("EXISTS")
-    else:
-        print("DOESN'T EXIST")
-    print(db.get_unique_row("user", "username", "email", email='happystudent@student.ssis-suzhou.net', idnumber='99999'))
-
-    print(db.list_existing_tables('ssismdl_'))
+    from IPython import embed
+    embed()

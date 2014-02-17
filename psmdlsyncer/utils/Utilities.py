@@ -194,6 +194,9 @@ def map_codes(short, grade, higher_lower):
 		'SPBHONSH1112': 'LBSPASH1112',  # Spanish
 		'SPIHONSH1112': 'LBSPAASH1112', # spanish ab initio
 
+		'ENGIB6': 'ENGI6',   # English Intensive 6 has two 'sections'
+		'ENGIA6': 'ENGI6', 
+
 		'PSYHONSH1112': 'SSPSYSH1112', # Psychology
 		'ECOHONSH1112': 'SSECOSH1112', # Economics
 		'BAMHONSH1112': 'SSBAMSH1112', # Business & Management

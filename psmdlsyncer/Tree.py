@@ -113,6 +113,7 @@ class Tree:
                 if student.is_elementary:
                     if not student.homeroom in self._elementary_homerooms:
                         self._elementary_homerooms.append(student.homeroom)
+            input(self._elementary_homerooms)
         return self._elementary_homerooms
     
     def get_all_groups(self):
@@ -276,7 +277,7 @@ class Tree:
         raw = schedule.content()
         self.schedule = defaultdict(list)
         for line in schedule.content():
-            course_number, periods, session_number, teacher, teacherID, student, studentID = line
+            course_number, periods, session_number, teacher, teacherID, teacher_email, student, studentID = line
             self.schedule[course_number].append((teacher, studentID))
 
     def sync_schedule(self):
