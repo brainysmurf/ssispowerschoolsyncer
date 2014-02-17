@@ -114,7 +114,7 @@ class Tree:
                     if not student.homeroom in self._elementary_homerooms:
                         self._elementary_homerooms.append(student.homeroom)
         return self._elementary_homerooms
-    
+
     def get_all_groups(self):
         list_of_groups = []
         for key in self.get_student_keys():
@@ -150,7 +150,7 @@ class Tree:
 
             if not homeroom:
                 self.logger.warn('This student does not have a homeroom {}: {}'.format(stunum, firstlast))
-            
+
             try:
                 grade = int(grade)
             except ValueError:
@@ -160,7 +160,7 @@ class Tree:
                 stuid, grade,
                 homeroom,
                 self.convert_hr_to_sortable(homeroom),
-                firstlast,DOB,                                   
+                firstlast,DOB,
                 re.split('[;,]', parent_emails),
                 datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
                 nationality,
@@ -219,7 +219,7 @@ class Tree:
                 course_number, full_name = line
                 moodle_short, moodle_long = convert_short_long(course_number, full_name)
                 self.add_course(course_number, full_name, moodle_short, moodle_long)
-            
+
     def sync_courses(self):
         """
         No syncing necessary, this one is for reference
@@ -242,7 +242,7 @@ class Tree:
         self.logger.info("Syncing teachers")
         for allocation in self.allocation_table.keys():
             for teacher in self.allocation_table[allocation]:
-                if not teacher: 
+                if not teacher:
                     self.logger.warn("no teacher?")
                     self.logger.warn(allocation)
                     self.logger.warn(self.allocation_table[allocation])
@@ -310,7 +310,7 @@ class Tree:
 
     def convert_hr_to_integer(self, hr):
         return {'K':-1, 'R':-2, 'G':-3, 'P':-4, 'N':-5}.get(hr[0], put_in_order(hr, reverse=True))
- 
+
     def convert_hr_to_grade(self, hr):
         if not hr: raise NoHomeroom(hr)
         if not re.match(r'^[a-zA-Z]', hr):

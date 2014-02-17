@@ -114,7 +114,7 @@ class ServerInfo(MoodleDBConnection):
                    'GroupDoesNotExist', 'NoEmailAddress',
                    'ParentAccountNotAssociated', 'ParentNotInGroup')
             dontraise = tuple( set(all) - set(onlyraise) )
-        
+
         if not self.db:
             return
         idnumber = student.num
@@ -201,7 +201,9 @@ class ServerInfo(MoodleDBConnection):
                 course = student.courses()[i]
                 group = student.groups()[i]
 
-                groups = self._groups.get(student.family_id)
+                groups = self._groups.get(student.family_id, [])
+                if not groups:
+                    groups = []
                 if not groups and not 'ParentNotInGroup' in dontraise:
                     raise ParentNotInGroup
                 if not group in groups:
