@@ -197,6 +197,9 @@ def map_codes(short, grade, higher_lower):
 		'ENGIB6': 'ENGI6',   # English Intensive 6 has two 'sections'
 		'ENGIA6': 'ENGI6', 
 
+		'ENGIB7': 'ENGI7',   # English Intensive 6 has two 'sections'
+		'ENGIA7': 'ENGI7', 
+
 		'PSYHONSH1112': 'SSPSYSH1112', # Psychology
 		'ECOHONSH1112': 'SSECOSH1112', # Economics
 		'BAMHONSH1112': 'SSBAMSH1112', # Business & Management
