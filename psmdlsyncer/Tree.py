@@ -113,7 +113,6 @@ class Tree:
                 if student.is_elementary:
                     if not student.homeroom in self._elementary_homerooms:
                         self._elementary_homerooms.append(student.homeroom)
-            input(self._elementary_homerooms)
         return self._elementary_homerooms
     
     def get_all_groups(self):
