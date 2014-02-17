@@ -176,6 +176,13 @@ def map_codes(short, grade, higher_lower):
 		'ENBSWA7': 'ENGBA7',
 		'ENBSWA6': 'ENGBA6',
 		'ENBSWA10': 'ENGBA10',
+
+		'ENGIB6': 'ENGI6',
+		'ENGIA6': 'ENGI6'
+
+		'ENGIB7': 'ENGI7',
+		'ENGIA7': 'ENGI7'
+
 		
 		# Straight conversions
 		'ENLHONSH1112': 'ENGLLSH1112',  # English A Lang & Lit
