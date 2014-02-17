@@ -120,7 +120,7 @@ class ServerInfo(MoodleDBConnection):
         idnumber = student.num
         username = student.username
         self.logger.debug("Checking current server information for student:\n{}".format(student))
-        if student.is_elementary and student.grade >= 5:
+        if student.is_elementary:
             # Account-based checks
             if self.moodle_config and self.sync_moodle:
                 if self.students.get(idnumber):

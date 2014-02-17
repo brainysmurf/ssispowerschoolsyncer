@@ -82,7 +82,7 @@ class Student(Entry):
         if self.is_secondary:
             self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_issecstudent = True
-        if self.grade in range(5, 13):
+        if self.grade in range(4, 13):
             self.auth = 'manual'
         else:
             self.auth = 'nologin'
