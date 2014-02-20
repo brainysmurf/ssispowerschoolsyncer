@@ -61,7 +61,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         if not self.server:
             print("Using localhost for mail server")
             self.server = 'localhost'
-        
+
         self.name = self.__class__.__name__.replace("_", " ")
         # Class-specific settings, which are delegated to sub-classes
         self.define()
@@ -85,7 +85,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         else:
             self.section_field_object = None
             self.section_field_default_value = None
-        
+
         self.start_date_field = StartDateField(self.database_name, 'Start Date')
         self.end_date_field   = EndDateField(self.database_name, 'End Date')
         self.process()
@@ -115,7 +115,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             self.database_objects.add(item)
         self.verbose and print("\n\nDatabase object")
         self.verbose and print(self.database_objects)
-        
+
     def model_items(self):
         """
         Returns a generator object that represents the potential rows in the database
@@ -186,7 +186,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             e.send()
         except smtplib.SMTPRecipientsRefused:
             self.print_email(email)
-            
+
 
     def define(self):
         """
@@ -246,7 +246,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
 
     def html(self, the_html, format=True):
         if format:
-            self.html_output += the_html.format(**self.__dict__)
+            self.html_output += the_html.replace('{ }', '{{ }}').format(**self.__dict__)
         else:
             self.html_output += the_html
 
@@ -277,7 +277,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 self.model.dbid_id,
                 item.dbid,
                 self.edit_word)
-            
+
         # NOW EDIT THE CONTENT SO THAT <p> TAGS ARE REMOVED, AND ANY SPACES ARE CONSOLIDATED
         content = re.sub(r'</*p>', '', content)
         content = re.sub(r'\n', ' ', content)
@@ -338,7 +338,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             else:
                 self.html("{header_pre_tag}{header}{colon}{header_post_tag}")
                 self.html("{begin_section_tag}")
-            # Now actually output the content of each item   
+            # Now actually output the content of each item
             for item in items:
                 self.html(self.derive_content(item))   # puts in the content
             # ... this last if statement is continuation from check above
@@ -365,7 +365,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         print("Email from {} to: {}".format(self.sender, recipient_list))
         print(self.get_subject())
         print(self.get_html())
-                
+
     def email_to_agents(self):
         """
         Follows the internal constructs and sends emails with associated tags to the agents
@@ -396,8 +396,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         If date IS none THEN USE self.date
         """
         self.format_for_email()
-                    
-        date_to_use = date if date else self.date            
+
+        date_to_use = date if date else self.date
         replace_apostrophes = "'\\''"
         d = {
             'title': self.get_subject(),   # remove the 'Student Notices for' part
