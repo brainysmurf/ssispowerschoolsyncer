@@ -97,7 +97,7 @@ class Student(Entry):
         if self.is_elementary:
             self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             self.profile_extra_iselemstudent = True
-            self.profile_existing_department = 'HOME4ES'
+            self.profile_existing_department = homeroom
         self.is_middle_school = self.grade in range (6, 9)
         self.is_high_school = self.grade in range(10, 13)
         self._groups = []
