@@ -382,6 +382,8 @@ class PowerSchoolIntegrator():
                 if not ns.field_id:
                     self.logger.warn(ns("You need to manually add the {extra_profile_field} field!"))
                     continue
+                if not ns.user_id:
+                    continue
                 there_already = database.get_unique_row("user_info_data", "data",
                                                         fieldid = ns.field_id,
                                                         userid = ns.user_id)
@@ -398,10 +400,10 @@ class PowerSchoolIntegrator():
                     database.sql(ns("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
         for teacher_key in self.students.get_teacher_keys():
             teacher = self.students.get_teacher(teacher_key)
-            ns = NS(teacher)
+            formatter = NS(teacher)
 
             try:
-                ns.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
+                formatter.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
             except IndexError:
                 # They don't have an account yet?
                 continue
@@ -425,8 +427,7 @@ class PowerSchoolIntegrator():
                     self.logger.debug(formatter('inserting {extra_profile_field}'))
                     database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
 
-
-        for student_key in self.students.get_student_keys(secondary=True):
+        for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
 
             formatter = NS()
