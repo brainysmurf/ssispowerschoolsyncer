@@ -223,13 +223,7 @@ class MainDispatcher:
         check_email = config_get_section_attribute('EMAIL', 'check_accounts')
         check_email = check_email == "True"
         if check_email:
-            self.logger.info('Defining dispatcher for postfix and autosend')
-            DefineDispatcher(postfix, autosend,
-                new_student=log_item('no_email'),
-                old_student=log_item('email_no_longer_needed')
-                )
-                #new_student=mod.no_email,
-                #old_student=self.email_no_longer_needed)
+            pass  # write this later
 
         if sync_moodle:
             self.logger.info('Defining dispatcher for moodle and autosend')
