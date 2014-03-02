@@ -23,30 +23,30 @@ class DataStoreCollection(type):
 			# TODO: Get around above limitation by passing a string and importing that way
 			get_all_module_classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
 			for class_name, class_reference in get_all_module_classes:
-					nested_class_name = NS2.string(
-						cls.qual_name_format,
-						branch=cls.__name__, 
-						delim=cls.qual_name_delimiter,
-						subbranch=class_reference.__name__
-						)
-					if class_name in attrs.keys():   # first check to see if the programmer declared something else by the same name
-						declared_class = attrs[class_name]  # this is now whatever the programmer declared
-						if inspect.isclass(declared_class) and issubclass(declared_class, datastore):
-							# If we're here, we need to adjust some augment, to match what we would do automatically (like below)
-							setattr(declared_class, '__qualname__', nested_class_name)
-							setattr(declared_class, '__outerclass__', cls)
-					elif class_reference is not datastore:  # check to ensure our heuristic doesn't detect itself
-						if issubclass(class_reference, datastore): # now see if this object is subclass of class represented by `pickup`
-							# okay, we need to manually pickup the class and bring it into ours
-							# copy the class entirely (won't work otherwise)
-							copied_class = type(name, class_reference.__bases__, dict(class_reference.__dict__))
-							# set up magic
-							copied_class.__qualname__ = nested_class_name
-							copied_class.__outerclass__ = cls
-							# and assign this brand new class to ours
-							setattr(cls, class_reference.__name__, copied_class)
-					else:
-						pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
+				nested_class_name = NS2.string(
+					cls.qual_name_format,
+					branch=cls.__name__,
+					delim=cls.qual_name_delimiter,
+					subbranch=class_reference.__name__
+					)
+				if class_name in attrs.keys():   # first check to see if the programmer declared something else by the same name
+					declared_class = attrs[class_name]  # this is now whatever the programmer declared
+					if inspect.isclass(declared_class) and issubclass(declared_class, datastore):
+						# If we're here, we need to adjust some augment, to match what we would do automatically (like below)
+						setattr(declared_class, '__qualname__', nested_class_name)
+						setattr(declared_class, '__outerclass__', cls)
+				elif class_reference is not datastore:  # check to ensure our heuristic doesn't detect itself
+					if issubclass(class_reference, datastore): # now see if this object is subclass of class represented by `pickup`
+						# okay, we need to manually pickup the class and bring it into ours
+						# copy the class entirely (won't work otherwise)
+						copied_class = type(name, class_reference.__bases__, dict(class_reference.__dict__))
+						# set up magic
+						copied_class.__qualname__ = nested_class_name
+						copied_class.__outerclass__ = cls
+						# and assign this brand new class to ours
+						setattr(cls, class_reference.__name__, copied_class)
+				else:
+					pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
 
 	@classmethod
 	def keys(cls):
@@ -85,7 +85,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def process_teachers(self):
 		for teacher in self.teacher_info.content():
-			self.teachers.make(*teacher)	 
+			self.teachers.make(*teacher)
 
 	def process_courses(self):
 		for course in self.course_info.content():
@@ -113,6 +113,8 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 		self.process_groups()
 		self.process_schedules()
+
+
 
 
 class MoodleTree(AbstractTree):

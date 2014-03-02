@@ -1,4 +1,6 @@
 from psmdlsyncer.models.datastores.tree import AbstractTree
+from psmdlsyncer.syncing.differences import DefineDispatcher
+from psmdlsyncer.models.datastores.branch import DataStore
 
 class test:
 	def __init__(self, which):
@@ -67,17 +69,17 @@ class test_teacher_info(test):
 		pass
 
 
-class test_schedule_info(test):
-	def left_content(self):
-		pass
-
-	def right_content(self):
-		pass
-
-
 class test_course_info(test):
 	def left_content(self):
-		pass
+		return (
+			('AWESOMECLASS', 'Awesome Class'),
+			('AWESOMERCLASS', 'Awesomer Class'),
+			('AWESOMESTCLASS', 'Awesomest Class'),
+
+			('UNAWESOMECLASS', 'Unawesome Class'),
+			('UNAWESOMERCLASS', 'Unawesomer Class'),
+			('UNAWESOMESTCLASS', 'Unawesomest Class'),
+			)
 
 	def right_content(self):
 		pass
@@ -99,23 +101,38 @@ class test_group_info(test):
 		pass
 
 
-class test_schedule_info(test):
-	def left_content(self):
-		pass
-
-	def right_content(self):
-		pass
-
-
 class TestLeftTree(AbstractTree):
-	self.schedule_info = test_schedule_info()
-	self.student_info = test_student_info()
-	self.teacher_info = test_teacher_info()
-	self.course_info = test_course_info()
-	self.allocations_info = test_allocations_info()
-	self.group_info = test_group_info()
-	self.schedule_info = test_schedule_info()
+	pickup = DataStore
+	def __init__(self):
+		self.schedule_info = test_schedule_info('left')
+		self.student_info = test_student_info('left')
+		self.teacher_info = test_teacher_info('left')
+		self.course_info = test_course_info('left')
+		self.allocations_info = test_allocations_info('left')
+		self.group_info = test_group_info('left')
+		self.schedule_info = test_schedule_info('left')
+
+		self.init()
 
 
 class TestRightTree(AbstractTree):
-	pass
+	pickup = DataStore
+	def __init__(self):
+		self.schedule_info = test_schedule_info('right')
+		self.student_info = test_student_info('right')
+		self.teacher_info = test_teacher_info('right')
+		self.course_info = test_course_info('right')
+		self.allocations_info = test_allocations_info('right')
+		self.group_info = test_group_info('right')
+		self.schedule_info = test_schedule_info('right')
+
+		self.init()
+
+if __name__ == "__main__":
+
+	left = TestLeftTree()
+	right = TestRightTree()
+
+	DefineDispathcer(left, right)
+
+

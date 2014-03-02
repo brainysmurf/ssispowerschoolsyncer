@@ -38,7 +38,7 @@ class MoodleAutosend:
 
         for item in items:
             self.log('+moodle  {}'.format(item))
-            result = self.moodle.get_table('user', 'idnumber', email=item.email)            
+            result = self.moodle.get_table('user', 'idnumber', email=item.email)
 
             # potentially the same email address could be registered in moodle, for staff who are also parents
             # annoying
@@ -52,7 +52,7 @@ class MoodleAutosend:
                         # if the syncing code is working perfectly this shouldn't happen
                         # but sometimes people don't get powerschool numbers? or whatever
                         self.log('!moodle idnumber updated in moodle: {}'.format(item))
-                        self.moodle.update_table('user', 
+                        self.moodle.update_table('user',
                             where={'email': item.email_address},
                             idnumber=item.idnumber)
                     elif not idnumber_in_moodle == item.idnumber:
@@ -227,7 +227,8 @@ class MainDispatcher:
 
         if sync_moodle:
             self.logger.info('Defining dispatcher for moodle and autosend')
-            DefineDispatcher(MoodleTree, AutoSendTree, template=moodle_autosend)
+            DefineDispatcher(MoodleTree, AutoSendTree,
+                template=moodle_autosend)
 
     def moodle_no_longer_needed(self, student):
         if student is None:
@@ -252,4 +253,4 @@ if __name__ == "__main__":
 
 
 
-    MainDispatcher()    
+    MainDispatcher()
