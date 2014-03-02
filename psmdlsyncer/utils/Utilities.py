@@ -178,10 +178,10 @@ def map_codes(short, grade, higher_lower):
 		'ENBSWA10': 'ENGBA10',
 
 		'ENGIB6': 'ENGI6',
-		'ENGIA6': 'ENGI6'
+		'ENGIA6': 'ENGI6',
 
 		'ENGIB7': 'ENGI7',
-		'ENGIA7': 'ENGI7'
+		'ENGIA7': 'ENGI7',
 
 		
 		# Straight conversions

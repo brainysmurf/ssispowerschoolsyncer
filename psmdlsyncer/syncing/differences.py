@@ -185,8 +185,6 @@ class DefineDispatcher:
                 subbranch=subbranch)]
 
     def subtract(self):
-        # Invokes the __sub__ method
-
         subbranches = ['teachers', 'students', 'group']
         for subbranch in subbranches:
             left_branch = self.get_subbranch(left, subbranch)
