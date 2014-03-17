@@ -26,7 +26,7 @@ def name_to_email(long_name):
         where = -1
     where += 1
     long_name = long_name[where:].strip().lower()
-    return re.sub('[^a-z]', '', long_name)
+    return re.sub('[^a-z0-9]', '', long_name)
 
 
 class PowerSchoolIntegrator():
@@ -619,7 +619,7 @@ class PowerSchoolIntegrator():
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
 
-            self.logger.debug("Got to this one here: \n{}".format(student))
+            self.logger.warning("Got to this one here: \n{}".format(student))
 
             # First handle secondary students
             if student.is_secondary and student.courses() and int(student.num) > 30000:

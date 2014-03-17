@@ -39,4 +39,4 @@ if __name__ == "__main__":
     f = File('sec', 'studentschedule')
     for line in f.content():
         print(line)
-    
+
