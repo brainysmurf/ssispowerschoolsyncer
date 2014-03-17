@@ -78,7 +78,7 @@ class SQLWrapper:
             where_phrase = "where " + " AND ".join(wheres)
         else:
             where_phrase = ""
-        self.call_sql('update {} set {} where {}'.format(table_name, set_phrase, where_phrase))
+        self.call_sql('update {}{} set {} {}'.format(self.prefix, table_name, set_phrase, where_phrase))
 
     def update_or_insert(self, table_name, where={}, **kwargs):
         """
@@ -138,7 +138,7 @@ class SQLWrapper:
             where_phrase = "where " + " AND ".join(wheres)
         else:
             where_phrase = ""
-        
+
         if select:
             select_phrase = ", ".join(select)
         else:

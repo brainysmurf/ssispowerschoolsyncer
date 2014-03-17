@@ -38,7 +38,7 @@ class RelativeDateFieldUpdater(UpdateField):
         return "next "
 
     def format_date(self, d):
-        return custom_strftime( "{S} %b", d )
+        return custom_strftime( "{S} %b %Y", d )
 
 if __name__ == "__main__":
 

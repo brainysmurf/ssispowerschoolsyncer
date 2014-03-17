@@ -55,7 +55,7 @@ class ModUserEnrollments(CallPHP):
             if self.dry_run:
                   test('create_account', student, '')
             else:
-                  error = self.create_account( student.username, student.email, student.first, student.last, student.num )
+                  error = self.create_account( student.username, student.email, student.first, student.last, student.num, student.auth )
                   print(error)
 
             #TODO: Test for cohorts, raise error, and move this to seperate function
@@ -113,7 +113,7 @@ class ModUserEnrollments(CallPHP):
             if self.dry_run:
                   test('new_parent', student, student.family_id)
             else:
-                  error = self.create_account( parent_email, parent_email, 'Parent ', parent_email, student.family_id )
+                  error = self.create_account( parent_email, parent_email, 'Parent ', parent_email, student.family_id, 'manual' )
                   self.handle_error(error)
 
       def new_support_staff(self, staff):

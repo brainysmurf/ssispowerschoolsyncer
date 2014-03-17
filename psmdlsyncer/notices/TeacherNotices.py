@@ -22,7 +22,6 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
                                                       *self.shared_command_line_args_switches,
                                                       **self.shared_command_line_args_strings)
         self.init()
-        self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/secondarystudentannouncements/">Click here Secondary Student Notices</i></a></p>'
 
     def define(self):
         """

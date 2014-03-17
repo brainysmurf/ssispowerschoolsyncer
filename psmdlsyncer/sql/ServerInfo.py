@@ -114,12 +114,28 @@ class ServerInfo(MoodleDBConnection):
                    'GroupDoesNotExist', 'NoEmailAddress',
                    'ParentAccountNotAssociated', 'ParentNotInGroup')
             dontraise = tuple( set(all) - set(onlyraise) )
-        
+
         if not self.db:
             return
         idnumber = student.num
         username = student.username
         self.logger.debug("Checking current server information for student:\n{}".format(student))
+        if student.is_elementary:
+            # Account-based checks
+            if self.moodle_config and self.sync_moodle:
+                if self.students.get(idnumber):
+                    if not username == self.students[idnumber]:
+                        # Use the one that we know from DragonNet
+                        # This error will not happen again
+                        student.username = self.students[idnumber]
+                        if not 'StudentChangedName' in dontraise:
+                            self.logger.debug("Raising StudentChangedName")
+                            raise StudentChangedName
+                else:
+                    if not 'NoStudentInMoodle' in dontraise:
+                        self.logger.debug("Raising NoStudentInMoodle")
+                        raise NoStudentInMoodle
+
         if student.is_secondary:
             # Account-based checks
             if self.moodle_config and self.sync_moodle:
@@ -185,7 +201,9 @@ class ServerInfo(MoodleDBConnection):
                 course = student.courses()[i]
                 group = student.groups()[i]
 
-                groups = self._groups.get(student.family_id)
+                groups = self._groups.get(student.family_id, [])
+                if not groups:
+                    groups = []
                 if not groups and not 'ParentNotInGroup' in dontraise:
                     raise ParentNotInGroup
                 if not group in groups:

@@ -26,7 +26,7 @@ def name_to_email(long_name):
         where = -1
     where += 1
     long_name = long_name[where:].strip().lower()
-    return re.sub('[^a-z]', '', long_name)
+    return re.sub('[^a-z0-9]', '', long_name)
 
 
 class PowerSchoolIntegrator():
@@ -36,10 +36,10 @@ class PowerSchoolIntegrator():
     temp_table = lambda: 'to_be_informed'
     temp_table_column_idnumber = lambda: 'idnumber'
     temp_table_column_comment = lambda: 'comment'
-    
+
     def __init__(self):
         """
-        
+
         """
         # if exists, move the php admin tool to to the right place
 
@@ -93,7 +93,7 @@ class PowerSchoolIntegrator():
             self.remove_enrollments()
         if self.students.settings.enroll_cohorts:
             self.enroll_cohorts()
-            
+
         self.logger.warn('Completed at {}'.format( datetime.datetime.now() ) )
 
     def build_courses(self):
@@ -104,9 +104,10 @@ class PowerSchoolIntegrator():
         ############
         """
         self.logger.info("Building courses")
-        source = AutoSendFile('sec', 'courseinfo')
         courses = {}
         summaries = {}
+
+        source = AutoSendFile('sec', 'courseinfo')
         with open(self.path_to_output + '/' + 'moodle_courses.txt', 'w') as f:
             f.write('fullname,shortname,category,summary,groupmode\n')
             self.logger.debug("Go through the file with course information, set up summaries and other info")
@@ -136,7 +137,7 @@ class PowerSchoolIntegrator():
         """
         self.logger.info("Building teachers and department heads")
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'teachers_moodle_file.txt')
-        output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'maildigest', 'course_', 'cohort_', 'type_'])
+        output_file.build_headers(['username', 'firstname', 'lastname', 'password', 'email', 'idnumber', 'maildigest', 'course_', 'cohort_', 'type_'])
 
         # First do heads of department
 
@@ -148,10 +149,10 @@ class PowerSchoolIntegrator():
                 continue
             for head in these_heads:
                 if head:
-                    heads[head].append(course.moodle_short)        
+                    heads[head].append(course.moodle_short)
 
         self.logger.debug("Head list has been built:\n{}".format(heads))
-        
+
         for head in list(heads.keys()):
             self.logger.debug("Building head of dept as 'non-editing teacher' but can be made to manager later: {}".format(head))
             courses = heads[head]
@@ -177,6 +178,7 @@ class PowerSchoolIntegrator():
             row.build_lastname(teacher.last)
             row.build_password('changeme')
             row.build_email(teacher.email)
+            row.build_idnumber(teacher.idnumber)
             row.build_maildigest('1')
             if teacher.courses:
                 row.build_course_([c for c in teacher.courses()])
@@ -204,7 +206,7 @@ class PowerSchoolIntegrator():
 
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-        
+
             parent_account = database.get_unique_row("user",
                                                 "username", "email",
                                                 idnumber = student.family_id)
@@ -302,13 +304,13 @@ class PowerSchoolIntegrator():
         password = section.get('password')
         host = section.get('host')
         database_name = section.get('database_name')
-        
+
         from utils.DB import UpdateField
         homework_club_updater = UpdateField(user, password, host, database_name, 'Homework Detention Database', 'Student')
         homework_club_list = []
         #golden_chair_updater = UpdateField(self.database_user, self.database_password, self.host, self.database_name, 'Homework Club', 'Student')
         golden_chair_list = []
-        
+
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             if student.grade >= 6 and student.grade <= 8:
@@ -372,13 +374,15 @@ class PowerSchoolIntegrator():
             except IndexError:
                 # They don't have an account yet?
                 continue
-            
+
             for ns.extra_profile_field, ns.value in family.get_extra_profile_fields():
                 ns.field_id = database.get_unique_row("user_info_field",
                                                       "id",
                                                       shortname=ns.extra_profile_field)
                 if not ns.field_id:
                     self.logger.warn(ns("You need to manually add the {extra_profile_field} field!"))
+                    continue
+                if not ns.user_id:
                     continue
                 there_already = database.get_unique_row("user_info_data", "data",
                                                         fieldid = ns.field_id,
@@ -387,19 +391,19 @@ class PowerSchoolIntegrator():
                     if there_already == str(int(ns.value)):
                         # only call update if it's different
                         ns.value = int(ns.value)
-                        self.logger.debug(ns('updating record {user_id} in ssis_user'))                        
+                        self.logger.debug(ns('updating record {user_id} in ssis_user'))
                         database.call_sql(ns("update ssismdl_user_info_data set data = {value} where fieldid = {field_id} and userid = {user_id}"))
                     else:
                         self.logger.debug(ns("No change in {extra_profile_field}, so didn't call the database"))
                 else:
                     self.logger.debug(ns('inserting {extra_profile_field}'))
-                    database.sql(ns("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()            
+                    database.sql(ns("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
         for teacher_key in self.students.get_teacher_keys():
             teacher = self.students.get_teacher(teacher_key)
-            ns = NS(teacher)
-            
+            formatter = NS(teacher)
+
             try:
-                ns.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
+                formatter.user_id = database.sql(formatter("select id from ssismdl_user where idnumber = '{num}'"))()[0][0]
             except IndexError:
                 # They don't have an account yet?
                 continue
@@ -423,8 +427,7 @@ class PowerSchoolIntegrator():
                     self.logger.debug(formatter('inserting {extra_profile_field}'))
                     database.sql(formatter("insert into ssismdl_user_info_data (userid, fieldid, data, dataformat) values ({user_id}, {field_id}, {value}, 0)"))()
 
-
-        for student_key in self.students.get_student_keys(secondary=True):
+        for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
 
             formatter = NS()
@@ -474,7 +477,7 @@ class PowerSchoolIntegrator():
 
                 formatter.url = formatter("http://dragonnet.ssis-suzhou.net/course/user.php?mode=grade&id={course_id}&user={user_id}")
                 grade_rows.append( formatter(grade_row) )
-                    
+
                 formatter.teacher_email = teacherusername + '@ssis-suzhou.net'
                 formatter.teacher_name = teacherusername
                 formatter.student_name = student.lastfirst # for debugging
@@ -510,7 +513,7 @@ class PowerSchoolIntegrator():
                 # Just use database directly instead of checking to see if already there
                 # (Below we have to check first)
                 database.sql(formatter("update ssismdl_user set {existing_profile_field} = '{value}' where id = {user_id}"))()
-                
+
             for formatter.extra_profile_field, formatter.value in student.get_extra_profile_fields():
                 formatter.field_id = database.sql(formatter("select id from ssismdl_user_info_field where shortname = '{extra_profile_field}'"))()
                 if not formatter.field_id:
@@ -586,13 +589,13 @@ class PowerSchoolIntegrator():
                 courses.extend(child.courses())
 
             queried = dnet.get_user_enrollments(family.idnumber)
-            
+
             for query in queried:
                 _, group, course = query
                 if course not in courses:
                     self.logger.warn('Unenrolling parent {} from course {}'.format(family.idnumber, course))
                     modify.unenrol_user_from_course(family.idnumber, course)
-            
+
 
     def build_students(self):
         """
@@ -612,13 +615,14 @@ class PowerSchoolIntegrator():
         self.logger.debug("Looping through students now")
 
         self.server_information.create_temp_storage('to_be_informed', 'idnumber', 'comment')
-        
+
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
-            self.logger.debug("Got to this one here: \n{}".format(student))
+
+            self.logger.warning("Got to this one here: \n{}".format(student))
 
             # First handle secondary students
-            if student.is_secondary and student.courses() and int(student.num) > 30000:                
+            if student.is_secondary and student.courses() and int(student.num) > 30000:
                 continue_until_no_errors = True
                 times_through = 0
                 while continue_until_no_errors:
@@ -639,6 +643,7 @@ class PowerSchoolIntegrator():
                                                                  idnumber=student.num,
                                                                  comment='newstudent')
 
+
                     except NoEmailAddress:
                         self.logger.warn("Student does not have an email address:\n{}".format(student))
                         modify.no_email(student)
@@ -653,8 +658,8 @@ class PowerSchoolIntegrator():
                             times_through = 11
                             # or just manually update the database, right?
                         else:
-                            self.server_information.init_users_and_groups()                            
-                        
+                            self.server_information.init_users_and_groups()
+
                     except StudentNotInGroup:
                         self.logger.debug("Student not enrolled in at least one of the required groups")
                         modify.enrol_student_into_courses(student)
@@ -678,13 +683,13 @@ class PowerSchoolIntegrator():
                         self.server_information.add_temp_storage('to_be_informed',
                                                                  idnumber = student.family_id,
                                                                  comment = 'newparent')
-                        
+
                         if self.dry_run:
                             times_through = 11
                             # or just manually update the database, right?
                         else:
                             self.server_information.init_users_and_groups()
-                    
+
                     except ParentAccountNotAssociated:
                         self.logger.warn("Parent account {} hasn't been assocated to student {}".format(student.family_id, student))
                         modify.parent_account_not_associated(student)
@@ -693,7 +698,7 @@ class PowerSchoolIntegrator():
                             # or just manually update the database, right?
                         else:
                             self.server_information.init_users_and_groups()
-                        
+
                     except ParentNotInGroup:
                         self.logger.debug("Parent is not enrolled in at least one group: {}".format(student.family_id))
                         modify.enrol_parent_into_courses(student)
@@ -701,7 +706,7 @@ class PowerSchoolIntegrator():
                             times_through = 11
                         else:
                             self.server_information.init_users_and_groups()
-                        
+
                     except StudentChangedName:
                         #TODO: Implement an email feature or something to be handled manually by admin
                         self.logger.warn("Student has had his or her account name changed.\n" +
@@ -740,7 +745,7 @@ class PowerSchoolIntegrator():
             # Now process elementary
             # At the moment, elementary kids don't have dragonnet accounts nor do they have any email
             # Parents only need to have an account is all, and done.
-            if student.homeroom in elementary_homerooms and int(student.num) > 30000:
+            if student.is_elementary and int(student.num) > 30000:
                 continue_until_no_errors = True
                 times_through = 0
                 while continue_until_no_errors:
@@ -958,11 +963,12 @@ class PowerSchoolIntegrator():
         special = defaultdict(list)
 
         self.logger.debug('Clearing the table on moodle')
-        self.server_information.create_temp_storage('student_email_info', 'list', 'email')
+        self.server_information.create_temp_storage('student_email_info',
+          'list', 'email')
         self.server_information.empty_temp_storage('student_email_info')
         write_db = self.server_information.add_temp_storage
         self.logger.debug("Setting email lists")
-        
+
         for student_key in self.students.get_student_keys():
             student = self.students.get_student(student_key)
             ns.homeroom = student.homeroom
@@ -986,6 +992,9 @@ class PowerSchoolIntegrator():
 
             if student.is_elementary:
                 usebccparentsELEM.extend(student.guardian_emails)
+                parentlink[student.username].extend( student.guardian_emails )
+                teacherlink[student.username].extend(student.teacher_emails)
+                hrlink[student.username].append(student.homeroom_teacher_email)
 
             if student.is_secondary:
                 usebccparentsSEC.extend(student.guardian_emails)
@@ -1062,7 +1071,7 @@ class PowerSchoolIntegrator():
 
         for ns.student in hrlink:
             for ns.email in set(hrlink[ns.student]):
-                write_db('student_email_info', list=ns('{student}HR'), email=ns('{email}'))            
+                write_db('student_email_info', list=ns('{student}HR'), email=ns('{email}'))
 
         for ns.klass in classes:
             for ns.email in classes[ns.klass]:
@@ -1131,10 +1140,10 @@ class PowerSchoolIntegrator():
                     try:
                         f.write( '\n'.join(set(hrlink[ns.student])) )
                     except TypeError:
-                        pass
+                      pass
         with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
-        
+
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsALL{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsALL) )
 
@@ -1185,12 +1194,12 @@ class PowerSchoolIntegrator():
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccstudentsSWA) )
-                
+
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
             for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
-                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM', 
+                            'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM',
                             'usebccparentsSWA', 'usebccstudentsSWA']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
@@ -1250,7 +1259,7 @@ class PowerSchoolIntegrator():
                     f.write(teacher.email + '\n')
 
         for ns.department in list(depart_dict.keys()):
-            # department is now actually the email name we want to use 
+            # department is now actually the email name we want to use
             setup_postfix = ns('{PATH}/departments{EXT}')
             with open(setup_postfix, 'a') as f:
                 f.write( ns("{department}: :include:{PATH}/departments/{department}{EXT}\n") )
@@ -1303,7 +1312,7 @@ class PowerSchoolIntegrator():
                            '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
             with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
                 f.write("\n".join(activities_postfix_parents[activity_name]))
-        
+
         # run newaliases command on exit if we're on the server
         newaliases_path = False
         if self.config.has_section('EMAIL'):
@@ -1345,7 +1354,7 @@ class PowerSchoolIntegrator():
                 (index,
                  f('<a href="http://dragonnet.ssis-suzhou.net/user/profile.php?id={idnum}">{first} {last}</a> ({username} {homeroom} {num})<br />')) )
 
-        # Here is where I want to 
+        # Here is where I want to
 
         result.sort()
         result2.sort(key=lambda x:x[0])

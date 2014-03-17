@@ -32,9 +32,9 @@ class CallPHP:
         else:
             print("Command sent in to CallPHP: {}".format(cmd))
 
-    def create_account(self, username, email, firstname, lastname, idnumber):
-        self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber)
-        to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber}")
+    def create_account(self, username, email, firstname, lastname, idnumber, auth):
+        self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber, auth=auth)
+        to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber} {auth}")
         if self.moodle_accounts:
             return self.command('create_account', to_pass)
         else:
