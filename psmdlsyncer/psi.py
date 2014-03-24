@@ -606,6 +606,9 @@ class PowerSchoolIntegrator():
         path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
         modify = ModUserEnrollments()
 
+        powerschool_autocom_file = MoodleCSVFile(self.path_to_output + '/' + 'student_emails_usernames.txt')
+        powerschool_autocom_file.build_headers(['idnumber', 'email', 'username'])
+
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_users.txt')
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
 
@@ -742,6 +745,12 @@ class PowerSchoolIntegrator():
                 row.build_type_(["1" for c in student.courses()])
                 output_file.add_row(row)
 
+                another_row = powerschool_autocom_file.factory()
+                another_row.build_idnumber(student.num)
+                another_row.build_email(student.email)
+                another_row.build_username(student.username)
+                powerschool_autocom_file.add_row(another_row)
+
             # Now process elementary
             # At the moment, elementary kids don't have dragonnet accounts nor do they have any email
             # Parents only need to have an account is all, and done.
@@ -799,7 +808,14 @@ class PowerSchoolIntegrator():
                         self.logger.warn("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
 
+                another_row = powerschool_autocom_file.factory()
+                another_row.build_idnumber(student.num)
+                another_row.build_email(student.email)
+                another_row.build_username(student.username)
+                powerschool_autocom_file.add_row(another_row)
+
         output_file.output()
+        powerschool_autocom_file.output()
 
     def build_emails_for_powerschool(self):
 
