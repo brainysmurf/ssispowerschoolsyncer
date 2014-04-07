@@ -33,7 +33,7 @@ class moodle_csv_row:
 		return self
 
 	def build_(self, objects):
-	        return self.build(self.name, objects)
+	    return self.build(self.name, objects)
 
 	def __getattr__(self, name):
 		if name.startswith('build_'):
@@ -129,3 +129,15 @@ if __name__ == "__main__":
 	output_file.add_row(row)
 
 	print(output_file.output())
+
+	output_file = MoodleCSVFile()
+	output_file.build_headers(['username', 'profile_field_blah'])
+
+	row = output_file.factory()
+	row.build_username('Adam Morris')
+	row.build_profile_field_blah('hi')
+	output_file.add_row(row)
+
+	print(output_file.output())
+
+

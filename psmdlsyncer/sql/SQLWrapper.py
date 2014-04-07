@@ -9,6 +9,7 @@ A SIMPLE WRAPPER FOR USE WITH A MOODLE DATABASE (postgres only at the moment)
 import postgresql
 import os
 from psmdlsyncer.utils.Namespace import NS
+import re
 
 class SQLWrapper:
     """
@@ -64,7 +65,8 @@ class SQLWrapper:
         columns_values = kwargs.items()
         columns_phrase = ", ".join([c[0] for c in columns_values])
         values_phrase = "'" + "', '".join([c[1] for c in columns_values]) + "'"
-        self.call_sql("insert into temp_{} ({}) values ({})".format(table_name, columns_phrase, values_phrase))
+        #values_phrase = "'" + "', '".join([re.escape(c[1]) for c in columns_values]) + "'"
+        self.call_sql("insert into {} ({}) values ({})".format(table_name, columns_phrase, values_phrase))
 
     def update_table(self, table_name, where={}, **kwargs):
         set_phrase = ",".join(["{}='{}'".format(c[0], c[1]) for c in kwargs.items()])
