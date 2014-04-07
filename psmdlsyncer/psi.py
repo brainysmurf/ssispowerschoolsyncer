@@ -606,6 +606,9 @@ class PowerSchoolIntegrator():
         path_to_php = self.config['PHP']['php_path'] if self.config.has_section('PHP') else None
         modify = ModUserEnrollments()
 
+        powerschool_autocom_file = MoodleCSVFile(self.path_to_output + '/' + 'student_emails_usernames.txt')
+        powerschool_autocom_file.build_headers(['idnumber', 'email', 'username'])
+
         output_file = MoodleCSVFile(self.path_to_output + '/' + 'moodle_users.txt')
         output_file.build_headers(['username', 'idnumber', 'firstname', 'lastname', 'password', 'email', 'course_', 'group_', 'cohort_', 'type_'])
 
@@ -742,6 +745,12 @@ class PowerSchoolIntegrator():
                 row.build_type_(["1" for c in student.courses()])
                 output_file.add_row(row)
 
+                another_row = powerschool_autocom_file.factory()
+                another_row.build_idnumber(student.num)
+                another_row.build_email(student.email)
+                another_row.build_username(student.username)
+                powerschool_autocom_file.add_row(another_row)
+
             # Now process elementary
             # At the moment, elementary kids don't have dragonnet accounts nor do they have any email
             # Parents only need to have an account is all, and done.
@@ -799,7 +808,14 @@ class PowerSchoolIntegrator():
                         self.logger.warn("Infinite Loop detected when processing student\n{}".format(student))
                         continue_until_no_errors = False
 
+                another_row = powerschool_autocom_file.factory()
+                another_row.build_idnumber(student.num)
+                another_row.build_email(student.email)
+                another_row.build_username(student.username)
+                powerschool_autocom_file.add_row(another_row)
+
         output_file.output()
+        powerschool_autocom_file.output()
 
     def build_emails_for_powerschool(self):
 
@@ -945,8 +961,11 @@ class PowerSchoolIntegrator():
         # SWA DISTRIBUTION LISTS
         usebccparentsSWA = []
         usebccstudentsSWA = []
+        usebccparentsNOTSWA = []
         usebccparentsSWAGRADE = defaultdict(list)
         usebccstudentsSWAGRADE = defaultdict(list)
+        usebccparentsGERMAN = []
+        usebccparentsNOTGERMAN = []
         # HR AND GRADE
         usebccparentsHOMEROOM = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
@@ -1026,11 +1045,18 @@ class PowerSchoolIntegrator():
                 student.is_secondary and usebccparentsJAPANESESEC.extend( student.guardian_emails )
                 student.is_elementary and usebccparentsJAPANESEELEM.extend( student.guardian_emails )
                 usebccparentsJAPANESEGRADE[ns.grade].extend( student.guardian_emails )
+            if student.is_german:
+                usebccparentsGERMAN.extend( student.guardian_emails )
+            else:
+                usebccparentsNOTGERMAN.extend( student.guardian_emails )
             if student.is_SWA:
                 usebccparentsSWA.extend( student.guardian_emails )
                 usebccstudentsSWA.append( student.email )
                 usebccparentsSWAGRADE[ns.grade].extend( student.guardian_emails )
                 usebccstudentsSWAGRADE[ns.grade].append( student.email )
+            else:
+                usebccparentsNOTSWA.extend( student.guardian_emails )
+
 
         for ns.email in set(usebccparentsALL):
             write_db('student_email_info', list='usebccparentsALL', email=ns.email)
@@ -1192,6 +1218,15 @@ class PowerSchoolIntegrator():
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSWA{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsSWA) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsNOTSWA{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsNOTSWA) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsGERMAN{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsGERMAN) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsNOTGERMAN{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccparentsNOTGERMAN) )
+
         with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccstudentsSWA) )
 
@@ -1200,7 +1235,7 @@ class PowerSchoolIntegrator():
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
                             'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM',
-                            'usebccparentsSWA', 'usebccstudentsSWA']:
+                            'usebccparentsSWA', 'usebccstudentsSWA', 'usebccparentsNOTSWA', 'usebccparentsNOTGERMAN', 'usebccparentsGERMAN']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
                 f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )

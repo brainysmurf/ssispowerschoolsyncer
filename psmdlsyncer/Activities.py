@@ -14,8 +14,8 @@ def name_to_email(long_name):
 		where = -1
 	where += 1
 	long_name = long_name[where:].strip().lower()
-	return re.sub('[^a-z]', '', long_name)
-	
+	return re.sub('[^a-z0-9]', '', long_name)
+
 def convert_activity_name(name):
 	to_replace = r"""
 		^   		# beginning of line
@@ -30,7 +30,7 @@ def convert_activity_name(name):
 
 if __name__ == "__main__":
 	students = Tree()
-   
+
 	db = MoodleDBConnection()
 	sf = NS(domain='student.ssis-suzhou.net')
 	results = db.get_all_users_activity_enrollments()

@@ -105,6 +105,34 @@ class Tree:
         self._secondary_homerooms.sort(key=put_in_order)
         return self._secondary_homerooms
 
+    def get_student_keys(self):
+        return self.student_info_controller._db.keys()
+
+    def get_teacher_keys(self):
+        return self.teacher_info_controller.db.keys()
+
+    def find_student_by_name(self, firstname, lastname):
+        look_for = "{}{}".format(firstname, lastname).lower()
+        look_for = re.sub('[^a-z]', '', look_for)
+        for student_key in self.get_student_keys():
+            student = self.get_student(student_key)
+            match_against = "{}{}".format(student.first, student.last).lower()
+            match_against = re.sub('[^a-z]', '', match_against)
+            if look_for == match_against:
+                return student
+        return None
+
+    def find_teacher_by_name(self, firstname, lastname):
+        look_for = "{}{}".format(firstname, lastname).lower()
+        look_for = re.sub('[^a-z]', '', look_for)
+        for teacher_key in self.get_teacher_keys():
+            teacher = self.get_teacher(teacher_key)
+            match_against = "{}{}".format(teacher.first, teacher.last).lower()
+            match_against = re.sub('[^a-z]', '', match_against)
+            if look_for == match_against:
+                return teacher
+        return None
+
     def get_elementary_homerooms(self):
         if not self._elementary_homerooms:
             self._elementary_homerooms = []
@@ -142,7 +170,7 @@ class Tree:
         for line in self.student_info_file.content():
             # This MUST sync with AutoSend
             try:
-                stunum, stuid, grade, homeroom, firstlast, DOB, parent_emails, entry_date, nationality = line
+                stunum, stuid, grade, homeroom, firstlast, DOB, parent_emails, entry_date, department, nationality = line
             except ValueError:
                 self.logger.warn(line)
                 self.logger.warn("Skipping above line... did one of the fields have a newline character in there?")
@@ -163,6 +191,7 @@ class Tree:
                 firstlast,DOB,
                 re.split('[;,]', parent_emails),
                 datetime.datetime.strptime(entry_date, '%m/%d/%Y'),
+                department,
                 nationality,
                 user_data=self.user_data)
 

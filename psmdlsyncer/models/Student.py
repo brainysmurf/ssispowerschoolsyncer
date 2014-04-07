@@ -23,7 +23,7 @@ class Object:
 class Student(Entry):
 
     def __init__(self, num, stuid, grade, homeroom, homeroom_sortable, lastfirst, dob, parent_emails,
-                 entry_date, nationality,
+                 entry_date, department, nationality,
                  user_data = {}):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
@@ -40,6 +40,7 @@ class Student(Entry):
         self.is_elementary = grade <= 5
         self.profile_extra_iselemstudent = self.is_elementary
         self.is_student = True
+        self.department = department
         self.profile_extra_isstudent = self.is_student
         self.lastfirst = lastfirst
         self.user_data = user_data
@@ -64,7 +65,8 @@ class Student(Entry):
         self.profile_extra_iskorean = self.is_korean
         self.profile_extra_ischinese = self.is_chinese
         self.homeroom = homeroom.upper().strip()
-        self.is_SWA = 'SWA' in self.homeroom
+        self.is_SWA = self.department == "SWA"
+        self.is_german = self.department == "German"
         self.homeroom_sortable = homeroom_sortable
 
         self.profile_existing_department = self.homeroom   # This is actually details that go on front page
