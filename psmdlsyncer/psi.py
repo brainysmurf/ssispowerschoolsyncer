@@ -28,6 +28,17 @@ def name_to_email(long_name):
     long_name = long_name[where:].strip().lower()
     return re.sub('[^a-z0-9]', '', long_name)
 
+def excluded_from_chinese_list(student):
+    """
+    Return true if parents explicitely ask us to exclude them
+    This happens with some students, like Singapore
+    There should be a field in PowerSchool, that lists what language they speak
+    Of course it should, it isn't because... well, let's not go there.
+    """
+    if student.family_id in ['3094P']:
+        return True
+    return False
+
 
 class PowerSchoolIntegrator():
     """
@@ -1030,7 +1041,7 @@ class PowerSchoolIntegrator():
                     classes[group].append(student.email)
                     classesPARENTS[group].extend(student.guardian_emails)
 
-            if student.is_chinese:
+            if student.is_chinese and not excluded_from_chinese_list(student):
                 usebccparentsCHINESE.extend( student.guardian_emails )
                 student.is_secondary and usebccparentsCHINESESEC.extend( student.guardian_emails )
                 student.is_elementary and usebccparentsCHINESEELEM.extend( student.guardian_emails )
