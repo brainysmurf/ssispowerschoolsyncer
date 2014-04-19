@@ -75,12 +75,12 @@ class Student(BaseModel):
     """
     A student
     self.kind = student
-    """ 
+    """
 
     kind = 'student'
     excluded_courses = ['XSTUDYSH1112']  #TODO: Make this a setting
 
-    def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails, 
+    def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails,
         entry_date, nationality,
         username=None,
         user_data={}):
@@ -97,7 +97,7 @@ class Student(BaseModel):
             self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
         except ValueError:
             self.entry_date = None
-        try: 
+        try:
             self.birthday = datetime.datetime.strptime(dob, '%m/%d/%Y')
         except ValueError:
             self.birthday = None
@@ -158,7 +158,7 @@ class Student(BaseModel):
         self.homeroom = homeroom.upper().strip()
         self.is_SWA = 'SWA' in self.homeroom
         self.homeroom_sortable = 0   # TODO: What's the put_in_order thing for then?
-        
+
         self.profile_existing_department = self.homeroom
         #self.profile_existing_address = self.bus_int
         #self.profile_existing_phone1 = self.bus_morning
@@ -312,7 +312,7 @@ class Student(BaseModel):
         return sorted([group.ID for group in self.groups])
 
     def get_english(self):
-        # Returns the first English... 
+        # Returns the first English...
         englishes = [course for course in self._courses if 'ENG' in course]
         for english in englishes:
             if 'BS' in english:
@@ -344,7 +344,7 @@ class Student(BaseModel):
                 return "Math Extended"
             else:
                 return "Unknown Maths!"
-            
+
         return "No Maths?"
 
     def teachers(self):
@@ -415,21 +415,19 @@ class Student(BaseModel):
 
     def differences(self, other):
 
-
         # We aren't going to remove things through looking at the scheduler
         # Since unenrolling automatically takes them out of the group, that's enough
         # Besides, might be some strange bugs creeping in, let us not let that happen
 
         for to_add in other.schedule_idnumbers - self.schedule_idnumbers:
             if to_add in self.course_idnumbers:
-                # we're already enrolled in the course, probably in the wrong group 
+                # we're already enrolled in the course, probably in the wrong group
                 # "add_group" will handle this below
                 continue
             ns = NS()
             ns.status = 'enrol_student_into_course'
-            ns.left = self.schedule
-            ns.right = other.schedule
-            to_add._operation_target = to_add
+            ns.left = self
+            ns.right = other
             ns.param = to_add
             yield ns
 
@@ -447,18 +445,16 @@ class Student(BaseModel):
         for to_add in other.group_idnumbers - self.group_idnumbers:
             ns = NS()
             ns.status = 'add_to_group'
-            ns.left = self.groups
-            ns.right = other.groups
-            self._operation_target = to_add
-            ns.param = self
+            ns.left = self
+            ns.right = other
+            ns.param = to_add
             yield ns
         for to_remove in self.group_idnumbers - other.group_idnumbers:
             ns = NS()
             ns.status = 'remove_from_group'
-            ns.left = self.groups
-            ns.right = other.groups
-            self._operation_target = to_remove
-            ns.param = self
+            ns.left = self
+            ns.right = other
+            ns.param = to_remove
             yield ns
 
         # HANDLE ENROLLMENTS INTO COURSES HERE
@@ -476,28 +472,25 @@ class Student(BaseModel):
         for to_remove in self.course_idnumbers - other.course_idnumbers:
             ns = NS()
             ns.status = 'deenrol_from_course'
-            ns.left = self.courses
-            ns.right = other.courses
-            self._operation_target = to_remove
-            ns.param = self
+            ns.left = self
+            ns.right = other
+            ns.param = to_remove
             yield ns
 
         # Handle cohorts (site-wide groups)
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
             ns = NS()
             ns.status = 'add_to_cohort'
-            ns.left = self.cohorts
-            ns.right = other.cohorts
-            self._operation_target = to_add
-            ns.param = self
+            ns.left = self
+            ns.right = other
+            ns.param = to_add
             yield ns
         for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
             ns = NS()
             ns.status = 'remove_from_cohort'
-            ns.left = self.cohorts
-            ns.right = other.cohorts
-            self._operation_target = to_remove
-            ns.param = self
+            ns.left = self
+            ns.right = other
+            ns.param = to_remove
             yield ns
 
         # Other things
@@ -506,10 +499,9 @@ class Student(BaseModel):
             ns.status = 'homeroom_changed'
             ns.left = self
             ns.right = other
-            self._operation_target = other.homeroom
-            ns.param = self
+            ns.param = other.homeroom
             yield ns
-    
+
 
     __sub__ = differences
 

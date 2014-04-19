@@ -1,3 +1,5 @@
+from psmdlsyncer.utils import NS2
+
 class BaseModel:
 	def update(self, key, value):
 		self.key = value
@@ -23,10 +25,10 @@ class BaseModel:
 
 	def __sub__(self, right):
 		for variable in self.__dict__:
-			ns = NS()
+			ns = NS2()
 			ns.name = variable
 			ns.left = getattr(self, variable)
 			ns.right = getattr(right, variable)
-			ns.status = left == right
+			ns.status = ns.left == ns.right
 			if not ns.status:
-				return ns
+				yield ns

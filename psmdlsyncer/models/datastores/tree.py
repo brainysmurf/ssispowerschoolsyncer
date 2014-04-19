@@ -98,7 +98,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 		for group in self.group_info.content():
 			self.groups.make(*group)
 
-	def process_secheule(self):
+	def process_schedules(self):
 		# no good standard way to do this, quite yet
 		pass
 
@@ -251,13 +251,13 @@ class Item:
 
 if __name__ == "__main__":
 
-	mstu33 = Moodle.students.make('33', '', '', '', '', '', '', '', '')
-	mstu3333 = Moodle.students.make('3333', '', '', '', '', '', '', '', '')
-	au33 = AutoSend.students.make('33', '', '', '', '', '', '', '', '')
-	mteach33 = Moodle.teachers.make('33', "Morris, Adam", '', '', '', '')
-	mstu33_ = Moodle.students.make('33', '', '', '', '', '', '', '', '')
-	mteach555 = Moodle.teachers.make('555', "Morris, Adam", '', '', '', '')
-	mteach333 = Moodle.teachers.make('333', "Morris, Adam", '', '', '', '')
+	mstu33 = MoodleTree.students.make('33', '', '', '', '', '', '', '', '')
+	mstu3333 = MoodleTree.students.make('3333', '', '', '', '', '', '', '', '')
+	au33 = AutoSendTree.students.make('33', '', '', '', '', '', '', '', '')
+	mteach33 = MoodleTree.teachers.make('33', "Morris, Adam", '', '', '', '')
+	mstu33_ = MoodleTree.students.make('33', '', '', '', '', '', '', '', '')
+	mteach555 = MoodleTree.teachers.make('555', "Morris, Adam", '', '', '', '')
+	mteach333 = MoodleTree.teachers.make('333', "Morris, Adam", '', '', '', '')
 	assert(mstu33 != mstu3333)
 	assert(mstu33 != mteach33)
 	assert(mstu33_ == mstu33)
