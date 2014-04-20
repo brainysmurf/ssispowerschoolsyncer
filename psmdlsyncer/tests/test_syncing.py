@@ -1,6 +1,7 @@
 from psmdlsyncer.models.datastores.tree import AbstractTree
-from psmdlsyncer.syncing.differences import DefineDispatcher
+from psmdlsyncer.syncing.differences import FindDifferences, FindPostDifferences
 from psmdlsyncer.models.datastores.branch import DataStore
+import logging
 
 class test:
 	def __init__(self, which):
@@ -39,31 +40,6 @@ class test_student_info(test):
 			('10101', '1113', '8', '8L', 'Student, New', '05/02/1960', 'newparent@gmail.com', '01/08/2013', 'America'),
 			)
 
-
-class test_schedule_info(test):
-	def left_content(self):
-		return (
-			('AWESOMECLASS', '4-5(B) 6-7(A)', '5', '81888', '33333'),
-			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', '82888', '44444'),
-			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', '83888', '55555'),
-
-			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', '84888', '66666'),
-			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', '85888', '77777'),
-			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '86888', '88888')
-		)
-
-	def right_content(self):
-		return (
-			#('AWESOMECLASS', '4-5(B) 6-7(A)', '5', 'Teacher, Happy', '81888', 'Student, Happy', '33333'),
-			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', 'Teacher, Happier', '82888', 'Student, Happier', '44444'),
-			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', 'Teacher, Happiest', '83888', 'Student, Happiest', '55555'),
-
-			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', 'Teacher, Unhappy', '84888', 'Student, Unhappy', '66666'),
-			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', 'Teacher, Unhappier', '85888', 'Student, Unhappier', '77777'),
-			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', 'Teacher, Unhappiest', '86888', 'Student, Unhappieste', '88888')
-		)
-
-
 class test_teacher_info(test):
 	def left_content(self):
 		return (
@@ -91,8 +67,6 @@ class test_teacher_info(test):
 			('99999', 'Teacher, New', 'new@example.com', 'Mr', '1', '1'),
 			)
 
-
-
 class test_course_info(test):
 	def left_content(self):
 		return (
@@ -100,9 +74,11 @@ class test_course_info(test):
 			('AWESOMERCLASS', 'Awesomer Class'),
 			('AWESOMESTCLASS', 'Awesomest Class'),
 
-			('UNAWESOMECLASS', 'Unawesome Class'),
-			('UNAWESOMERCLASS', 'Unawesomer Class'),
-			('UNAWESOMESTCLASS', 'Unawesomest Class'),
+			('BOOHISSCLASS', 'Unawesome Class'),
+			('BOOHISSERCLASS', 'Unawesomer Class'),
+			('BOOHISSIESTCLASS', 'Unawesomest Class'),
+
+			('ANEWCOURSE', 'A new course!')
 			)
 
 	def right_content(self):
@@ -111,11 +87,36 @@ class test_course_info(test):
 			('AWESOMERCLASS', 'Awesomer Class'),
 			('AWESOMESTCLASS', 'Awesomest Class'),
 
-			('UNAWESOMECLASS', 'Unawesome Class'),
-			('UNAWESOMERCLASS', 'Unawesomer Class'),
-			('UNAWESOMESTCLASS', 'Unawesomest Class'),
+			('BOOHISSCLASS', 'Unawesome Class'),
+			('BOOHISSERCLASS', 'Unawesomer Class'),
+			('BOOHISSIESTCLASS', 'Unawesomest Class'),
+
 			)
 
+class test_schedule_info(test):
+	def left_content(self):
+		return (
+			#('AWESOMECLASS', '4-5(B) 6-7(A)', '5', '81888', '33333'),
+			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', '82888', '44444'),
+			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', '83888', '55555'),
+
+			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', '84888', '66666'),
+			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', '85888', '77777'),
+			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '86888', '88888'),
+
+			('ANEWCOURSE', '1-2(B) 5-6(C)', '4', '86888', '88888')
+		)
+
+	def right_content(self):
+		return (
+			('AWESOMECLASS', '4-5(B) 6-7(A)', '5', '81888', '33333'),
+			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', '82888', '44444'),
+			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', '83888', '55555'),
+
+			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', '84888', '66666'),
+			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', '85888', '77777'),
+			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '86888', '88888')
+		)
 
 class test_allocations_info(test):
 	def left_content(self):
@@ -124,7 +125,6 @@ class test_allocations_info(test):
 	def right_content(self):
 		pass
 
-
 class test_group_info(test):
 	def left_content(self):
 		return []
@@ -132,10 +132,16 @@ class test_group_info(test):
 	def right_content(self):
 		return []
 
-
 class TestLeftTree(AbstractTree):
 	pickup = DataStore
 	def __init__(self):
+		"""
+		We have some things going on here that's not really part of the default behaviour
+		So override completely
+		"""
+		self.logger = logging.getLogger('TestLeftTree')
+		self.default_logger = self.logger.info
+
 		self.student_info = test_student_info('left')
 		self.teacher_info = test_teacher_info('left')
 		self.course_info = test_course_info('left')
@@ -145,10 +151,12 @@ class TestLeftTree(AbstractTree):
 
 		self.init()
 
-
 class TestRightTree(AbstractTree):
 	pickup = DataStore
 	def __init__(self):
+		self.logger = logging.getLogger('TestLeftTree')
+		self.default_logger = self.logger.info
+
 		self.student_info = test_student_info('right')
 		self.teacher_info = test_teacher_info('right')
 		self.course_info = test_course_info('right')
@@ -163,6 +171,6 @@ if __name__ == "__main__":
 	left = TestLeftTree()
 	right = TestRightTree()
 
-	DefineDispatcher(left, right)
-
+	FindDifferences(left, right)
+	FindPostDifferences(left, right)
 

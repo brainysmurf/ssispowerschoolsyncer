@@ -150,7 +150,7 @@ class MoodleAutosend:
 class DefaultTemplate:
     def __init__(self):
         self.logger = logging.getLogger("DefaultTemplate")
-        self.default_logger = self.logger.info  # change this for verbosity
+        self.default_logger = self.logger.info
 
     def get(self, item, default=None):
         return getattr(self, item, default) if hasattr(self, item) else default
@@ -177,7 +177,7 @@ class DefaultTemplate:
         self.default_logger("Get out of here! {0.param}".format(item))
 
 
-class DefineDispatcher:
+class FindDifferences:
     """
     BOILERPLATE STUFF FOR MAKING THE WHEEL TURN
     LEFT IS "HAVE"
@@ -215,14 +215,21 @@ class DefineDispatcher:
                 pass
 
     def get_subbranch(self, tree, subbranch):
+        """
+        Returns the subbranch of tree
+        TODO: Check and throw KeyError exception
+        """
         return tree.__class__._store[tree.__class__.qual_name_format.format(
                 branch=tree.__class__.__name__,
                 delim=tree.__class__.qual_name_delimiter,
                 subbranch=subbranch)]
 
     def subtract(self):
-        subbranches = ['teachers', 'students', 'group', 'schedule']
+        subbranches = ['teachers', 'students', 'groups', 'schedules']
         for subbranch in subbranches:
+
+            # First check for the differences between keys
+
             self.default_logger("Subbranch: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
@@ -252,11 +259,14 @@ class DefineDispatcher:
                     param = [left_branch.get(key)]
                     )
 
+            # Now check for the difference in values of each variable
+
             for item_key in left_branch:
                 self.default_logger('item_key: {}'.format(item_key))
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:
+                    self.default_logger("Finding the differences between\n\t{}\n\t{}".format(item_left, item_right))
                     for left_minus_right in item_left - item_right:
                         self.default_logger(left_minus_right)
                         yield ModificationStatement(
@@ -265,6 +275,41 @@ class DefineDispatcher:
                             status = left_minus_right.status,
                             param = left_minus_right.param
                             )
+
+class FindPostDifferences(FindDifferences):
+    """
+    This goes through the students and teachers subbranches, and calls the post_differences routines
+    """
+    def subtract(self):
+        subbranches = ['teachers', 'students']
+        for subbranch in subbranches:
+            self.default_logger("Subbranch: {}".format(subbranch))
+            left_branch = self.get_subbranch(self.left, subbranch)
+            right_branch = self.get_subbranch(self.right, subbranch)
+            self.default_logger("There are {} items in {}'s left branch".format(len(right_branch), subbranch))
+            self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
+
+            for item_key in left_branch:
+                self.default_logger('item_key: {}'.format(item_key))
+                item_left = left_branch.get(item_key)
+                item_right = right_branch.get(item_key)
+                if item_left and item_right:
+                    self.default_logger("Finding the post-differences between\n\t{}\n\t{}".format(item_left, item_right))
+
+                    # magical trick that substitutes out the regular differences method
+                    # have to set it at class level because the model uses class methods
+                    item_left.__class__.__sub__ = item_left.post_differences
+
+                    for left_minus_right in item_left - item_right:
+                        self.default_logger(left_minus_right)
+                        yield ModificationStatement(
+                            left = left_minus_right.left,
+                            right = left_minus_right.right,
+                            status = left_minus_right.status,
+                            param = left_minus_right.param
+                            )
+
+                    item_left.__class__.__sub__ = item_left.differences
 
 class MainDispatcher:
     def __init__(self):

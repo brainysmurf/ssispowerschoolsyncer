@@ -7,21 +7,29 @@ class Schedule(BaseModel):
     """
     kind = 'schedule'
 
-    def __init__(self, schedule_id, student, teacher, course):        
+    def __init__(self, schedule_ID, course, teacher, student):
         """
-        group_name param indicates that we don't have the teacher info but to derive that from the group name
+        Schedules don't come built-in with schedule ids, so we have to derive it ourselves,
+        which is done in the datastores
         """
-        self.idnumber = self.ID = schedule_id
+        self.idnumber = self.ID = schedule_ID
         self.student = student
         self.teacher = teacher
         self.course = course
 
     def __repr__(self):
-        return self.format_string("<Schedule: {course_number}, Student:{student_id}, Teacher:{teacher_id}>")
+        return self.format_string("<Schedule: {idnumber}, Student:{student}, Teacher:{teacher}>")
 
     def __hash__(self):
         return hash(self.ID)
 
     def __eq__(self, other):
         return self.ID == other.ID
-    
+
+    def __sub__(self, other):
+        """
+        Schedules are special cases, since we define the ID number by its items,
+        we can be assured that there are no differences between any of them
+        So how do we know a change occured? For that, we look at the students
+        """
+        return []

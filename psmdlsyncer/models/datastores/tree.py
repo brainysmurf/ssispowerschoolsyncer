@@ -69,7 +69,8 @@ class AbstractTree(metaclass=DataStoreCollection):
 	convert_course = True   # by default, convert the course shortname
 
 	def __init__(self):
-		super().__init__()
+		self.logger = logging.getLogger('AbstractTree')
+		self.default_logger = self.logger.debug
 		self.student_info = self.klass('dist', 'studentinfo')
 		self.teacher_info = self.klass('dist', 'staffinfo')
 		self.course_info = self.klass('sec', 'courseinfo')
@@ -78,17 +79,19 @@ class AbstractTree(metaclass=DataStoreCollection):
 		self.schedule_info = self.klass('sec', 'studentschedule')
 		self.init()
 
-
 	def process_students(self):
 		for student in self.student_info.content():
+			self.default_logger('Processing student: {}'.format(student))
 			self.students.make(*student)
 
 	def process_teachers(self):
 		for teacher in self.teacher_info.content():
+			self.default_logger('Processing teacher: {}'.format(teacher))
 			self.teachers.make(*teacher)
 
 	def process_courses(self):
 		for course in self.course_info.content():
+			self.default_logger('Processing course: {}'.format(course))
 			if self.convert_course:
 				self.courses.make_with_conversion(*course)
 			else:
@@ -96,29 +99,52 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def process_groups(self):
 		for group in self.group_info.content():
+			self.default_logger('Processing group: {}'.format(group))
 			self.groups.make(*group)
 
 	def process_schedules(self):
-		# no good standard way to do this, quite yet
+		"""
+		Schedule should just have the keys for student and teachers
+		"""
 		for schedule in self.schedule_info.content():
+			self.default_logger('Processing schedule: {}'.format(schedule))
 			course_key, period_info, section, teacher_key, student_key = schedule
 			course = self.courses.get(course_key, False)  # send in False rather than class default
-			self.schedules.make(*schedule)
+			teacher = self.teachers.get_key(teacher_key)
+			student = self.students.get_key(student_key)
+
+			# Do some sanity checks
+			if not course:
+				self.logger.warning("Course not found! {}".format(course))
+			if not teacher:
+				self.logger.warning("Teacher not found! {}".format(teacher))
+			if not student:
+				self.logger.warning("Student not found! {}".format(student))
+
+			self.default_logger('Making schedule:\ncourse:"{}" teacher:"{}" student:"{}"'.format(course, teacher, student))
+			schedule = self.schedules.make_schedule(course, teacher, student)
+			self.associate(schedule, course, teacher, student)
+
+	def associate(self, schedule, course, teacher, student):
+		"""
+		Just call
+		"""
+		course.add_teacher(teacher)
+		course.add_student(student)
+		teacher.add_course(course)
+		teacher.add_student(student)
+		student.add_teacher(teacher)
+		student.add_course(course)
 
 	def init(self):
 		# Some of this stuff is pretty magical
 		# The self.students, self.teachers, etc objects come from MetaDataStore
 		# They actually return the new (or old) object, but we don't care about them here
-
 		self.process_students()
 		self.process_teachers()
 		self.process_courses()
-
 		self.process_groups()
 		self.process_schedules()
-
-
-
 
 class MoodleTree(AbstractTree):
 	klass = MoodleImport

@@ -232,7 +232,7 @@ class Student(BaseModel):
         self.add_teacher(teacher)
         self.add_course(course)
         self.add_group(group)
-        if 'HROOM' in course.ID:
+        if course.is_homeroom:
             self.add_homeroom_teacher(teacher)
 
     def add_homeroom_teacher(self, teacher):
@@ -413,23 +413,77 @@ class Student(BaseModel):
             return False
         return True
 
+    def post_differences(self, other):
+        """
+        Teachers and students have a post processing feature
+        """
+        for to_add in other.group_idnumbers - self.group_idnumbers:
+            ns = NS()
+            ns.status = 'add_to_group'
+            ns.left = self
+            ns.right = other
+            ns.param = to_add
+            yield ns
+        for to_remove in self.group_idnumbers - other.group_idnumbers:
+            ns = NS()
+            ns.status = 'remove_from_group'
+            ns.left = self
+            ns.right = other
+            ns.param = to_remove
+            yield ns
+
+        for to_add in set(other.course_idnumbers) - set(self.course_idnumbers):
+            ns = NS()
+            ns.status = 'enrol_in_course'
+            ns.left = self
+            ns.right = other
+            ns.param = to_add
+            yield ns
+
+        for to_remove in set(self.course_idnumbers) - set(other.course_idnumbers):
+            ns = NS()
+            ns.status = 'deenrol_in_course'
+            ns.left = self
+            ns.right = other
+            ns.param = to_remove
+            yield ns
+
+        for to_add in set(other.course_idnumbers) - set(self.course_idnumbers):
+            ns = NS()
+            ns.status = 'enrol_in_course'
+            ns.left = self
+            ns.right = other
+            ns.param = to_add
+            yield ns
+
+        for to_remove in set(self.course_idnumbers) - set(other.course_idnumbers):
+            ns = NS()
+            ns.status = 'deenrol_in_course'
+            ns.left = self
+            ns.right = other
+            ns.param = to_remove
+            yield ns
+
+
+        return ()
+
     def differences(self, other):
 
         # We aren't going to remove things through looking at the scheduler
         # Since unenrolling automatically takes them out of the group, that's enough
         # Besides, might be some strange bugs creeping in, let us not let that happen
 
-        for to_add in other.schedule_idnumbers - self.schedule_idnumbers:
+        #for to_add in other.schedule_idnumbers - self.schedule_idnumbers:
             #if to_add in self.course_idnumbers:
                 # we're already enrolled in the course, probably in the wrong group
                 # "add_group" will handle this below
             #    continue
-            ns = NS()
-            ns.status = 'enrol_student_into_course'
-            ns.left = self
-            ns.right = other
-            ns.param = to_add
-            yield ns
+        #    ns = NS()
+        #    ns.status = 'enrol_student_into_course'
+        #    ns.left = self
+        #    ns.right = other
+        #    ns.param = to_add
+        #    yield ns
 
         #for to_remove in self.schedule_idnumbers - other.schedule_idnumbers:
         #    ns = NS()
@@ -440,7 +494,6 @@ class Student(BaseModel):
         #    ns.param = self
         #    yield ns
 
-        # HANDLE MEMBERSHIP IN GROUPS HERE
         # We do this first before enrollments because unenrolling also removes user from group
         for to_add in other.group_idnumbers - self.group_idnumbers:
             ns = NS()
@@ -501,7 +554,6 @@ class Student(BaseModel):
             ns.right = other
             ns.param = other.homeroom
             yield ns
-
 
     __sub__ = differences
 

@@ -10,6 +10,10 @@ class Course(BaseModel):
 
     def __init__(self, course_id, course_name=""):
         self.ID, self.name = course_id, course_name
+        if 'HROOM' in self.ID:
+            self.is_homeroom = True
+        else:
+            self.is_homeroom = False
         self.course_id = self.idnumber = self.ID
         self.department = derive_depart(self.name)
         self.heads = department_heads.get(self.department)
@@ -19,7 +23,7 @@ class Course(BaseModel):
         self._students = []
         self._groups = []
         self._parents = []
-        
+
     def add_teacher(self, teacher):
         if not teacher:
             return

@@ -88,6 +88,7 @@ class DataStore:
 		"""
 		if callable(idnumber):
 			# TODO handle passing errors
+			# Can't remember why I made this!
 			idnumber = idnumber(*args, **kwargs)
 		if cls.is_new(idnumber):
 			# Instantiate the instance
@@ -141,3 +142,14 @@ class courses(DataStore):
 class schedules(DataStore):
 	klass = Schedule
 
+	@classmethod
+	def make_schedule(cls, *args):
+		"""
+		no idnumber, we have to calculate that ourselves
+		"""
+		schedule_id = "".join([arg.ID for arg in args])
+		print(schedule_id)
+		if not schedule_id:
+			from IPython import embed
+			embed()
+		return cls.make(schedule_id, *args)
