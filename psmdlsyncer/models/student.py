@@ -420,10 +420,10 @@ class Student(BaseModel):
         # Besides, might be some strange bugs creeping in, let us not let that happen
 
         for to_add in other.schedule_idnumbers - self.schedule_idnumbers:
-            if to_add in self.course_idnumbers:
+            #if to_add in self.course_idnumbers:
                 # we're already enrolled in the course, probably in the wrong group
                 # "add_group" will handle this below
-                continue
+            #    continue
             ns = NS()
             ns.status = 'enrol_student_into_course'
             ns.left = self

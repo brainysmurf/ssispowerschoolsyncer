@@ -100,7 +100,10 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def process_schedules(self):
 		# no good standard way to do this, quite yet
-		pass
+		for schedule in self.schedule_info.content():
+			course_key, period_info, section, teacher_key, student_key = schedule
+			course = self.courses.get(course_key, False)  # send in False rather than class default
+			self.schedules.make(*schedule)
 
 	def init(self):
 		# Some of this stuff is pretty magical

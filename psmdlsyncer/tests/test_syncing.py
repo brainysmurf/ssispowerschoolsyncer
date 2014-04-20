@@ -43,17 +43,25 @@ class test_student_info(test):
 class test_schedule_info(test):
 	def left_content(self):
 		return (
-			('AWESOMECLASS', '4-5(B) 6-7(A)', '5', 'Teacher, Happy', '81888', 'Student, Happy', '33333'),
-			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', 'Teacher, Happier', '82888', 'Student, Happier', '44444'),
-			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', 'Teacher, Happiest', '83888', 'Student, Happiest', '55555')
+			('AWESOMECLASS', '4-5(B) 6-7(A)', '5', '81888', '33333'),
+			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', '82888', '44444'),
+			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', '83888', '55555'),
 
-			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', 'Teacher, Unhappy', '84888', 'Student, Unhappy', '66666')
-			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', 'Teacher, Unhappier', '85888', 'Student, Unhappier', '77777')
-			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', 'Teacher, Unhappiest', '86888', 'Student, Unhappieste', '88888')
+			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', '84888', '66666'),
+			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', '85888', '77777'),
+			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '86888', '88888')
 		)
 
 	def right_content(self):
-		pass
+		return (
+			#('AWESOMECLASS', '4-5(B) 6-7(A)', '5', 'Teacher, Happy', '81888', 'Student, Happy', '33333'),
+			('AWESOMERCLASS', '2-3(A) 5-6(B)', '10', 'Teacher, Happier', '82888', 'Student, Happier', '44444'),
+			('AWESOMESTCLASS', '4-5(C) 2-3(D)', '11', 'Teacher, Happiest', '83888', 'Student, Happiest', '55555'),
+
+			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', 'Teacher, Unhappy', '84888', 'Student, Unhappy', '66666'),
+			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', 'Teacher, Unhappier', '85888', 'Student, Unhappier', '77777'),
+			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', 'Teacher, Unhappiest', '86888', 'Student, Unhappieste', '88888')
+		)
 
 
 class test_teacher_info(test):
@@ -128,7 +136,6 @@ class test_group_info(test):
 class TestLeftTree(AbstractTree):
 	pickup = DataStore
 	def __init__(self):
-		self.schedule_info = test_schedule_info('left')
 		self.student_info = test_student_info('left')
 		self.teacher_info = test_teacher_info('left')
 		self.course_info = test_course_info('left')
@@ -142,7 +149,6 @@ class TestLeftTree(AbstractTree):
 class TestRightTree(AbstractTree):
 	pickup = DataStore
 	def __init__(self):
-		self.schedule_info = test_schedule_info('right')
 		self.student_info = test_student_info('right')
 		self.teacher_info = test_teacher_info('right')
 		self.course_info = test_course_info('right')

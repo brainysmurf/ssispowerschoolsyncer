@@ -190,7 +190,7 @@ class DefineDispatcher:
         if not template:
             self.template = DefaultTemplate()
         self.logger = logging.getLogger("DefineDispatcher")
-        self.default_logger = self.logger.debug   # change this to info for verbosity
+        self.default_logger = self.logger.info   # change this to info for verbosity
         self.default_logger("Inside DefineDispatcher")
         self.default_logger("Left: {}".format(self.left))
         self.default_logger("Right: {}".format(self.right))
@@ -221,11 +221,13 @@ class DefineDispatcher:
                 subbranch=subbranch)]
 
     def subtract(self):
-        subbranches = ['teachers', 'students', 'group']
+        subbranches = ['teachers', 'students', 'group', 'schedule']
         for subbranch in subbranches:
             self.default_logger("Subbranch: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
+            self.default_logger("There are {} items in {}'s left branch".format(len(right_branch), subbranch))
+            self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
 
             self.default_logger("First difference:")
             self.default_logger(right_branch.keys() - left_branch.keys())
@@ -251,6 +253,7 @@ class DefineDispatcher:
                     )
 
             for item_key in left_branch:
+                self.default_logger('item_key: {}'.format(item_key))
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:

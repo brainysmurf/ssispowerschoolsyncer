@@ -67,7 +67,7 @@ class DataStore:
 	@classmethod
 	def will_make_new(cls, new):
 		pass
-		
+
 	@classmethod
 	def did_make_new(cls, new):
 		"""
@@ -121,6 +121,13 @@ class courses(DataStore):
 	@classmethod
 	def make_without_conversion(cls, idnumber, name=""):
 		return cls.make(idnumber, name)
+
+	@classmethod
+	def get(cls, idnumber, convert):
+		if convert:
+			return cls.get_with_conversion(idnumber)
+		else:
+			return cls.get_without_conversion(idnumber)
 
 	@classmethod
 	def get_with_conversion(cls, idnumber):
