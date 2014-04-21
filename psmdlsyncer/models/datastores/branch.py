@@ -111,6 +111,10 @@ class teachers(DataStore):
 class groups(DataStore):
 	klass = Group
 
+	def make_group(self, teacher, course):
+		group_id = teacher.username + course.ID
+		return cls.make()
+
 class courses(DataStore):
 	klass = Course
 
@@ -148,8 +152,4 @@ class schedules(DataStore):
 		no idnumber, we have to calculate that ourselves
 		"""
 		schedule_id = "".join([arg.ID for arg in args])
-		print(schedule_id)
-		if not schedule_id:
-			from IPython import embed
-			embed()
 		return cls.make(schedule_id, *args)

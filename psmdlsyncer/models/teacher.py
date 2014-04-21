@@ -54,7 +54,7 @@ class Teacher(BaseModel):
         reference = weak_reference(course)
         if not reference in self._courses:
             if course.ID.startswith('HROOM'):
-                self.homeroom = int(re.sub('[A-Z]', '', course.ID.upper()))
+                self.homeroom = int(re.sub('[A-Z_]', '', course.ID.upper()))
             self._courses.append(reference)
 
     def add_student(self, student):

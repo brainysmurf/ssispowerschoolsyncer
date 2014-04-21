@@ -1,6 +1,7 @@
 from psmdlsyncer.models.datastores.tree import AbstractTree
 from psmdlsyncer.syncing.differences import FindDifferences, FindPostDifferences
 from psmdlsyncer.models.datastores.branch import DataStore
+from psmdlsyncer.models.datastores.tree import MoodleTree, AutoSendTree
 import logging
 
 class test:
@@ -78,7 +79,7 @@ class test_course_info(test):
 			('BOOHISSERCLASS', 'Unawesomer Class'),
 			('BOOHISSIESTCLASS', 'Unawesomest Class'),
 
-			('ANEWCOURSE', 'A new course!')
+			('ABYGONECOURSE', 'A new course!')
 			)
 
 	def right_content(self):
@@ -91,6 +92,7 @@ class test_course_info(test):
 			('BOOHISSERCLASS', 'Unawesomer Class'),
 			('BOOHISSIESTCLASS', 'Unawesomest Class'),
 
+			('ANEWCOURSE', 'A new course!')
 			)
 
 class test_schedule_info(test):
@@ -104,7 +106,6 @@ class test_schedule_info(test):
 			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', '85888', '77777'),
 			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '86888', '88888'),
 
-			('ANEWCOURSE', '1-2(B) 5-6(C)', '4', '86888', '88888')
 		)
 
 	def right_content(self):
@@ -115,7 +116,9 @@ class test_schedule_info(test):
 
 			('BOOHISSCLASS', '1-2(A) 3-4(B)', '1', '84888', '66666'),
 			('BOOHISSERCLASS', '8-9(C) 4-5(A)', '2', '85888', '77777'),
-			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '86888', '88888')
+			('BOOHISSIESTCLASS', '3-4(A) 5-6(C)', '2', '81888', '88888'),    # change of teacher!
+
+			('ANEWCOURSE', '1-2(B) 5-6(C)', '4', '86888', '88888')
 		)
 
 class test_allocations_info(test):
@@ -125,28 +128,21 @@ class test_allocations_info(test):
 	def right_content(self):
 		pass
 
-class test_group_info(test):
-	def left_content(self):
-		return []
-
-	def right_content(self):
-		return []
-
 class TestLeftTree(AbstractTree):
 	pickup = DataStore
+
 	def __init__(self):
 		"""
 		We have some things going on here that's not really part of the default behaviour
 		So override completely
 		"""
 		self.logger = logging.getLogger('TestLeftTree')
-		self.default_logger = self.logger.info
+		self.default_logger = self.logger.debug
 
 		self.student_info = test_student_info('left')
 		self.teacher_info = test_teacher_info('left')
 		self.course_info = test_course_info('left')
 		self.allocations_info = test_allocations_info('left')
-		self.group_info = test_group_info('left')
 		self.schedule_info = test_schedule_info('left')
 
 		self.init()
@@ -155,22 +151,25 @@ class TestRightTree(AbstractTree):
 	pickup = DataStore
 	def __init__(self):
 		self.logger = logging.getLogger('TestLeftTree')
-		self.default_logger = self.logger.info
+		self.default_logger = self.logger.debug
 
 		self.student_info = test_student_info('right')
 		self.teacher_info = test_teacher_info('right')
 		self.course_info = test_course_info('right')
 		self.allocations_info = test_allocations_info('right')
-		self.group_info = test_group_info('right')
 		self.schedule_info = test_schedule_info('right')
 
 		self.init()
 
 if __name__ == "__main__":
 
-	left = TestLeftTree()
-	right = TestRightTree()
+	left = MoodleTree()
+	right = AutoSendTree()
+
+	from IPython import embed
+	embed()
 
 	FindDifferences(left, right)
 	FindPostDifferences(left, right)
+
 

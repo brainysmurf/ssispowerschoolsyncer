@@ -118,7 +118,7 @@ class Student(BaseModel):
         try:
             grade = int(grade)
         except ValueError:
-            self.logger.info("This student {} ({}) has a non-integer grade: '{}'".format(username, self.ID, grade))
+            self.logger.debug("This student {} ({}) has a non-integer grade: '{}'".format(username, self.ID, grade))
             grade = 0
         self.grade = grade
         self.profile_extra_isstudent = True
@@ -448,23 +448,6 @@ class Student(BaseModel):
             ns.param = to_remove
             yield ns
 
-        for to_add in set(other.course_idnumbers) - set(self.course_idnumbers):
-            ns = NS()
-            ns.status = 'enrol_in_course'
-            ns.left = self
-            ns.right = other
-            ns.param = to_add
-            yield ns
-
-        for to_remove in set(self.course_idnumbers) - set(other.course_idnumbers):
-            ns = NS()
-            ns.status = 'deenrol_in_course'
-            ns.left = self
-            ns.right = other
-            ns.param = to_remove
-            yield ns
-
-
         return ()
 
     def differences(self, other):
@@ -538,6 +521,7 @@ class Student(BaseModel):
             ns.right = other
             ns.param = to_add
             yield ns
+
         for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
             ns = NS()
             ns.status = 'remove_from_cohort'

@@ -1,7 +1,8 @@
 from psmdlsyncer.sql.MoodleDatabase import MoodleDBConnection
-from collections import namedtuple
+from collections import defaultdict
 import re
 import time
+
 
 class MoodleImport(MoodleDBConnection):
     """
@@ -31,10 +32,6 @@ class MoodleImport(MoodleDBConnection):
         for row in self.get_teaching_learning_courses(select_list=['shortname', 'fullname']):
             yield row.shortname, row.fullname
 
-    def content_sec_groups(self):
-        for row in self.get_table('groups', 'name'):
-            yield row[0]
-
     def content_dist_studentinfo(self):
         """
         MOODLE DOESN'T HAVE CONCEPT OF SITE-WIDE ROLES,
@@ -47,11 +44,64 @@ class MoodleImport(MoodleDBConnection):
                    student_username]
 
     def content_sec_studentschedule(self):
-        enrollments = self.get_all_students_enrollments()
-        for enrollment in enrollments:
-            yield [enrollment.usr_idnumber, enrollment.crs_idnumber, enrollment.grp_name]
+        yield from self.get_dragonnet_enrollments()
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))
         if dispatch_to:
             yield from dispatch_to()
+
+    def get_dragonnet_enrollments(self):
+        results = defaultdict(lambda : defaultdict(list))
+
+        for row in self.call_sql("""
+select
+    crs.idnumber courseID, usr.idnumber as userID, usr.username as username, r.name as rolename, grps.name as groupName
+FROM ssismdl_course crs
+JOIN ssismdl_course_categories cat ON cat.id = crs.category
+JOIN ssismdl_context ct ON crs.id = ct.instanceid
+JOIN ssismdl_role_assignments ra ON ra.contextid = ct.id
+JOIN ssismdl_user usr ON usr.id = ra.userid
+JOIN ssismdl_role r ON r.id = ra.roleid
+JOIN ssismdl_groups_members mmbrs ON mmbrs.userid = usr.id
+JOIN ssismdl_groups grps ON grps.id = mmbrs.groupid
+where
+    not crs.idnumber like '' and
+    not usr.idnumber like '' and
+    cat.path like '/{}/%'
+order by
+    r.name DESC
+""".format(50)):
+            courseID, userID, username, roleName, groupname = row
+            # Do different things based on the role
+            # For teachers, we have to see if they are the owner of the group
+            if roleName == "Teacher":
+                # we have to derive the group name
+                groupname = username + courseID
+                results[groupname]['course'] = courseID
+                results[groupname]['teachers'].append(userID)
+
+            elif roleName == "Student":
+                if userID.endswith('P'):
+                    # Ensure there are no parents mistakenly being put
+                    # TODO: Unenrol them?
+                    continue
+
+                if not groupname:
+                    #TODO: Turn this into a warning
+                    print("No groupname, what to do?")
+                    continue
+
+                results[groupname]['students'].append(userID)
+
+            elif roleName == "Parent":
+                pass
+
+        # TODO: Section
+        _period = ''
+        _section = ''
+        for group in results.keys():
+            for student in results[group]['students']:
+                for teacher in results[group]['teachers']:
+                    yield results[group]['course'], _period, _section, teacher, student
+

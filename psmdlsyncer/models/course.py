@@ -62,5 +62,8 @@ class Course(BaseModel):
     def parents(self):
         return self._parents
 
+    def __sub__(self, other):
+        return ()
+
     def __repr__(self):
         return self.format_string("<Course: {ID} ({name})>") #" : {teachers}", first="(", mid="| ", last=") ", teachers=teacher_txt)

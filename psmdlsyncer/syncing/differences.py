@@ -4,6 +4,7 @@ from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.settings import logging
 from psmdlsyncer.utils.modifications import ModificationStatement
 from psmdlsyncer.utils import NS2
+from psmdlsyncer.syncing.templates import DefaultTemplate
 log = logging.getLogger(__name__)
 
 # Used in Dispatched:
@@ -68,7 +69,6 @@ class MoodleAutosend:
                 handler = getattr(self.moodle_mod, which_handler)
                 # handler is either new student, new teacher, or ?
                 # TODO: add 'new staff' eventually
-                print(handler)
                 handler(item)
 
     @expose(debug=True)
@@ -147,35 +147,6 @@ class MoodleAutosend:
                 where={'idnumber': item.idnumber},
                 department=item._operation_target)
 
-class DefaultTemplate:
-    def __init__(self):
-        self.logger = logging.getLogger("DefaultTemplate")
-        self.default_logger = self.logger.info
-
-    def get(self, item, default=None):
-        return getattr(self, item, default) if hasattr(self, item) else default
-
-    def old_student(self, item):
-        self.default_logger("Found student who has now left: {}".format(item.left))
-
-    def new_student(self, item):
-        self.default_logger("Found new student: {}".format(item.right))
-
-    def homeroom_changed(self, item):
-        self.default_logger("Put {0.right} in homeroom: {0.right.homeroom}".format(item))
-
-    def remove_from_cohort(self, item):
-        self.default_logger("Take {0.right} out of this cohort: {0.param}".format(item))
-
-    def add_to_cohort(self, item):
-        self.default_logger("Put {0.left} into this cohort: {0.param}".format(item))
-
-    def new_teacher(self, item):
-        self.default_logger("We have a new teacher! {0.param}".format(item))
-
-    def old_teacher(self, item):
-        self.default_logger("Get out of here! {0.param}".format(item))
-
 
 class FindDifferences:
     """
@@ -189,9 +160,9 @@ class FindDifferences:
         self.template = template
         if not template:
             self.template = DefaultTemplate()
-        self.logger = logging.getLogger("DefineDispatcher")
-        self.default_logger = self.logger.info   # change this to info for verbosity
-        self.default_logger("Inside DefineDispatcher")
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.default_logger = self.logger.debug   # change this to info for verbosity
+        self.default_logger("Inside FindDifferences")
         self.default_logger("Left: {}".format(self.left))
         self.default_logger("Right: {}".format(self.right))
         if template:
@@ -204,10 +175,8 @@ class FindDifferences:
 
     def go(self, **kwargs):
         for item in self.subtract():
-            self.default_logger(item)
             dispatch = self.template.get(item.status) if self.template and hasattr(item, 'status') else None
             if dispatch:
-                self.default_logger('Dispatching {} to {}'.format(str(item.param), dispatch.__name__))
                 dispatch(item)
             else:
                 #TODO: Handle unrecognized statuses here
@@ -225,7 +194,7 @@ class FindDifferences:
                 subbranch=subbranch)]
 
     def subtract(self):
-        subbranches = ['teachers', 'students', 'groups', 'schedules']
+        subbranches = ['teachers', 'students', 'courses', 'groups', 'schedules']
         for subbranch in subbranches:
 
             # First check for the differences between keys
@@ -237,10 +206,8 @@ class FindDifferences:
             self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
 
             self.default_logger("First difference:")
-            self.default_logger(right_branch.keys() - left_branch.keys())
             # Loop through missing stuff and do with it what we must
             for key in right_branch.keys() - left_branch.keys():
-                self.default_logger(key)
                 yield ModificationStatement(
                     left = left_branch.get(key),
                     right = right_branch.get(key),
@@ -249,7 +216,6 @@ class FindDifferences:
                     )
 
             self.default_logger("Second difference:")
-            self.default_logger(left_branch.keys() - right_branch.keys())
 
             for key in left_branch.keys() - right_branch.keys():
                 yield ModificationStatement(
@@ -262,13 +228,11 @@ class FindDifferences:
             # Now check for the difference in values of each variable
 
             for item_key in left_branch:
-                self.default_logger('item_key: {}'.format(item_key))
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:
-                    self.default_logger("Finding the differences between\n\t{}\n\t{}".format(item_left, item_right))
+                    #self.default_logger("Finding the differences between\n\t{}\n\t{}".format(item_left, item_right))
                     for left_minus_right in item_left - item_right:
-                        self.default_logger(left_minus_right)
                         yield ModificationStatement(
                             left = left_minus_right.left,
                             right = left_minus_right.right,
@@ -290,18 +254,16 @@ class FindPostDifferences(FindDifferences):
             self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
 
             for item_key in left_branch:
-                self.default_logger('item_key: {}'.format(item_key))
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:
-                    self.default_logger("Finding the post-differences between\n\t{}\n\t{}".format(item_left, item_right))
+                    #self.default_logger("Finding the post-differences between\n\t{}\n\t{}".format(item_left, item_right))
 
                     # magical trick that substitutes out the regular differences method
                     # have to set it at class level because the model uses class methods
                     item_left.__class__.__sub__ = item_left.post_differences
 
                     for left_minus_right in item_left - item_right:
-                        self.default_logger(left_minus_right)
                         yield ModificationStatement(
                             left = left_minus_right.left,
                             right = left_minus_right.right,
