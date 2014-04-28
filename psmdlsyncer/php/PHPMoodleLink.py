@@ -55,7 +55,7 @@ class CallPHP:
         else:
             return "Moodle updating disabled: create_account {}".format(to_pass)
 
-    def enrol_user_in_course(self, idnumber, shortname, group, role="Student"):
+    def enrol_user_into_course(self, idnumber, shortname, group, role="Student"):
         self.sf.define(idnumber=idnumber, shortname=shortname, group=group, role=role)
         to_pass = self.sf("{idnumber} {shortname} {group} {role}")
         if self.moodle_accounts:
@@ -64,9 +64,9 @@ class CallPHP:
             return "Dry run enabled: enrol_user_in_course {}".format(to_pass)
 
     def unenrol_user_from_course(self, idnumber, course):
-        self.sf(idnumber=idnumber, course=course)
+        self.sf.define(idnumber=idnumber, course=course)
         if self.moodle_accounts:
-            return self.command('deenrol_user_in_course', self.sf('{idnumber} {course}'))
+            return self.command('deenrol_user_from_course', self.sf('{idnumber} {course}'))
         else:
             return "Dry run enabled: deenrol_user_in_course".format(to_pass)
 
@@ -101,6 +101,16 @@ class CallPHP:
             return self.command('remove_user_from_group', to_pass)
         else:
             return "Dry run enabled: add_user_to_group ".format(to_pass)
+
+    def add_group(self, group, course):
+        self.sf.define(group=group, course=course)
+        to_pass = self.sf("{course} '{group}'")
+        self.command('create_group_for_course', to_pass)
+
+    def delete_group(self, group, course):
+        self.sf.define(group=group, course=course)
+        to_pass = self.sf("{course} '{group}'")
+        self.command('delete_group_for_course', to_pass)
 
     def shell(self, command):
         p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)

@@ -3,6 +3,7 @@ from psmdlsyncer.utils import NS2
 class BaseModel:
 	def update(self, key, value):
 		self.key = value
+
 	def compare_kwargs(self, **kwargs):
 		if set(list(kwargs.keys())).issubset(list(self.__dict__)):
 			for key in kwargs:
@@ -20,8 +21,11 @@ class BaseModel:
 			d[key] = kwargs[key]
 		return s.format(**d)
 
-	def get_extra_profile_fields(self):
-		return [(key.split('profile_extra_')[1], self.__dict__[key]) for key in self.__dict__ if key.startswith('profile_extra_')]
+	def plain_name_of_custom_field(self, custom_field):
+		return custom_field.split('custom_profile_')[1]
+
+	def get_custom_field_keys(self):
+		return [key for key in self.__dict__ if key.startswith('custom_profile_')]
 
 	def __sub__(self, right):
 		for variable in self.__dict__:

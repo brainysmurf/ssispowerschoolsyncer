@@ -92,15 +92,15 @@ def verbosity(passed):
 import logging
 path_to_logger = config_get_section_attribute('LOGGING', 'path_to_logger')
 #used to keep this in a file, let's just set it up right, shall we?
-#log_level = config_get_section_attribute('LOGGING', 'log_level') 
-numeric_level = logging.DEBUG
+log_level = config_get_section_attribute('LOGGING', 'log_level')
+numeric_level = getattr(logging, log_level.upper())
 if numeric_level is None:
     raise ValueError('Invalid log level: {}'.format(loglevel))
 
 logging.basicConfig(filename=path_to_logger, level=numeric_level)
 
 if sys.stdout.isatty():
-    # running with an attached terminal, automatically 
+    # running with an attached terminal, automatically
     # set stdout debugging to full verbosity
     root = logging.getLogger()
     stdout_level = logging.DEBUG

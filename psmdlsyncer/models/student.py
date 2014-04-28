@@ -4,9 +4,10 @@ from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enro
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
 from psmdlsyncer.utils import NS, weak_reference
+from collections import defaultdict
 import re
-import os
 import datetime
+import itertools
 _taken_usernames = []
 
 class ProxyScheduleWrapper:
@@ -76,14 +77,12 @@ class Student(BaseModel):
     A student
     self.kind = student
     """
-
     kind = 'student'
     excluded_courses = ['XSTUDYSH1112']  #TODO: Make this a setting
 
     def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails,
-        entry_date, nationality,
-        username=None,
-        user_data={}):
+        entry_date, department, nationality,
+        username=None):
         """
         @param grade Pass None to derive from homeroom
         """
@@ -121,15 +120,18 @@ class Student(BaseModel):
             self.logger.debug("This student {} ({}) has a non-integer grade: '{}'".format(username, self.ID, grade))
             grade = 0
         self.grade = grade
-        self.profile_extra_isstudent = True
+        if self.grade < 5:
+            self.login_method = 'nologin'
+        else:
+            self.login_method = 'manual'
+        self.custom_profile_isstudent = True
         self.is_secondary = grade >= 6
-        self.profile_extra_issecstudent = self.is_secondary
+        self.custom_profile_issecstudent = self.is_secondary
         self.is_elementary = grade <= 5
-        self.profile_extra_iselemstudent = self.is_elementary
+        self.custom_profile_iselemstudent = self.is_elementary
         self.is_student = True
-        self.profile_extra_isstudent = self.is_student
+        self.custom_profile_isstudent = self.is_student
         self.lastfirst = lastfirst
-        self.user_data = user_data
         try:
             self.is_new_student = self.entry_date >= get_academic_start_date()
         except TypeError:
@@ -138,6 +140,7 @@ class Student(BaseModel):
         #self.bus_int = bus_int
         #self.bus_morning = bus_morning
         #self.bus_afternoon = bus_afternoon
+        self.department = department
         self.nationality = nationality
         self.is_korean = self.nationality == "Korea"
         self.is_japanese = self.nationality == "Japan"
@@ -146,8 +149,8 @@ class Student(BaseModel):
         self.is_big5 = self.nationality in ["America", "Australia", "Canada", "New Zealand", "United Kingdom"]
         self.is_european = self.nationality in ["Austria", "Belgium", "Czech Republic", "Denmark", "Finland", "France", "Germany", "Hungary", "Italy", "Netherlands", "Norway", "Poland", "Portugal", "Spain", "Sweden", "Switzerland", "United Kingdom"]
         self.is_western = self.is_big5 or self.is_european
-        self.profile_extra_iskorean = self.is_korean
-        self.profile_extra_ischinese = self.is_chinese
+        self.custom_profile_iskorean = self.is_korean
+        self.custom_profile_ischinese = self.is_chinese
         if homeroom:
             self.homeroom = homeroom.upper().strip()
         else:
@@ -178,21 +181,27 @@ class Student(BaseModel):
         self._schedule = []
         self._teachers = []
         self._groups = []
+        self._parents = []
+        self._timetable = defaultdict(lambda : defaultdict(dict))
+        self._enrollments = defaultdict(list)
         self._homeroom_teacher = None
         if self.is_secondary:
             self._cohorts = ['studentsALL', 'studentsSEC', 'students{}'.format(grade), 'students{}'.format(homeroom)]
-            self.profile_extra_issecstudent = True
+            self.custom_profile_issecstudent = True
         if self.grade in range(6, 9):
-            self.profile_extra_ismsstudent = True
+            self.custom_profile_ismsstudent = True
             self._cohorts.append('studentsMS')
         if self.grade in range(9, 13):
-            self.profile_extra_ishsstudent = True
+            self.custom_profile_ishsstudent = True
             self._cohorts.append('studentsHS')
         if self.grade in range(11, 13):
             self._cohorts.append('students1112')
         if self.is_elementary:
-            self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
-            self.profile_extra_iselemstudent = True
+            if self.grade >= 5:
+                self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
+            else:
+                self._cohorts = []
+            self.custom_profile_iselemstudent = True
             self.profile_existing_department = 'HOME4ES'
         self.is_middle_school = self.grade in range (6, 9)
         self.is_high_school = self.grade in range(10, 13)
@@ -219,19 +228,24 @@ class Student(BaseModel):
         second_half = str(get_year_of_graduation(self.grade))
         self.username = first_half + second_half
         times_through = 1
+        report = False
         while self.username in _taken_usernames:
-            self.logger.warning("Username {} already taken".format(self.username))
-            self.logger.warning("Looking for a new name for student:\n{}".format(self.username))
+            self.logger.warning("Username {} already taken, looking for new name".format(self.username))
+            report = True
             self.username = first_half + ('_' * times_through) + second_half
+
+        if report:
+            self.logger.warning("Using new username {}".format(self.username))
         self.email = self.username + '@student.ssis-suzhou.net'
 
     def update(self, key, value):
         self.key = value
 
-    def associate(self, teacher, course, group):
+    def associate(self, course, group, teacher):
         self.add_teacher(teacher)
         self.add_course(course)
         self.add_group(group)
+        self.add_enrollment(course, group)
         if course.is_homeroom:
             self.add_homeroom_teacher(teacher)
 
@@ -242,6 +256,9 @@ class Student(BaseModel):
     def add_schedule(self, schedule):
         # no weak reference, because they is nothing holding on to them
         self._schedule.append( schedule )
+
+    def add_enrollment(self, course, group):
+        self._enrollments[course.ID].append(group.ID)
 
     def add_course(self, course):
         if course.idnumber in self.excluded_courses:
@@ -260,6 +277,11 @@ class Student(BaseModel):
         if not reference in self._teachers:
             self._teachers.append( reference )
 
+    def add_parent(self, parent):
+        reference = weak_reference(parent)
+        if not reference in self._parents:
+            self._parents.append( reference )
+
     @property
     def courses(self):
         if self.grade in [11, 12]:
@@ -267,6 +289,19 @@ class Student(BaseModel):
                 if force_enrol not in [course().idnumber for course in self._courses]:
                     self._courses.append(ProxyCourseWrapper(force_enrol))
         return [course() for course in self._courses]
+
+    @property
+    def timetable(self):
+        return self._timetable
+
+    def add_timetable(self, timetable_dict):
+        """
+        timetable_dict is going to have days as the top-level key
+        The next level keys are the periods
+        """
+        for day in timetable_dict:
+            for period, value in timetable_dict[day].items():
+                self.timetable[day][period].update(value)
 
     @property
     def schedule(self):
@@ -277,6 +312,10 @@ class Student(BaseModel):
         # not really their idnumbers, but the naming is consistent
         # this really does work, since schedule implmenets a __hash__ and __eq__ operators
         return set(self._schedule)
+
+    @property
+    def enrollments(self):
+        return self._enrollments
 
     @property
     def course_names(self):
@@ -347,8 +386,13 @@ class Student(BaseModel):
 
         return "No Maths?"
 
+    @property
     def teachers(self):
         return self._teachers
+
+    @property
+    def parents(self):
+        return [parent() for parent in self._parents]
 
     def get_teachers_as_list(self):
         """
@@ -382,7 +426,6 @@ class Student(BaseModel):
 
     @property
     def teacher_emails(self):
-        teachers = self.teachers
         return [teacher().email for teacher in self._teachers]
 
     @property
@@ -413,105 +456,8 @@ class Student(BaseModel):
             return False
         return True
 
-    def post_differences(self, other):
-        """
-        Teachers and students have a post processing feature
-        """
-        for to_add in other.group_idnumbers - self.group_idnumbers:
-            ns = NS()
-            ns.status = 'add_to_group'
-            ns.left = self
-            ns.right = other
-            ns.param = to_add
-            yield ns
-        for to_remove in self.group_idnumbers - other.group_idnumbers:
-            ns = NS()
-            ns.status = 'remove_from_group'
-            ns.left = self
-            ns.right = other
-            ns.param = to_remove
-            yield ns
-
-        for to_add in set(other.course_idnumbers) - set(self.course_idnumbers):
-            ns = NS()
-            ns.status = 'enrol_in_course'
-            ns.left = self
-            ns.right = other
-            ns.param = to_add
-            yield ns
-
-        for to_remove in set(self.course_idnumbers) - set(other.course_idnumbers):
-            ns = NS()
-            ns.status = 'deenrol_in_course'
-            ns.left = self
-            ns.right = other
-            ns.param = to_remove
-            yield ns
-
-        return ()
 
     def differences(self, other):
-
-        # We aren't going to remove things through looking at the scheduler
-        # Since unenrolling automatically takes them out of the group, that's enough
-        # Besides, might be some strange bugs creeping in, let us not let that happen
-
-        #for to_add in other.schedule_idnumbers - self.schedule_idnumbers:
-            #if to_add in self.course_idnumbers:
-                # we're already enrolled in the course, probably in the wrong group
-                # "add_group" will handle this below
-            #    continue
-        #    ns = NS()
-        #    ns.status = 'enrol_student_into_course'
-        #    ns.left = self
-        #    ns.right = other
-        #    ns.param = to_add
-        #    yield ns
-
-        #for to_remove in self.schedule_idnumbers - other.schedule_idnumbers:
-        #    ns = NS()
-        #    ns.status = 'remove_from_schedule'
-        #    ns.left = self.schedule
-        #    ns.right = other.schedule
-        #    self._operation_target = to_remove
-        #    ns.param = self
-        #    yield ns
-
-        # We do this first before enrollments because unenrolling also removes user from group
-        for to_add in other.group_idnumbers - self.group_idnumbers:
-            ns = NS()
-            ns.status = 'add_to_group'
-            ns.left = self
-            ns.right = other
-            ns.param = to_add
-            yield ns
-        for to_remove in self.group_idnumbers - other.group_idnumbers:
-            ns = NS()
-            ns.status = 'remove_from_group'
-            ns.left = self
-            ns.right = other
-            ns.param = to_remove
-            yield ns
-
-        # HANDLE ENROLLMENTS INTO COURSES HERE
-        #for to_add in other.course_idnumbers - self.course_idnumbers:
-        #    ns = NS()
-        #    ns.status = 'enrol_student_in_course'
-        #    ns.left = self.courses
-        #    ns.right = other.courses
-        #    self._operation_target = to_add
-        #    ns.param = self
-        #    yield ns
-
-        # Allow de-enrolling to be handled here
-        # Should be careful that's what we want, however
-        for to_remove in self.course_idnumbers - other.course_idnumbers:
-            ns = NS()
-            ns.status = 'deenrol_from_course'
-            ns.left = self
-            ns.right = other
-            ns.param = to_remove
-            yield ns
 
         # Handle cohorts (site-wide groups)
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
@@ -531,13 +477,68 @@ class Student(BaseModel):
             yield ns
 
         # Other things
-        if not self.homeroom == other.homeroom:
-            ns = NS()
-            ns.status = 'homeroom_changed'
-            ns.left = self
-            ns.right = other
-            ns.param = other.homeroom
-            yield ns
+        attrs = ['homeroom', 'username']
+        for attr in attrs:
+            if not getattr(self, attr) == getattr(other, attr):
+                ns = NS()
+                ns.status = attr+'_changed'
+                ns.left = self
+                ns.right = other
+                ns.param = getattr(other, attr)
+                yield ns
+
+        for course in set(other.enrollments.keys()) - set(self.enrollments.keys()):
+            for group in other.enrollments[course]:
+                ns = NS()
+                ns.status = 'enrol_student_into_course'
+                ns.left = self
+                ns.right = other
+                to_add = NS()
+                to_add.course = course
+                to_add.group = group
+                ns.param = to_add
+                yield ns
+
+        # Go through each course that they share, and check that
+        # they have the same groups, if not, do what's right
+        for course in set(self.enrollments.keys()) and set(other.enrollments.keys()):
+            self_groups = self.enrollments[course]
+            other_groups = other.enrollments[course]
+            for group in other_groups:
+                if not group in self_groups:
+                    ns = NS()
+                    ns.status = 'add_to_group'
+                    ns.left = self
+                    ns.right = other
+                    to_add = NS()
+                    to_add.course = course
+                    to_add.group = group
+                    ns.param = to_add
+                    yield ns
+            for group in self_groups:
+                if not group in other_groups:
+                    ns = NS()
+                    ns.status = 'remove_from_group'
+                    ns.left = self
+                    ns.right = other
+                    to_remove = NS()
+                    to_remove.course = course
+                    to_remove.group = group
+                    ns.param = to_remove
+                    yield ns
+
+        for course in set(self.enrollments.keys()) - set(other.enrollments.keys()):
+            for group in self.enrollments[course]:
+                ns = NS()
+                ns.status = 'deenrol_student_from_course'
+                ns.left = self
+                ns.right = other
+                to_remove = NS()
+                to_remove.course = course
+                to_remove.group = group
+                ns.param = to_remove
+                yield ns
+
 
     __sub__ = differences
 

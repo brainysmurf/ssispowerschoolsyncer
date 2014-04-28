@@ -1,3 +1,4 @@
+
 import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation
 from psmdlsyncer.utils.Utilities import derive_depart, department_heads
@@ -45,6 +46,11 @@ class Course(BaseModel):
         reference = weak_reference(group)
         if not reference in self._groups:
             self._groups.append( reference )
+
+    def associate(self, group, teacher, student):
+        self.add_group(group)
+        self.add_teacher(teacher)
+        self.add_student(student)
 
     @property
     def teachers(self):

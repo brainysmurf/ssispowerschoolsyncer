@@ -7,16 +7,19 @@ import re
 from psmdlsyncer.utils import NS
 from psmdlsyncer.utils import weak_reference
 
-class Group(BaseModel):
+class Class(BaseModel):
     """
     """
     kind = "group"
 
     def __init__(self, idnumber):
-        self.group_id = self.ID = self.name = self.idnumber = idnumber
+        self.change_name(idnumber)
         self._students = []
         self._teachers = []
-        self._course = None
+        self._courses = []
+
+    def change_name(self, new_name):
+        self.group_id = self.ID = self.name = self.idnumber = new_name
 
     @property
     def teachers(self):
@@ -33,8 +36,13 @@ class Group(BaseModel):
         self.add_student(student)
 
     @property
-    def course(self):
-        return self._course() if self._course else None
+    def courses(self):
+        return [course() for course in self._courses]
+
+    def add_course(self, course):
+        reference = weak_reference(course)
+        if not reference in self._courses:
+            self._courses.append( reference )
 
     @property
     def students(self):
@@ -45,9 +53,15 @@ class Group(BaseModel):
         if not reference in self._students:
             self._students.append( reference )
 
+    @property
+    def courses(self):
+        return [course() for course in self._courses]
+
     def add_course(self, course):
         reference = weak_reference(course)
-        self._course = reference
+        if not reference in self._courses:
+            self._courses.append( reference )
+
 
     def differences(self, other):
         # groups possibly could have different students involved, but this is picked up in the schedule

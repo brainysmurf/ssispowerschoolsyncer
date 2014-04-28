@@ -3,27 +3,48 @@ HIGHER LEVEL CLASS THAN CALLPHP
 """
 
 from psmdlsyncer.php.PHPMoodleLink import CallPHP
+
 from psmdlsyncer.utils import NS
 from psmdlsyncer.settings import config_get_section_attribute
 
 class ModUserEnrollments(CallPHP):
-
+      """
+      Takes raw information and sends it on to PHP
+      At this point we should only be passing it
+      """
       def __init__(self):
             super().__init__()
+            self.default_logger = self.logger.debug
             self.new_email_cmd = config_get_section_attribute('EMAIL', 'new_student_cmd')
             path_to_home = config_get_section_attribute('EMAIL', 'path_to_home')
 
       def handle_error(self, error):
-            if error and error[0] == '-':  # negative value indicates error
+            print(error)
+            if error and '-' in error:  # negative value indicates error
                   self.logger.warning(error)
 
-      def enrol_student_into_course(self, schedule_object):
-            student = schedule_object.student
-            course = schedule_object.course
-            group = schedule_object.group
-            if not group:
-                  return
-            error = self.enrol_user_in_course( student.idnumber, course.idnumber, group.name, "student" )
+      def enrol_student_into_course(self, student_idnumber, course_idnumber, group_name):
+            error = self.enrol_user_into_course( student_idnumber, course_idnumber, group_name, "student" )
+            self.handle_error(error)
+
+      def enrol_teacher_into_course(self, teacher_idnumber, course_idnumber, group_name):
+            error = self.enrol_user_into_course( teacher_idnumber, course_idnumber, group_name, "teacher" )
+            self.handle_error(error)
+
+      def deenrol_student_from_course(self, student_idnumber, course_idnumber):
+            error = self.unenrol_user_from_course( student_idnumber, course_idnumber )
+            self.handle_error(error)
+
+      def deenrol_teacher_from_course(self, teacher_idnumber, course_idnumber):
+            error = self.unenrol_user_from_course( teacher_idnumber, course_idnumber )
+            self.handle_error(error)
+
+      def enrol_parent_into_course(self, student_idnumber, course_idnumber, group_name):
+            error = super().enrol_user_into_course( student_idnumber, course_idnumber, group_name, "parent" )
+            self.handle_error(error)
+
+      def enrol_teacher_into_course(self, student_idnumber, course_idnumber, group_name):
+            error = super().enrol_user_into_course( student_idnumber, course_idnumber, group_name, "teacher" )
             self.handle_error(error)
 
       def enrol_student_into_courses(self, student):
@@ -31,10 +52,10 @@ class ModUserEnrollments(CallPHP):
             Also sets up groups, and creates them if they don't exist
             """
             # TODO: This should really be done based on enrollment available in the model
-            for index in range(0, len(student.courses)):
-                  course = student.courses[index]
-                  group  = student.groups[index]
-                  self.logger.warning("Enrolling student {} into course {} in group {}".format(student.num, course, group))
+            for key in student.enrollments:
+                  course = key
+                  group  = student.enrollments[key]
+                  self.default_logger("Enrolling student {} into course {} in group {}".format(student.num, course, group))
                   error = self.enrol_user_in_course( student.num, course, group, 'Student' )
                   self.handle_error(error)
 
@@ -50,20 +71,22 @@ class ModUserEnrollments(CallPHP):
                   self.handle_error(error)
 
       def new_student(self, student):
-            if student.grade < 5:
-                  auth = 'nologin'
-            else:
-                  auth = 'manual'
+            try:
+                  auth = student.login_method
+            except AttributeError:
+                  self.logger.warning("new_student called on {}, but no login_method provided, not adding".format(student))
+                  return
             self.logger.warning('Creating {} account for {}'.format(auth, student))
             error = self.create_account( student.username, student.email, student.first, student.last, student.num, auth=auth )
             self.handle_error(error)
 
             for cohort in student.cohorts:
-                  self.logger.warning("Adding {} to cohort {}".format(student.num, cohort))
+                  self.default_logger("Adding {} to cohort {}".format(student.num, cohort))
                   error = self.add_user_to_cohort( student.num, cohort )
                   self.handle_error(error)
             self.enrol_student_into_courses(student)
-            
+            self.logger.info("Successfully created new moodle account -- and enabled enrollments -- for student {}".format(student))
+
       def new_teacher(self, teacher):
             pass
 
@@ -73,19 +96,6 @@ class ModUserEnrollments(CallPHP):
 
             error = self.shell( sf("/bin/bash {new_student_cmd} {num} {username} '{lastfirst}'") )
             self.handle_error(error)
-
-      def create_groups_for_student(self, student):
-            self.verbose and print("create_groups_for_students")
-            get_groups = self.sql('select id, name from ssismdl_groups')()
-            _groups = {}
-            self.verbose and print("Setting up _groups dict now")
-            for item in get_groups:
-                  groupid, groupname = item
-            _groups[groupname] = groupid
-
-            for group in student.groups():
-                  if not group in _groups.keys():
-                        self.create_groups_for_course(group, )
 
       def enroll_in_groups(self, student):
             self.verbose and print("enroll_in_groups")
@@ -138,16 +148,17 @@ class ModUserEnrollments(CallPHP):
                   cohorts.append('parentsKOREAN')
             if student.is_chinese:
                   cohorts.append('parentsCHINESE')
-            
+
             for cohort in cohorts:
                   error = self.add_user_to_cohort( student.family_id, cohort )
                   self.handle_error(error)
-                        
+
             for index in range(0, len(student.courses())):
                   course = student.courses()[index]
                   group  = student.groups()[index]
                   error = self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
                   self.handle_error(error)
+
 
 class FakeStudent:
 
@@ -155,7 +166,7 @@ class FakeStudent:
             self.username = "success"
             self.fullname = "Mr Success"
             self.idnum = 555555555
-      
+
 
 if __name__ == "__main__":
       s = FakeStudent()

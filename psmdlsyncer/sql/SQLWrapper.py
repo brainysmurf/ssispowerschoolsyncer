@@ -140,7 +140,7 @@ class SQLWrapper:
             where_phrase = "where " + " AND ".join(wheres)
         else:
             where_phrase = ""
-        
+
         if select:
             select_phrase = ", ".join(select)
         else:

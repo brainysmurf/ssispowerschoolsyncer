@@ -1,4 +1,5 @@
 from psmdlsyncer.models.base import BaseModel
+from psmdlsyncer.utils import NS, weak_reference
 
 class Parent(BaseModel):
     """
@@ -6,12 +7,12 @@ class Parent(BaseModel):
     """
     kind = 'parent'
 
-    def __init__(self, student):
+    def __init__(self, idnumber, child):
         """ SETS COMMON ATTRIBUTES, CALLS add_child """
-        self.family_id = student.family_id
-        self.ID = student.family_id
+        self.family_id = self.ID = idnumber
         self.children = []
-        self.add_child(student)
+        self.add_child(child)
+        child.add_parent(self)
 
     @property
     def grades(self):

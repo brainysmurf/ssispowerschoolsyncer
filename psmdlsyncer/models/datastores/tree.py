@@ -5,7 +5,7 @@ import inspect, sys, copy
 from collections import defaultdict
 import re, logging
 log = logging.getLogger(__name__)
-from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, groups, schedules, courses
+from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, parents, parent_links, timetables, custom_profile, groups, schedules, courses
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
 from psmdlsyncer.utils import NS2
@@ -70,12 +70,14 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def __init__(self):
 		self.logger = logging.getLogger('AbstractTree')
-		self.default_logger = self.logger.info
+		self.default_logger = self.logger.debug
 		self.student_info = self.klass('dist', 'studentinfo')
 		self.teacher_info = self.klass('dist', 'staffinfo')
-		self.course_info = self.klass('sec', 'courseinfo')
+		self.secondary_courses = self.klass('sec', 'courseinfo')
+		self.elementary_courses = self.klass('elem', 'courseinfo')
 		self.allocations_info = self.klass('sec', 'teacherallocations')
-		self.schedule_info = self.klass('sec', 'studentschedule')
+		self.secondary_schedule = self.klass('sec', 'studentschedule')
+		self.elementary_schedule = self.klass('elem', 'studentschedule')
 		self.init()
 
 	def process_students(self):
@@ -90,9 +92,24 @@ class AbstractTree(metaclass=DataStoreCollection):
 			self.default_logger('Processing teacher: {}'.format(teacher))
 			self.teachers.make(*teacher)
 
+	def process_parents(self):
+		"""
+		Go through the students and make parents based on that data
+		"""
+		for student in self.students.get_objects():
+			self.parents.make_parent(student)
+
 	def process_courses(self):
-		self.default_logger('{} inside processing courses'.format(self.__class__.__name__))
-		for course in self.course_info.content():
+		self.default_logger('{} processing secondary courses'.format(self.__class__.__name__))
+		for course in self.secondary_courses.content():
+			self.default_logger('Processing course: {}'.format(course))
+			if self.convert_course:
+				self.courses.make_with_conversion(*course)
+			else:
+				self.courses.make_without_conversion(*course)
+
+		self.default_logger('{} processing elementary courses'.format(self.__class__.__name__))
+		for course in self.elementary_courses.content():
 			self.default_logger('Processing course: {}'.format(course))
 			if self.convert_course:
 				self.courses.make_with_conversion(*course)
@@ -103,47 +120,71 @@ class AbstractTree(metaclass=DataStoreCollection):
 		"""
 		Schedule should just have the keys for student and teachers
 		"""
-		self.default_logger('{} inside processing schedule'.format(self.__class__.__name__))
-		for schedule in self.schedule_info.content():
-			self.default_logger('Processing schedule: {}'.format(schedule))
-			print('Processing schedule: {}'.format(schedule))
-			course_key, period_info, section, teacher_key, student_key = schedule
-			course = self.courses.get(course_key, self.convert_course)  # send in False rather than class default
-			teacher = self.teachers.get_key(teacher_key)
-			student = self.students.get_key(student_key)
+		for school in ['elementary', 'secondary']:
+			self.default_logger('{} processing {} schedule'.format(self.__class__.__name__, school))
+			# calls both secondary_schedule.content, elementary_schedule.content
+			method = getattr(self, "{}_schedule".format(school))
+			for schedule in method.content():
+				self.default_logger('Processing {} schedule: {}'.format(school, schedule))
+				course_key, period_info, section_number, teacher_key, student_key = schedule
+				course = self.courses.get(course_key, self.convert_course)
+				teacher = self.teachers.get_key(teacher_key)
+				group = self.groups.make_group(course, teacher, section_number)
+				student = self.students.get_key(student_key)
 
-			# Do some sanity checks
-			if not course:
-				self.logger.warning("Course not found! {}".format(course_key))
-				continue
-			if not teacher:
-				self.logger.warning("Teacher not found! {}".format(teacher_key))
-				continue
-			if not student:
-				self.logger.warning("Student not found! {}".format(student_key))
-				continue
+				# Do some sanity checks
+				if not course:
+					self.logger.warning("Course not found! {}".format(course_key))
+					continue
+				if not teacher:
+					self.logger.warning("Teacher not found! {}".format(teacher_key))
+					continue
+				if not student:
+					self.logger.warning("Student not found! {}".format(student_key))
+					continue
+				if not group:
+					self.logger.warning("Group not found! {}".format(section_number))
 
-			# Making the group depends on the schedule
-			group = self.groups.make(teacher.username + course.ID, teacher, course)
+				self.associate(course, teacher, group, student)
 
-			self.default_logger('Making schedule:\ncourse:"{}" teacher:"{}" student:"{}"'.format(course, teacher, student))
-			schedule = self.schedules.make_schedule(course, teacher, student)
-			self.associate(course, teacher, group, student)
+				timetable = self.timetables.make_timetable(
+					course, teacher, group, student, section_number, period_info
+					)
+				student.add_timetable(timetable)
+				teacher.add_timetable(timetable)
+
+
+
+	def process_parent_links(self):
+		"""
+		Go through the students and build a tree that maps students to parents
+		"""
+		for student in self.students.get_objects():
+			for parent in student.parents:
+				self.parent_links.make_parent_link(parent, student)
+
+	def process_custom_profile(self):
+		"""
+		By default, does nothing, because the model takes care of it
+		"""
+		for student in self.students.get_objects():
+			self.custom_profile.make_profile(student)
+		for parent in self.parents.get_objects():
+			self.custom_profile.make_profile(parent)
+		for teacher in self.teachers.get_objects():
+			self.custom_profile.make_profile(teacher)
+
+	def process_timetables(self):
+		pass
 
 	def associate(self, course, teacher, group, student):
 		"""
 		Updates everything in the model to point to each other
 		"""
-		course.add_teacher(teacher)
-		course.add_student(student)
-		course.add_group(group)
-		teacher.add_course(course)
-		teacher.add_student(student)
-		teacher.add_group(group)
-		student.add_teacher(teacher)
-		student.add_course(course)
-		student.add_group(group)
-		group.add_student(student)
+		course.associate(group, teacher, student)
+		teacher.associate(course, group, student)
+		student.associate(course, group, teacher)
+		group.associate(course, teacher, student)
 		# do not need to do group.add_teacher or .add_course because that is done at init
 
 	def init(self):
@@ -152,108 +193,12 @@ class AbstractTree(metaclass=DataStoreCollection):
 		# They actually return the new (or old) object, but we don't care about them here
 		self.process_students()
 		self.process_teachers()
+		self.process_parents()
+		self.process_parent_links()
 		self.process_courses()
 		self.process_schedules()
-
-class MoodleTree(AbstractTree):
-	klass = MoodleImport
-	pickup = DataStore
-	convert_course = False
-
-	# def process_schedules(self):
-	# 	for schedule in self.schedule_info.content():
-	# 		# Schedule is a special case, where we want to bring in things from all over
-	# 		# TODO: Figure out a way to handle this in the model
-	# 			# special case for Moodle
-	# 		student_idnumber, course_idnumber, group_name = schedule
-	# 		teacher_username = re.sub('[^a-z]*', '', group_name)
-	# 		teacher = self.teachers.get_from_attribute('username', teacher_username)
-
-	# 		if self.convert_course:
-	# 			course = self.courses.get_with_conversion(course_idnumber)
-	# 		else:
-	# 			course = self.courses.get_without_conversion(course_idnumber)
-
-	# 		student = self.students.get_key(student_idnumber)
-	# 		if not teacher or not course:
-	# 			log.warning("Could not get group: {} {}".format(teacher_username, course_idnumber))
-	# 		else:
-	# 			group = self.groups.get_key(teacher.username + course.idnumber)
-
-	# 		self.schedules.make(student, teacher, course)
-
-	# def __sub__(self, other):
-	# 	"""
-
-	# 	"""
-	# 	left = self.tree.students.keys()
-	# 	right = other.tree.students.keys()
-
-	# 	for student_id in right - left:
-	# 		ns = NS(status='new_student')
-	# 		ns.left = self.tree.students.get(student_id)
-	# 		ns.right = other.tree.students.get(student_id)
-	# 		ns.param = [ns.right]
-	# 		yield ns
-
-	# 	for student_id in left - right:
-	# 		ns = NS(status='old_student')
-	# 		ns.left = self.tree.students.get(student_id)
-	# 		ns.right = other.tree.students.get(student_id)
-	# 		ns.param = [ns.left]
-	# 		yield ns
-
-	# 	left = self.tree.teachers.keys()
-	# 	right = other.tree.teachers.keys()
-
-	# 	for teacher_id in right - left:
-	# 		ns = NS(status='new_teacher')
-	# 		ns.left = self.tree.teachers.get(teacher_id)
-	# 		ns.right = other.tree.teachers.get(teacher_id)
-	# 		ns.param = [ns.right]
-	# 		yield ns
-
-	# 	for teacher_id in left - right:
-	# 		ns = NS(status='old_teacher')
-	# 		ns.left = self.tree.teachers.get(teacher_id)
-	# 		ns.right = other.tree.teachers.get(teacher_id)
-	# 		ns.param = [ns.left]
-	# 		yield ns
-
-	# 	# Now look at the individual information.
-	# 	for student_id in self.tree.students.keys():
-	# 		left = self.tree.students.get(student_id)
-	# 		right = other.tree.students.get(student_id)
-	# 		if left and right:
-	# 			yield from left - right
-
-
-class AutoSendTree(AbstractTree):
-	pickup = DataStore
-	klass = AutoSendImport
-	convert_course = True
-
-	# def process_schedules(self):
-	# 	for info in self.schedule_info.content():
-	# 		# Schedule is a special case, where we want to bring in things from all over
-	# 		# TODO: Figure out a way to handle this in the model
-	# 		course_number, course_name, periods, teacher_lastfirst, teacherID, teacher_email, student, studentID = info
-	# 		teacher = self.teachers.get_key(teacherID)
-
-	# 		if self.convert_course:
-	# 			course = self.courses.get_with_conversion(course_number)
-	# 		else:
-	# 			course = self.courses.get_without_conversion(course_number)
-
-	# 		student = self.students.get_key(studentID)
-
-	# 		# wait a minute, why am I getting group here anyway?
-	# 		if not teacher or not course:
-	# 			group = None
-	# 		else:
-	# 			group = self.groups.get_key(teacher.username + course.idnumber)
-
-	# 		self.schedules.make(student, teacher, course)
+		self.process_custom_profile()
+		self.process_timetables()
 
 
 class PostfixTree(AbstractTree):
@@ -262,7 +207,6 @@ class PostfixTree(AbstractTree):
 class Item:
 	def __init__(self, idnumber):
 		self.idnumber = idnumber
-
 
 if __name__ == "__main__":
 

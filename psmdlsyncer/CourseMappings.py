@@ -32,7 +32,7 @@ if __name__ == "__main__":
     courses = TextFileReader('../powerschool/ssis_courseinfoall',
                              interface_class=Course)
     all_courses = All()
-    
+
     for course in courses.generate():
         after_conversion = convert_short_long(course.course_number, course.course_name)
         course.short_after, course.long_after = after_conversion

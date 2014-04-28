@@ -1,110 +1,55 @@
 from psmdlsyncer.sql import MoodleImport
-from psmdlsyncer.models.datastores.abstract import AbstractTree
-import re
-import logging
-log = logging.getLogger(__name__)
-from psmdlsyncer.utils import NS2
+from psmdlsyncer.models.datastores.tree import AbstractTree
+from psmdlsyncer.models.datastores.branch import DataStore
 
-def log_warning(astring, *args, **kwargs):
-    log.warning(NS2.string(astring, *args, **kwargs))
-
-class MoodleAbstractTree(AbstractTree):
+class MoodleTree(AbstractTree):
     klass = MoodleImport
+    pickup = DataStore
     convert_course = False
 
     def process_schedules(self):
-        for schedule in self.schedule_info.content():
-            # Schedule is a special case, where we want to bring in things from all over
-            # TODO: Figure out a way to handle this in the model
-                # special case for Moodle
-            student_idnumber, course_idnumber, group_name = schedule
-
-            # With Moodle we only use the group name to derive everything
-            teacher_username = re.sub('[^a-z]*', '', group_name)
-            teacher = self.teachers.get_from_attribute('username', teacher_username)
-
-            if self.convert_course:
-                course = self.courses.get_with_conversion(course_idnumber)
-            else:
-                course = self.courses.get_without_conversion(course_idnumber)
-
-            student = self.students.get_key(student_idnumber)
-            if not teacher:
-                log_warning("Teacher must have left (because his or her PowerSchool idnumber isn't in the table?), but his/her group remains: {group}",
-                    group=group_name)
-                continue
-            if not course:
-                log_warning("Course found in schedule but does not exist in Moodle {course}.", course=course.idnumber)
-                continue
-            group = self.groups.get_key(teacher.username + course.idnumber)
-            if not group:
-                log_warning("Schedule has this group {group1} {NEWLINE}{TAB}but looked for {group2} instead", 
-                    group1=group_name, 
-                    group2=teacher.username + course.idnumber)
-                continue
-
-            # Okay, all clear, let's register it in the schedule
-            self.schedules.make(self.derive_schedule_idnumber,
-                student, teacher, course)
-
-    def process_groups(self):
-        for group_name in self.group_info.content():
-            if not group_name:
-                continue
-            teacher_username = re.sub(r'[^a-z]', '', group_name)
-            course_idnumber = re.sub(r'[a-z]', '', group_name)
-            teacher = self.teachers.get_from_attribute('username', teacher_username)
-            if self.convert_course:
-                course = self.courses.get_with_conversion(course_idnumber)
-            else:
-                course = self.courses.get_without_conversion(course_idnumber)
-            if not teacher or not course:
-                continue
-
-            self.groups.make(self.derive_group_idnumber,
-                teacher, course)
-
-    def __sub__(self, other):
         """
-
+        Schedule should just have the keys for student and teachers
         """
-        left = self.tree.students.keys()
-        right = other.tree.students.keys()
+        for school in ['elementary', 'secondary']:
+            self.default_logger('{} processing {} schedule'.format(self.__class__.__name__, school))
+            # calls both secondary_schedule.content, elementary_schedule.content
+            method = getattr(self, "{}_schedule".format(school))
+            for schedule in method.content():
+                self.default_logger('Processing {} schedule: {}'.format(school, schedule))
+                course_key, period_info, section_number, teacher_key, student_key = schedule
+                course = self.courses.get(course_key, self.convert_course)
+                teacher = self.teachers.get_key(teacher_key)
+                if not teacher:
+                    self.logger.warning("Teacher not found! {}".format(teacher_key))
+                    continue
+                if section_number:
+                    group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number))
+                else:
+                    group = self.groups.make("{}{}".format(teacher.username, course.ID))
+                student = self.students.get_key(student_key)
 
-        for student_id in right - left:
-            ns = NS(status='new_student')
-            ns.left = self.tree.students.get(student_id)
-            ns.right = other.tree.students.get(student_id)
-            ns.param = [ns.right]
-            yield ns
+                # Do some sanity checks
+                if not course:
+                    self.logger.warning("Course not found! {}".format(course_key))
+                    continue
+                if not student:
+                    self.logger.warning("Student not found! {}".format(student_key))
+                    continue
+                if not group:
+                    self.logger.warning("Group not found! {}".format(section_number))
 
-        for student_id in left - right:
-            ns = NS(status='old_student')
-            ns.left = self.tree.students.get(student_id)
-            ns.right = other.tree.students.get(student_id)
-            ns.param = [ns.left]
-            yield ns
+                self.associate(course, teacher, group, student)
 
-        left = self.tree.teachers.keys()
-        right = other.tree.teachers.keys()
+                timetable = self.timetables.make_timetable(
+                    course, teacher, group, student, section_number, period_info
+                    )
+                student.add_timetable(timetable)
+                teacher.add_timetable(timetable)
 
-        for teacher_id in right - left:
-            ns = NS(status='new_teacher')
-            ns.left = self.tree.teachers.get(teacher_id)
-            ns.right = other.tree.teachers.get(teacher_id)
-            ns.param = [ns.right]
-            yield ns
+    def process_profile_fields(self):
+        self.default_logger("Moodle processing profile fields")
+        for profile_info in self.custom_profile_fields.content():
+            idnumber, username, shortname, data = profile_info
 
-        for teacher_id in left - right:
-            ns = NS(status='old_teacher')
-            ns.left = self.tree.teachers.get(teacher_id)
-            ns.right = other.tree.teachers.get(teacher_id)
-            ns.param = [ns.left]
-            yield ns
 
-        # Now look at the individual information.
-        for student_id in self.tree.students.keys():
-            left = self.tree.students.get(student_id)
-            right = other.tree.students.get(student_id)
-            if left and right:
-                yield from left - right
