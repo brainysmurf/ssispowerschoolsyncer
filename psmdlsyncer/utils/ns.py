@@ -32,6 +32,10 @@ class NS2:
             kwargs.update(arg.__dict__)
         return cls(*args, **kwargs)(astring)
 
+    @property
+    def kwargs(self):
+        return {key: value for key, value in self.__dict__.items() if key.islower() and not key.startswith('_')}
+
     def __repr__(self):
         """
         VERY MEAGER WAY TO OUTPUT THIS DATA

@@ -8,6 +8,7 @@ from collections import defaultdict
 import re
 import datetime
 import itertools
+import json
 _taken_usernames = []
 
 class ProxyScheduleWrapper:
@@ -258,28 +259,29 @@ class Student(BaseModel):
         self._schedule.append( schedule )
 
     def add_enrollment(self, course, group):
-        self._enrollments[course.ID].append(group.ID)
+        if not group.ID in self.enrollments[course.ID]:
+            self.enrollments[course.ID].append( group.ID )
 
     def add_course(self, course):
         if course.idnumber in self.excluded_courses:
             return
-        reference = weak_reference(course)
-        if not reference in self._courses:
+        if not course.ID in self.course_idnumbers:
+            reference = weak_reference(course)
             self._courses.append( reference )
 
     def add_group(self, group):
-        reference = weak_reference(group)
-        if not reference in self._groups:
+        if not group.ID in self.group_idnumbers:
+            reference = weak_reference(group)
             self._groups.append( reference )
 
     def add_teacher(self, teacher):
-        reference = weak_reference(teacher)
-        if not reference in self._teachers:
+        if not teacher.ID in self.teacher_idnumbers:
+            reference = weak_reference(teacher)
             self._teachers.append( reference )
 
     def add_parent(self, parent):
-        reference = weak_reference(parent)
-        if not reference in self._parents:
+        if not parent.ID in self.parents:
+            reference = weak_reference(parent)
             self._parents.append( reference )
 
     @property
@@ -293,6 +295,20 @@ class Student(BaseModel):
     @property
     def timetable(self):
         return self._timetable
+
+    @property
+    def custom_profile_timetable(self):
+        if self.timetable == None:
+            return None
+        result = {}
+        result['enrollments'] = self.enrollments
+        result['timetable'] = self.timetable
+        result['teacher_names'] = self.timetable_teacher_names
+        return json.dumps(result)
+
+    @custom_profile_timetable.setter
+    def custom_profile_timetable(self, value):
+        self._timetable = value
 
     def add_timetable(self, timetable_dict):
         """
@@ -317,6 +333,23 @@ class Student(BaseModel):
     def enrollments(self):
         return self._enrollments
 
+    def get_enrollments(self):
+        for course in self.enrollments:
+            for group in self.enrollments[course]:
+                yield course, group
+
+    @property
+    def timetable_teacher_names(self):
+        result = defaultdict( list )
+        for group in self.groups:
+            for teacher in group.teachers:
+                this_teacher = {}
+                this_teacher['lastfirst'] = teacher.lastfirst.replace("'", "")
+                this_teacher['first'] = teacher.first.replace("'", "")
+                this_teacher['last'] = teacher.last.replace("'", "")
+                result[group.ID].append(this_teacher)
+        return result
+
     @property
     def course_names(self):
         return sorted(["{} ('{}')".format(course.ID, course.name) for course in self.courses])
@@ -328,6 +361,14 @@ class Student(BaseModel):
     @property
     def course_idnumbers(self):
         return set([course.ID for course in self.courses])
+
+    @property
+    def parent_idnumbers(self):
+        return set([parents.ID for parents in self.parents])
+
+    @property
+    def teacher_idnumbers(self):
+        return set([teacher.ID for teacher in self.teachers])
 
     @property
     def cohorts(self):
@@ -455,7 +496,6 @@ class Student(BaseModel):
         else:
             return False
         return True
-
 
     def differences(self, other):
 

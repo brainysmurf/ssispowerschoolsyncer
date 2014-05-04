@@ -25,7 +25,20 @@ class BaseModel:
 		return custom_field.split('custom_profile_')[1]
 
 	def get_custom_field_keys(self):
-		return [key for key in self.__dict__ if key.startswith('custom_profile_')]
+		"""
+		Return all the custom_profile instance and class variables
+		If a custom_profile is set to None, don't return it
+		That way someone else can set it None for more manual control
+		"""
+		keys = [key for key in self.__dict__ if key.startswith('custom_profile_')]
+		keys.extend([key for key in self.__class__.__dict__ if key.startswith('custom_profile_')])
+		return [key for key in keys if getattr(self, key) is not None]
+
+	def get_custom_field(self, name, default=None):
+		return getattr(self, 'custom_profile_'+name, default)
+
+	def set_custom_field(self, name, value):
+		return setattr(self, 'custom_profile_'+name, value)
 
 	def __sub__(self, right):
 		for variable in self.__dict__:

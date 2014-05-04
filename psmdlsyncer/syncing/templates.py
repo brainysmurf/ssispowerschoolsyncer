@@ -24,7 +24,7 @@ class DefaultTemplate:
     """
     def __init__(self):
         self.logger = logging.getLogger("DefaultTemplate")
-        self.default_logger = self.logger.info
+        self.default_logger = self.logger.debug
 
     def get(self, item, default=None):
         return getattr(self, item, default) if hasattr(self, item) else default
@@ -45,10 +45,16 @@ class DefaultTemplate:
         self.default_logger("Put {0.left} into this cohort: {0.param}".format(item))
 
     def new_teacher(self, item):
-        self.default_logger("We have a new teacher! {0.param}".format(item))
+        self.logger.info("Found a new teacher! {0.param}".format(item))
+
+    def new_student(self, item):
+        self.logger.info("Found a new student! {0.param}".format(item))
+
+    def new_parent(self, item):
+        self.logger.info("Found a new parent! {0.param}".format(item))
 
     def old_teacher(self, item):
-        self.default_logger("Get out of here! {0.param}".format(item))
+        self.logger.warning("Found teacher who has now left: {0.param}".format(item))
 
     def add_to_group(self, item):
         course = item.param.course
@@ -81,14 +87,13 @@ class DefaultTemplate:
         self.default_logger("AN OLD COURSE! {0.param} ".format(item))
 
     def new_group(self, item):
-        self.default_logger("A NEW GROUP! {0.param} ".format(item))
+        self.default_logger("A NEW GROUP! {0.param} (should be created when someone enrolls...)".format(item))
 
     def old_group(self, item):
         self.default_logger("AN OLD GROUP! {0.param} ".format(item))
 
     def username_changed(self, item):
         self.default_logger("Username changed! was {0.left.username} should be {0.param} ".format(item))
-
 
 class MoodleTemplate(DefaultTemplate):
     """
@@ -116,32 +121,44 @@ class MoodleTemplate(DefaultTemplate):
             group_name = group[0]
             self.groups.append(group_name)
 
-
     def course_exists(self, course_idnumber):
         return course_idnumber in self.courses
 
-    def new_student(self, item):
-        """
-        """
-        #First double-checks to see if we actually do have something in Moodle
-        #for example, an account with item.email_address
-        student = item.right.idnumber
-        self.moodle_mod.new_student(student)
-
-    # def old_student(self, item):
+    # def new_student(self, item):
     #     """
-    #     TODO: Determine how long it's been since the student has logged info
-    #     and then go ahead and delete it
-    #     (Deleting in Moodle is actually just setting deleted=1)
     #     """
-    #     pass
+    #     super().new_student(item)
+    #     student = item.right
+    #     self.moodle_mod.new_student(student)
 
     def new_teacher(self, item):
         """
         """
-        super().new_teacher(item)
-        teacher = item.right
-        self.moodle_mod.new_teacher(teacher)
+        if self.moodle.get_table("user", username=item.right.username):
+            self.logger.warning("Staff member already exists, maybe they are not in the teachersALL or supportALL group?.")
+        else:
+            super().new_teacher(item)
+            teacher = item.right
+            self.moodle_mod.new_teacher(teacher)
+
+    # def new_parent(self, item):
+    #     """
+    #     """
+    #     super().new_parent(item)
+    #     parent = item.right
+    #     self.moodle_mod.new_parent(parent)
+
+    def new_group(self, item):
+        """
+        Although we detect new groups, the right thing to do is actually to create the group,
+        as they are needed,
+        when enrolling users.
+
+        That's because groups and courses are inexplicably linked together
+        and we have to do the checks for groups when enrolling anyway
+        so best is to do the creation there
+        """
+        super().new_group(item)  # output
 
     def enrol_in_course(self, item):
         course_idnumber = item.param.course
@@ -167,6 +184,22 @@ class MoodleTemplate(DefaultTemplate):
             self.moodle_mod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
         else:
             self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+
+    def enrol_parent_into_course(self, item):
+        parent = item.right.idnumber
+        course = item.param.course
+        group = item.param.group
+        if self.enrol_in_course(item):   # for output and checking
+            self.moodle_mod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
+        else:
+            self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+
+    def deenrol_teacher_from_course(self, item):
+        super().deenrol_from_course(item)   # for output
+        user = item.right.idnumber
+        course = item.param.course
+        group = item.param.group
+        self.moodle_mod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
         super().deenrol_from_course(item)   # for output
@@ -195,37 +228,59 @@ class MoodleTemplate(DefaultTemplate):
         self.moodle_mod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
-        super().new_group(item)
         course = item.right.course.ID
         group = item.param
         if group in self.groups:
             self.default_logger("Did NOT add group {} because it's already there....".format(group, course))
         elif course in self.courses:
+            super().new_group(item)
             self.moodle_mod.add_group(group, course)
         else:
             self.default_logger("Did NOT add group {} because course {} does not exist.".format(group, course))
 
+    def new_custom_profile(self, item):
+        """
+        This actually means that a particular user doesn't have a particular custom profile
+        (It does NOT mean that this profile field doesn't exist...)
+        """
+        right = item.right
+        name = right.name
+        value = right.value
+        useridnumber = right.useridnumber
+        self.default_logger("Modified custom profile for {} change {} to {}".format(useridnumber, name, value))
+        self.moodle.add_user_custom_profile(useridnumber, name, value)
+
+    def old_custom_profile(self, item):
+        """
+        This actually means that a particular user has lost a particular profile field
+        (It does NOT mean that this profile field should be deleted...)
+        or does it?
+        """
+        # not sure what to do yet
+
+
     def old_group(self, item):
-        super().old_group(item)
-        course = item.left.course
+        course = item.left
         group = item.param
         if not course or not course in self.courses:
             self.default_logger("Did NOT remove group {} because the correspoding course does not exist.".format(group, course))
         else:
+            super().old_group(item)
             group = item.param
             self.moodle_mod.delete_group(group, course)
 
     def add_to_group(self, item):
-        super().add_to_group(item)
         user = item.right.idnumber
         group = item.param.group
         course = item.param.course
         if course in self.courses:
+            super().add_to_group(item)
             # We don't actually need the course...
+
             self.moodle_mod.add_user_to_group(user, group)
             #self.default_logger("Successfully put user {} into group {}".format(user, group))
         else:
-            self.default_logger("Did NOT put in group {} because course {} does not exist.".format(group, course))
+            self.default_logger("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))
 
     def remove_from_group(self, item):
         super().remove_from_group(item)
@@ -234,29 +289,40 @@ class MoodleTemplate(DefaultTemplate):
         course = item.param.course
         # We don't actually need the course...
         self.moodle_mod.remove_user_from_group(user, group)
-        #self.default_logger("Successfully removed user {} from group {}".format(user, group))
 
     def username_changed(self, item):
-        super().username_changed(item)
         user = item.left
         idnumber = user.idnumber
         from_what = item.left.username
         to_what = item.right.username
         if hasattr(user, 'login_method') and user.login_method == 'nologin':
             # Just go ahead and change it automatically, no need to inform anyone or anything
-            self.moodle.update_where('user', where={
+            # because the account isn't active anyway
+            self.moodle.update_table('user', where={
                 'idnumber':idnumber
                 },
                 username=to_what)
-            #self.default_logger("Successfully changed user {}'s username from {} to {}".format(
-            #    idnumber, from_what, to_what
-            #    ))
+            super().username_changed(item)
+        else:
+            msg = "Student {} needs his/her username changed manually".format(from_what, to_what)
+            if '_' in from_what:
+                if from_what.replace('_', '') == to_what:
+                    self.default_logger("Student {} with an underscore and whose username has NOT changed to {}.".format(from_what, to_what))
+                else:
+                    self.logger.warning(msg)
+            else:
+                self.logger.warning(msg)
+
+    def custom_profile_value_changed(self, item):
+        person = item.left.useridnumber
+        field = item.param.field
+        value = item.param.value
+        self.moodle.set_user_custom_profile(person, field, value)
 
     def homeroom_changed(self, item):
         super().homeroom_changed(item)
         student = item.left
         from_what = item.left.homeroom
-        to_what = item.param
         homeroom = item.param
         self.moodle.update_table('user', where={
             'idnumber':student.idnumber

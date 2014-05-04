@@ -33,10 +33,8 @@ class Timetable(BaseModel):
         """
         result = defaultdict(lambda : defaultdict(dict))
         value = {
-        'course':self.course_idnumber,
-        'teacher':self.teacher_idnumber,
-        'group':self.group_idnumber,
-        'student':self.student_idnumber
+        'group': self.group_idnumber,
+        'course': self.course_idnumber
         }
         for item in self.value.split(' '):
             # First seperate out the
@@ -45,7 +43,8 @@ class Timetable(BaseModel):
                 continue  # fatal error, really, because it means we don't know our own data
             periods, days = match.groups()
             for day in make_list(days):
-                key = map_days.get(day)
+                #key = map_days.get(day)
+                key = day
                 if not key:
                     # fatal error, really, because it means we don't know our own data
                     continue

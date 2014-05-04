@@ -6,17 +6,18 @@ PROVIDES A HIGHER-LEVEL CLASS FOR USE WITH MOODLE INSTALLATIONS
 from psmdlsyncer.sql.SQLWrapper import SQLWrapper
 from psmdlsyncer.settings import config, requires_setting
 from psmdlsyncer.utils.Namespace import NS
+from psmdlsyncer.utils import NS2
 
 class MoodleDBConnection(SQLWrapper):
     """
     PROVIDES ASSORTMENT OF USEFUL SQL QUERIES COMMON TO MOODLE INSTALLATIONS
     """
 
-    def __init__(self):        
+    def __init__(self):
         settings = ['db_username', 'db_password', 'db_name', 'db_prefix', 'db_host']
         for setting in settings:
             requires_setting('MOODLE', setting)
-        
+
         super().__init__(config['MOODLE'].get('db_username'),
                          config['MOODLE'].get('db_password'),
                          config['MOODLE'].get('db_prefix'),
@@ -104,7 +105,7 @@ class MoodleDBConnection(SQLWrapper):
         return [i[0] for i in self.call_sql('select idnumber from ssismdl_user where deleted = 0')]
 
     def get_all_parent_name_ids(self):
-        return self.call_sql("select idnumber, username from ssismdl_user where deleted = 0 and idnumber like '%P'")                
+        return self.call_sql("select idnumber, username from ssismdl_user where deleted = 0 and idnumber like '%P'")
 
     def get_all_user_name_ids(self):
         return self.call_sql('select idnumber, username, firstname, lastname from ssismdl_user where deleted = 0')
@@ -150,7 +151,7 @@ class MoodleDBConnection(SQLWrapper):
 
     def get_userid_idnumber(self):
         return self.call_sql( "select id, idnumber, username from ssismdl_user")
-    
+
     def get_student_info(self):
         """
         RETURNS NEEDED INFORMATION ABOUT USER FOR students
@@ -181,7 +182,7 @@ class MoodleDBConnection(SQLWrapper):
 
     def get_all_users_activity_enrollments(self):
         return self.call_sql("select crs.fullname, usr.idnumber from ssismdl_enrol enrl join ssismdl_user_enrolments usrenrl on usrenrl.enrolid = enrl.id join ssismdl_course crs on enrl.courseid = crs.id join ssismdl_user usr on usrenrl.userid = usr.id where enrl.enrol = 'sedb.lf' and not usr.idnumber = ''")
-            
+
     def get_user_group_enrollments(self, idnumber):
         """ returns a list of tuples [(idnumber, groupname, courseidnumber)] """
         return self.call_sql("select usr.idnumber, grp.name, crs.idnumber from ssismdl_user usr join ssismdl_groups_members gm on gm.userid = usr.id join ssismdl_groups grp on gm.groupid = grp.id join ssismdl_course crs on grp.courseid = crs.id where usr.idnumber = '{}'".format(idnumber))
@@ -194,6 +195,84 @@ class MoodleDBConnection(SQLWrapper):
 
     def get_user_cohort_enrollment_idnumbers(self, idnumber):
         return [row[1] for row in self.get_user_cohort_enrollments(idnumber)]
+
+    def set_user_custom_profile(self, user_idnumber, name, value):
+        userid = self.get_unique_row('user', 'id', idnumber=user_idnumber)
+        if not userid:
+            return
+        fieldid = self.get_unique_row('user_info_field', 'id', shortname=name)
+        if not fieldid:
+            return
+        self.update_table('user_info_data', where=dict(
+            userid=userid,
+            fieldid=fieldid
+            ),
+            data=value
+            )
+
+    def add_user_custom_profile(self, user_idnumber, name, value):
+        """
+        TODO: Figure out a way to detect the data format
+        Should do automatic conversions here too
+        """
+        useridnumber = self.get_table('user', idnumber=user_idnumber)
+        if not useridnumber:
+            return
+        useridnumber = useridnumber[0][0]
+        fieldid = self.get_table('user_info_field', shortname=name)
+        if not fieldid:
+            # Automatically make the new custom profile entry
+            # This is actually pretty cool
+
+            # Get the sort order
+            result = self.call_sql("""
+select sortorder from ssismdl_user_info_field
+order by sortorder DESC
+limit 1
+                """)
+            lastsort = int(result[0][0])
+            sort = lastsort+1
+            ns = NS2()
+            ns.shortname = name
+            ns.name = name.replace("_", " ").title()
+            ns.description = ""
+            ns.descriptionformat = 1
+            ns.categoryid = 1
+            ns.sortorder = sort
+            ns.required = 0
+            ns.locked = 1
+            ns.visible = 0
+            ns.forceunique = 0
+            ns.signup = 0
+            ns.defaultdata = 0
+            ns.defaultdataformat = 0
+            ns.param1 = ""
+            ns.param2 = ""
+            ns.param3 = ""
+            ns.param4 = ""
+            ns.param5 = ""
+
+            if isinstance(value, bool):
+                ns.datatype = "checkbox"
+            elif isinstance(value, int):
+                # just use text for everything...
+                ns.datatype = "text"
+            else:
+                ns.datatype = "text"
+
+            self.insert_table('user_info_field', **ns.kwargs)
+
+            # This should work now!
+            fieldid = self.get_table('user_info_field', shortname=name)
+
+        fieldid = fieldid[0][0]
+        self.insert_table('user_info_data',
+            userid=useridnumber,
+            fieldid=fieldid,
+            data=value,
+            dataformat=0
+            )
+
 
     def get_user_profile_data(self):
         """
@@ -263,12 +342,15 @@ class MoodleDBConnection(SQLWrapper):
 
 if __name__ == "__main__":
     db = MoodleDBConnection()
-    if db.table_exists("blahs"):
-        print("EXISTS")
-    else:
-        print("DOESN'T EXIST")
-    print(db.get_unique_row("user", "username", "email", email='happystudent@student.ssis-suzhou.net', idnumber='99999'))
 
-    all = db.get_all_users_enrollments()
-    for item in all:
-        print(item)
+    db.add_user_custom_profile("38110", "testingabc", True)
+
+    # if db.table_exists("blahs"):
+    #     print("EXISTS")
+    # else:
+    #     print("DOESN'T EXIST")
+    # print(db.get_unique_row("user", "username", "email", email='happystudent@student.ssis-suzhou.net', idnumber='99999'))
+
+    # all = db.get_all_users_enrollments()
+    # for item in all:
+    #     print(item)

@@ -180,14 +180,14 @@ class TestLeftTree(AbstractTree):
 		So override completely
 		"""
 		self.logger = logging.getLogger('TestLeftTree')
-		self.default_logger = self.logger.debug
+		self.default_logger = self.logger.info
 
 		self.student_info = test_student_info('left')
 		self.teacher_info = test_teacher_info('left')
-		self.secondary_courses = test_secondary_course_info('left')
 		self.elementary_courses = test_elementary_course_info('left')
+		self.secondary_courses = test_secondary_course_info('left')
 		self.allocations_info = test_allocations_info('left')
-		self.elementary_schedule = test_secondary_schedule_info('left')
+		self.elementary_schedule = test_elementary_schedule_info('left')
 		self.secondary_schedule = test_secondary_schedule_info('left')
 		self.custom_profile_fields = test_profile_fields('left')
 
@@ -195,16 +195,17 @@ class TestLeftTree(AbstractTree):
 
 class TestRightTree(AbstractTree):
 	pickup = DataStore
+
 	def __init__(self):
 		self.logger = logging.getLogger('TestLeftTree')
-		self.default_logger = self.logger.debug
+		self.default_logger = self.logger.info
 
 		self.student_info = test_student_info('right')
 		self.teacher_info = test_teacher_info('right')
-		self.secondary_courses = test_secondary_course_info('right')
 		self.elementary_courses = test_elementary_course_info('right')
+		self.secondary_courses = test_secondary_course_info('right')
 		self.allocations_info = test_allocations_info('right')
-		self.elementary_schedule = test_secondary_schedule_info('right')
+		self.elementary_schedule = test_elementary_schedule_info('right')
 		self.secondary_schedule = test_secondary_schedule_info('right')
 		self.custom_profile_fields = test_profile_fields('right')
 
@@ -213,10 +214,14 @@ class TestRightTree(AbstractTree):
 if __name__ == "__main__":
 
 	left = TestLeftTree()
+	from IPython import embed
+	embed()
+
+
 	right = TestRightTree()
 
 	DetermineChanges(left, right)
 
+	l_get_parent = left.parents.get_key
+	l_get_student = left.students.get_key
 
-	from IPython import embed
-	embed()

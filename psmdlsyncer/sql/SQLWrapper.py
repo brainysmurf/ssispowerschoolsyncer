@@ -63,10 +63,20 @@ class SQLWrapper:
 
     def insert_table(self, table_name, **kwargs):
         #TODO: Handle case where there is an apostrophe
-        columns_values = kwargs.items()
-        columns_phrase = ", ".join([c[0] for c in columns_values])
-        values_phrase = "'" + "', '".join([c[1] for c in columns_values]) + "'"
-        self.call_sql("insert into temp_{} ({}) values ({})".format(table_name, columns_phrase, values_phrase))
+        columns = set([k for k in kwargs.keys()])
+        columns_phrase = ", ".join(columns)
+        values_list = []
+        for c in columns:
+            value = kwargs[c]
+            if isinstance(value, bool):
+                b = 1 if value else 0
+                values_list.append( ' ' + str(b))
+            elif isinstance(value, int):
+                values_list.append( ' ' + str(value))
+            else:
+                values_list.append( " '" + str(value) + "'" )
+        values_phrase = ", ".join(values_list)
+        self.call_sql("insert into {}{} ({}) values ({})".format(self.prefix, table_name, columns_phrase, values_phrase))
 
     def update_table(self, table_name, where={}, **kwargs):
         set_phrase = ",".join(["{}='{}'".format(c[0], c[1]) for c in kwargs.items()])

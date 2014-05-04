@@ -5,10 +5,22 @@ import inspect, sys, copy
 from collections import defaultdict
 import re, logging
 log = logging.getLogger(__name__)
-from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, parents, parent_links, timetables, custom_profile, groups, schedules, courses
+from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, parents, mrbs_editor, parent_links, timetables, custom_profiles, groups, schedules, courses
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
 from psmdlsyncer.utils import NS2
+
+def is_immediate_subclass(klass, of_klass):
+	"""
+	This way datastores can use inheritance in fancier ways
+	This also means that 'pickup' is more literal
+	"""
+	if klass is of_klass:
+		return True
+	if len(klass.__bases__) < 1:
+		return False
+	subclass = klass.__bases__[0]
+	return subclass is of_klass
 
 class DataStoreCollection(type):
 	_store = defaultdict(dict)
@@ -17,36 +29,50 @@ class DataStoreCollection(type):
 
 	def __init__(cls, name, bases, attrs):
 		if attrs.get('pickup'):
-			datastore = attrs.get('pickup')
+			datastores = attrs.get('pickup')
+			if not isinstance(datastores, list):
+				datastores = [datastores]
+
 			# Cycle through all the classes that have been declared in this module, so we can augment this class with those ones
 			# Limitation: You have to declare your branches in the same place as this module
 			# TODO: Get around above limitation by passing a string and importing that way
-			get_all_module_classes = inspect.getmembers(sys.modules[__name__], inspect.isclass)
-			for class_name, class_reference in get_all_module_classes:
-				nested_class_name = NS2.string(
-					cls.qual_name_format,
-					branch=cls.__name__,
-					delim=cls.qual_name_delimiter,
-					subbranch=class_reference.__name__
-					)
-				if class_name in attrs.keys():   # first check to see if the programmer declared something else by the same name
-					declared_class = attrs[class_name]  # this is now whatever the programmer declared
-					if inspect.isclass(declared_class) and issubclass(declared_class, datastore):
-						# If we're here, we need to adjust some augment, to match what we would do automatically (like below)
-						setattr(declared_class, '__qualname__', nested_class_name)
-						setattr(declared_class, '__outerclass__', cls)
-				elif class_reference is not datastore:  # check to ensure our heuristic doesn't detect itself
-					if issubclass(class_reference, datastore): # now see if this object is subclass of class represented by `pickup`
-						# okay, we need to manually pickup the class and bring it into ours
-						# copy the class entirely (won't work otherwise)
-						copied_class = type(name, class_reference.__bases__, dict(class_reference.__dict__))
-						# set up magic
-						copied_class.__qualname__ = nested_class_name
-						copied_class.__outerclass__ = cls
-						# and assign this brand new class to ours
-						setattr(cls, class_reference.__name__, copied_class)
-				else:
-					pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
+
+			for datastore in datastores:
+				find_classes = []
+				all_modules = sys.modules.keys()
+
+				# For ease in use, we inspect all modules available at this place in the code
+				# and look for the pickups classes
+				for module_key in all_modules:
+					module = sys.modules[module_key]
+					get_all_module_classes = inspect.getmembers(module, inspect.isclass)
+
+					# Now go through all classes in this particular module
+					for class_name, class_reference in get_all_module_classes:
+						nested_class_name = NS2.string(
+							cls.qual_name_format,
+							branch=cls.__name__,
+							delim=cls.qual_name_delimiter,
+							subbranch=class_reference.__name__
+							)
+						if class_name in attrs.keys():   # first check to see if the programmer declared something else by the same name
+							declared_class = attrs[class_name]  # this is now whatever the programmer declared
+							if inspect.isclass(declared_class) and issubclass(declared_class, datastore):
+								# If we're here, we need to adjust some augment, to match what we would do automatically (like below)
+								setattr(declared_class, '__qualname__', nested_class_name)
+								setattr(declared_class, '__outerclass__', cls)
+						elif class_reference is not datastore:  # check to ensure our heuristic doesn't detect itself
+							if 	is_immediate_subclass(class_reference, datastore): # now see if this object is subclass of class represented by `pickup`
+								# okay, we need to manually pickup the class and bring it into ours
+								# copy the class entirely (won't work otherwise)
+								copied_class = type(name, class_reference.__bases__, dict(class_reference.__dict__))
+								# set up magic
+								copied_class.__qualname__ = nested_class_name
+								copied_class.__outerclass__ = cls
+								# and assign this brand new class to ours
+								setattr(cls, class_reference.__name__, copied_class)
+						else:
+							pass # nothing to do here, programmer defined a method or object with the same name but not a subclass of class referenced by `pickup`
 
 	@classmethod
 	def keys(cls):
@@ -78,7 +104,29 @@ class AbstractTree(metaclass=DataStoreCollection):
 		self.allocations_info = self.klass('sec', 'teacherallocations')
 		self.secondary_schedule = self.klass('sec', 'studentschedule')
 		self.elementary_schedule = self.klass('elem', 'studentschedule')
+		self.custom_profile_fields_info = self.klass('dist', 'customprofiles')
+		self.mrbs_editor_info = self.klass('dist', 'mrbs_editor')
 		self.init()
+
+	def get_person(self, idnumber):
+		student = self.students.get_key(idnumber)
+		if student:
+			return student
+		teacher = self.teachers.get_key(idnumber)
+		if teacher:
+			return teacher
+		parent = self.parents.get_key(idnumber)
+		if parent:
+			return parent
+		return None
+
+	def get_everyone(self):
+		for student_key in self.students.get_keys():
+			yield self.students.get_key(student_key)
+		for teacher_key in self.teachers.get_keys():
+			yield self.teachers.get_key(teacher_key)
+		for parent_key in self.parents.get_keys():
+			yield self.parents.get_key(parent_key)
 
 	def process_students(self):
 		self.default_logger('{} inside processing students'.format(self.__class__.__name__))
@@ -133,17 +181,24 @@ class AbstractTree(metaclass=DataStoreCollection):
 				student = self.students.get_key(student_key)
 
 				# Do some sanity checks
+				if not student:
+					self.logger.warning("Student not found! {}".format(student_key))
+					continue
 				if not course:
 					self.logger.warning("Course not found! {}".format(course_key))
 					continue
 				if not teacher:
 					self.logger.warning("Teacher not found! {}".format(teacher_key))
 					continue
-				if not student:
-					self.logger.warning("Student not found! {}".format(student_key))
-					continue
 				if not group:
 					self.logger.warning("Group not found! {}".format(section_number))
+					continue
+
+				# Make parent
+				# associate call not needed
+				parent = self.parents.make_parent(student)
+				parent.add_child(student)
+				student.add_parent(parent)
 
 				self.associate(course, teacher, group, student)
 
@@ -153,7 +208,8 @@ class AbstractTree(metaclass=DataStoreCollection):
 				student.add_timetable(timetable)
 				teacher.add_timetable(timetable)
 
-
+	def process_timetables(self):
+		return ()
 
 	def process_parent_links(self):
 		"""
@@ -168,14 +224,14 @@ class AbstractTree(metaclass=DataStoreCollection):
 		By default, does nothing, because the model takes care of it
 		"""
 		for student in self.students.get_objects():
-			self.custom_profile.make_profile(student)
+			self.custom_profiles.make_profile(student)
 		for parent in self.parents.get_objects():
-			self.custom_profile.make_profile(parent)
+			self.custom_profiles.make_profile(parent)
 		for teacher in self.teachers.get_objects():
-			self.custom_profile.make_profile(teacher)
+			self.custom_profiles.make_profile(teacher)
 
-	def process_timetables(self):
-		pass
+	def process_mrbs_editor(self):
+		return ()
 
 	def associate(self, course, teacher, group, student):
 		"""
@@ -185,21 +241,16 @@ class AbstractTree(metaclass=DataStoreCollection):
 		teacher.associate(course, group, student)
 		student.associate(course, group, teacher)
 		group.associate(course, teacher, student)
-		# do not need to do group.add_teacher or .add_course because that is done at init
 
 	def init(self):
+		# Basically just calls every single
 		# Some of this stuff is pretty magical
 		# The self.students, self.teachers, etc objects come from MetaDataStore
 		# They actually return the new (or old) object, but we don't care about them here
-		self.process_students()
-		self.process_teachers()
-		self.process_parents()
-		self.process_parent_links()
-		self.process_courses()
-		self.process_schedules()
-		self.process_custom_profile()
-		self.process_timetables()
-
+		order = ['students', 'teachers', 'parents', 'parent_links', 'courses', 'schedules', 'custom_profile', 'mrbs_editor']
+		for o in order:
+			method = getattr(self, 'process_{}'.format(o))
+			method()
 
 class PostfixTree(AbstractTree):
 	pass

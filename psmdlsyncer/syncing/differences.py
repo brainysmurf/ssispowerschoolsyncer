@@ -58,17 +58,15 @@ class DetermineChanges:
         # then looking for differences between each item
         # then we check the keys for subtractions
 
-        subbranches = ['teachers', 'students', 'custom_profile_fields', 'courses', 'groups', 'schedules']
-        subbranches = ['teachers']
+        subbranches = ['teachers', 'students', 'parents', 'custom_profiles', 'courses', 'groups', 'schedules']
         for subbranch in subbranches:
-
             self.default_logger("Subbranch: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
             self.default_logger("There are {} items in {}'s left branch".format(len(right_branch), subbranch))
             self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
 
-            self.default_logger("Looking for new {}s:".format(subbranch))
+            self.default_logger("Looking for new {}:".format(subbranch))
             # Loop through missing stuff and do with it what we must
             for key in right_branch.keys() - left_branch.keys():
                 yield ModificationStatement(
@@ -93,13 +91,11 @@ class DetermineChanges:
                             )
 
         # Now go through the model and inspect the individual items
-        subbranches = ['teachers', 'students']
-        for subbranch in subbranches:
+        indiv_subbranches = ['teachers', 'students', 'parents', 'custom_profiles']
+        for subbranch in indiv_subbranches:
             self.default_logger("Subbranch: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
-            self.default_logger("There are {} items in {}'s left branch".format(len(right_branch), subbranch))
-            self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
 
             for item_key in left_branch:
                 item_left = left_branch.get(item_key)
@@ -115,6 +111,10 @@ class DetermineChanges:
 
         self.default_logger("Looking for old {}s:".format(subbranch))
         for subbranch in subbranches:
+            self.default_logger("Subbranch: {}".format(subbranch))
+            left_branch = self.get_subbranch(self.left, subbranch)
+            right_branch = self.get_subbranch(self.right, subbranch)
+
             for key in left_branch.keys() - right_branch.keys():
                 yield ModificationStatement(
                     left = left_branch.get(key),

@@ -5,4 +5,4 @@ class AutoSend(AutoSendTree):
     """
     """
     klass = AutoSendImport
- 
+

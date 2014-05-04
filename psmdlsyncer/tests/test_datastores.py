@@ -5,7 +5,7 @@ from psmdlsyncer.syncing.differences import DetermineChanges
 
 if __name__ == "__main__":
 
-    inspect = False  # make this a command line argument
+    inspect = True  # make this a command line argument
 
     left = MoodleTree()
     right = AutoSendTree()

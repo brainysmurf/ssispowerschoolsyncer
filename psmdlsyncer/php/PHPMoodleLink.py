@@ -1,44 +1,71 @@
-import subprocess
+"""
+Exposes native Moodle functions to python
+Uses pexpect utility
+"""
+
 from psmdlsyncer.utils import NS
 from psmdlsyncer.settings import config_get_section_attribute, logging
+from psmdlsyncer.sql import MoodleDBConnection
+import pexpect, sys, os
 
 class CallPHP:
     """
-    Implements common functions
-    Serves as gateway to php functions available in moodle, makes available to Python
+    Interfaces with php file phpclimoodle.php
     """
     def __init__(self):
         #TODO: Get this info from standard settings and config
         self.logger = logging.getLogger(self.__class__.__name__)
+        self.default_logger = self.logger.info
         self.sf = NS()
+        self.email_accounts = config_get_section_attribute('EMAIL', 'check_accounts')
+        self.moodle_accounts = config_get_section_attribute('MOODLE', 'sync')
+        # TODO: Depreciate this stupid dry run thingie, make it a logging feature instead
         self.dry_run = config_get_section_attribute('DEFAULTS', 'dry_run')
         self.path_to_cli = config_get_section_attribute('MOODLE', 'path_to_cli')
         self.path_to_php = config_get_section_attribute('MOODLE', 'path_to_php')
         if not self.path_to_php:
             self.path_to_php = '/usr/bin/php'
-        self.email_accounts = config_get_section_attribute('EMAIL', 'check_accounts')
-        self.moodle_accounts = config_get_section_attribute('MOODLE', 'sync')
+
+        # Moodle requires any php files to be run from the admin/cli directory
+        os.chdir(self.path_to_cli)
+
+        # And now, spawn it
+        cmd = "{} {}/phpclimoodle.php".format(self.path_to_php, self.path_to_cli)
+        self.process = pexpect.spawn(cmd)
+        self.process.delaybeforesend = 0  # speed things up a bit, eh?
+        self.process.expect_exact('?: ') # not sure why this works the first time
 
     def command(self, routine, cmd):
-        self.sf.define(php_path=self.path_to_php, routine=routine, space=" ")
-        cmd = self.sf('{php_path} phpclimoodle.php {routine}{space}' ) + cmd
-        if not self.dry_run:
-            self.logger.debug('Calling using Popen: ' + cmd)
-            p = subprocess.Popen( cmd,
-                              shell=True, stdout=subprocess.PIPE, cwd=self.path_to_cli)
-            result = p.communicate()
-            # MAKE SURE TO LOG IT IF THERE IS SOME MESSAGE
-            if len(result) > 1 and result[1]:
-                self.logger.warn(result)
-            return result
+        """
+        Interfaces with pexpect
+        """
+        try:
+            self.process.sendline(routine + ' ' + cmd)
+        except OSError:
+            if self.process.isalive():
+                self.logger.warning("Huh. Error but it's still alive!")
+            else:
+                self.logger.warning("The other side just up and died")
+
+        # We know that the phpclimoodle file returns a plus if it's all good
+        # and a negative if not, handle accordingly
+        which = self.process.expect(['\+.*', '-\d+ .*'])
+        if which == 1:
+            self.logger.warning(self.process.after)   # make sure this is a warning
         else:
-            return "Dry run enabled: {}".format(cmd)
+            self.default_logger(self.process.after)   # let the class decide whether or not to output it or not
 
     def create_account(self, username, email, firstname, lastname, idnumber, auth='manual'):
         self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber, auth=auth)
         to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber} {auth}")
         if self.moodle_accounts:
             return self.command('create_account', to_pass)
+        else:
+            return "Dry run enabled: create_account {}".format(to_pass)
+
+    def create_group_for_course(self, course_id, group_name):
+        if self.moodle_accounts:
+            self.command('create_group_for_course {} {}'.format(course_id, group_name))
         else:
             return "Dry run enabled: create_account {}".format(to_pass)
 
@@ -112,21 +139,21 @@ class CallPHP:
         to_pass = self.sf("{course} '{group}'")
         self.command('delete_group_for_course', to_pass)
 
-    def shell(self, command):
-        p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-        return p.communicate()
-
     def change_username(self, idnumber, new_name):
         return self.command('change_username', "{} {}".format(idnumber, new_name))
 
     def associate_child_to_parent(self, idnumber, child_idnumber):
         return self.command('associate_child_to_parent', "{} {}".format(idnumber, child_idnumber))
 
-class PowerSchoolIntegrator(CallPHP):
-    pass
+    def __del__(self):
+        """
+        Kill the spawned process
+        TODO: Send it an EOF instead?
+        """
+        try:
+            self.command('QUIT', '')
+        except pexpect.EOF:
+            pass
 
-if __name__ == "__main__":
 
-    p = PowerSchoolIntegrator()
 
-    print(p.add_user_to_group('32352', 'darkosaboMATST10'))

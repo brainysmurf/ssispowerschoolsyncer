@@ -10,7 +10,7 @@ def inform_admin(admin_email):
 def reinform_new_parent(family):
     pass
 
-def inform_new_student(family, student):
+def inform_new_student(student):
     path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
     student_email_templates = read_in_templates(path_to_templates + '/student_new_account')
     sender = '"DragonNet Admin" <lcssisadmin@student.ssis-suzhou.net>'
@@ -35,12 +35,12 @@ def inform_new_student(family, student):
     """
     email.add_cc(get_head_of_grade(student.grade))
     email.define_fields(sf)
-    email.add_bcc('lcssisadmin@student.ssis-suzhou.net')    
+    email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
     email.send()
-    
-def inform_new_parent(family):
+
+def inform_new_parent(parent):
     """
-    family is object
+    parent is object
     """
     path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
     parent_email_templates = read_in_templates(path_to_templates + '/parent_new_account')
@@ -48,15 +48,15 @@ def inform_new_parent(family):
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(parent_email_templates)
     email.make_subject("Your SSIS DragonNet Parent Account")
-    for family_email in family.emails:
-        email.add_to(family_email)
-    for student in family.children:
+    for parent_email in parent.emails:
+        email.add_to(parent_email)
+    for student in parent.children:
         if student.is_korean:
             email.add_language('kor')
         if student.is_chinese:
             email.add_language('chi')
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
-    email.define_field('username', family.email)
+    email.define_field('username', parent.email)
     email.define_field('salutation', 'Dear Parent')
     email.send()
-        
+

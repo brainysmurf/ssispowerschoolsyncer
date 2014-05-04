@@ -4,14 +4,16 @@ import re
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower, derive_departments
 from collections import defaultdict
 from psmdlsyncer.utils import NS
+import json
 
 PRIMARYSCHOOLID = 111
 SECONDARYSCHOOLID = 112
+NOSCHOOLID = 0
 
 class Teacher(BaseModel):
     kind = "teacher"
 
-    def __init__(self, num, lastfirst, email, title, schoolid, status, **kwargs):
+    def __init__(self, num, lastfirst, email, title, schoolid, staffstatus, status, **kwargs):
         self.num = num
         self.ID = num
         self.powerschool_id = num
@@ -43,13 +45,21 @@ class Teacher(BaseModel):
         self._enrollments = defaultdict(list)
         self.is_primary = False
         self.is_secondary = False
+        self.is_support = False
         self.homeroom = None
+        self.profile_bool_iselemteacher = False
+        self.profile_bool_issecteacher = False
+        self.profile_bool_issupport = False
+        self.custom_profile_schoolid = schoolid
         if schoolid == str(PRIMARYSCHOOLID):
             self.is_primary = True
             self.profile_bool_iselemteacher = True
-        if schoolid == str(SECONDARYSCHOOLID):
+        elif schoolid == str(SECONDARYSCHOOLID):
             self.is_secondary = True
             self.profile_bool_issecteacher = True
+        elif schoolid == str(NOSCHOOLID):
+            self.is_support = True
+            self.profile_bool_issupport = True
         self.status = status
         self.profile_extra_isteacher = True
         self._cohorts = self.derive_cohorts()
@@ -64,18 +74,18 @@ class Teacher(BaseModel):
             self._courses.append(reference)
 
     def add_student(self, student):
-        reference = weak_reference(student)
-        if not student in self._students:
+        if not student.ID in self.student_idnumbers:
+            reference = weak_reference(student)
             self._students.append(reference)
 
     def add_group(self, group):
-        reference = weak_reference(group)
-        if not group in self._groups:
+        if not group.ID in self.group_idnumbers:
+            reference = weak_reference(group)
             self._groups.append(reference)
 
     def add_teacher(self, teacher):
-        reference = weak_reference(teacher)
-        if not teacher in self._teachers:
+        if not teacher.ID in self.teacher_idnumbers:
+            reference = weak_reference(teacher)
             self._teachers.append(reference)
 
     def add_parent(self, parent):
@@ -87,7 +97,7 @@ class Teacher(BaseModel):
         self.add_student(student)
         self.add_course(course)
         self.add_group(group)
-        self.enrollments[course.ID].append( group.ID )
+        self.add_enrollment(course, group)
 
     @property
     def enrollments(self):
@@ -110,6 +120,10 @@ class Teacher(BaseModel):
         return [group() for group in self._groups]
 
     @property
+    def teachers(self):
+        return [teacher() for teacher in self._teachers]
+
+    @property
     def enrollments(self):
         return self._enrollments
 
@@ -126,8 +140,32 @@ class Teacher(BaseModel):
         return set([course.ID for course in self.courses])
 
     @property
+    def group_idnumbers(self):
+        return set([group.ID for group in self.groups])
+
+    @property
+    def teacher_idnumbers(self):
+        return set([teacher.ID for teacher in self.teachers])
+
+    @property
+    def student_idnumbers(self):
+        return set([student.ID for student in self.students])
+
+    @property
     def cohorts(self):
         return self._cohorts
+
+    @property
+    def enrollments(self):
+        return self._enrollments
+
+    def get_enrollments(self):
+        """
+        Return a tuple of course, group
+        """
+        for course in self.enrollments:
+            for group in self.enrollments[course]:
+                yield course, group
 
     @property
     def cohort_idnumbers(self):
@@ -136,6 +174,23 @@ class Teacher(BaseModel):
     @property
     def timetable(self):
         return self._timetable
+
+    @property
+    def custom_profile_timetable(self):
+        if self.timetable == None:
+            return None
+        result = {}
+        result['enrollments'] = self.enrollments
+        result['timetable'] = self.timetable
+        return json.dumps(result)
+
+    @custom_profile_timetable.setter
+    def custom_profile_timetable(self, value):
+        self._timetable = value
+
+    def add_enrollment(self, course, group):
+        if not group.ID in self.enrollments[course.ID]:
+            self.enrollments[course.ID].append( group.ID )
 
     def add_timetable(self, timetable_dict):
         """
@@ -155,6 +210,8 @@ class Teacher(BaseModel):
             l.append('teachersELEM')
         if self.is_secondary or self.is_primary:
             l.append('teachersALL')
+        if self.is_support:
+            l.append('supportALL')
         return l
 
     def get_departments(self):
@@ -162,7 +219,7 @@ class Teacher(BaseModel):
         return self._departments
 
     def __repr__(self):
-        return self.format_string("<Teacher: {lastfirst} ({ID}): {username}>") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
+        return self.format_string("<Teacher: {username} ({ID})>") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
 
     def differences(self, other):
         # Handle cohorts (site-wide groups)

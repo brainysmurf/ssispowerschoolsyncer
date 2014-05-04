@@ -25,7 +25,7 @@ class MoodleImport(MoodleDBConnection):
             if not staff_info:
                 continue
             lastfirst = staff_info.lastname + ', ' + staff_info.firstname
-            yield [staff_id, lastfirst, staff_info.email, '', '', '']
+            yield [staff_id, lastfirst, staff_info.email, '', '', '', '']
 
     def content_sec_courseinfo(self):
         """ RETURN ALL THE STUFF IN TEACHING & LEARNING TAB """
@@ -58,7 +58,7 @@ class MoodleImport(MoodleDBConnection):
         """
         return ()
 
-    def content_dist_userprofiles(self):
+    def content_dist_customprofiles(self):
         """
         The model by default takes care of the custom_profile fields,
         but with Moodle we have to download from the database
@@ -105,15 +105,32 @@ order by
     usr.idnumber,
     grps.name
 """.format(50)):
+            _period = ''
             courseID, userID, username, roleName, groupname = row
+            if not groupname:
+                continue
+
             # Do different things based on the role
             # For teachers, we have to see if they are the owner of the group
+
             if roleName == "Teacher":
-                # we have to derive the group name
-                if not groupname:
-                    groupname = username + courseID
+                # TODO: Can be deleted, right?
+                # if not groupname:
+                #     groupname = username + courseID
                 results[groupname]['course'] = courseID
+
+                # Most probably, there will only be one teacher in this group
+                # But hard-coding it as one object seems wrong, so use a list
+                # FIXME: If teachers were to be manaully put into a group
+                #        that isn't their own group, we have some trouble
+                #        There isn't any reason for them to do that
+                #        But we should probably close that off
+                #        (Maybe look at the username before adding here?)
                 results[groupname]['teachers'].append(userID)
+
+            elif roleName == "Manager":
+                # what do we do in this case?
+                continue
 
             elif roleName == "Student":
                 if userID.endswith('P'):
@@ -129,27 +146,45 @@ order by
                     results[groupname]['students'].append(userID)
 
             elif roleName == "Parent":
-                pass
+                # The below will work okay because we sorted the query by name
+                # and Teacher comes before Parent
+                # a bit of a workaround, but it should work okay
+                if not groupname:
+                    #TODO: Figure out why the SQL query returns so many blank groups
+                    continue
+
+                if '-' in groupname:
+                    section = groupname.split('-')[1]
+                else:
+                    self.logger.warning("Found when processing parent, moodle group {} does not have a section number attached, so much be illigitmate".format(groupname))
+                    # we should indicate the enrollment by yielding what we can
+                    continue
+
+                teachers = results[groupname]['teachers']
+                course = results[groupname]['course']
+                if not course or not teachers:
+                    self.logger.warning("Group with no teacher info: {}!".format(groupname))
+                    continue
+                for teacher in teachers:
+                    yield course, _period, section, teacher, userID
 
             else:
                 # non-editing teachers...
                 pass
 
-        # TODO: Section
-        _period = ''
-
         for group in results.keys():
             if '-' in group:
                 section = group.split('-')[1]
             else:
-                section = ""
+                self.logger.warning("Moodle group {} does not have a section number attached, so much be illigitmate".format(group))
+                continue
+            teachers = results[group]['teachers']
+            course = results[group]['course']
+            if not course or not teachers:
+                self.logger.warning("Group with no teacher info: {}!".format(group))
+                continue
+
             for student in results[group]['students']:
-                teachers = results[group]['teachers']
-                course = results[group]['course']
-                if not course:
-                    self.logger.warning("That's really weird, no course information available for group {}!".format(group))
-                if not teachers:
-                    self.logger.warning("A moodle course {} with some student enrollments doesn't seem to have any teacher enrollments! Won't sync properly!".format(course))
                 for teacher in teachers:
                     yield course, _period, section, teacher, student
 
