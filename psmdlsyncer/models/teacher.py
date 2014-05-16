@@ -13,11 +13,12 @@ NOSCHOOLID = 0
 class Teacher(BaseModel):
     kind = "teacher"
 
-    def __init__(self, num, lastfirst, email, title, schoolid, staffstatus, status, **kwargs):
+    def __init__(self, num, database_id, lastfirst, email, title, schoolid, staffstatus, status, **kwargs):
         self.num = num
         self.ID = num
         self.powerschool_id = num
         self.idnumber = self.num
+        self.database_id = database_id
         self.family_id = self.ID[:4] + 'P'
         self.lastfirst = lastfirst
         self.email = email if email.strip() else None
@@ -64,6 +65,9 @@ class Teacher(BaseModel):
         self.profile_extra_isteacher = True
         self._cohorts = self.derive_cohorts()
 
+    def add_cohort(self, cohort):
+        if not cohort in self._cohorts:
+            self._cohorts.append(cohort)
 
     def add_course(self, course):
         """ UPDATES INTERNAL AS WELL AS DETECTS HOMEROOM """
@@ -211,7 +215,7 @@ class Teacher(BaseModel):
         if self.is_secondary or self.is_primary:
             l.append('teachersALL')
         if self.is_support:
-            l.append('supportALL')
+            l.append('supportstaffALL')
         return l
 
     def get_departments(self):

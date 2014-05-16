@@ -5265,7 +5265,6 @@ class UserInfoDatum(Base):
     data = Column(Text, nullable=False)
     dataformat = Column(SmallInteger, nullable=False, server_default='0')
 
-
 class UserInfoField(Base):
     __tablename__ = 'ssismdl_user_info_field'
 

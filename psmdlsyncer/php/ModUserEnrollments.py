@@ -68,7 +68,8 @@ class ModUserEnrollments(CallPHP):
 
     def new_parent(self, parent):
         self.logger.info('Creating account for {}'.format(parent))
-        self.create_account( parent.username, parent.email, parent.first, parent.last, parent.num, auth='manual' )
+        # parents' email is their username
+        self.create_account( parent.username, parent.email, "Parent", parent.email, parent.idnumber, auth='manual' )
         for cohort in parent.cohorts:
             self.add_user_to_cohort(parent.ID, cohort)
         for course, group in parent.get_enrollments():
@@ -84,10 +85,8 @@ class ModUserEnrollments(CallPHP):
         self.shell( sf("/bin/bash {new_student_cmd} {num} {username} '{lastfirst}'") )
 
     def enroll_in_groups(self, student):
-        self.verbose and print("enroll_in_groups")
         get_groups = self.sql('select id, name from ssismdl_groups')()
         self._groups = {}
-        self.verbose and print("Setting up _groups dict now")
         for item in get_groups:
             groupid, groupname = item
         self._groups[groupid] = groupname

@@ -3,9 +3,6 @@ from psmdlsyncer.utils.modifications import ModificationStatement
 from psmdlsyncer.utils import NS2
 from psmdlsyncer.syncing.templates import DefaultTemplate
 
-# Used in Dispatched:
-from psmdlsyncer.sql.MoodleDatabase import MoodleDBConnection
-
 class DetermineChanges:
     """
     BOILERPLATE STUFF FOR MAKING THE WHEEL TURN
@@ -58,9 +55,11 @@ class DetermineChanges:
         # then looking for differences between each item
         # then we check the keys for subtractions
 
-        subbranches = ['teachers', 'students', 'parents', 'custom_profiles', 'courses', 'groups', 'schedules']
+        subbranches = ['courses', 'groups', 'cohorts', 'teachers', 'students', 'parents', 'schedules', 'custom_profile_fields']
+
         for subbranch in subbranches:
             self.default_logger("Subbranch: {}".format(subbranch))
+
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
             self.default_logger("There are {} items in {}'s left branch".format(len(right_branch), subbranch))
@@ -91,9 +90,9 @@ class DetermineChanges:
                             )
 
         # Now go through the model and inspect the individual items
-        indiv_subbranches = ['teachers', 'students', 'parents', 'custom_profiles']
+        indiv_subbranches = ['teachers', 'students', 'parents', 'courses']
         for subbranch in indiv_subbranches:
-            self.default_logger("Subbranch: {}".format(subbranch))
+            self.default_logger("Individual items: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
 
@@ -109,9 +108,8 @@ class DetermineChanges:
                             param = left_minus_right.param
                             )
 
-        self.default_logger("Looking for old {}s:".format(subbranch))
         for subbranch in subbranches:
-            self.default_logger("Subbranch: {}".format(subbranch))
+            self.default_logger("Looking for old {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
 

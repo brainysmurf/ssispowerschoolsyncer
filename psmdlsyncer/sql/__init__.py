@@ -1,6 +1,6 @@
-from psmdlsyncer.sql.MoodleDatabase import MoodleDBConnection
-from psmdlsyncer.sql.SQLWrapper import SQLWrapper
-from psmdlsyncer.sql.ServerInfo import ServerInfo
+from psmdlsyncer.sql.MDB import MoodleDBSession
 from psmdlsyncer.sql.MoodleReadIn import MoodleImport
+from psmdlsyncer.utils import NS2
+from contextlib import contextmanager
 
-a__all__ = [SQLWrapper, MoodleDBConnection, ServerInfo, MoodleImport]
+__all__ = [MoodleDBSession, MoodleImport]

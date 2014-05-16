@@ -1,8 +1,10 @@
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.models.datastores.tree import AbstractTree
 from psmdlsyncer.models.datastores.branch import DataStore
-from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.sql import MoodleDBSession
 from psmdlsyncer.models.parent import MoodleParent
+
+from psmdlsyncer.utils import NS2
 
 class MoodleDataStore(DataStore):
     pass
@@ -19,6 +21,24 @@ class MoodleTree(AbstractTree):
     klass = MoodleImport
     pickup = [DataStore, MoodleDataStore]
     convert_course = False
+
+    def process_students(self):
+        """
+        For Moodle since new students are added to the studentsALL cohort,
+        we have to go over it twice in order for them to appear.
+        """
+        super().process_students()
+        for student in self.student_info.content():
+            self.students.make(*student)
+
+    def process_teachers(self):
+        """
+        For Moodle since new students are added to the teachersALL or supportstaffALL cohort,
+        we have to go over it twice in order for them to appear.
+        """
+        super().process_teachers()
+        for teacher in self.teacher_info.content():
+            self.teachers.make(*teacher)
 
     def process_schedules(self):
         """
@@ -51,24 +71,31 @@ class MoodleTree(AbstractTree):
                         continue
 
                     course = self.courses.get(course_key, self.convert_course)
+                    if not course:
+                        # this may be an old-style group
+                        if course_key.endswith('11'):
+                            course_key = course_key + '12'
+                        elif course_key.endswith('12'):
+                            course_key = course_key[:-2] + '1112'
+                        course = self.courses.get(course_key, self.convert_course)
+                        if not course:
+                            self.logger.warning("Course not found! {}".format(course_key))
+                            continue
+
                     teacher = self.teachers.get_key(teacher_key)
                     if not teacher:
-                        self.logger.warning("Teacher not found! {}".format(teacher_key))
-                        continue
+                        # see if the teacher_key is actually a username we can deal with
+                        teacher = self.teachers.get_from_attribute('username', teacher_key)
+                        if not teacher:
+                            teacher = NS2()
+                            teacher.username = teacher_key
+
                     if section_number:
                         group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number))
                     else:
-                        self.logger.warning("No section number for group {}!".format(group))
-                        continue
+                        #self.logger.warning("No section number for group {}!".format(group))
+                        #continue
                         group = self.groups.make("{}{}".format(teacher.username, course.ID))
-
-                    # Do some sanity checks
-                    if not course:
-                        self.logger.warning("Course not found! {}".format(course_key))
-                        continue
-                    if not group:
-                        self.logger.warning("Group not found! {}".format(section_number))
-                        continue
 
                     # Now put in enrollments manually
                     enrollment = {course.ID: [group.ID]}
@@ -88,6 +115,11 @@ class MoodleTree(AbstractTree):
                         group = self.groups.make("{}{}".format(teacher.username, course.ID))
 
                     student = self.students.get_key(student_key)
+                    if not student:
+                        if self.teachers.get_key(student_key):
+                            # case where teacher is enrolled into the group
+                            # TODO: Figure out what to do about that
+                            continue
                     parent = self.parents.make_parent(student)
 
                     parent.add_child(student)
@@ -113,40 +145,47 @@ class MoodleTree(AbstractTree):
                     teacher.add_timetable(timetable)
 
     def process_mrbs_editor(self):
-        dnet = MoodleDBConnection()
-        for teacher_id in dnet.call_sql("""
-select
-    u.idnumber
-from
-    ssismdl_role_assignments ra
-join
-    ssismdl_user u on ra.userid = u.id
-where
-    contextid = 1 and roleid = 10 and
-    not u.idnumber like ''
-"""):
+        dnet = MoodleDBSession()
+        for teacher_id in dnet.mrbs_editors():
             self.mrbs_editor.make(teacher_id)
 
-    def process_custom_profile(self):
+    def process_cohorts(self):
+        cache = {}
+
+        for cohort_info in self.cohort_info.content():
+            idnumber, cohort_name = cohort_info
+            if idnumber in cache:
+                person = cache[idnumber]
+            else:
+                person = self.get_person(idnumber)
+                if not person:
+                    self.default_logger("invalid idnumber '{}' found when processing moodle cohorts".format(idnumber))
+                    continue
+                person._cohorts = []
+            person.add_cohort(cohort_name)
+
+    def process_custom_profile_fields(self):
         # Indicate to the model we are are manually controlling the fields
         # By setting them all to None
-        # Subsequent calls with .get_custom_field_keys won't return them again
+        # Subsequent calls to .get_custom_field_keys won't return them again
         for person in self.get_everyone():
             for field in person.get_custom_field_keys():
                 setattr(person, field, None)
 
+        # Now look in Moodle's database for the values, and set them
         self.default_logger("Moodle processing profile fields")
+
         for profile_info in self.custom_profile_fields_info.content():
             self.default_logger("Processing custom profile: {}".format(profile_info))
             idnumber, username, shortname, data = profile_info
             person = self.get_person(idnumber)
             if not person:
-                self.logger.warning('Could not find person while processing {} moodle custom profile'.format(profile_info))
+                self.default_logger('Could not find person while processing {} moodle custom profile'.format(profile_info))
                 continue
             person.set_custom_field(shortname, data)
 
         # Now go through and actually make the items in the branch
-        super().process_custom_profile()
+        super().process_custom_profile_fields()
 
 if __name__ == "__main__":
 

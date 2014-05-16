@@ -1,5 +1,4 @@
 from psmdlsyncer.models.base import BaseModel
-from psmdlsyncer.sql import MoodleDBConnection
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
 from psmdlsyncer.settings import logging
@@ -92,7 +91,7 @@ class Student(BaseModel):
         self.idnumber = self.num
         self.ID = self.num
         self.powerschoolID = self.ID
-        self.stuid = stuid
+        self.database_id = stuid
         try:
             self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
         except ValueError:
@@ -274,6 +273,10 @@ class Student(BaseModel):
             reference = weak_reference(group)
             self._groups.append( reference )
 
+    def add_cohort(self, cohort):
+        if not cohort in self._cohorts:
+            self._cohorts.append(cohort)
+
     def add_teacher(self, teacher):
         if not teacher.ID in self.teacher_idnumbers:
             reference = weak_reference(teacher)
@@ -344,9 +347,9 @@ class Student(BaseModel):
         for group in self.groups:
             for teacher in group.teachers:
                 this_teacher = {}
-                this_teacher['lastfirst'] = teacher.lastfirst.replace("'", "")
-                this_teacher['first'] = teacher.first.replace("'", "")
-                this_teacher['last'] = teacher.last.replace("'", "")
+                this_teacher['lastfirst'] = teacher.lastfirst
+                this_teacher['first'] = teacher.first
+                this_teacher['last'] = teacher.last
                 result[group.ID].append(this_teacher)
         return result
 
@@ -578,7 +581,6 @@ class Student(BaseModel):
                 to_remove.group = group
                 ns.param = to_remove
                 yield ns
-
 
     __sub__ = differences
 

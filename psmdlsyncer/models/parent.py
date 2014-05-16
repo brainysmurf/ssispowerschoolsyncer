@@ -1,5 +1,6 @@
 from psmdlsyncer.models.base import BaseModel
 from psmdlsyncer.utils import NS, weak_reference
+from psmdlsyncer.utils.Counter import Counter
 
 class Parent(BaseModel):
     """
@@ -13,6 +14,7 @@ class Parent(BaseModel):
         self.family_id = self.ID = self.idnumber = idnumber
         self._children = []
         self._cohorts = ['parentsALL']
+        self._username = None
         self.custom_profile_isparent = True
 
     @property
@@ -34,11 +36,39 @@ class Parent(BaseModel):
         return set(result)
 
     @property
+    def username(self):
+        """
+        Look at the common emails between all the children
+        and pick the second one (assuming there are two)
+        Reason for this is because there is no way for a computer to know
+        which one is which
+        """
+        c = Counter()
+        for child in self.children:
+            for email in child.parent_emails:
+                c.add(email)
+        common = c.maximum_in_order_added
+        if not common:
+            input("A parent with no children emails?")
+        if len(common) == 1:
+            return common[0]
+        else:
+            return common[1]
+
+    @property
+    def email(self):
+        return self.username
+
+    @property
     def courses(self):
         result = []
         for child in self.children:
             result.extend(child.courses)
         return set(result)
+
+    def add_cohort(self, cohort):
+        if not cohort in self._cohorts:
+            self._cohorts.append(cohort)
 
     @property
     def enrollments(self):

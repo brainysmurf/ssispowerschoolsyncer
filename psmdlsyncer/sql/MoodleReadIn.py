@@ -1,10 +1,9 @@
-from psmdlsyncer.sql.MoodleDatabase import MoodleDBConnection
+from psmdlsyncer.sql import MoodleDBSession
 from collections import defaultdict
 import re
 import time
 
-
-class MoodleImport(MoodleDBConnection):
+class MoodleImport(MoodleDBSession):
     """
     Class used to import information about students
     """
@@ -14,23 +13,16 @@ class MoodleImport(MoodleDBConnection):
         super().__init__()
 
     def content_dist_staffinfo(self):
-        staff_ids = set([row.idnumber for row in
-                         self.those_enrolled_in_one_of_these_cohorts(
-                             'teachersALL', 'supportALL'
-                             )
-                         if row.idnumber])
-        for staff_id in staff_ids:
-            staff_info = self.get_unique_row('user', 'idnumber', 'firstname', 'lastname', 'email',
-                                             idnumber=staff_id)
-            if not staff_info:
-                continue
-            lastfirst = staff_info.lastname + ', ' + staff_info.firstname
-            yield [staff_id, lastfirst, staff_info.email, '', '', '', '']
+        for staff in self.users_enrolled_in_these_cohorts(['teachersALL', 'supportALL']):
+            schoolid = self.wrap_no_result(self.get_user_schoolid, staff)
+            if schoolid is None:
+                schoolid = ''
+            lastfirst = staff.lastname + ', ' + staff.firstname
+            yield [staff.idnumber, staff.id, lastfirst, staff.email, '', schoolid, '', '']
 
     def content_sec_courseinfo(self):
         """ RETURN ALL THE STUFF IN TEACHING & LEARNING TAB """
-        for row in self.get_teaching_learning_courses(select_list=['shortname', 'fullname']):
-            yield row.shortname, row.fullname
+        yield from self.get_teaching_learning_courses()
 
     def content_elem_courseinfo(self):
         """
@@ -39,15 +31,10 @@ class MoodleImport(MoodleDBConnection):
         return ()
 
     def content_dist_studentinfo(self):
-        """
-        MOODLE DOESN'T HAVE CONCEPT OF SITE-WIDE ROLES,
-        BUT IT DOES HAVE SITE-WIDE COHORTS, SO LET'S USE THAT
-        """
-        students = [ (row.idnumber, row.username, row.homeroom) for row in self.those_enrolled_in_cohort('studentsALL')]
-        for student_id, student_username, student_homeroom in students:
-            # pass grade as None tells the model to use the homeroom
-            yield [student_id, '', None, student_homeroom, "", "", "", "", "", "",
-                   student_username]
+        for student in self.users_enrolled_in_this_cohort('studentsALL'):
+            # note, student.username on the end is an optional parameter
+            # TODO: Add bus info here too!
+            yield [student.idnumber, student.id, None, student.department, "", "", "", "", "", "", student.username]
 
     def content_sec_studentschedule(self):
         yield from self.get_bell_schedule()
@@ -63,14 +50,10 @@ class MoodleImport(MoodleDBConnection):
         The model by default takes care of the custom_profile fields,
         but with Moodle we have to download from the database
         """
-        yield from self.call_sql("""
-SELECT
-    u.idnumber, u.username, f.shortname, d.data from ssismdl_user_info_data d
-JOIN
-    ssismdl_user_info_field f ON f.id = d.fieldid
-JOIN
-    ssismdl_user u ON u.id = d.userid
-""")
+        yield from self.get_custom_profile_records()
+
+    def content_dist_cohorts(self):
+        yield from self.get_cohorts()
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))
@@ -85,26 +68,7 @@ JOIN
         (Getting it done in pure sql with nested seelcts was just a bit too tedius)
         """
         results = defaultdict(lambda : defaultdict(list))
-        for row in self.call_sql("""
-select distinct
-    crs.idnumber courseID, usr.idnumber as userID, usr.username as username, r.name as rolename, grps.name as groupName
-FROM ssismdl_course crs
-JOIN ssismdl_course_categories cat ON cat.id = crs.category
-JOIN ssismdl_context ct ON crs.id = ct.instanceid
-JOIN ssismdl_role_assignments ra ON ra.contextid = ct.id
-JOIN ssismdl_user usr ON usr.id = ra.userid
-LEFT JOIN ssismdl_role r ON r.id = ra.roleid
-LEFT JOIN ssismdl_groups_members mmbrs ON mmbrs.userid = usr.id
-LEFT JOIN ssismdl_groups grps ON grps.id = mmbrs.groupid and grps.courseid = crs.id
-where
-    not crs.idnumber like '' and
-    not usr.idnumber like '' and
-    cat.path like '/{}/%'
-order by
-    r.name DESC,
-    usr.idnumber,
-    grps.name
-""".format(50)):
+        for row in self.bell_schedule():
             _period = ''
             courseID, userID, username, roleName, groupname = row
             if not groupname:
@@ -156,15 +120,30 @@ order by
                 if '-' in groupname:
                     section = groupname.split('-')[1]
                 else:
-                    self.logger.warning("Found when processing parent, moodle group {} does not have a section number attached, so much be illigitmate".format(groupname))
-                    # we should indicate the enrollment by yielding what we can
-                    continue
+                    section = ''
+                    #self.logger.warning("Found when processing parent, moodle group {} does not have a section number attached, so much be illigitmate".format(groupname))
+                    # TODO: we should indicate the enrollment by yielding what we can
+                    #continue
 
                 teachers = results[groupname]['teachers']
                 course = results[groupname]['course']
-                if not course or not teachers:
-                    self.logger.warning("Group with no teacher info: {}!".format(groupname))
-                    continue
+                if not teachers:
+                    if groupname[-2] == '-':
+                        groupname = groupname[:-2]
+                    # first do a heuristic to see if we can't get the teacher username from the group name
+                    derived_teacher = re.sub('[^a-z]', '', groupname)
+                    if derived_teacher:
+                        teachers = [derived_teacher]
+                    else:
+                        self.logger.warning("Group with no teacher info: {}!".format(groupname))
+                if not course:
+                    if groupname[-2] == '-':
+                        groupname = groupname[:-2]
+                    derived_course = re.sub('[a-z]', '', groupname)
+                    if derived_course:
+                        course = derived_course
+                    else:
+                        self.logger.warning("No course for group {}".format(groupname))
                 for teacher in teachers:
                     yield course, _period, section, teacher, userID
 
@@ -176,8 +155,9 @@ order by
             if '-' in group:
                 section = group.split('-')[1]
             else:
-                self.logger.warning("Moodle group {} does not have a section number attached, so much be illigitmate".format(group))
-                continue
+                section = ''
+                # self.logger.warning("Moodle group {} does not have a section number attached, so much be illigitmate".format(group))
+                # continue
             teachers = results[group]['teachers']
             course = results[group]['course']
             if not course or not teachers:
@@ -188,5 +168,8 @@ order by
                 for teacher in teachers:
                     yield course, _period, section, teacher, student
 
+if __name__ == "__main__":
 
-
+    m = MoodleImport('', '')
+    for student in m.users_enrolled_in_these_cohorts(['teachersALL', 'supportALL']):
+        print(student)

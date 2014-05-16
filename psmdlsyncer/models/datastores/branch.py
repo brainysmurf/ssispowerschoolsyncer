@@ -2,12 +2,13 @@ from psmdlsyncer.models.student import Student
 from psmdlsyncer.models.teacher import Teacher
 from psmdlsyncer.models.parent import Parent, MoodleParent
 from psmdlsyncer.models.parent_link import ParentLink
-from psmdlsyncer.models.custom_profile import CustomProfile
+from psmdlsyncer.models.custom_profile import CustomProfileField
 from psmdlsyncer.models.course import Course
 from psmdlsyncer.models.group import Group
 from psmdlsyncer.models.schedule import Schedule
 from psmdlsyncer.models.timetable import Timetable
 from psmdlsyncer.models.mrbs import MRBSEditor
+from psmdlsyncer.models.cohorts import Cohort
 from psmdlsyncer.utils.Utilities import convert_short_long
 import logging
 log = logging.getLogger(__name__)
@@ -76,7 +77,7 @@ class DataStore:
 
 	@classmethod
 	def get_from_attribute(cls, attr, value):
-		for item in cls.get_values():
+		for item in cls.get_objects():
 			if getattr(item, attr) == value:
 				return item
 		return None
@@ -190,13 +191,24 @@ class courses(DataStore):
 	klass = Course
 
 	@classmethod
-	def make_with_conversion(cls, idnumber, name=""):
-		short, name = convert_short_long(idnumber, name)
-		return cls.make(short, name)
+	def exclude(cls, idnumber, name):
+		# TODO: Make this a setting
+		return "Lab" in name
 
 	@classmethod
-	def make_without_conversion(cls, idnumber, name=""):
-		return cls.make(idnumber, name)
+	def make_with_conversion(cls, idnumber, name, *args, **kwargs):
+		short, name = convert_short_long(idnumber, name)
+		ret = cls.make(short, name, *args, **kwargs)
+		if cls.exclude(idnumber, name) and not ret.exclude:
+			ret.exclude = True
+		return ret
+
+	@classmethod
+	def make_without_conversion(cls, idnumber, name, *args, **kwargs):
+		ret = cls.make(idnumber, name, *args, **kwargs)
+		if cls.exclude(idnumber, name) and not ret.exclude:
+			ret.exclude = True
+		return ret
 
 	@classmethod
 	def get(cls, idnumber, convert):
@@ -225,17 +237,24 @@ class schedules(DataStore):
 		schedule_id = "".join([arg.ID for arg in args])
 		return cls.make(schedule_id, *args)
 
-class custom_profiles(DataStore):
-	klass = CustomProfile
+class custom_profile_fields(DataStore):
+	klass = CustomProfileField
 
 	@classmethod
 	def make_profile(cls, person):
 		for custom_field in person.get_custom_field_keys():
-			plain_name = person.plain_name_of_custom_field(custom_field)
-			idnumber = person.ID + plain_name
-			cls.make(idnumber, plain_name, getattr(person, custom_field), person.ID)
+			idnumber = person.plain_name_of_custom_field(custom_field)
+			return cls.make(idnumber)
 
 class mrbs_editor(DataStore):
 	klass = MRBSEditor
+
+class cohorts(DataStore):
+	klass = Cohort
+
+	@classmethod
+	def make_cohort(cls, person):
+		for cohort in person.cohorts:
+			return cls.make(cohort)
 
 

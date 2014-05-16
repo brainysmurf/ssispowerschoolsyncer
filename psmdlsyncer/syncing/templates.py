@@ -1,6 +1,6 @@
 import logging
 from psmdlsyncer.php import ModUserEnrollments
-from psmdlsyncer.sql.MoodleDatabase import MoodleDBConnection
+from psmdlsyncer.sql.MDB import MoodleDBSession
 log = logging.getLogger(__name__)
 
 class dry_run:
@@ -22,15 +22,36 @@ class DefaultTemplate:
     and send it on to the low-level handlers
     This one just prints out what it sees
     """
+    only = "course_grade_changed"    # for debugging
+
     def __init__(self):
         self.logger = logging.getLogger("DefaultTemplate")
-        self.default_logger = self.logger.debug
+        self.default_logger = self.logger.info
+
+    def __getattribute__(self, name):
+        if '_' in name:
+            if object.__getattribute__(self, 'only'):
+                if name == object.__getattribute__(self, 'only'):
+                    return object.__getattribute__(self, name)
+                else:
+                    return object.__getattribute__(self, 'dummy')
+            else:
+                return super().__getattribute__(name)
+        else:
+            return super().__getattribute__(name)
+
+    def dummy(self, *args, **kwargs):
+        pass
 
     def get(self, item, default=None):
         return getattr(self, item, default) if hasattr(self, item) else default
 
     def old_student(self, item):
+        pass # for now
         self.default_logger("Found student who has now left: {}".format(item.left))
+
+    def old_parent(self, item):
+        pass
 
     def new_student(self, item):
         self.default_logger("Found new student: {}".format(item.right))
@@ -64,7 +85,7 @@ class DefaultTemplate:
     def remove_from_group(self, item):
         course = item.param.course
         group = item.param.group
-        self.default_logger("Remove {0.right} from group {2} in course {1}".format(item, course, group))
+        self.default_logger("Remove {0.left} from group {2} in course {1}".format(item, course, group))
 
     def enrol_in_course(self, item):
         course = item.param.course
@@ -72,13 +93,19 @@ class DefaultTemplate:
         self.default_logger("Enrol {0.left} into course {1} in group {2}".format(item, course, group))
 
     def deenrol_from_course(self, item):
-        self.default_logger("De-enrol {0.right} from course {0.param}".format(item))
+        self.default_logger("De-enrol {0.left} from course {0.param.course}".format(item))
 
     def new_schedule(self, item):
         pass
 
     def old_schedule(self, item):
         pass
+
+    def new_cohort(self, item):
+        self.default_logger("A NEW COHORT! {0.param} ".format(item))
+
+    def old_cohort(self, item):
+        self.default_logger("AN OLD COHORT! {0.param} ".format(item))
 
     def new_course(self, item):
         self.default_logger("A NEW COURSE! {0.param} ".format(item))
@@ -95,6 +122,15 @@ class DefaultTemplate:
     def username_changed(self, item):
         self.default_logger("Username changed! was {0.left.username} should be {0.param} ".format(item))
 
+    def add_custom_profile_field_to_user(self, item):
+        self.default_logger("Adding custom profile field {0.param.field} to user {0.right.idnumber}".format(item))
+
+    def remove_custom_profile_field_to_user(self, item):
+        self.default_logger("Remove custom profile field? {0.param.field}".format(item))
+
+    def course_grade_changed(self):
+        self.default_logger("Course {0.left.idnumber} grade changed to {0.right.param} ".format(item))
+
 class MoodleTemplate(DefaultTemplate):
     """
     Unpacks the info that comes in and sends it on to the PHP routines that acutally
@@ -105,41 +141,47 @@ class MoodleTemplate(DefaultTemplate):
     """
     def __init__(self):
         super().__init__()
-        self.moodle = MoodleDBConnection()
+        self.moodle = MoodleDBSession()
         self.moodle_mod = ModUserEnrollments()
 
         # Set up some things
-        courses = self.moodle.get_table('course', 'idnumber')
-        self.courses = []
-        for course in courses:
-            course_idnumber = course[0]
-            self.courses.append(course_idnumber)
-
-        groups = self.moodle.get_table('groups', 'idnumber')
-        self.groups = []
-        for group in groups:
-            group_name = group[0]
-            self.groups.append(group_name)
+        self.courses = self.moodle.get_list_of_attributes('course', 'idnumber')
+        self.groups = self.moodle.get_list_of_attributes('group', 'name')
 
     def course_exists(self, course_idnumber):
         return course_idnumber in self.courses
 
-    # def new_student(self, item):
-    #     """
-    #     """
-    #     super().new_student(item)
-    #     student = item.right
-    #     self.moodle_mod.new_student(student)
+    def new_cohort(self, item):
+        super().new_cohort(item)
+        cohort_name = ""  # unknown, only matters to front-end
+        cohort_idnumber = item.param
+        self.moodle.add_cohort(cohort_idnumber, cohort_name)
 
-    def new_teacher(self, item):
+    def old_cohort(self, item):
+        super().old_cohort()
+        # Remove it?
+
+    def new_student(self, item):
         """
         """
-        if self.moodle.get_table("user", username=item.right.username):
-            self.logger.warning("Staff member already exists, maybe they are not in the teachersALL or supportALL group?.")
+        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.username):
+            self.logger.warning("Student already exists, maybe they are not in the studentsALL group?.")
         else:
-            super().new_teacher(item)
-            teacher = item.right
-            self.moodle_mod.new_teacher(teacher)
+            super().new_student(item)
+            student = item.right
+            self.moodle_mod.new_student(student)
+            self.moodle_mod.add_user_to_cohort(student.idnumber, 'studentsALL')
+
+    # def new_teacher(self, item):
+    #     """
+    #     """
+    #     if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.username):
+    #         self.logger.warning("Staff member already exists, maybe they are not in the teachersALL or supportALL group?.")
+    #     else:
+    #         super().new_teacher(item)
+    #         teacher = item.right
+    #         self.moodle_mod.new_teacher(teacher)
+    #         self.moodle_mod.add_user_to_cohort(teacher.idnumber, 'teachersALL')
 
     # def new_parent(self, item):
     #     """
@@ -147,6 +189,7 @@ class MoodleTemplate(DefaultTemplate):
     #     super().new_parent(item)
     #     parent = item.right
     #     self.moodle_mod.new_parent(parent)
+    #     self.moodle_mod.add_user_to_cohort(parent.idnumber, 'parentsALL')
 
     def new_group(self, item):
         """
@@ -159,6 +202,11 @@ class MoodleTemplate(DefaultTemplate):
         so best is to do the creation there
         """
         super().new_group(item)  # output
+
+    def new_course(self, item):
+        super().new_course(item)
+        course = item.right
+        self.moodle_mod.create_new_course(course.idnumber, course.name)
 
     def enrol_in_course(self, item):
         course_idnumber = item.param.course
@@ -215,17 +263,24 @@ class MoodleTemplate(DefaultTemplate):
         group = item.param.group
         self.moodle_mod.deenrol_teacher_from_course(user, course)
 
+    def deenrol_parent_from_course(self, item):
+        super().deenrol_from_course(item)   # for output
+        user = item.right.idnumber
+        course = item.param.course
+        group = item.param.group
+        self.moodle_mod.deenrol_parent_from_course(user, course)
+
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
         user = item.right.idnumber
         cohort = item.param
         self.moodle_mod.add_user_to_cohort(user, cohort)
 
-    def remove_from_cohort(self, item):
-        super().remove_from_cohort(item)
-        user = item.left.idnumber
-        cohort = item.param
-        self.moodle_mod.remove_user_from_cohort(user, cohort)
+    # def remove_from_cohort(self, item):
+    #     super().remove_from_cohort(item)
+    #     user = item.left.idnumber
+    #     cohort = item.param
+    #     self.moodle_mod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
         course = item.right.course.ID
@@ -244,11 +299,9 @@ class MoodleTemplate(DefaultTemplate):
         (It does NOT mean that this profile field doesn't exist...)
         """
         right = item.right
-        name = right.name
-        value = right.value
-        useridnumber = right.useridnumber
-        self.default_logger("Modified custom profile for {} change {} to {}".format(useridnumber, name, value))
-        self.moodle.add_user_custom_profile(useridnumber, name, value)
+        name = right.idnumber
+        self.default_logger("Found a new custom profile field {}".format(name))
+        self.moodle.make_new_custom_profile_field(useridnumber, name, value)
 
     def old_custom_profile(self, item):
         """
@@ -319,6 +372,13 @@ class MoodleTemplate(DefaultTemplate):
         value = item.param.value
         self.moodle.set_user_custom_profile(person, field, value)
 
+    def add_custom_profile_field_to_user(self, item):
+        super().add_custom_profile_field_to_user(item)
+        person = item.right.idnumber
+        field = item.param.field
+        value = item.param.value
+        self.moodle.add_user_custom_profile(person, field, value)
+
     def homeroom_changed(self, item):
         super().homeroom_changed(item)
         student = item.left
@@ -331,4 +391,24 @@ class MoodleTemplate(DefaultTemplate):
         #self.default_logger("Successfully changed user {}'s homeroom from {} to {}".format(
         #    idnumber, from_what, to_what
         #    ))
+
+    def course_grade_changed(self, item):
+        if item.left.grade is None:
+            # we need to add a new one
+            self.moodle.insert_table('course_ssis_metadata',
+                courseid = item.left.database_id,
+                field='grade',
+                value=item.param
+                )
+        else:
+            # we just need to update the existing one
+            self.moodle.update_table('course_ssis_metadata',
+                where = dict(
+                    courseid=item.left.database_id,
+                    field='grade',
+                    ),
+                value=item.param
+                )
+
+
 

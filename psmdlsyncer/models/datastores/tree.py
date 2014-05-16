@@ -5,7 +5,8 @@ import inspect, sys, copy
 from collections import defaultdict
 import re, logging
 log = logging.getLogger(__name__)
-from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, parents, mrbs_editor, parent_links, timetables, custom_profiles, groups, schedules, courses
+from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, parents, \
+	mrbs_editor, cohorts, parent_links, timetables, custom_profile_fields, groups, schedules, courses
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
 from psmdlsyncer.utils import NS2
@@ -106,6 +107,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 		self.elementary_schedule = self.klass('elem', 'studentschedule')
 		self.custom_profile_fields_info = self.klass('dist', 'customprofiles')
 		self.mrbs_editor_info = self.klass('dist', 'mrbs_editor')
+		self.cohort_info = self.klass('dist', 'cohorts')
 		self.init()
 
 	def get_person(self, idnumber):
@@ -137,6 +139,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 	def process_teachers(self):
 		self.default_logger('{} inside processing teachers'.format(self.__class__.__name__))
 		for teacher in self.teacher_info.content():
+			print(teacher)
 			self.default_logger('Processing teacher: {}'.format(teacher))
 			self.teachers.make(*teacher)
 
@@ -176,6 +179,10 @@ class AbstractTree(metaclass=DataStoreCollection):
 				self.default_logger('Processing {} schedule: {}'.format(school, schedule))
 				course_key, period_info, section_number, teacher_key, student_key = schedule
 				course = self.courses.get(course_key, self.convert_course)
+				if course.exclude:
+					self.default_logger("Course {} has been excluded!".format(course_key))
+					# And so we should skip this schedule entirely!
+					continue
 				teacher = self.teachers.get_key(teacher_key)
 				group = self.groups.make_group(course, teacher, section_number)
 				student = self.students.get_key(student_key)
@@ -219,16 +226,16 @@ class AbstractTree(metaclass=DataStoreCollection):
 			for parent in student.parents:
 				self.parent_links.make_parent_link(parent, student)
 
-	def process_custom_profile(self):
+	def process_custom_profile_fields(self):
 		"""
-		By default, does nothing, because the model takes care of it
+		The make_profile creates the keys, which are just the name of the fields
 		"""
-		for student in self.students.get_objects():
-			self.custom_profiles.make_profile(student)
-		for parent in self.parents.get_objects():
-			self.custom_profiles.make_profile(parent)
-		for teacher in self.teachers.get_objects():
-			self.custom_profiles.make_profile(teacher)
+		for person in self.get_everyone():
+			self.custom_profile_fields.make_profile(person)
+
+	def process_cohorts(self):
+		for person in self.get_everyone():
+			self.cohorts.make_cohort(person)
 
 	def process_mrbs_editor(self):
 		return ()
@@ -243,11 +250,8 @@ class AbstractTree(metaclass=DataStoreCollection):
 		group.associate(course, teacher, student)
 
 	def init(self):
-		# Basically just calls every single
-		# Some of this stuff is pretty magical
-		# The self.students, self.teachers, etc objects come from MetaDataStore
-		# They actually return the new (or old) object, but we don't care about them here
-		order = ['students', 'teachers', 'parents', 'parent_links', 'courses', 'schedules', 'custom_profile', 'mrbs_editor']
+		# Basically just calls every process_x method we have
+		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules', 'custom_profile_fields', 'mrbs_editor']
 		for o in order:
 			method = getattr(self, 'process_{}'.format(o))
 			method()

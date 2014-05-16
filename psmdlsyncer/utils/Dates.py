@@ -1,4 +1,8 @@
 import datetime
+import time
+
+def time_now():
+    return int(time.time())
 
 def yearsago(years, from_date=None):
     if from_date is None:
@@ -72,4 +76,4 @@ if __name__ == "__main__":
 
     print(get_year_of_graduation(10))
     print(get_year_of_graduation(7))
-    print(get_year_of_graduation(12))    
+    print(get_year_of_graduation(12))

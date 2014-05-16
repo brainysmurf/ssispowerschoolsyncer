@@ -6,18 +6,18 @@ Bascially, PowerSchool's internal student photo format exported out to format Mo
 """
 
 import os, shutil
+from psmdlsyncer.models.datastores.autosend import AutoSendTree
 
 # who knows where this might be, so let's not use settings.ini for this
 # TODO: make this a command line argument
-path_to_ps_photos = '../../../powerschool/photos/students'
-path_to_ps_data   = '../../../powerschool/id_idnumber.txt'
-from psmdlsyncer.files import TextFileReader
 
-ps_data = TextFileReader(path_to_ps_data)
+teacher_data = AutoSendTree()
+id_cache = {}
 
-id_to_num = {}
-for item in ps_data.generate():
-    id_to_num[item.id] = item.powerschoolid
+for teacher in teacher_data.teachers.get_objects():
+    id_cache[teacher.database_id] = teacher.idnumber
+
+path_to_ps_photos = '../../powerschool/photos/faculty'
 
 new_folder = os.path.join(path_to_ps_photos, 'flat')
 for folder in os.listdir(path_to_ps_photos):
@@ -28,10 +28,10 @@ for folder in os.listdir(path_to_ps_photos):
         if this_folder.startswith('.'): continue
         target_file = os.path.join(os.path.join(inside_folder, this_folder), 'ph_normal.jpeg')
         try:
-            new_name = id_to_num[this_folder] + '.jpg'
+            new_name = id_cache[this_folder] + '.jpg'
         except KeyError:
-            print('No student by this ID: {}'.format(this_folder))
+            print('No teacher by this ID: {}'.format(this_folder))
             continue
         shutil.copyfile(target_file, os.path.join(new_folder, new_name))
-        
+
 

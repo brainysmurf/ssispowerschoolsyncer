@@ -2,13 +2,13 @@ from psmdlsyncer.settings import logging
 import re
 import os
 import csv
+from psmdlsyncer.settings import config_get_section_attribute
 
 # This is the version of the autosend files
 # With each increase of number in the version, means that something about the fields have changed from within autosend
 major_version = 3
-version_format = "{prefix}_{{school}}_{{unique}}_v{major_version}.{{minor_version}}".format(prefix='ssis', major_version=major_version)
-
-from psmdlsyncer.settings import config_get_section_attribute
+prefix = config_get_section_attribute('AUTOSEND', 'prefix')
+version_format = "{prefix}_{{school}}_{{unique}}_v{major_version}.{{minor_version}}".format(prefix=prefix, major_version=major_version)
 
 class AutoSendImport:
 
@@ -53,4 +53,4 @@ if __name__ == "__main__":
     f = File('sec', 'studentschedule')
     for line in f.content():
         print(line)
-    
+

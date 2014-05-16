@@ -5,11 +5,16 @@ from psmdlsyncer.utils.Utilities import derive_depart, department_heads
 from psmdlsyncer.utils import weak_reference
 from psmdlsyncer.models.base import BaseModel
 from psmdlsyncer.utils.Utilities import convert_short_long
+from psmdlsyncer.utils import NS
 
 class Course(BaseModel):
     kind = "course"
 
-    def __init__(self, course_id, course_name=""):
+    def __init__(self, course_id, course_name, grade="", database_id=0):
+        """
+        @param grade has to be a string by default
+        @param database_id has to be an integer
+        """
         self.ID, self.name = course_id, course_name
         if 'HROOM' in self.ID:
             self.is_homeroom = True
@@ -18,8 +23,24 @@ class Course(BaseModel):
         self.course_id = self.idnumber = self.ID
         self.department = derive_depart(self.name)
         self.heads = department_heads.get(self.department)
+        self.grade = grade
+        self.database_id = database_id
+        if self.grade is "":
+            # determine it as best we can...
+            # which in this case is looking for stuff inside the parenths
+            # at the end of the string, taking into account possible whitespace
+            match = re.search('\((\d+)\)\W?$', self.name)
+            if not match:
+                self.grade = -100  # dunno what to put here really
+            else:
+                self.grade = match.group(1)
+            if self.grade == '11/12' or self.grade == '1112':
+                self.grade = [11, 12]
+            else:
+                self.grade = [int(self.grade)]
         if not self.heads:
             pass
+        self.exclude = False
         self._teachers = []
         self._students = []
         self._groups = []
@@ -68,8 +89,16 @@ class Course(BaseModel):
     def parents(self):
         return self._parents
 
-    def __sub__(self, other):
-        return ()
+    def differences(self, other):
+        if self.grade != other.grade:
+            ns = NS()
+            ns.status = 'course_grade_changed'
+            ns.left = self
+            ns.right = other
+            ns.param = other.grade
+            yield ns
+
+    __sub__ = differences
 
     def __repr__(self):
         return self.format_string("<Course: {ID} ({name})>") #" : {teachers}", first="(", mid="| ", last=") ", teachers=teacher_txt)

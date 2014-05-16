@@ -59,6 +59,9 @@ class SQLWrapper:
         ns = self.make_ns(table_name=table_name)
         return self.call_sql( ns("select exists(select 1 from information_schema.tables where table_name = '{PREFIX}{table_name}')") )[0][0]
 
+    def escape(self, s):
+        return s.replace("'", r"\\'")
+
     test_table = table_exists   # depreciated name
 
     def insert_table(self, table_name, **kwargs):
@@ -72,9 +75,9 @@ class SQLWrapper:
                 b = 1 if value else 0
                 values_list.append( ' ' + str(b))
             elif isinstance(value, int):
-                values_list.append( ' ' + str(value))
+                values_list.append( ' ' + self.escape(str(value)))
             else:
-                values_list.append( " '" + str(value) + "'" )
+                values_list.append( " '" + self.escape(str(value)) + "'" )
         values_phrase = ", ".join(values_list)
         self.call_sql("insert into {}{} ({}) values ({})".format(self.prefix, table_name, columns_phrase, values_phrase))
 
@@ -86,7 +89,7 @@ class SQLWrapper:
                 if isinstance(value, int):
                     wheres.append( "{} = {}".format(key, value) )
                 else:
-                    wheres.append( "{} = '{}'".format(key, value))
+                    wheres.append( "{} = '{}'".format(key, self.escape(value)))
             where_phrase = "where " + " AND ".join(wheres)
         else:
             where_phrase = ""
@@ -176,3 +179,16 @@ class SQLWrapper:
     def __del__(self):
         if self.db:
             self.db.close()
+
+
+if __name__ == "__main__":
+
+
+    db = MoodleDBConnection()
+
+    db.insert_table('just_testing', idnumber="O'shea")
+
+
+
+
+
