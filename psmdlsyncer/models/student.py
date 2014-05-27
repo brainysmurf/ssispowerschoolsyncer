@@ -86,6 +86,7 @@ class Student(BaseModel):
         """
         @param grade Pass None to derive from homeroom
         """
+
         self.logger = logging.getLogger(self.__class__.__name__)
         self.num = num
         self.idnumber = self.num
@@ -191,6 +192,9 @@ class Student(BaseModel):
         if self.grade in range(6, 9):
             self.custom_profile_ismsstudent = True
             self._cohorts.append('studentsMS')
+        if self.grade in range(6, 11):
+            self.custom_profile_ismypstudent = True
+            self._cohorts.append('studentsMYP')
         if self.grade in range(9, 13):
             self.custom_profile_ishsstudent = True
             self._cohorts.append('studentsHS')
@@ -200,7 +204,7 @@ class Student(BaseModel):
             if self.grade >= 5:
                 self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             else:
-                self._cohorts = []
+                self._cohorts = ['studentsALL']
             self.custom_profile_iselemstudent = True
             self.profile_existing_department = 'HOME4ES'
         self.is_middle_school = self.grade in range (6, 9)
@@ -258,8 +262,10 @@ class Student(BaseModel):
         self._schedule.append( schedule )
 
     def add_enrollment(self, course, group):
-        if not group.ID in self.enrollments[course.ID]:
-            self.enrollments[course.ID].append( group.ID )
+        if self.login_method != 'nologin':
+            if (self.is_elementary and 'HROOM' in course.ID) or (self.is_secondary):
+                if not group.ID in self.enrollments[course.ID]:
+                    self.enrollments[course.ID].append( group.ID )
 
     def add_course(self, course):
         if course.idnumber in self.excluded_courses:
@@ -500,7 +506,9 @@ class Student(BaseModel):
             return False
         return True
 
-    def differences(self, other):
+    def __sub__(self, other):
+
+        yield from super().__sub__(other)
 
         # Handle cohorts (site-wide groups)
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
@@ -581,8 +589,6 @@ class Student(BaseModel):
                 to_remove.group = group
                 ns.param = to_remove
                 yield ns
-
-    __sub__ = differences
 
     def __repr__(self):
         ns = NS()

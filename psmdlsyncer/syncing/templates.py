@@ -22,7 +22,7 @@ class DefaultTemplate:
     and send it on to the low-level handlers
     This one just prints out what it sees
     """
-    only = "course_grade_changed"    # for debugging
+    #only = "new_cohort"    # for debugging
 
     def __init__(self):
         self.logger = logging.getLogger("DefaultTemplate")
@@ -30,7 +30,7 @@ class DefaultTemplate:
 
     def __getattribute__(self, name):
         if '_' in name:
-            if object.__getattribute__(self, 'only'):
+            if hasattr(self, 'only') and object.__getattribute__(self, 'only'):
                 if name == object.__getattribute__(self, 'only'):
                     return object.__getattribute__(self, name)
                 else:
@@ -126,10 +126,25 @@ class DefaultTemplate:
         self.default_logger("Adding custom profile field {0.param.field} to user {0.right.idnumber}".format(item))
 
     def remove_custom_profile_field_to_user(self, item):
-        self.default_logger("Remove custom profile field? {0.param.field}".format(item))
+        # because of the way moodle works, we don't want it to remove, just leave it in there
+        # no need to report it, either
+        pass
 
     def course_grade_changed(self):
         self.default_logger("Course {0.left.idnumber} grade changed to {0.right.param} ".format(item))
+
+    def new_parent_link(self, item):
+        self.default_logger("New association: {0.param}".format(item))
+
+    def new_mrbs_editor(self, item):
+        self.default_logger("Add this person {0.param} as an mrbs editor".format(item))
+
+    def associate_child_to_parent(self, item):
+        self.default_logger("Associate child {0.param.child} to parent {0.param.parent} ".format(item))
+
+    def deassociate_child_from_parent(self, item):
+        self.default_logger("De-associate child {0.param.child} to parent {0.param.parent} ".format(item))
+
 
 class MoodleTemplate(DefaultTemplate):
     """
@@ -142,10 +157,12 @@ class MoodleTemplate(DefaultTemplate):
     def __init__(self):
         super().__init__()
         self.moodle = MoodleDBSession()
-        self.moodle_mod = ModUserEnrollments()
+        self.moodlemod = ModUserEnrollments()
 
         # Set up some things
-        self.courses = self.moodle.get_list_of_attributes('course', 'idnumber')
+        self.courses = []
+        for course in self.moodle.get_teaching_learning_courses():
+            self.courses.append(course.idnumber)
         self.groups = self.moodle.get_list_of_attributes('group', 'name')
 
     def course_exists(self, course_idnumber):
@@ -153,43 +170,41 @@ class MoodleTemplate(DefaultTemplate):
 
     def new_cohort(self, item):
         super().new_cohort(item)
-        cohort_name = ""  # unknown, only matters to front-end
         cohort_idnumber = item.param
+        cohort_name = cohort_idnumber
         self.moodle.add_cohort(cohort_idnumber, cohort_name)
 
     def old_cohort(self, item):
-        super().old_cohort()
+        super().old_cohort(item)
         # Remove it?
 
     def new_student(self, item):
         """
         """
-        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.username):
+        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
             self.logger.warning("Student already exists, maybe they are not in the studentsALL group?.")
         else:
             super().new_student(item)
             student = item.right
-            self.moodle_mod.new_student(student)
-            self.moodle_mod.add_user_to_cohort(student.idnumber, 'studentsALL')
+            self.moodlemod.new_student(student)
 
-    # def new_teacher(self, item):
-    #     """
-    #     """
-    #     if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.username):
-    #         self.logger.warning("Staff member already exists, maybe they are not in the teachersALL or supportALL group?.")
-    #     else:
-    #         super().new_teacher(item)
-    #         teacher = item.right
-    #         self.moodle_mod.new_teacher(teacher)
-    #         self.moodle_mod.add_user_to_cohort(teacher.idnumber, 'teachersALL')
+    def new_teacher(self, item):
+        """
+        """
+        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
+            self.logger.warning("Staff member {} already exists, not creating.".format(item.right))
+        else:
+            super().new_teacher(item)
+            teacher = item.right
+            self.moodlemod.new_teacher(teacher)
 
-    # def new_parent(self, item):
-    #     """
-    #     """
-    #     super().new_parent(item)
-    #     parent = item.right
-    #     self.moodle_mod.new_parent(parent)
-    #     self.moodle_mod.add_user_to_cohort(parent.idnumber, 'parentsALL')
+    def new_parent(self, item):
+        """
+        """
+        super().new_parent(item)
+        parent = item.right
+        self.moodlemod.new_parent(parent)
+        self.moodlemod.add_user_to_cohort(parent.idnumber, 'parentsALL')
 
     def new_group(self, item):
         """
@@ -206,7 +221,7 @@ class MoodleTemplate(DefaultTemplate):
     def new_course(self, item):
         super().new_course(item)
         course = item.right
-        self.moodle_mod.create_new_course(course.idnumber, course.name)
+        self.moodlemod.create_new_course(course.idnumber, course.name)
 
     def enrol_in_course(self, item):
         course_idnumber = item.param.course
@@ -220,7 +235,7 @@ class MoodleTemplate(DefaultTemplate):
         course = item.param.course
         group = item.param.group
         if self.enrol_in_course(item):   # for output and checking
-            self.moodle_mod.enrol_student_into_course(student, course, group) # just pass the whole schedule object itself
+            self.moodlemod.enrol_student_into_course(student, course, group) # just pass the whole schedule object itself
         else:
             self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
@@ -229,7 +244,7 @@ class MoodleTemplate(DefaultTemplate):
         course = item.param.course
         group = item.param.group
         if self.enrol_in_course(item):   # for output and checking
-            self.moodle_mod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
+            self.moodlemod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
         else:
             self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
@@ -238,7 +253,7 @@ class MoodleTemplate(DefaultTemplate):
         course = item.param.course
         group = item.param.group
         if self.enrol_in_course(item):   # for output and checking
-            self.moodle_mod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
+            self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
         else:
             self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
@@ -247,40 +262,40 @@ class MoodleTemplate(DefaultTemplate):
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        self.moodle_mod.deenrol_teacher_from_course(user, course)
+        self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        self.moodle_mod.deenrol_student_from_course(user, course)
+        self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_teacher_from_course(self, item):
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        self.moodle_mod.deenrol_teacher_from_course(user, course)
+        self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        self.moodle_mod.deenrol_parent_from_course(user, course)
+        self.moodlemod.deenrol_parent_from_course(user, course)
 
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
         user = item.right.idnumber
         cohort = item.param
-        self.moodle_mod.add_user_to_cohort(user, cohort)
+        self.moodlemod.add_user_to_cohort(user, cohort)
 
-    # def remove_from_cohort(self, item):
-    #     super().remove_from_cohort(item)
-    #     user = item.left.idnumber
-    #     cohort = item.param
-    #     self.moodle_mod.remove_user_from_cohort(user, cohort)
+    def remove_from_cohort(self, item):
+        super().remove_from_cohort(item)
+        user = item.left.idnumber
+        cohort = item.param
+        self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
         course = item.right.course.ID
@@ -289,21 +304,19 @@ class MoodleTemplate(DefaultTemplate):
             self.default_logger("Did NOT add group {} because it's already there....".format(group, course))
         elif course in self.courses:
             super().new_group(item)
-            self.moodle_mod.add_group(group, course)
+            self.moodlemod.add_group(group, course)
         else:
             self.default_logger("Did NOT add group {} because course {} does not exist.".format(group, course))
 
-    def new_custom_profile(self, item):
+    def new_custom_profile_field(self, item):
         """
-        This actually means that a particular user doesn't have a particular custom profile
-        (It does NOT mean that this profile field doesn't exist...)
         """
         right = item.right
         name = right.idnumber
         self.default_logger("Found a new custom profile field {}".format(name))
-        self.moodle.make_new_custom_profile_field(useridnumber, name, value)
+        self.moodle.make_new_custom_profile_field(name)
 
-    def old_custom_profile(self, item):
+    def old_custom_profile_field(self, item):
         """
         This actually means that a particular user has lost a particular profile field
         (It does NOT mean that this profile field should be deleted...)
@@ -311,16 +324,14 @@ class MoodleTemplate(DefaultTemplate):
         """
         # not sure what to do yet
 
-
     def old_group(self, item):
-        course = item.left
-        group = item.param
-        if not course or not course in self.courses:
-            self.default_logger("Did NOT remove group {} because the correspoding course does not exist.".format(group, course))
+        group = item.left
+        course_idnumber = group.course_idnumber
+        if course_idnumber not in self.courses:
+            self.default_logger("Did NOT delete group {} because the correspoding course {} does not exist.".format(group, course_idnumber))
         else:
             super().old_group(item)
-            group = item.param
-            self.moodle_mod.delete_group(group, course)
+            self.moodlemod.delete_group(group.idnumber, course_idnumber)
 
     def add_to_group(self, item):
         user = item.right.idnumber
@@ -330,7 +341,7 @@ class MoodleTemplate(DefaultTemplate):
             super().add_to_group(item)
             # We don't actually need the course...
 
-            self.moodle_mod.add_user_to_group(user, group)
+            self.moodlemod.add_user_to_group(user, group)
             #self.default_logger("Successfully put user {} into group {}".format(user, group))
         else:
             self.default_logger("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))
@@ -341,7 +352,7 @@ class MoodleTemplate(DefaultTemplate):
         group = item.param.group
         course = item.param.course
         # We don't actually need the course...
-        self.moodle_mod.remove_user_from_group(user, group)
+        self.moodlemod.remove_user_from_group(user, group)
 
     def username_changed(self, item):
         user = item.left
@@ -393,22 +404,43 @@ class MoodleTemplate(DefaultTemplate):
         #    ))
 
     def course_grade_changed(self, item):
-        if item.left.grade is None:
-            # we need to add a new one
-            self.moodle.insert_table('course_ssis_metadata',
+        for i in range(len(item.param)):
+            grade = item.param[i]
+            field = 'grade{}'.format(i+1)
+
+            exists = self.moodle.get_rows_in_table('course_ssis_metadata',
                 courseid = item.left.database_id,
-                field='grade',
-                value=item.param
-                )
-        else:
-            # we just need to update the existing one
-            self.moodle.update_table('course_ssis_metadata',
-                where = dict(
-                    courseid=item.left.database_id,
-                    field='grade',
-                    ),
-                value=item.param
+                field=field)
+
+            if not exists:
+                self.moodle.insert_table('course_ssis_metadata',
+                    courseid = item.left.database_id,
+                    field=field,
+                    value=grade)
+            else:
+                # we just need to update the existing one
+                self.moodle.update_table('course_ssis_metadata',
+                    where = dict(
+                        courseid=item.left.database_id,
+                        field=field,
+                        ),
+                    value=grade
                 )
 
+    def new_parent_link(self, item):
+        """
+        Go through all the children and make the association
+        """
+        super().new_parent_link(item)
+        for child_idnumber in item.right.children:
+            self.moodlemod.associate_child_to_parent(item.right.parent_idnumber, child_idnumber)
+
+    def new_mrbs_editor(self, item):
+        super().new_mrbs_editor(item)
+        self.moodle.add_mrbs_editor(item.param)
+
+    def deassociate_child_from_parent(self, item):
+        super().deassociate_child_from_parent(item)
+        input()
 
 

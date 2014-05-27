@@ -8,5 +8,6 @@ from psmdlsyncer.utils import NS, weak_reference
 from psmdlsyncer.models.base import BaseModel
 
 class MRBSEditor(BaseModel):
-    def __init__(self, idnumber):
+    def __init__(self, idnumber, userid=None):
         self.idnumber = self.ID = idnumber
+        self.userid = userid

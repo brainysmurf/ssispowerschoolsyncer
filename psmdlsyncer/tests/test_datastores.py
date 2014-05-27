@@ -5,13 +5,8 @@ from psmdlsyncer.syncing.differences import DetermineChanges
 
 if __name__ == "__main__":
 
-    inspect = True  # make this a command line argument
 
     left = MoodleTree()
     right = AutoSendTree()
-
-    if inspect:
-        from IPython import embed
-        embed()
 
     DetermineChanges(left, right, MoodleTemplate)

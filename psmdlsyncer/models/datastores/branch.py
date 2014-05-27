@@ -46,7 +46,7 @@ class DataStore:
 
 	@classmethod
 	def get_keys(cls):
-		return cls._resolve().keys()
+		return [key for key in cls._resolve().keys() if not key.startswith('__')]
 
 	@classmethod
 	def get_keys_startswith(cls, startswith):
@@ -65,7 +65,7 @@ class DataStore:
 
 	@classmethod
 	def get_objects(cls):
-		yield from cls._resolve().values()
+		return [cls._resolve()[key] for key in cls._resolve().keys() if not key.startswith('__')]
 
 	@classmethod
 	def get_object_n(cls, n):
@@ -87,19 +87,19 @@ class DataStore:
 		cls.outer_store()[cls.fullname()][key] = value
 
 	@classmethod
-	def will_make_new(cls, new):
+	def will_make_new(cls, new, *args, **kwargs):
 		pass
 
 	@classmethod
-	def did_make_new(cls, new):
+	def did_make_new(cls, new, *args, **kwargs):
 		"""
 		HOOK METHOD CALLED AFTER `make` MAKES A NEW ONE
 		"""
 		pass
 
 	@classmethod
-	def will_return_old(self, old):
-			pass
+	def will_return_old(self, old, *args, **kwargs):
+		pass
 
 	@classmethod
 	def make(cls, idnumber, *args, **kwargs):
@@ -115,13 +115,13 @@ class DataStore:
 		if cls.is_new(idnumber):
 			# Instantiate the instance
 			new = cls.klass(idnumber, *args, **kwargs)
-			cls.will_make_new(new)
+			cls.will_make_new(new, *args, **kwargs)
 			cls.set_key(idnumber, new)
-			cls.did_make_new(new)
+			cls.did_make_new(new, *args, **kwargs)
 			return new
 		else:
 			old = cls.get_key(idnumber)
-			cls.will_return_old(old)
+			cls.will_return_old(old, *args, **kwargs)
 			return old
 
 class students(DataStore):
@@ -136,15 +136,27 @@ class parents(DataStore):
 	@classmethod
 	def make_parent(cls, student):
 		idnumber = student.family_id
-		return cls.make(idnumber)
+		parent = cls.make(idnumber)
+		parent.add_child(student)
+		return parent
 
 class parent_links(DataStore):
 	klass = ParentLink
 
 	@classmethod
+	def did_make_new(cls, new, child):
+		"""
+		HOOK METHOD CALLED AFTER `make` MAKES A NEW ONE
+		"""
+		new.add_child(child)
+
+	@classmethod
+	def will_return_old(self, old, child):
+		old.add_child(child)
+
+	@classmethod
 	def make_parent_link(cls, parent, child):
-		idnumber = parent.ID + child.ID
-		cls.make(idnumber, parent, child)
+		return cls.make(parent, child)
 
 class groups(DataStore):
 	klass = Group
@@ -155,7 +167,6 @@ class groups(DataStore):
 	def make_group(cls, course, teacher, section):
 		"""
 		Makes a group and parses the section as well
-		Groups are different from classes...
 		The passed section should be the 'official' section number
 		here we will change it to .a or .b accordingly
 		"""
@@ -163,7 +174,7 @@ class groups(DataStore):
 		sectional_key = "{}{}{}".format(idnumber, cls.sep, section)
 		if sectional_key in cls.section_maps.keys():
 			# Already have it, so use that then
-			return cls.make(cls.section_maps[sectional_key])
+			return cls.make(cls.section_maps[sectional_key], course.idnumber)
 		else:
 			# first time running, make a new sectional
 			how_many = len(cls.get_keys_startswith("{}{}".format(idnumber, cls.sep)))
@@ -171,7 +182,7 @@ class groups(DataStore):
 			new_sectional_value = "{}{}{}".format(idnumber, cls.sep, alpha)
 			# keep for future reference, and return
 			cls.section_maps[sectional_key] = new_sectional_value
-			return cls.make(new_sectional_value)
+			return cls.make(new_sectional_value, course.idnumber)
 
 class timetables(DataStore):
 	klass = Timetable
@@ -244,9 +255,9 @@ class custom_profile_fields(DataStore):
 	def make_profile(cls, person):
 		for custom_field in person.get_custom_field_keys():
 			idnumber = person.plain_name_of_custom_field(custom_field)
-			return cls.make(idnumber)
+			cls.make(idnumber)
 
-class mrbs_editor(DataStore):
+class mrbs_editors(DataStore):
 	klass = MRBSEditor
 
 class cohorts(DataStore):
@@ -255,6 +266,6 @@ class cohorts(DataStore):
 	@classmethod
 	def make_cohort(cls, person):
 		for cohort in person.cohorts:
-			return cls.make(cohort)
+			cls.make(cohort)
 
 

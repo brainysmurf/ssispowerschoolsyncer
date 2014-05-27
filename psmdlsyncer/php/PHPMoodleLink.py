@@ -5,7 +5,6 @@ Uses pexpect utility
 
 from psmdlsyncer.utils import NS
 from psmdlsyncer.settings import config_get_section_attribute, logging
-from psmdlsyncer.sql import MoodleDBConnection
 import pexpect, sys, os
 
 class CallPHP:
@@ -15,7 +14,7 @@ class CallPHP:
     def __init__(self):
         #TODO: Get this info from standard settings and config
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.default_logger = self.logger.info
+        self.default_logger = self.logger.debug
         self.sf = NS()
         self.email_accounts = config_get_section_attribute('EMAIL', 'check_accounts')
         self.moodle_accounts = config_get_section_attribute('MOODLE', 'sync')
@@ -56,18 +55,24 @@ class CallPHP:
         error_string = '-\d+ .*'
         which = self.process.expect([success_string, error_string])
 
-        if which == 1:
-            self.logger.warning(self.process.after.decode('utf-8'))   # make sure this is a warning
+        if which == 0:
+            pass
+        elif which == 1:
+            str = self.process.after.decode('utf-8')
+            where = str.find('\r\n?: ')
+            if not where:
+                self.logger.critical(str)
+            self.logger.warning(str[:where])   # make sure this is a warning
         else:
             self.logger.critical(self.process.after.decode('utf-8'))   # This will probably be something essential
 
     def create_new_course(self, idnumber, fullname):
-        return self.command('create_new_course', "{} {}".format(idnumber, fullname))
+        self.command('create_new_course', "{} '{}'".format(idnumber, fullname))
 
     def create_account(self, username, email, firstname, lastname, idnumber, auth='manual'):
         self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber, auth=auth)
-        to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber} {auth}")
-        return self.command('create_account', to_pass)
+        to_pass = self.sf("{username} '{email}' '{firstname}' '{lastname}' {idnumber} {auth}")
+        self.command('create_account', to_pass)
 
     def create_group_for_course(self, course_id, group_name):
         self.command('create_group_for_course {} {}'.format(course_id, group_name))
@@ -80,52 +85,55 @@ class CallPHP:
         """
         self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber)
         to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber} nologin")
-        return self.command('create_account', to_pass)
+        self.command('create_account', to_pass)
 
     def enrol_user_into_course(self, idnumber, shortname, group, role="Student"):
         self.sf.define(idnumber=idnumber, shortname=shortname, group=group, role=role)
         to_pass = self.sf("{idnumber} {shortname} {group} {role}")
-        return self.command('enrol_user_in_course', to_pass)
+        self.command('enrol_user_in_course', to_pass)
 
     def unenrol_user_from_course(self, idnumber, course):
         self.sf.define(idnumber=idnumber, course=course)
-        return self.command('deenrol_user_from_course', self.sf('{idnumber} {course}'))
+        self.command('deenrol_user_from_course', self.sf('{idnumber} {course}'))
 
     def add_user_to_cohort(self, useridnumber, cohortidnumber):
         self.sf.define(useridnumber=useridnumber, cohortidnumber=cohortidnumber)
         to_pass = self.sf("{useridnumber} '{cohortidnumber}'")
-        return self.command('add_user_to_cohort', to_pass)
+        self.command('add_user_to_cohort', to_pass)
 
     def remove_user_from_cohort(self, useridnumber, cohortidnumber):
         self.sf.define(useridnumber=useridnumber, cohortidnumber=cohortidnumber)
         to_pass = self.sf("{useridnumber} '{cohortidnumber}'")
-        return self.command('remove_user_from_cohort', to_pass)
+        self.command('remove_user_from_cohort', to_pass)
+
+    def new_cohort(self, cohortidnumber, cohortname):
+        self.command("create_cohort {} '{}'".format(cohortidnumber, cohortname))
 
     def add_user_to_group(self, userid, group_name):
         self.sf.define(userid=userid, group_name=group_name)
         to_pass = self.sf("{userid} '{group_name}'")
-        return self.command('add_user_to_group', to_pass)
+        self.command('add_user_to_group', to_pass)
 
     def remove_user_from_group(self, userid, group_name):
         self.sf.define(userid=userid, group_name=group_name)
         to_pass = self.sf("{userid} '{group_name}'")
-        return self.command('remove_user_from_group', to_pass)
+        self.command('remove_user_from_group', to_pass)
 
     def add_group(self, group, course):
         self.sf.define(group=group, course=course)
         to_pass = self.sf("{course} '{group}'")
-        return self.command('create_group_for_course', to_pass)
+        self.command('create_group_for_course', to_pass)
 
     def delete_group(self, group, course):
         self.sf.define(group=group, course=course)
         to_pass = self.sf("{course} '{group}'")
-        return self.command('delete_group_for_course', to_pass)
+        self.command('delete_group_for_course', to_pass)
 
     def change_username(self, idnumber, new_name):
-        return self.command('change_username', "{} {}".format(idnumber, new_name))
+        self.command('change_username', "{} {}".format(idnumber, new_name))
 
     def associate_child_to_parent(self, idnumber, child_idnumber):
-        return self.command('associate_child_to_parent', "{} {}".format(idnumber, child_idnumber))
+        self.command('associate_child_to_parent', "{} {}".format(idnumber, child_idnumber))
 
     def __del__(self):
         """

@@ -225,7 +225,10 @@ class Teacher(BaseModel):
     def __repr__(self):
         return self.format_string("<Teacher: {username} ({ID})>") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
 
-    def differences(self, other):
+    def __sub__(self, other):
+
+        yield from super().__sub__(other)
+
         # Handle cohorts (site-wide groups)
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
             ns = NS()
@@ -305,8 +308,6 @@ class Teacher(BaseModel):
                 to_remove.group = group
                 ns.param = to_remove
                 yield ns
-
-    __sub__ = differences
 
     # def post_differences(self, other):
     #     return ()

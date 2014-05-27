@@ -62,13 +62,9 @@ class Class(BaseModel):
         if not reference in self._courses:
             self._courses.append( reference )
 
-
-    def differences(self, other):
+    def __sub__(self, other):
         # groups possibly could have different students involved, but this is picked up in the schedule
         return ()
-
-    __sub__ = differences
-
 
     def __repr__(self):
         return self.format_string("<Group>: {group_id}")

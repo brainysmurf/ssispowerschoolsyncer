@@ -48,8 +48,7 @@ class Parent(BaseModel):
             for email in child.parent_emails:
                 c.add(email)
         common = c.maximum_in_order_added
-        if not common:
-            input("A parent with no children emails?")
+        # TODO: do a check here with common
         if len(common) == 1:
             return common[0]
         else:
@@ -137,7 +136,10 @@ class Parent(BaseModel):
     def number_groups(self):
         return len(self.groups)
 
-    def differences(self, other):
+    def __sub__(self, other):
+
+        yield from super().__sub__(other)
+
         # Handle cohorts (site-wide groups)
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):
             ns = NS()
@@ -218,8 +220,6 @@ class Parent(BaseModel):
                 ns.param = to_remove
                 yield ns
 
-    __sub__ = differences
-
     def __repr__(self):
         ns = NS()
         ns.homerooms = " ".join(self.homerooms)
@@ -230,17 +230,20 @@ class Parent(BaseModel):
         ns.homerooms = "(" + ", ".join(self.homerooms) + ")"
         ns.courses = "{} courses".format(len(self.courses))
         ns.groups = "{} groups".format(len(self.groups))
-        return ns("<Parent {ID}: {ID}, {parents_of} {homerooms}>") #{midrow}" \
-                  #"{courses}{midrow}{groups}{lastrow}{NEWLINE}",
-                  #                firstrow="+ ",
-                  #                midrow="\n| ",
-                  #                lastrow="\n| ")
+        return ns("<Parent {ID}: {parents_of} {homerooms}>")
 
 class MoodleParent(Parent):
 
-    def __init__(self, idnumber):
+    def __init__(self, idnumber, database_id, dunno, *args, username):
         super().__init__(idnumber)
+        self.idnumber = idnumber
+        self._username = username
+        self.database_id = database_id
         self._enrollments = {}
+
+    @property
+    def username(self):
+        return self._username
 
     @property
     def enrollments(self):

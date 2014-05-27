@@ -33,11 +33,11 @@ class ModUserEnrollments(CallPHP):
     def deenrol_parent_from_course(self, parent_idnumber, course_idnumber):
         self.unenrol_user_from_course( parent_idnumber, course_idnumber )
 
-    def enrol_parent_into_course(self, student_idnumber, course_idnumber, group_name):
-        super().enrol_user_into_course( student_idnumber, course_idnumber, group_name, "parent" )
+    def enrol_parent_into_course(self, parent_idnumber, course_idnumber, group_name):
+        self.enrol_user_into_course( parent_idnumber, course_idnumber, group_name, "parent" )
 
     def enrol_teacher_into_course(self, teacher_idnumber, course_idnumber, group_name):
-        super().enrol_user_into_course( teacher_idnumber, course_idnumber, group_name, "teacher" )
+        self.enrol_user_into_course( teacher_idnumber, course_idnumber, group_name, "teacher" )
 
     def new_student(self, student):
         try:
@@ -52,7 +52,6 @@ class ModUserEnrollments(CallPHP):
         for cohort in student.cohorts:
             self.default_logger("Adding {} to cohort {}".format(student.num, cohort))
             self.add_user_to_cohort( student.num, cohort )
-
         for cohort in student.cohorts:
             self.add_user_to_cohort(student.ID, cohort)
         for course, group in student.get_enrollments():
@@ -75,8 +74,11 @@ class ModUserEnrollments(CallPHP):
         for course, group in parent.get_enrollments():
             self.enrol_parent_into_course(parent.ID, course, group)
 
-    def new_group(self, group):
-        self.logger.info('Creating account for {}'.format(parent))
+    def add_cohort(self, name):
+        pass
+
+    # def new_group(self, group):
+    #     self.logger.info('Creating account for {}'.format(parent))
 
     def no_email(self, student):
         sf = NS(student)
@@ -104,27 +106,7 @@ class ModUserEnrollments(CallPHP):
 
         self.add_user_to_cohort( staff.num, 'adminALL' )
 
-    def parent_account_not_associated(self, student):
-        self.associate_child_to_parent( student.family_id, student.num )
 
-        cohorts = ['parentsALL']
-        if student.is_secondary:
-            cohorts.append('parentsSEC')
-        if student.is_elementary:
-            cohorts.append('parentsELEM')
-        if student.is_korean:
-            cohorts.append('parentsKOREAN')
-        if student.is_chinese:
-            cohorts.append('parentsCHINESE')
-
-        for cohort in cohorts:
-            self.add_user_to_cohort( student.family_id, cohort )
-
-
-        for index in range(0, len(student.courses())):
-            course = student.courses()[index]
-            group  = student.groups()[index]
-            self.enrol_user_in_course( student.family_id, course, group, 'Parent' )
 
 
 

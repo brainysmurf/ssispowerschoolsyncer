@@ -12,10 +12,15 @@ ns.db_prefix = config['MOODLE'].get('db_prefix')
 ns.db_password = config['MOODLE'].get('db_password')
 ns.db_host = config['MOODLE'].get('db_host')
 ns.db_name = config['MOODLE'].get('db_name')
+
 engine =  create_engine(
     'postgresql://{db_username}:{db_password}@{db_host}/{db_name}'.\
-        format(**ns.declared_kwargs))
-session_maker = sessionmaker(bind=engine, expire_on_commit=False)
+        format(**ns.declared_kwargs),
+        max_overflow=0, pool_size=100)
+session_maker = sessionmaker(
+    bind=engine,
+    expire_on_commit=False
+    )
 
 @contextmanager
 def DBSession():
@@ -28,6 +33,5 @@ def DBSession():
         raise
     finally:
         session.close()
-#DBSession = DBSessionContext
 
 __all__ = [DBSession]

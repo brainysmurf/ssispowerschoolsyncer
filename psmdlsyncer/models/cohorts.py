@@ -14,7 +14,6 @@ class Cohort(BaseModel):
         """
         self.idnumber = idnumber   # the name of the field
 
-    def differences(self, other):
+    def __sub__(self, other):
         return ()
 
-    __sub__ = differences

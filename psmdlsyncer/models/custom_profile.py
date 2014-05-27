@@ -14,19 +14,5 @@ class CustomProfileField(BaseModel):
         """
         self.idnumber = idnumber   # the name of the field
 
-    def differences(self, other):
-        return ()  # below is depreciated
-
-        # if not self.value == other.value:
-        #     # Make NS with information about changes
-        #     ns = NS()
-        #     ns.status = 'custom_profile_value_changed'
-        #     ns.left = self
-        #     ns.right = other
-        #     param = NS()
-        #     param.value = other.value
-        #     param.field = self.name
-        #     ns.param = param
-        #     yield ns
-
-    __sub__ = differences
+    def __sub__(self, other):
+        return ()  # yes, needed

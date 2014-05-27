@@ -1,6 +1,7 @@
 from psmdlsyncer.utils import NS2
 
 class BaseModel:
+
     def update(self, key, value):
         self.key = value
 
@@ -32,7 +33,7 @@ class BaseModel:
         """
         keys = [key for key in self.__dict__ if key.startswith('custom_profile_')]
         keys.extend([key for key in self.__class__.__dict__ if key.startswith('custom_profile_')])
-        return [key for key in keys if getattr(self, key) is not None]
+        return [key for key in keys if getattr(self, key, None) is not None]
 
     def get_custom_field(self, name, default=None):
         return getattr(self, 'custom_profile_'+name, default)
@@ -40,22 +41,30 @@ class BaseModel:
     def set_custom_field(self, name, value):
         return setattr(self, 'custom_profile_'+name, value)
 
-    def differences(self, other):
+    def __sub__(self, other):
 
         for to_add in set(other.get_custom_field_keys()) - set(self.get_custom_field_keys()):
-            ns = NS()
+            ns = NS2()
             ns.status = 'add_custom_profile_field_to_user'
             ns.left = self
             ns.right = other
-            ns.param = to_add
+            param = NS2()
+            plain = self.plain_name_of_custom_field(to_add)
+            param.value = other.get_custom_field(plain)
+            param.field = plain
+            ns.param = param
             yield ns
 
-        for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
-            ns = NS()
+        for to_remove in set(self.get_custom_field_keys()) - set(other.get_custom_field_keys()):
+            ns = NS2()
             ns.status = 'remove_custom_profile_field_to_user'
             ns.left = self
             ns.right = other
-            ns.param = to_remove
+            param = NS2()
+            plain = self.plain_name_of_custom_field(to_remove)
+            param.value = self.get_custom_field(plain)
+            param.field = plain
+            ns.param = param
             yield ns
 
         for field in self.get_custom_field_keys():
@@ -63,11 +72,11 @@ class BaseModel:
             right = self.get_custom_field(field)
 
             if left != right:
-                ns = NS()
+                ns = NS2()
                 ns.status = 'custom_profile_value_changed'
                 ns.left = self
                 ns.right = other
-                param = NS()
+                param = NS2()
                 param.value = other.value
                 param.field = self.name
                 ns.param = param

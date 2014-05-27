@@ -1,4 +1,3 @@
-
 import re
 from psmdlsyncer.utils.Dates import get_year_of_graduation
 from psmdlsyncer.utils.Utilities import derive_depart, department_heads
@@ -29,15 +28,15 @@ class Course(BaseModel):
             # determine it as best we can...
             # which in this case is looking for stuff inside the parenths
             # at the end of the string, taking into account possible whitespace
-            match = re.search('\((\d+)\)\W?$', self.name)
+            match = re.search('\((.+)\)\W?$', self.name)
             if not match:
-                self.grade = -100  # dunno what to put here really
+                self.grade = "-100"  # dunno what to put here really
             else:
                 self.grade = match.group(1)
-            if self.grade == '11/12' or self.grade == '1112':
-                self.grade = [11, 12]
+            if '/' in self.grade:
+                self.grade = self.grade.split('/')
             else:
-                self.grade = [int(self.grade)]
+                self.grade = [self.grade]
         if not self.heads:
             pass
         self.exclude = False
@@ -89,7 +88,7 @@ class Course(BaseModel):
     def parents(self):
         return self._parents
 
-    def differences(self, other):
+    def __sub__(self, other):
         if self.grade != other.grade:
             ns = NS()
             ns.status = 'course_grade_changed'
@@ -97,8 +96,6 @@ class Course(BaseModel):
             ns.right = other
             ns.param = other.grade
             yield ns
-
-    __sub__ = differences
 
     def __repr__(self):
         return self.format_string("<Course: {ID} ({name})>") #" : {teachers}", first="(", mid="| ", last=") ", teachers=teacher_txt)

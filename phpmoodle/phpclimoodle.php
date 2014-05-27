@@ -6,6 +6,7 @@ require_once('../../cohort/lib.php');
 require_once('../../enrol/locallib.php');
 require_once('../../group/lib.php');
 require_once('../../lib/grouplib.php');
+require_once('../../course/lib.php');
 
 
 class moodlephp
@@ -17,11 +18,11 @@ class moodlephp
     {
       global $DB;
 
-      $s = $DB->get_record_select( 'role', 'name = ?', array("Student") );
+      $s = $DB->get_record_select( 'role', 'archetype = ?', array("student") );
       $this->STUDENT_ROLE_ID = $s->id;
-      $s = $DB->get_record_select( 'role', 'name = ?', array('Parent') );
+      $s = $DB->get_record_select( 'role', 'shortname = ?', array('parent') );
       $this->PARENT_ROLE_ID = $s->id;
-      $s = $DB->get_record_select( 'role', 'name = ?', array('Teacher') );
+      $s = $DB->get_record_select( 'role', 'archetype = ?', array('editingteacher') );
       $this->TEACHER_ROLE_ID = $s->id;
     }
 
@@ -86,6 +87,50 @@ class moodlephp
       return "+";
     }
 
+    private function create_new_course( $args )
+    {
+      global $DB;
+
+      $coursedata->idnumber = $args[0];
+      $coursedata->shortname = $args[0];
+      $coursedata->fullname = $args[1];
+      $teachlearning = $DB->get_field('course_categories', 'id', array('name'=>'Teaching & Learning'));
+      $coursedata->category = $teachlearning;
+      $coursedata->format = 'onetopic';
+
+      $course_idnumber = $coursedata->idnumber;
+
+      try {
+        $course = create_course($coursedata);
+      } catch (Exception $e) {
+        return "-101 Did not create course $course_idnumber: ".$e->getMessage();
+      }
+
+      if (!$course) {
+        return "-1 Could not create course. Not sure why though...";
+      } else {
+        return "+";
+      }
+
+    }
+
+    private function create_cohort( $args )
+    {
+      $cohortidnumber = $args[0];
+      $cohortname = $args[1];
+
+      $cohort = new stdClass;
+      $cohort->idnumber = $cohortidnumber;
+      $cohort->name = $cohortname;
+
+      // moodle takes care of the rest
+      if (!cohort_add_cohort($cohort)) {
+        return "- Could not create cohort $cohortidnumber (for some reason?)";
+      } else {
+        return "+";
+      }
+    }
+
     private function create_account( $args )
     {
       $username = $args[0];
@@ -94,9 +139,9 @@ class moodlephp
       $lastname = $args[3];
       $idnumber = $args[4];
 
-      if ( $this->user_does_exist(array($username)) ) {
-        return "+1000 This username is already taken: $username";
-      }
+      // if ( $this->user_does_exist(array($username)) ) {
+      //   return "-1000 This username is already taken: $username";
+      // }
 
       global $DB, $CFG;
 
@@ -105,7 +150,7 @@ class moodlephp
       }
 
       catch( Exception $e ) {
-          return "-104 Could not create account for $username";
+          return "-104 Could not create account for $username because ".$e->getMessage()." This can happen if the user was defined twice, with two different powerschool ids";
       }
 
       $user->email = trim($email);
@@ -275,7 +320,11 @@ class moodlephp
       $manager = new course_enrolment_manager($PAGE, $course);
 
       if( !is_enrolled($context, $user->id) ) {
-    	  $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
+        try {
+      	  $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
+        } catch (Exception $e) {
+          return "-300 Could not find manual enrol method for course?: ".$e->getMessage();
+        }
     	  $enrolid = $enrolMethod->id;
 
     	  $instances = $manager->get_enrolment_instances();
@@ -287,6 +336,10 @@ class moodlephp
 
     	  $instance = $instances[$enrolid];
     	  $plugin = $plugins[$instance->enrol];
+
+        if (!$plugin) {
+          return "-200 Cannot find plugin, used enrolid $enrolid";
+        }
 
     	  $today = time();
 

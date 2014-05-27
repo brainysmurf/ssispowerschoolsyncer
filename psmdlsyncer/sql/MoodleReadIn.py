@@ -13,14 +13,14 @@ class MoodleImport(MoodleDBSession):
         super().__init__()
 
     def content_dist_staffinfo(self):
-        for staff in self.users_enrolled_in_these_cohorts(['teachersALL', 'supportALL']):
+        for staff in self.users_enrolled_in_these_cohorts(['teachersALL', 'supportstaffALL']):
             schoolid = self.wrap_no_result(self.get_user_schoolid, staff)
             if schoolid is None:
                 schoolid = ''
             lastfirst = staff.lastname + ', ' + staff.firstname
             yield [staff.idnumber, staff.id, lastfirst, staff.email, '', schoolid, '', '']
 
-    def content_sec_courseinfo(self):
+    def content_dist_courseinfo(self):
         """ RETURN ALL THE STUFF IN TEACHING & LEARNING TAB """
         yield from self.get_teaching_learning_courses()
 
@@ -30,11 +30,21 @@ class MoodleImport(MoodleDBSession):
         """
         return ()
 
+    def content_dist_parentstudentlinks(self):
+        """
+
+        """
+        yield from self.get_parent_student_links()
+
     def content_dist_studentinfo(self):
         for student in self.users_enrolled_in_this_cohort('studentsALL'):
             # note, student.username on the end is an optional parameter
             # TODO: Add bus info here too!
             yield [student.idnumber, student.id, None, student.department, "", "", "", "", "", "", student.username]
+
+    def content_dist_parentinfo(self):
+        for parent in self.users_enrolled_in_this_cohort('parentsALL'):
+            yield [parent.idnumber, parent.id, None, "", "", "", "", "", "", "", parent.username]
 
     def content_sec_studentschedule(self):
         yield from self.get_bell_schedule()
@@ -50,10 +60,15 @@ class MoodleImport(MoodleDBSession):
         The model by default takes care of the custom_profile fields,
         but with Moodle we have to download from the database
         """
+        for field in self.get_custom_profile_fields():
+            yield None, None, field.shortname, None
         yield from self.get_custom_profile_records()
 
     def content_dist_cohorts(self):
         yield from self.get_cohorts()
+
+    def content_dist_mrbs_editors(self):
+        yield from self.get_mrbs_editors()
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))
@@ -77,7 +92,7 @@ class MoodleImport(MoodleDBSession):
             # Do different things based on the role
             # For teachers, we have to see if they are the owner of the group
 
-            if roleName == "Teacher":
+            if roleName == "editingteacher":
                 # TODO: Can be deleted, right?
                 # if not groupname:
                 #     groupname = username + courseID
@@ -92,11 +107,11 @@ class MoodleImport(MoodleDBSession):
                 #        (Maybe look at the username before adding here?)
                 results[groupname]['teachers'].append(userID)
 
-            elif roleName == "Manager":
+            elif roleName == "manager":
                 # what do we do in this case?
                 continue
 
-            elif roleName == "Student":
+            elif roleName == "student":
                 if userID.endswith('P'):
                     # Ensure there are no parents mistakenly being put
                     # TODO: Unenrol them?
@@ -109,7 +124,7 @@ class MoodleImport(MoodleDBSession):
                 if not userID in results[groupname]['students']:
                     results[groupname]['students'].append(userID)
 
-            elif roleName == "Parent":
+            elif roleName == "parent":
                 # The below will work okay because we sorted the query by name
                 # and Teacher comes before Parent
                 # a bit of a workaround, but it should work okay
@@ -171,5 +186,5 @@ class MoodleImport(MoodleDBSession):
 if __name__ == "__main__":
 
     m = MoodleImport('', '')
-    for student in m.users_enrolled_in_these_cohorts(['teachersALL', 'supportALL']):
-        print(student)
+    for info in m.get_bell_schedule():
+        print(info)

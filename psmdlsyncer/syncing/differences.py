@@ -12,12 +12,19 @@ class DetermineChanges:
     def __init__(self, left, right, template_klass=None, **kwargs):
         self.left = left
         self.right = right
+
+        self.left.process()
+        self.right.process()
+
+        from IPython import embed
+        embed()
+
         if not template_klass:
             self.template = DefaultTemplate()
         else:
             self.template = template_klass()
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.default_logger = self.logger.info   # change this to debug for verbosity
+        self.default_logger = self.logger.debug   # change this to debug for verbosity
         self.default_logger("Inside FindDifferences")
         self.default_logger("Left: {}".format(self.left))
         self.default_logger("Right: {}".format(self.right))
@@ -55,7 +62,9 @@ class DetermineChanges:
         # then looking for differences between each item
         # then we check the keys for subtractions
 
-        subbranches = ['courses', 'groups', 'cohorts', 'teachers', 'students', 'parents', 'schedules', 'custom_profile_fields']
+        assert(len(self.left.get_subbranches()) == len(self.right.get_subbranches()))
+
+        subbranches = self.left.get_subbranches()
 
         for subbranch in subbranches:
             self.default_logger("Subbranch: {}".format(subbranch))
@@ -66,8 +75,15 @@ class DetermineChanges:
             self.default_logger("There are {} items in {}'s right branch".format(len(right_branch), subbranch))
 
             self.default_logger("Looking for new {}:".format(subbranch))
+
+            if subbranch == '':   # for debugging
+                from IPython import embed
+                embed()
+
             # Loop through missing stuff and do with it what we must
             for key in right_branch.keys() - left_branch.keys():
+                if key.startswith('__'):
+                    continue
                 yield ModificationStatement(
                     left = left_branch.get(key),
                     right = right_branch.get(key),
@@ -75,28 +91,15 @@ class DetermineChanges:
                     param = key
                     )
 
-            # Now check for the difference in values of each variable
-            for item_key in left_branch:
-                item_left = left_branch.get(item_key)
-                item_right = right_branch.get(item_key)
-                if item_left and item_right:
-                    #self.default_logger("Finding the differences between\n\t{}\n\t{}".format(item_left, item_right))
-                    for left_minus_right in item_left - item_right:
-                        yield ModificationStatement(
-                            left = left_minus_right.left,
-                            right = left_minus_right.right,
-                            status = left_minus_right.status,
-                            param = left_minus_right.param
-                            )
-
         # Now go through the model and inspect the individual items
-        indiv_subbranches = ['teachers', 'students', 'parents', 'courses']
-        for subbranch in indiv_subbranches:
+        for subbranch in subbranches:
             self.default_logger("Individual items: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
 
             for item_key in left_branch:
+                if item_key.startswith('__'):
+                    continue
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:
@@ -114,6 +117,8 @@ class DetermineChanges:
             right_branch = self.get_subbranch(self.right, subbranch)
 
             for key in left_branch.keys() - right_branch.keys():
+                if key.startswith('__'):
+                    continue
                 yield ModificationStatement(
                     left = left_branch.get(key),
                     right = right_branch.get(key),
@@ -122,13 +127,6 @@ class DetermineChanges:
                     )
 
 
-
-class PostDetermineChanges(DetermineChanges):
-    """
-    This goes through the students and teachers subbranches, and calls the post_differences routines
-    """
-    def subtract(self):
-        pass
 
 if __name__ == "__main__":
 

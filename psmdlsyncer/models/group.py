@@ -12,11 +12,12 @@ class Group(BaseModel):
     """
     kind = "group"
 
-    def __init__(self, idnumber):
+    def __init__(self, idnumber, course_idnumber):
         self.group_id = self.ID = self.name = self.idnumber = idnumber
         self._students = []
         self._teachers = []
         self._course = None
+        self.course_idnumber = course_idnumber
 
     @property
     def teachers(self):
@@ -49,12 +50,9 @@ class Group(BaseModel):
         reference = weak_reference(course)
         self._course = reference
 
-    def differences(self, other):
+    def __sub__(self, other):
         # groups possibly could have different students involved, but this is picked up in the schedule
         return ()
-
-    __sub__ = differences
-
 
     def __repr__(self):
         return self.format_string("<Group>: {group_id}")

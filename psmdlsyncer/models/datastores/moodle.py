@@ -10,35 +10,35 @@ class MoodleDataStore(DataStore):
     pass
 
 class parents(MoodleDataStore):
+    """
+    Use MoodleParent instead of Parent
+    """
     klass = MoodleParent
 
     @classmethod
-    def make_parent(cls, student):
-        idnumber = student.family_id
-        return cls.make(idnumber)
+    def make_parent(cls, idnumber, *args, **kwargs):
+        parent = cls.make(idnumber, *args, **kwargs)
+        # Do NOT manually add child here, do that through the database
+        # parent.add_child(student)
+        return parent
 
 class MoodleTree(AbstractTree):
     klass = MoodleImport
     pickup = [DataStore, MoodleDataStore]
     convert_course = False
 
-    def process_students(self):
+    def process_parents(self):
         """
-        For Moodle since new students are added to the studentsALL cohort,
-        we have to go over it twice in order for them to appear.
+        Go through the students and make parents based on that data
         """
-        super().process_students()
-        for student in self.student_info.content():
-            self.students.make(*student)
+        for idnumber, parent_id, _, _, _, _, _, _, _, _, username in self.parent_info.content():
+            self.parents.make_parent(idnumber, parent_id, _, _, _, _, _, _, _, _, username=username)
 
-    def process_teachers(self):
+    def process_parent_links(self):
         """
-        For Moodle since new students are added to the teachersALL or supportstaffALL cohort,
-        we have to go over it twice in order for them to appear.
         """
-        super().process_teachers()
-        for teacher in self.teacher_info.content():
-            self.teachers.make(*teacher)
+        for parent_idnumber, child_idnumber in self.parent_student_links.content():
+            self.parent_links.make_parent_link(parent_idnumber, child_idnumber)
 
     def process_schedules(self):
         """
@@ -91,11 +91,11 @@ class MoodleTree(AbstractTree):
                             teacher.username = teacher_key
 
                     if section_number:
-                        group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number))
+                        group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
                     else:
                         #self.logger.warning("No section number for group {}!".format(group))
                         #continue
-                        group = self.groups.make("{}{}".format(teacher.username, course.ID))
+                        group = self.groups.make("{}{}".format(teacher.username, course.ID), course.idnumber)
 
                     # Now put in enrollments manually
                     enrollment = {course.ID: [group.ID]}
@@ -106,6 +106,9 @@ class MoodleTree(AbstractTree):
                     teacher = self.teachers.get_key(teacher_key)
                     if not teacher:
                         self.logger.warning("Teacher not found! {}".format(teacher_key))
+                        continue
+                    if not course:
+                        self.logger.warning("Course not found! {}".format(course_key))
                         continue
                     if section_number:
                         group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number))
@@ -120,10 +123,12 @@ class MoodleTree(AbstractTree):
                             # case where teacher is enrolled into the group
                             # TODO: Figure out what to do about that
                             continue
-                    parent = self.parents.make_parent(student)
 
-                    parent.add_child(student)
-                    student.add_parent(parent)
+                    # THIS IS DONE IN process_parents
+                    # parent = self.parents.make_parent(student)
+
+                    # parent.add_child(student)
+                    # student.add_parent(parent)
 
                     # Do some sanity checks
                     if not course:
@@ -144,10 +149,15 @@ class MoodleTree(AbstractTree):
                     student.add_timetable(timetable)
                     teacher.add_timetable(timetable)
 
-    def process_mrbs_editor(self):
-        dnet = MoodleDBSession()
-        for teacher_id in dnet.mrbs_editors():
-            self.mrbs_editor.make(teacher_id)
+    def process_mrbs_editors(self):
+        for teacher in self.mrbs_editor_info.content():
+            self.mrbs_editors.make(teacher.idnumber, teacher.id)
+
+    def process_courses(self):
+        for course in self.district_courses.content():
+            self.courses.make_without_conversion(
+                course.idnumber, course.fullname, course.grade, course.database_id
+                )
 
     def process_cohorts(self):
         cache = {}
@@ -162,7 +172,11 @@ class MoodleTree(AbstractTree):
                     self.default_logger("invalid idnumber '{}' found when processing moodle cohorts".format(idnumber))
                     continue
                 person._cohorts = []
+                cache[idnumber] = person
+
             person.add_cohort(cohort_name)
+
+        super().process_cohorts()
 
     def process_custom_profile_fields(self):
         # Indicate to the model we are are manually controlling the fields
@@ -178,6 +192,9 @@ class MoodleTree(AbstractTree):
         for profile_info in self.custom_profile_fields_info.content():
             self.default_logger("Processing custom profile: {}".format(profile_info))
             idnumber, username, shortname, data = profile_info
+            if not idnumber and not data and shortname:
+                # not user info, just the name itself, add it
+                self.custom_profile_fields.make(shortname)
             person = self.get_person(idnumber)
             if not person:
                 self.default_logger('Could not find person while processing {} moodle custom profile'.format(profile_info))

@@ -7,7 +7,7 @@ setup(
     author = "Adam Morris",
     author_email = "amorris@mistermorris.com",
     keywords = ["moodle"],
-    requires = ['py-postgresql >= (1.1.0)'],
+    requires = ['py-postgresql >= (1.1.0)', 'pexpect'],
     classifiers = [
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",

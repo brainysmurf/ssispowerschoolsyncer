@@ -2,8 +2,6 @@ from psmdlsyncer.models.datastores.tree import AbstractTree
 from psmdlsyncer.files import AutoSendImport
 from psmdlsyncer.models.datastores.branch import DataStore
 
-
-
 class AutoSendTree(AbstractTree):
     pickup = DataStore
     klass = AutoSendImport

@@ -6,7 +6,7 @@ from collections import defaultdict
 import re, logging
 log = logging.getLogger(__name__)
 from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, parents, \
-	mrbs_editor, cohorts, parent_links, timetables, custom_profile_fields, groups, schedules, courses
+	mrbs_editors, cohorts, parent_links, timetables, custom_profile_fields, groups, schedules, courses
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
 from psmdlsyncer.utils import NS2
@@ -77,7 +77,8 @@ class DataStoreCollection(type):
 
 	@classmethod
 	def keys(cls):
-		return cls._store.keys()
+		# Filter out any special __variables__ like that
+		return [key for key in cls._store.keys() if not key.startswith('__')]
 
 	@classmethod
 	def get_branch(cls, key):
@@ -91,7 +92,6 @@ class DataStoreCollection(type):
 			subbranch=subbranch
 			)]
 
-
 class AbstractTree(metaclass=DataStoreCollection):
 	convert_course = False   # by default, don't run any conversion on the course shortname
 
@@ -99,16 +99,19 @@ class AbstractTree(metaclass=DataStoreCollection):
 		self.logger = logging.getLogger('AbstractTree')
 		self.default_logger = self.logger.debug
 		self.student_info = self.klass('dist', 'studentinfo')
+		self.parent_info = self.klass('dist', 'parentinfo')
+		self.parent_student_links = self.klass('dist', 'parentstudentlinks')
 		self.teacher_info = self.klass('dist', 'staffinfo')
-		self.secondary_courses = self.klass('sec', 'courseinfo')
-		self.elementary_courses = self.klass('elem', 'courseinfo')
+		self.district_courses = self.klass('dist', 'courseinfo')
 		self.allocations_info = self.klass('sec', 'teacherallocations')
 		self.secondary_schedule = self.klass('sec', 'studentschedule')
 		self.elementary_schedule = self.klass('elem', 'studentschedule')
 		self.custom_profile_fields_info = self.klass('dist', 'customprofiles')
-		self.mrbs_editor_info = self.klass('dist', 'mrbs_editor')
+		self.mrbs_editor_info = self.klass('dist', 'mrbs_editors')
 		self.cohort_info = self.klass('dist', 'cohorts')
-		self.init()
+
+	def get_subbranches(self):
+		return [re.sub('^.*\.', '', key) for key in self.__class__._store.keys()]
 
 	def get_person(self, idnumber):
 		student = self.students.get_key(idnumber)
@@ -139,7 +142,6 @@ class AbstractTree(metaclass=DataStoreCollection):
 	def process_teachers(self):
 		self.default_logger('{} inside processing teachers'.format(self.__class__.__name__))
 		for teacher in self.teacher_info.content():
-			print(teacher)
 			self.default_logger('Processing teacher: {}'.format(teacher))
 			self.teachers.make(*teacher)
 
@@ -148,19 +150,11 @@ class AbstractTree(metaclass=DataStoreCollection):
 		Go through the students and make parents based on that data
 		"""
 		for student in self.students.get_objects():
-			self.parents.make_parent(student)
+			parent = self.parents.make_parent(student)
+			student.add_parent(parent)
 
 	def process_courses(self):
-		self.default_logger('{} processing secondary courses'.format(self.__class__.__name__))
-		for course in self.secondary_courses.content():
-			self.default_logger('Processing course: {}'.format(course))
-			if self.convert_course:
-				self.courses.make_with_conversion(*course)
-			else:
-				self.courses.make_without_conversion(*course)
-
-		self.default_logger('{} processing elementary courses'.format(self.__class__.__name__))
-		for course in self.elementary_courses.content():
+		for course in self.district_courses.content():
 			self.default_logger('Processing course: {}'.format(course))
 			if self.convert_course:
 				self.courses.make_with_conversion(*course)
@@ -201,11 +195,10 @@ class AbstractTree(metaclass=DataStoreCollection):
 					self.logger.warning("Group not found! {}".format(section_number))
 					continue
 
-				# Make parent
-				# associate call not needed
-				parent = self.parents.make_parent(student)
-				parent.add_child(student)
-				student.add_parent(parent)
+				# THIS IS DONE IN PROCESS PARENTS
+				# parent = self.parents.make_parent(student)
+				# parent.add_child(student)
+				# student.add_parent(parent)
 
 				self.associate(course, teacher, group, student)
 
@@ -224,7 +217,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 		"""
 		for student in self.students.get_objects():
 			for parent in student.parents:
-				self.parent_links.make_parent_link(parent, student)
+				self.parent_links.make_parent_link(parent.idnumber, student.idnumber)
 
 	def process_custom_profile_fields(self):
 		"""
@@ -237,8 +230,9 @@ class AbstractTree(metaclass=DataStoreCollection):
 		for person in self.get_everyone():
 			self.cohorts.make_cohort(person)
 
-	def process_mrbs_editor(self):
-		return ()
+	def process_mrbs_editors(self):
+		for teacher in self.teachers.get_objects():
+			self.mrbs_editors.make(teacher.idnumber)
 
 	def associate(self, course, teacher, group, student):
 		"""
@@ -249,11 +243,12 @@ class AbstractTree(metaclass=DataStoreCollection):
 		student.associate(course, group, teacher)
 		group.associate(course, teacher, student)
 
-	def init(self):
+	def process(self):
 		# Basically just calls every process_x method we have
-		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules', 'custom_profile_fields', 'mrbs_editor']
+		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules', 'custom_profile_fields', 'mrbs_editors']
 		for o in order:
-			method = getattr(self, 'process_{}'.format(o))
+			method_name = 'process_{}'.format(o)
+			method = getattr(self, method_name)
 			method()
 
 class PostfixTree(AbstractTree):

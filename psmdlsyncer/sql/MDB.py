@@ -1,13 +1,14 @@
 from psmdlsyncer.db import DBSession
 from psmdlsyncer.db import MoodleDB    # yes, import the module itself, used for getattr statements
 from psmdlsyncer.db.MoodleDB import *  # and, yes, import all the terms we need to refer to the tables as classes
-from sqlalchemy.orm import aliased
 from sqlalchemy import and_, not_, or_
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy import desc, asc
 from psmdlsyncer.utils import NS2
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.utils import time_now
+from sqlalchemy import func, case
+from sqlalchemy.orm import aliased
 
 import logging
 
@@ -32,27 +33,40 @@ class MoodleDBSess:
         """
         if table.lower().endswith('data'):
             table = table[:-4] + 'datum'
+        if table.endswith('s'):
+            table = table[:-1]
         ret = getattr(MoodleDB, table.replace('_', ' ').title().replace(' ', ''))
         return ret
 
-    def wrap_no_result(self, func, *args, **kwargs):
+    def wrap_no_result(self, f, *args, **kwargs):
         """
         For simple work, returns None if NoResultFound is encountered
         Most useful when calling an sqlalchemy function like one() and you want
         a simple way to handle an error
         """
         try:
-            return func(*args, **kwargs)
+            return f(*args, **kwargs)
         except NoResultFound:
             return None
 
     def insert_table(self, table, **kwargs):
-        table_class = self.table_string_to_class(table)
-        instance = table_class()
-        for key in kwargs.keys():
-            setattr(instance, key, kwargs[key])
         with DBSession() as session:
+            table_class = self.table_string_to_class(table)
+            instance = table_class()
+            for key in kwargs.keys():
+                setattr(instance, key, kwargs[key])
+
             session.add(instance)
+
+    def get_rows_in_table(self, table, **kwargs):
+        """
+        @table string of the table name (without the prefix)
+        @param kwargs is the where statement
+        """
+        table_class = self.table_string_to_class(table)
+        with DBSession() as session:
+            statement = session.query(table_class).filter_by(**kwargs)
+        return statement.all()
 
     def update_table(self, table, where={}, **kwargs):
         """
@@ -134,7 +148,19 @@ class MoodleDBSession(MoodleDBSess):
     But basically, anything obviously 'dragonnet-y' is here
     """
     SYSTEM_CONTEXT = 1
+    MRBS_EDITOR_ROLE = 10
     TEACHING_LEARNING_CATEGORY_ID = config_get_section_attribute('MOODLE', 'tl_cat_id')
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        with DBSession() as session:
+            needed_cohorts = ['teachersALL', 'parentsALL', 'studentsALL', 'supportstaffALL']
+            for cohort in needed_cohorts:
+                exists = session.query(Cohort).filter_by(idnumber=cohort).all()
+                if not exists:
+                    self.add_cohort(cohort, cohort)
 
     def users_enrolled_in_this_cohort(self, cohort):
         """
@@ -172,17 +198,23 @@ class MoodleDBSession(MoodleDBSess):
             yield from all_users.all()
 
     def add_cohort(self, idnumber, name):
+        exists = self.get_rows_in_table('cohort', idnumber=idnumber)
+        if exists:
+            self.default_logger('Did NOT create cohort {} as it already exists!'.format(idnumber))
+            return
         now = time_now()
-        self.insert_table(
-            'cohort',
-            idnumber=idnumber,
-            contextid=1,  # system-wide
-            name=name,
-            description='',
-            descriptionformat=0,
-            component = 1,
-            timecreated=now,
-            timemodified=now)
+
+        with DBSession() as session:
+            cohort = Cohort()
+            cohort.idnumber = idnumber
+            cohort.name = name
+            cohort.descriptionformat = 0
+            cohort.description = ''
+            cohort.contextid = self.SYSTEM_CONTEXT
+            cohort.source="psmdlsyncer"
+            cohort.timecreated = time_now()
+            cohort.timemodified = time_now()
+            session.add(cohort)
 
     def bell_schedule(self):
         """
@@ -196,7 +228,7 @@ class MoodleDBSession(MoodleDBSess):
 
         with DBSession() as session:
             schedule = session.query(
-                    Course.idnumber.label("courseID"), User.idnumber.label("userID"), User.username.label('username'), Role.name.label('rolename'), Group.name.label('groupName')
+                    Course.idnumber.label("courseID"), User.idnumber.label("userID"), User.username.label('username'), Role.shortname.label('rolename'), Group.name.label('groupName')
                     ).select_from(Course).\
                         join(CourseCategory, CourseCategory.id == Course.category).\
                         join(Context, Course.id == Context.instanceid).\
@@ -208,17 +240,18 @@ class MoodleDBSession(MoodleDBSess):
                             Group.id == GroupsMember.groupid,
                             Group.courseid == Course.id
                             )).\
-                            filter(
-                                and_(
-                                    CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
-                                    not_(Group.name == None),
-                                    not_(Course.idnumber.like('')),
-                                    not_(User.idnumber.like('')),
-                                )).\
-                            order_by(asc(Role.name))
+                        filter(
+                            and_(
+                                # CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
+                                CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
+                                Group.name != None,
+                                Course.idnumber != '',
+                                User.idnumber != '',
+                            )).\
+                        order_by(asc(Role.id))   # sort by role.id because it's in the natural order expected (teachers first, then students, then parents)
             yield from schedule.all()
 
-    def mrbs_editors(self):
+    def get_mrbs_editors(self):
         with DBSession() as session:
             statement = session.query(User).\
                 select_from(RoleAssignment).\
@@ -226,10 +259,29 @@ class MoodleDBSession(MoodleDBSess):
                         filter(
                             and_(
                                 RoleAssignment.contextid == self.SYSTEM_CONTEXT,
+                                RoleAssignment.roleid == self.MRBS_EDITOR_ROLE,
                                 not_(User.idnumber.like(''))
                             )
                         )
-            yield from statement.all()
+        yield from statement.all()
+
+    def add_mrbs_editor(self, user_idnumber):
+        user = self.wrap_no_result(self.get_user_from_idnumber, user_idnumber)
+        if not user:
+            # no such user, don't do it!
+            return
+
+        now = time_now()
+        self.insert_table(
+            'role_assignments',
+            contextid=self.SYSTEM_CONTEXT,
+            roleid=self.MRBS_EDITOR_ROLE,
+            userid=user.id,
+            modifierid=2, # TODO: Admin ID, right?
+            component='psmdlsyncer',  # Might as well use it for something?
+            itemid=0,
+            sortorder=0,
+            timemodified=now)
 
     def get_user_schoolid(self, user):
         obj = self.get_user_custom_profile_field(user, 'schoolid')
@@ -240,16 +292,38 @@ class MoodleDBSession(MoodleDBSess):
     def get_teaching_learning_courses(self):
         """ Returns a set of id of courses that are in teaching/learning """
         with DBSession() as session:
-            statement = session.query(Course.idnumber, Course.fullname, CourseSsisMetadatum.value, Course.id).\
+            statement = session.query(Course.idnumber, Course.fullname, CourseSsisMetadatum.value.label('grade'), Course.id.label('database_id')).\
                 join(CourseCategory, CourseCategory.id == Course.category).\
-                    filter(CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID))).\
                 outerjoin(CourseSsisMetadatum,
                     and_(
                         CourseSsisMetadatum.courseid == Course.id,
-                        CourseSsisMetadatum.field == 'grade'
+                        CourseSsisMetadatum.field.like('grade%')
                         )).\
-                filter(not_(Course.idnumber == ''))
-            yield from statement.all()
+                filter(and_(
+                    not_(Course.idnumber == ''),
+                    CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID))
+                    )).\
+                order_by(Course.fullname,   CourseSsisMetadatum.value)
+        yield from statement.all()
+
+    def get_teaching_learning_courses2(self):
+        """ Returns a set of id of courses that are in teaching/learning """
+
+        with DBSession() as session:
+            sub = session.query(Course.id.label('course_id'), func.count('*').label('grade_count')).\
+                select_from(Course).\
+                    join(CourseSsisMetadatum,
+                        and_(
+                            CourseSsisMetadatum.courseid == Course.id,
+                            CourseSsisMetadatum.field.like('grade%')
+                        )
+                    ).\
+                    group_by(Course.id).subquery()
+
+            statement = session.query(Course, sub.c.grade_count).\
+                outerjoin(sub, Course.id == sub.c.course_id).\
+                    order_by(Course.id)
+        yield from statement.all()
 
     def get_custom_profile_records(self):
         with DBSession() as session:
@@ -258,7 +332,35 @@ class MoodleDBSession(MoodleDBSess):
                     select_from(UserInfoDatum).\
                 join(UserInfoField, UserInfoField.id == UserInfoDatum.fieldid).\
                 join(User, User.id == UserInfoDatum.userid)
-            yield from statement.all()
+        yield from statement.all()
+
+    def get_custom_profile_fields(self):
+        """
+        Returns just the data in user_info_fields
+        """
+        with DBSession() as session:
+            statement = session.\
+                query(UserInfoField)
+        yield from statement.all()
+
+    def get_parent_student_links(self):
+        with DBSession() as session:
+            Child = aliased(User)
+            statement = session.\
+                query(User.idnumber, Child.idnumber).\
+                select_from(User).\
+                join(RoleAssignment, RoleAssignment.userid == User.id).\
+                join(Role, Role.id == RoleAssignment.roleid).\
+                join(Context,
+                    and_(
+                        Context.id == RoleAssignment.contextid,
+                        Context.contextlevel == 30
+                    )).\
+                join(Child, Child.id == Context.instanceid).\
+                filter(Role.shortname == 'parent').\
+                order_by(User.idnumber)
+        yield from statement.all()
+
 
     def set_user_custom_profile(self, user_idnumber, name, value):
         user = self.get_user_from_idnumber(user_idnumber)
@@ -283,9 +385,20 @@ class MoodleDBSession(MoodleDBSess):
         """
         Do database stuff to create the custom user profile field
         """
-        with DBSession as session:
-            result = session.query(UserInfoField.sortorder).order_by(desc(UserInfoField.sortorder)).limit(1)
-        lastsort = int(result.sortorder)
+        with DBSession() as session:
+            exists = session.query(UserInfoField).filter(UserInfoField.name == name).all()
+        if exists:
+            print('Already there buddy')
+            return
+
+
+        with DBSession() as session:
+            result = session.query(UserInfoField.sortorder).order_by(desc(UserInfoField.sortorder)).limit(1).first()
+        if not result:
+            lastsort = 0
+        else:
+            lastsort = int(result.sortorder)
+
         sort = lastsort + 1
         ns = NS2()
         ns.shortname = name
@@ -307,11 +420,8 @@ class MoodleDBSession(MoodleDBSess):
         ns.param4 = ""
         ns.param5 = ""
 
-        if isinstance(value, bool):
+        if name.startswith('is'):
             ns.datatype = "checkbox"
-        elif isinstance(value, int):
-            # just use text ....
-            ns.datatype = "text"
         else:
             # for everything...?
             ns.datatype = "text"
@@ -327,19 +437,28 @@ class MoodleDBSession(MoodleDBSess):
 
         with DBSession() as session:
             try:
-                field = session.query(UserInfoField).filter_by(shortname=name).one()
+                field = session.query(UserInfoField).filter_by(shortname=name).one()  # shortname == idnumber
             except NoResultFound:
-                self.logger.inform("User has a custom profile field {} but it doesn't exist yet".format(name))
+                self.logger.info("User has a custom profile field {} but it doesn't exist yet".format(name))
                 return
+            except MultipleResultsFound:
+                self.logger.info("Multiple, using first (again)")
+                field = session.query(UserInfoField).filter_by(shortname=name).first()
 
-        # check for multiples?
-        fieldid = field.id
-        self.insert_table('user_info_data',
-            userid=user_id,
-            fieldid=fieldid,
-            data=value,
-            dataformat=0
-            )
+            exists = session.query(UserInfoDatum).filter_by(fieldid=field.id, userid=user_id).all()
+            if exists:
+                self.default_logger("Not creating entry for field {} for user {} because it already exists!".format(name, user_idnumber))
+                return
+            # check for multiples?
+            user_info = UserInfoDatum()
+            user_info.userid = user_id
+            user_info.fieldid = field.id
+            if field.datatype == 'checkbox':
+                user_info.data = int(value)
+            else:
+                user_info.data = value
+            user_info.dateformat = 0
+            session.add(user_info)
 
     def get_cohorts(self):
         with DBSession() as session:
@@ -347,26 +466,44 @@ class MoodleDBSession(MoodleDBSess):
                 select_from(CohortMember).\
                     join(Cohort, Cohort.id == CohortMember.cohortid).\
                     join(User, User.id == CohortMember.userid)
-            yield from statement.all()
+
+        yield from statement.all()
 
 if __name__ == "__main__":
 
     m = MoodleDBSession()
 
+    # for item in m.get_custom_profile_records():
+    #     print(item)
+
     # result = m.wrap_no_result(m.get_user_from_idnumber, 'xxxx')
     # assert(result is None)
 
-    # for item in m.users_enrolled_in_this_cohort('studentsSEC'):
-    #     print(item)
+    # for item in m.users_enrolled_in_these_cohorts(['supportALL']):
+    #     print(item.idnumber)
 
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
 
-    # for course in m.get_teaching_learning_courses():
-    #     print(course.fullname)
+    for user in m.mrbs_editors():
+        from IPython import embed
+        embed()
+        print(user)
 
-    for item in m.get_teaching_learning_courses():
-        input()
-        print(item)
+    # for student, parent in m.get_parent_student_links():
+    #     print(student)
+    #     print(parent)
+    #     print()
+
+    # for item, number in m.get_teaching_learning_courses2():
+    #     print(item.fullname)
+    #     print(number)
+    #     # print("{} {}".format(course.fullname, course.grade))
+
+    # for item in m.get_teaching_learning_courses():
+    #     input()
+    #     print(item)
+
+    # m.add_cohort('blahblahALL', 'All Parents')
 
 

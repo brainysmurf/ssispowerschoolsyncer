@@ -6,7 +6,7 @@ from psmdlsyncer.settings import config_get_section_attribute
 
 # This is the version of the autosend files
 # With each increase of number in the version, means that something about the fields have changed from within autosend
-major_version = 3
+major_version = 4
 prefix = config_get_section_attribute('AUTOSEND', 'prefix')
 version_format = "{prefix}_{{school}}_{{unique}}_v{major_version}.{{minor_version}}".format(prefix=prefix, major_version=major_version)
 
@@ -31,12 +31,12 @@ class AutoSendImport:
         candidates = [g for g in [f.split(os.path.sep)[-1] for f in os.listdir(path_to_powerschool)] if path in g]
         candidates = sorted(candidates)
         if not candidates:
-            self.logger.critical("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
+            self.logger.debug("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
             self.content = lambda *args, **kwargs: []
             return
         final = candidates[-1]
         self.path = path_to_powerschool + '/' + final
-        self.logger.info('Autosend: {}_{}\nParsing this file: {}'.format(school, unique, self.path))
+        self.logger.debug('Autosend: {}_{}\nParsing this file: {}'.format(school, unique, self.path))
 
     def content(self):
         with open(self.path) as f:

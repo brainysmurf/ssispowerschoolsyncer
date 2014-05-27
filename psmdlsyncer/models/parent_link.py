@@ -8,17 +8,31 @@ from psmdlsyncer.utils import NS, weak_reference
 from psmdlsyncer.models.base import BaseModel
 
 class ParentLink(BaseModel):
-    def __init__(self, idnumber, parent, child):
-        self.idnumber = self.ID = idnumber
-        self.parent = weak_reference(parent)
-        self.child = weak_reference(child)
+    def __init__(self, parent_idnumber, child_idnumber):
+        self.parent_idnumber = self.ID = self.idnumber = parent_idnumber
+        self.children = []
 
-    def differences(self, other):
-        if self.parent != other.parent:
-            # wrong parent!
-            pass
-        if self.child != other.child:
-            # wrong!
-            pass
+    def add_child(self, child_idnumber):
+        self.children.append(child_idnumber)
 
-    __sub__ = differences
+    def __sub__(self, other):
+        if self.children != other.children:
+            for to_add in set(other.children) - set(self.children):
+                ns = NS()
+                ns.status = 'associate_child_to_parent'
+                ns.left = self
+                ns.right = other
+                ns.param = NS()
+                ns.param.child = to_add
+                ns.param.parent = self.parent_idnumber
+                yield ns
+
+            for to_remove in set(self.children) - set(other.children):
+                ns = NS()
+                ns.status = 'deassociate_child_from_parent'
+                ns.left = self
+                ns.right = other
+                ns.param = NS()
+                ns.param.child = to_remove
+                ns.param.parent = self.parent_idnumber
+                yield ns
