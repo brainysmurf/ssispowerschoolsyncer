@@ -209,6 +209,9 @@ class AbstractTree(metaclass=DataStoreCollection):
 				teacher.add_timetable(timetable)
 
 	def process_timetables(self):
+		"""
+		We don't need to do taht here
+		"""
 		return ()
 
 	def process_parent_links(self):
@@ -245,7 +248,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def process(self):
 		# Basically just calls every process_x method we have
-		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules', 'custom_profile_fields', 'mrbs_editors']
+		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules', 'timetables', 'custom_profile_fields', 'mrbs_editors']
 		for o in order:
 			method_name = 'process_{}'.format(o)
 			method = getattr(self, method_name)

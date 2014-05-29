@@ -57,6 +57,15 @@ class DataStore:
 		for item in cls._resolve().items():
 			yield item
 
+	@classmethod
+	def del_key(cls, key):
+		del cls._resolve()[key]
+
+	@classmethod
+	def del_all_keys(cls, key):
+		for key in cls.get_keys():
+			cls.del_key(key)
+
 	# TODO: Figure out why I can't do this
 	# def __iter__(self):
 	# 	input()
@@ -81,6 +90,12 @@ class DataStore:
 			if getattr(item, attr) == value:
 				return item
 		return None
+
+	@classmethod
+	def find_one_with_callback(cls, callback):
+		for item in cls.get_objects():
+			if callback(item):
+				return item
 
 	@classmethod
 	def set_key(cls, key, value):
@@ -194,8 +209,8 @@ class timetables(DataStore):
 		Making it just sets up an object that is then called to get the timetable data
 		Return that, the calling function will pass it on to the student and teacher object
 		"""
-		idnumber = group.ID
-		this = cls.make(idnumber, course.ID, teacher.ID, group.ID, student.ID, period_info)
+		idnumber = '{}/{}'.format(group.ID, student.idnumber)
+		this = cls.make(idnumber, course, teacher, group, student, period_info)
 		return this.unpack_timetable()
 
 class courses(DataStore):

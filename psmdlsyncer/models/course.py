@@ -24,7 +24,9 @@ class Course(BaseModel):
         self.heads = department_heads.get(self.department)
         self.grade = grade
         self.database_id = database_id
-        if self.grade is "":
+        if '/' in grade:
+            self.grade = sorted(grade.split('/'))
+        elif self.grade is "":
             # determine it as best we can...
             # which in this case is looking for stuff inside the parenths
             # at the end of the string, taking into account possible whitespace
@@ -34,7 +36,7 @@ class Course(BaseModel):
             else:
                 self.grade = match.group(1)
             if '/' in self.grade:
-                self.grade = self.grade.split('/')
+                self.grade = sorted(self.grade.split('/'))
             else:
                 self.grade = [self.grade]
         if not self.heads:

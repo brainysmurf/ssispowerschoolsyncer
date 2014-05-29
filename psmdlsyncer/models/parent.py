@@ -105,10 +105,6 @@ class Parent(BaseModel):
         return set([teacher.ID for teacher in self.teachers])
 
     @property
-    def student_idnumbers(self):
-        return set([student.ID for student in self.students])
-
-    @property
     def teachers(self):
         result = []
         for child in self.children:
@@ -119,6 +115,10 @@ class Parent(BaseModel):
         """ SET ATTRIBUTES THAT DEPEND ON child HERE """
         if not child.ID in self.children_ids:
             self._children.append( weak_reference(child) )
+            if child.is_secondary:
+                self.add_cohort('parentsSEC')
+            if child.is_elementary:
+                self.add_cohort('parentsELEM')
 
     @property
     def children(self):
@@ -271,9 +271,9 @@ class MoodleParent(Parent):
 
     def __repr__(self):
         ns = NS()
-        ns.homerooms = " ".join(self.homerooms)
         ns.emails = ", ".join(self.emails)
         ns.parents_of = "Parents of " + ", ".join(self.children_ids)
+        ns.homerooms = "(" + ", ".join(self.homerooms) + ")"
         ns.family_id = self.family_id
         ns.ID = self.ID
         return ns("<MoodleParent {ID}: {parents_of} {homerooms}>")

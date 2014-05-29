@@ -738,7 +738,6 @@ class Capability(Base):
     component = Column(String(100), nullable=False, server_default="''::character varying")
     riskbitmask = Column(BigInteger, nullable=False, server_default='0')
 
-
 class CategorySsisMetadatum(Base):
     __tablename__ = 'ssismdl_category_ssis_metadata'
 
@@ -746,6 +745,18 @@ class CategorySsisMetadatum(Base):
     field = Column(String(255), primary_key=True, nullable=False)
     value = Column(String(255))
 
+class SsisTimetableInfo(Base):
+    __tablename__ = 'ssismdl_ssis_timetable_info'
+
+    id = Column(BigInteger, primary_key=True)
+    studentuserid = Column(BigInteger, nullable=False, server_default='0')
+    courseid = Column(BigInteger, nullable=False, server_default='0')
+    teacheruserid = Column(BigInteger, nullable=False, server_default='0')
+    grade = Column(String(100), nullable=False, server_default = "''::character varying")
+    period = Column(String(100), nullable=False, server_default = "''::character varying")
+    name = Column(String(255), nullable=False, server_default = "''::character varying")
+    comment = Column(String(255), nullable=False, server_default = "''::character varying")
+    active = Column(SmallInteger, nullable=False, server_default='0')
 
 class Chat(Base):
     __tablename__ = 'ssismdl_chat'

@@ -18,14 +18,16 @@ class parents(MoodleDataStore):
     @classmethod
     def make_parent(cls, idnumber, *args, **kwargs):
         parent = cls.make(idnumber, *args, **kwargs)
-        # Do NOT manually add child here, do that through the database
-        # parent.add_child(student)
         return parent
 
 class MoodleTree(AbstractTree):
     klass = MoodleImport
     pickup = [DataStore, MoodleDataStore]
     convert_course = False
+
+    def __init__(self):
+        super().__init__()
+        self.timetable_table = self.klass('dist', 'timetable_table')
 
     def process_parents(self):
         """
@@ -36,9 +38,28 @@ class MoodleTree(AbstractTree):
 
     def process_parent_links(self):
         """
+        Here the main thing is creating the parent/child links and putting the child in the model
         """
         for parent_idnumber, child_idnumber in self.parent_student_links.content():
-            self.parent_links.make_parent_link(parent_idnumber, child_idnumber)
+            parent = self.parents.get_key(parent_idnumber)
+            child = self.students.get_key(child_idnumber)
+            if parent and child:
+                parent.add_child(child)
+                self.parent_links.make_parent_link(parent_idnumber, child_idnumber)
+
+    def process_timetables(self):
+        """
+        This is different, we just go through each item and add it to the database
+        """
+        self.timetable_table.clear_active_timetable_data()
+
+        ttbl_keys = [timetable.name + '/' + idnumber for timetable, idnumber in self.timetable_table.content()]
+        for key in self.timetables.get_keys():
+            timetable = self.timetables.get_key(key)
+            if key not in ttbl_keys:
+                this = self.timetable_table.add_timetable_data(timetable)
+            else:
+                self.timetable_table.set_timetable_data_active(timetable)
 
     def process_schedules(self):
         """

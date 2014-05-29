@@ -7,8 +7,11 @@ from sqlalchemy import desc, asc
 from psmdlsyncer.utils import NS2
 from psmdlsyncer.settings import config_get_section_attribute
 from psmdlsyncer.utils import time_now
-from sqlalchemy import func, case
+from sqlalchemy import func, case, Integer, String
+from sqlalchemy.dialects.postgres import ARRAY
 from sqlalchemy.orm import aliased
+from collections import defaultdict
+from sqlalchemy.sql.expression import cast
 
 import logging
 
@@ -289,40 +292,45 @@ class MoodleDBSession(MoodleDBSess):
             return None
         return obj.data
 
-    def get_teaching_learning_courses(self):
-        """ Returns a set of id of courses that are in teaching/learning """
+    def get_timetable_table(self):
         with DBSession() as session:
-            statement = session.query(Course.idnumber, Course.fullname, CourseSsisMetadatum.value.label('grade'), Course.id.label('database_id')).\
-                join(CourseCategory, CourseCategory.id == Course.category).\
-                outerjoin(CourseSsisMetadatum,
-                    and_(
-                        CourseSsisMetadatum.courseid == Course.id,
-                        CourseSsisMetadatum.field.like('grade%')
-                        )).\
-                filter(and_(
-                    not_(Course.idnumber == ''),
-                    CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID))
-                    )).\
-                order_by(Course.fullname,   CourseSsisMetadatum.value)
+            statement = session.query(SsisTimetableInfo, User.idnumber).\
+                join(User, User.id == SsisTimetableInfo.studentuserid)
+
         yield from statement.all()
 
-    def get_teaching_learning_courses2(self):
-        """ Returns a set of id of courses that are in teaching/learning """
+    def get_teaching_learning_courses(self):
+        """
+        Returns course information for any course that is within the Teaching & Learning menu
+        Including the grade info stored in course_ssis_metadata
+        Grade info is a string, if there are more than two then is in 11/12 format
+        TODO: Sometimes it formats as 12/11, make it sort (but if you sort you have to put in group_by)
+              Workaround: the model just sorts it for us
+        """
 
         with DBSession() as session:
-            sub = session.query(Course.id.label('course_id'), func.count('*').label('grade_count')).\
+            sub = session.query(
+                Course.id.label('course_id'),
+                func.string_agg(CourseSsisMetadatum.value, '/').label('grade')).\
                 select_from(Course).\
+                    join(CourseCategory, CourseCategory.id == Course.category).\
                     join(CourseSsisMetadatum,
                         and_(
                             CourseSsisMetadatum.courseid == Course.id,
                             CourseSsisMetadatum.field.like('grade%')
                         )
                     ).\
-                    group_by(Course.id).subquery()
+                    filter(and_(
+                        not_(Course.idnumber == ''),
+                        CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID))
+                        )).\
+                    group_by(Course.id).\
+                    subquery()
 
-            statement = session.query(Course, sub.c.grade_count).\
-                outerjoin(sub, Course.id == sub.c.course_id).\
+            statement = session.query(Course.idnumber, Course.fullname, sub.c.grade, Course.id.label('database_id')).\
+                join(sub, Course.id == sub.c.course_id).\
                     order_by(Course.id)
+
         yield from statement.all()
 
     def get_custom_profile_records(self):
@@ -387,45 +395,43 @@ class MoodleDBSession(MoodleDBSess):
         """
         with DBSession() as session:
             exists = session.query(UserInfoField).filter(UserInfoField.name == name).all()
-        if exists:
-            print('Already there buddy')
-            return
+            if exists:
+                return
 
-
-        with DBSession() as session:
             result = session.query(UserInfoField.sortorder).order_by(desc(UserInfoField.sortorder)).limit(1).first()
-        if not result:
-            lastsort = 0
-        else:
-            lastsort = int(result.sortorder)
+            if not result:
+                lastsort = 0
+            else:
+                lastsort = int(result.sortorder)
 
-        sort = lastsort + 1
-        ns = NS2()
-        ns.shortname = name
-        ns.name = name.replace("_", " ").title()
-        ns.description = ""
-        ns.descriptionformat = 1
-        ns.categoryid = 1
-        ns.sortorder = sort
-        ns.required = 0
-        ns.locked = 1
-        ns.visible = 0
-        ns.forceunique = 0
-        ns.signup = 0
-        ns.defaultdata = 0
-        ns.defaultdataformat = 0
-        ns.param1 = "psmdlsyncer"  # for debugging...
-        ns.param2 = ""
-        ns.param3 = ""
-        ns.param4 = ""
-        ns.param5 = ""
+            sort = lastsort + 1
+            user_info_field = UserInfoField()
+            user_info_field.shortname = name
+            user_info_field.name = name.replace("_", " ").title()
+            user_info_field.description = ""
+            user_info_field.descriptionformat = 1
+            user_info_field.categoryid = 1
+            user_info_field.sortorder = sort
+            user_info_field.required = 0
+            user_info_field.locked = 1
+            user_info_field.visible = 0
+            user_info_field.forceunique = 0
+            user_info_field.signup = 0
+            user_info_field.defaultdata = 0
+            user_info_field.defaultdataformat = 0
+            user_info_field.param1 = "psmdlsyncer"  # for debugging...
+            user_info_field.param2 = ""
+            user_info_field.param3 = ""
+            user_info_field.param4 = ""
+            user_info_field.param5 = ""
 
-        if name.startswith('is'):
-            ns.datatype = "checkbox"
-        else:
-            # for everything...?
-            ns.datatype = "text"
-        self.insert_table('user_info_field', **ns.kwargs)
+            if name.startswith('is'):
+                user_info_field.datatype = "checkbox"
+            else:
+                # for everything...?
+                user_info_field.datatype = "text"
+
+            session.add(user_info_field)
 
     def add_user_custom_profile(self, user_idnumber, name, value):
         """
@@ -469,6 +475,73 @@ class MoodleDBSession(MoodleDBSess):
 
         yield from statement.all()
 
+    def clear_active_timetable_data(self):
+        with DBSession() as session:
+            statement = session.query(SsisTimetableInfo)
+
+            for row in statement.all():
+                row.active = 0
+
+    def build_timetable_data(self, timetable):
+        with DBSession() as session:
+            ns = NS2()
+            try:
+                ns.courseid = session.query(Course).filter_by(shortname=timetable.course.idnumber).one().id
+                ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student.idnumber).one().id
+                ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
+            except NoResultFound:
+                self.logger.warning('No results found for timetable object {}'.format(timetable))
+                return
+            except MultipleResultsFound:
+                self.logger.warning('Multiple results found for timetable object{}'.format(timetable))
+                return
+            ns.name = timetable.group.idnumber
+            ns.period = timetable.period_info
+
+            return session.query(SsisTimetableInfo).\
+                filter_by(
+                    **ns.kwargs
+                    )
+
+        return exist
+
+    def add_timetable_data(self, timetable):
+        exist = self.build_timetable_data()
+        if exist.all():
+            self.logger.warning("Already exists")
+            return
+        new = SsisTimetableInfo()
+        for key in ns.kwargs:
+            setattr(new, key, getattr(ns, key))
+        new.comment = 'psmdlsyncer'
+        new.active = 1
+
+        with DBSession() as session:
+            session.add(new)
+
+    def set_timetable_data_active(self, timetable):
+        # TODO: Figure this out so that I'm not repeating code...
+        with DBSession() as session:
+            ns = NS2()
+            try:
+                ns.courseid = session.query(Course).filter_by(shortname=timetable.course.idnumber).one().id
+                ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student.idnumber).one().id
+                ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
+            except NoResultFound:
+                self.logger.warning('No results found for timetable object {}'.format(timetable))
+                return
+            except MultipleResultsFound:
+                self.logger.warning('Multiple results found for timetable object{}'.format(timetable))
+                return
+            ns.name = timetable.group.idnumber
+            ns.period = timetable.period_info
+
+            this = session.query(SsisTimetableInfo).\
+                filter_by(
+                    **ns.kwargs
+                    ).one()
+            this.active = 1
+
 if __name__ == "__main__":
 
     m = MoodleDBSession()
@@ -485,20 +558,19 @@ if __name__ == "__main__":
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
 
-    for user in m.mrbs_editors():
-        from IPython import embed
-        embed()
-        print(user)
+    # for user in m.mrbs_editors():
+    #     print(user)
 
     # for student, parent in m.get_parent_student_links():
     #     print(student)
     #     print(parent)
     #     print()
 
-    # for item, number in m.get_teaching_learning_courses2():
-    #     print(item.fullname)
-    #     print(number)
-    #     # print("{} {}".format(course.fullname, course.grade))
+    for timetable, student_idnumber in m.get_timetable_table():
+        if timetable.name.startswith('nikolaybukilic'):
+            print(timetable.name)
+            print(student_idnumber)
+            print('---')
 
     # for item in m.get_teaching_learning_courses():
     #     input()

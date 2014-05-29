@@ -199,7 +199,7 @@ class Student(BaseModel):
             self.custom_profile_ishsstudent = True
             self._cohorts.append('studentsHS')
         if self.grade in range(11, 13):
-            self._cohorts.append('students1112')
+            self._cohorts.append('studentsDP')
         if self.is_elementary:
             if self.grade >= 5:
                 self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
@@ -490,7 +490,7 @@ class Student(BaseModel):
     def homeroom_teacher_email(self):
         hroom = self._homeroom_teacher
         if hroom:
-            return hroom.email
+            return hroom().email
         else:
             return None
 

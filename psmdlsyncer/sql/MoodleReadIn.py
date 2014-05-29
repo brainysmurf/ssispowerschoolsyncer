@@ -49,6 +49,9 @@ class MoodleImport(MoodleDBSession):
     def content_sec_studentschedule(self):
         yield from self.get_bell_schedule()
 
+    def content_dist_timetable_table(self):
+        yield from self.get_timetable_table()
+
     def content_elem_studentschedule(self):
         """
         Not needed, because content_sec_studentschedule does the job

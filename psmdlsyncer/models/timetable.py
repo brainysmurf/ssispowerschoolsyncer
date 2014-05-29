@@ -19,12 +19,17 @@ def make_list(str, delimiter='-'):
     return items
 
 class Timetable(BaseModel):
-    def __init__(self, idnumber, course_idnumber, teacher_idnumber, group_idnumber, student_idnumber, period_info):
-        self.value = period_info
-        self.course_idnumber = course_idnumber
-        self.teacher_idnumber = teacher_idnumber
-        self.student_idnumber = student_idnumber
-        self.group_idnumber = group_idnumber
+    def __init__(self, idnumber, course, teacher, group, student, period_info):
+        self.idnumber = idnumber
+        self.period_info = period_info
+        self.course = course
+        self.course_idnumber = course.idnumber
+        self.teacher = teacher
+        self.teacher_idnumber = teacher.idnumber
+        self.student = student
+        self.student_idnumber = student.idnumber
+        self.group = group
+        self.group_idnumber = group.idnumber
 
     def unpack_timetable(self):
         """
@@ -36,7 +41,7 @@ class Timetable(BaseModel):
         'group': self.group_idnumber,
         'course': self.course_idnumber
         }
-        for item in self.value.split(' '):
+        for item in self.period_info.split(' '):
             # First seperate out the
             match = re.search(r'(.*)\((.*)\)', item)
             if not match:
@@ -53,3 +58,10 @@ class Timetable(BaseModel):
                 for period in make_list(periods):
                     result[key][period] = value
         return result
+
+    def __sub__(self, other):
+        return ()
+
+    def __repr__(self):
+        return '{}'.format(self.idnumber)
+

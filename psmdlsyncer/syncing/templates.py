@@ -145,6 +145,8 @@ class DefaultTemplate:
     def deassociate_child_from_parent(self, item):
         self.default_logger("De-associate child {0.param.child} to parent {0.param.parent} ".format(item))
 
+    def new_timetable(self, item):
+        self.default_logger("New timetable {0.param} ".format(item))
 
 class MoodleTemplate(DefaultTemplate):
     """
@@ -441,6 +443,9 @@ class MoodleTemplate(DefaultTemplate):
 
     def deassociate_child_from_parent(self, item):
         super().deassociate_child_from_parent(item)
-        input()
 
+    def new_timetable(self, item):
+        pass  # meaningless
 
+    def old_timetable(self, item):
+        pass # meaningless
