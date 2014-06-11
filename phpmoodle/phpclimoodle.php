@@ -7,7 +7,7 @@ require_once('../../enrol/locallib.php');
 require_once('../../group/lib.php');
 require_once('../../lib/grouplib.php');
 require_once('../../course/lib.php');
-
+require_once($CFG->dirroot . '/lib/ssisolp.php');
 
 class moodlephp
 {
@@ -84,6 +84,24 @@ class moodlephp
     }
 
       $r = cohort_remove_member($cohortID, $userID);
+      return "+";
+    }
+
+    private function create_online_portfolio( $args )
+    {
+      global $DB;
+      $idnumber = $args[0];
+
+      $user = $DB->get_record('user', array('idnumber'=>$idnumber));
+
+      $OLPManager = new OLPManager();
+      $olp = $OLPManager->createOLP($user);
+
+      try {
+        $OLPManager->handleEnrollments($user, $olp);
+      } catch (Exception $e) {
+          return "-999 Oops, because " . $e->getMessage();
+      }
       return "+";
     }
 
@@ -187,8 +205,7 @@ class moodlephp
           return "-105 Either could not find parent $parent_idnumber or couldn't find child $child_idnumber";
         }
       } catch( Exception $e ) {
-        var_dump($e);
-        return "-106 Could not associate child $child_idnumber to parent $parent_idnumber";
+        return "-106 Could not associate child $child_idnumber to parent $parent_idnumber because ".$e->getMessage();
       }
 
       return "+";
