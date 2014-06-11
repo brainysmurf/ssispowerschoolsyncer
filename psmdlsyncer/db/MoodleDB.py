@@ -4724,7 +4724,7 @@ class ScormSeqRulecond(Base):
     cond = Column(String(30), nullable=False, server_default="'always'::character varying")
 
 
-class ScormSeqRulecond(Base):
+class ScormSeqRuleconds(Base):
     __tablename__ = 'ssismdl_scorm_seq_ruleconds'
     __table_args__ = (
         Index('ssismdl_scorseqrule_scoid_uix', 'scoid', 'id'),

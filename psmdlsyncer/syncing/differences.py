@@ -16,7 +16,7 @@ class DetermineChanges:
         self.left.process()
         self.right.process()
 
-        if False:
+        if True:
             print('Inside DetermineChange __init__')
             from IPython import embed
             embed()
@@ -30,11 +30,23 @@ class DetermineChanges:
         self.default_logger("Inside FindDifferences")
         self.default_logger("Left: {}".format(self.left))
         self.default_logger("Right: {}".format(self.right))
+        self._re_process = False
         self.go()
+        if self._re_process: #self._re_process:
+            self.logger.info('REPROCESSING')
+            self.left.re_process()
+            # You don't need to re_process self.right
+            # because that's the stuff you "need", and that hasn't changed
+            self.go()
 
     def go(self, **kwargs):
         for item in self.subtract():
-            dispatch = self.template.get(item.status) if self.template and hasattr(item, 'status') else None
+            if self.template and hasattr(item, 'status'):
+                if item.status in ['new_teacher', 'new_student']:
+                    self._repeat = True
+                dispatch = self.template.get(item.status)
+            else:
+                dispatch = None
             if dispatch:
                 dispatch(item)
             else:
@@ -66,7 +78,10 @@ class DetermineChanges:
 
         assert(len(self.left.get_subbranches()) == len(self.right.get_subbranches()))
 
-        subbranches = self.left.get_subbranches()
+        subbranches = [
+        'cohorts', 'course_metadatas', 'courses', 'teachers', 'students',
+        'groups', 'parents', 'parent_links', 'timetable_datas', 'custom_profile_fields', 'online_portfolios'
+        ] # self.left.get_subbranches()
 
         for subbranch in subbranches:
             self.default_logger("Subbranch: {}".format(subbranch))
@@ -78,14 +93,12 @@ class DetermineChanges:
 
             self.default_logger("Looking for new {}:".format(subbranch))
 
-            if subbranch == '':   # for debugging
+            if subbranch == 'timetable_datas':   # for debugging
                 from IPython import embed
                 embed()
 
             # Loop through missing stuff and do with it what we must
             for key in right_branch.keys() - left_branch.keys():
-                if key.startswith('__'):
-                    continue
                 yield ModificationStatement(
                     left = left_branch.get(key),
                     right = right_branch.get(key),
@@ -100,8 +113,6 @@ class DetermineChanges:
             right_branch = self.get_subbranch(self.right, subbranch)
 
             for item_key in left_branch:
-                if item_key.startswith('__'):
-                    continue
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:
@@ -119,8 +130,6 @@ class DetermineChanges:
             right_branch = self.get_subbranch(self.right, subbranch)
 
             for key in left_branch.keys() - right_branch.keys():
-                if key.startswith('__'):
-                    continue
                 yield ModificationStatement(
                     left = left_branch.get(key),
                     right = right_branch.get(key),

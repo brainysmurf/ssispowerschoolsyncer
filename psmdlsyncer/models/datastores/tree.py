@@ -78,7 +78,7 @@ class DataStoreCollection(type):
 	@classmethod
 	def keys(cls):
 		# Filter out any special __variables__ like that
-		return [key for key in cls._store.keys() if not key.startswith('__')]
+		return cls._store.keys()
 
 	@classmethod
 	def get_branch(cls, key):
@@ -111,7 +111,10 @@ class AbstractTree(metaclass=DataStoreCollection):
 		self.cohort_info = self.klass('dist', 'cohorts')
 
 	def get_subbranches(self):
-		return [re.sub('^.*\.', '', key) for key in self.__class__._store.keys()]
+		return set([re.sub('^.*\.', '', key) for key in self.__class__._store.keys()])
+
+	def get_store_keys(self):
+		return [key for key in self.__class__._store.keys() if key.startswith(self.__class__.__name__)]
 
 	def get_person(self, idnumber):
 		student = self.students.get_key(idnumber)
@@ -154,12 +157,15 @@ class AbstractTree(metaclass=DataStoreCollection):
 			student.add_parent(parent)
 
 	def process_courses(self):
-		for course in self.district_courses.content():
-			self.default_logger('Processing course: {}'.format(course))
+		for course_info in self.district_courses.content():
+			self.default_logger('Processing course: {}'.format(course_info))
 			if self.convert_course:
-				self.courses.make_with_conversion(*course)
+				course = self.courses.make_with_conversion(*course_info)
 			else:
-				self.courses.make_without_conversion(*course)
+				course = self.courses.make_without_conversion(*course_info)
+
+			self.course_metadatas.make_course_metadata(course.idnumber, course.grade)
+
 
 	def process_schedules(self):
 		"""
@@ -195,11 +201,6 @@ class AbstractTree(metaclass=DataStoreCollection):
 					self.logger.warning("Group not found! {}".format(section_number))
 					continue
 
-				# THIS IS DONE IN PROCESS PARENTS
-				# parent = self.parents.make_parent(student)
-				# parent.add_child(student)
-				# student.add_parent(parent)
-
 				self.associate(course, teacher, group, student)
 
 				timetable = self.timetables.make_timetable(
@@ -208,11 +209,13 @@ class AbstractTree(metaclass=DataStoreCollection):
 				student.add_timetable(timetable)
 				teacher.add_timetable(timetable)
 
-	def process_timetables(self):
-		"""
-		We don't need to do taht here
-		"""
-		return ()
+				self.timetable_datas.make_timetable_datas(course, teacher, group, student, period_info)
+
+				if student.login_method == 'manual':
+					self.online_portfolios.make(student.idnumber)
+
+	def process_timetable_data(self):
+		pass
 
 	def process_parent_links(self):
 		"""
@@ -237,6 +240,9 @@ class AbstractTree(metaclass=DataStoreCollection):
 		for teacher in self.teachers.get_objects():
 			self.mrbs_editors.make(teacher.idnumber)
 
+	def process_online_portfolios(self):
+		pass
+
 	def associate(self, course, teacher, group, student):
 		"""
 		Updates everything in the model to point to each other
@@ -248,11 +254,22 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def process(self):
 		# Basically just calls every process_x method we have
-		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules', 'timetables', 'custom_profile_fields', 'mrbs_editors']
+		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules',  'timetable_data', 'custom_profile_fields', 'mrbs_editors', 'online_portfolios']
 		for o in order:
 			method_name = 'process_{}'.format(o)
 			method = getattr(self, method_name)
 			method()
+
+	def blankify(self):
+		for branch in self.get_store_keys():
+			self.__class__._store[branch] = {}
+
+	def re_process(self):
+		"""
+		Set everything to zero
+		"""
+		self.blankify()
+		self.process()
 
 class PostfixTree(AbstractTree):
 	pass
@@ -263,15 +280,23 @@ class Item:
 
 if __name__ == "__main__":
 
-	mstu33 = MoodleTree.students.make('33', '', '', '', '', '', '', '', '')
-	mstu3333 = MoodleTree.students.make('3333', '', '', '', '', '', '', '', '')
-	au33 = AutoSendTree.students.make('33', '', '', '', '', '', '', '', '')
-	mteach33 = MoodleTree.teachers.make('33', "Morris, Adam", '', '', '', '')
-	mstu33_ = MoodleTree.students.make('33', '', '', '', '', '', '', '', '')
-	mteach555 = MoodleTree.teachers.make('555', "Morris, Adam", '', '', '', '')
-	mteach333 = MoodleTree.teachers.make('333', "Morris, Adam", '', '', '', '')
+	from psmdlsyncer.models.datastores.moodle import MoodleTree
+	from psmdlsyncer.models.datastores.autosend import AutoSendTree
+
+	moodle = MoodleTree()
+	autosend = AutoSendTree()
+	mstu33 = moodle.students.make('33', '', '', '', '', '', '', '', '', '')
+	mstu3333 = moodle.students.make('3333', '', '', '', '', '', '', '', '', '')
+	au33 = autosend.students.make('33', '', '', '', '', '', '', '', '', '')
+	mteach33 = moodle.teachers.make('33', 3, "Morris, Adam", '', '', '', '', '')
+	mstu33_ = moodle.students.make('33', '', '', '', '', '', '', '', '', '')
+	mteach555 = moodle.teachers.make('555', 5, "Morris, Adam", '', '', '', '', '')
+	mteach333 = moodle.teachers.make('333', 33, "Morris, Adam", '', '', '', '', '')
 	assert(mstu33 != mstu3333)
 	assert(mstu33 != mteach33)
 	assert(mstu33_ == mstu33)
 	assert(mstu33 != au33)
+
+	from IPython import embed
+	embed()
 

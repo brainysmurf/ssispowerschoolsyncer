@@ -69,6 +69,9 @@ class CallPHP:
     def create_new_course(self, idnumber, fullname):
         self.command('create_new_course', "{} '{}'".format(idnumber, fullname))
 
+    def create_online_portfolio(self, idnumber):
+        self.command('create_online_portfolio', '{}'.format(idnumber))
+
     def create_account(self, username, email, firstname, lastname, idnumber, auth='manual'):
         self.sf.define(username=username, email=email, firstname=firstname, lastname=lastname, idnumber=idnumber, auth=auth)
         to_pass = self.sf("{username} '{email}' '{firstname}' '{lastname}' {idnumber} {auth}")

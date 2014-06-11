@@ -7,8 +7,11 @@ from psmdlsyncer.models.course import Course
 from psmdlsyncer.models.group import Group
 from psmdlsyncer.models.schedule import Schedule
 from psmdlsyncer.models.timetable import Timetable
+from psmdlsyncer.models.timetable_datas import TimetableDatas
+from psmdlsyncer.models.course_metadatas import CourseMetaData
 from psmdlsyncer.models.mrbs import MRBSEditor
 from psmdlsyncer.models.cohorts import Cohort
+from psmdlsyncer.models.online_portfolios import OnlinePortfolio
 from psmdlsyncer.utils.Utilities import convert_short_long
 import logging
 log = logging.getLogger(__name__)
@@ -46,7 +49,7 @@ class DataStore:
 
 	@classmethod
 	def get_keys(cls):
-		return [key for key in cls._resolve().keys() if not key.startswith('__')]
+		return cls._resolve().keys()
 
 	@classmethod
 	def get_keys_startswith(cls, startswith):
@@ -74,7 +77,7 @@ class DataStore:
 
 	@classmethod
 	def get_objects(cls):
-		return [cls._resolve()[key] for key in cls._resolve().keys() if not key.startswith('__')]
+		return cls._resolve().values()
 
 	@classmethod
 	def get_object_n(cls, n):
@@ -199,6 +202,22 @@ class groups(DataStore):
 			cls.section_maps[sectional_key] = new_sectional_value
 			return cls.make(new_sectional_value, course.idnumber)
 
+class course_metadatas(DataStore):
+	klass = CourseMetaData
+
+	@classmethod
+	def make_course_metadata(cls, course_idnumber, course_grade):
+		idnumber = course_idnumber
+		cls.make(idnumber, course_idnumber, course_grade)
+
+class timetable_datas(DataStore):
+	klass = TimetableDatas
+
+	@classmethod
+	def make_timetable_datas(cls, course, teacher, group, student, period_info):
+		idnumber = '{}/{}'.format(group.idnumber, student.idnumber)
+		return cls.make(idnumber, course, teacher, group, student, period_info)
+
 class timetables(DataStore):
 	klass = Timetable
 
@@ -282,5 +301,8 @@ class cohorts(DataStore):
 	def make_cohort(cls, person):
 		for cohort in person.cohorts:
 			cls.make(cohort)
+
+class online_portfolios(DataStore):
+	klass = OnlinePortfolio
 
 

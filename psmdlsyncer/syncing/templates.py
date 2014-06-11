@@ -143,10 +143,22 @@ class DefaultTemplate:
         self.default_logger("Associate child {0.param.child} to parent {0.param.parent} ".format(item))
 
     def deassociate_child_from_parent(self, item):
-        self.default_logger("De-associate child {0.param.child} to parent {0.param.parent} ".format(item))
+        self.default_logger("De-associate child {0.param.child} from parent {0.param.parent} ".format(item))
 
     def new_timetable(self, item):
         self.default_logger("New timetable {0.param} ".format(item))
+
+    def new_timetable_data(self, item):
+        self.default_logger("New timetable data {0.param} ".format(item))
+
+    def old_timetable_data(self, item):
+        self.default_logger("Old timetable data {0.param} ".format(item))
+
+    def new_online_portfolio(self, item):
+        self.default_logger("Creating new online portfolio for student {0.param}".format(item))
+
+    def new_course_metadata(self, item):
+        self.default_logger("New course metadata {0.right} ".format(item))
 
 class MoodleTemplate(DefaultTemplate):
     """
@@ -437,15 +449,31 @@ class MoodleTemplate(DefaultTemplate):
         for child_idnumber in item.right.children:
             self.moodlemod.associate_child_to_parent(item.right.parent_idnumber, child_idnumber)
 
+    def deassociate_child_from_parent(self, item):
+        super().deassociate_child_from_parent(item)
+
     def new_mrbs_editor(self, item):
         super().new_mrbs_editor(item)
         self.moodle.add_mrbs_editor(item.param)
-
-    def deassociate_child_from_parent(self, item):
-        super().deassociate_child_from_parent(item)
 
     def new_timetable(self, item):
         pass  # meaningless
 
     def old_timetable(self, item):
         pass # meaningless
+
+    def new_timetable_data(self, item):
+        super().new_timetable_data(item)
+        self.moodle.add_timetable_data(item.right)
+
+    def old_timetable_data(self, item):
+        super().old_timetable_data(item)
+        self.moodle.set_timetable_data_inactive(item.left)
+
+    def new_course_metadata(self, item):
+        super().new_course_metadata(item)
+        self.moodle.add_course_metadata(item.right)
+
+    def new_online_portfolio(self, item):
+        super().new_online_portfolio(item)
+        self.moodlemod.create_online_portfolio(item.param)

@@ -14,6 +14,7 @@ from collections import defaultdict
 from sqlalchemy.sql.expression import cast
 
 import logging
+import re
 
 class MoodleDBSess:
     """
@@ -122,6 +123,14 @@ class MoodleDBSess:
             # passed an idnumber, so let's get the object
             return self.get_user_from_idnumber(user)
         return user
+
+    def get_online_portfolios(self):
+        with DBSession() as session:
+            statement = session.query(Course).filter(Course.idnumber.startswith('OLP:'))
+
+        for row in statement.all():
+            yield re.sub(r'^OLP:', '', row.idnumber)
+
 
     def get_user_custom_profile_field(self, user, field_name):
         """
@@ -245,7 +254,7 @@ class MoodleDBSession(MoodleDBSess):
                             )).\
                         filter(
                             and_(
-                                # CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
+                                #CourseCategory.path == ('/{}'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
                                 CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
                                 Group.name != None,
                                 Course.idnumber != '',
@@ -296,14 +305,54 @@ class MoodleDBSession(MoodleDBSess):
         with DBSession() as session:
             statement = session.query(SsisTimetableInfo, User.idnumber).\
                 join(User, User.id == SsisTimetableInfo.studentuserid)
+        yield from statement.all()
+
+    def get_course_metadata(self):
+        with DBSession() as session:
+            statement = session.query(
+                Course.idnumber.label('course_idnumber'),
+                CourseSsisMetadatum.value.label('course_grade')).\
+            select_from(CourseSsisMetadatum).\
+            join(Course, Course.id == CourseSsisMetadatum.courseid).\
+            filter(CourseSsisMetadatum.field.like('grade%')).\
+            order_by(Course.idnumber, CourseSsisMetadatum.value)
 
         yield from statement.all()
+
+    def add_course_metadata(self, course_metadata):
+        with DBSession() as session:
+            try:
+                course = session.query(Course).filter_by(idnumber=course_metadata.course_idnumber).one()
+            except NoResultFound:
+                self.logger.warning("No course by idnumber {}".format(course_metadata.course_idnumber))
+                return
+            except MultipleResultsFound:
+                self.logger.warning("Multiple courses with idnumber {}".format(course_metadata.course_idnumber))
+                return
+
+            for i in range(len(course_metadata.course_grade)):
+                grade = course_metadata.course_grade[i]
+                grade_str = "grade{}".format(i+1)
+                new = CourseSsisMetadatum()
+                new.courseid = course.id
+                setattr(new, 'field', grade_str)
+                setattr(new, 'value', grade)
+
+                exists = session.query(CourseSsisMetadatum).filter_by(
+                    courseid=course.id,
+                    field=grade_str,
+                    value=grade
+                    ).all()
+                if exists:
+                    self.logger.default_logger('Course Metadata already exists')
+                    continue
+                session.add(new)
 
     def get_teaching_learning_courses(self):
         """
         Returns course information for any course that is within the Teaching & Learning menu
         Including the grade info stored in course_ssis_metadata
-        Grade info is a string, if there are more than two then is in 11/12 format
+        Grade info is a string, if there are more than two then is in 11,12 format
         TODO: Sometimes it formats as 12/11, make it sort (but if you sort you have to put in group_by)
               Workaround: the model just sorts it for us
         """
@@ -311,7 +360,7 @@ class MoodleDBSession(MoodleDBSess):
         with DBSession() as session:
             sub = session.query(
                 Course.id.label('course_id'),
-                func.string_agg(CourseSsisMetadatum.value, '/').label('grade')).\
+                func.string_agg(CourseSsisMetadatum.value, ',').label('grade')).\
                 select_from(Course).\
                     join(CourseCategory, CourseCategory.id == Course.category).\
                     join(CourseSsisMetadatum,
@@ -322,6 +371,7 @@ class MoodleDBSession(MoodleDBSess):
                     ).\
                     filter(and_(
                         not_(Course.idnumber == ''),
+                        #CourseCategory.path == '/{}'.format(self.TEACHING_LEARNING_CATEGORY_ID)
                         CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID))
                         )).\
                     group_by(Course.id).\
@@ -368,7 +418,6 @@ class MoodleDBSession(MoodleDBSess):
                 filter(Role.shortname == 'parent').\
                 order_by(User.idnumber)
         yield from statement.all()
-
 
     def set_user_custom_profile(self, user_idnumber, name, value):
         user = self.get_user_from_idnumber(user_idnumber)
@@ -478,11 +527,28 @@ class MoodleDBSession(MoodleDBSess):
     def clear_active_timetable_data(self):
         with DBSession() as session:
             statement = session.query(SsisTimetableInfo)
-
             for row in statement.all():
                 row.active = 0
 
-    def build_timetable_data(self, timetable):
+    def get_timetable_data(self):
+        with DBSession() as session:
+            Teacher = aliased(User)
+            Student = aliased(User)
+            statement = session.query(
+                Course.idnumber,
+                Teacher.idnumber,
+                Student.idnumber,
+                SsisTimetableInfo.name,
+                SsisTimetableInfo.period
+                ).\
+            select_from(SsisTimetableInfo).\
+                join(Course, Course.id == SsisTimetableInfo.courseid).\
+                join(Teacher, Teacher.id == SsisTimetableInfo.teacheruserid).\
+                join(Student, Student.id == SsisTimetableInfo.studentuserid).\
+            filter(SsisTimetableInfo.active == 1)
+        return statement.all()
+
+    def set_timetable_data_inactive(self, timetable):
         with DBSession() as session:
             ns = NS2()
             try:
@@ -493,30 +559,49 @@ class MoodleDBSession(MoodleDBSess):
                 self.logger.warning('No results found for timetable object {}'.format(timetable))
                 return
             except MultipleResultsFound:
-                self.logger.warning('Multiple results found for timetable object{}'.format(timetable))
+                self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
+                return
+            ns.name = timetable.group.idnumber
+            exist = session.query(SsisTimetableInfo).\
+                filter_by(
+                    **ns.kwargs
+                    ).all()
+
+            for row in exist:
+                row.active = 0
+
+
+    def add_timetable_data(self, timetable):
+        with DBSession() as session:
+            ns = NS2()
+            try:
+                ns.courseid = session.query(Course).filter_by(shortname=timetable.course.idnumber).one().id
+                ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student.idnumber).one().id
+                ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
+            except NoResultFound:
+                self.logger.warning('No results found for timetable object {}'.format(timetable))
+                return
+            except MultipleResultsFound:
+                self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
                 return
             ns.name = timetable.group.idnumber
             ns.period = timetable.period_info
+            ns.grade = timetable.course.convert_grade()
 
-            return session.query(SsisTimetableInfo).\
+            exist = session.query(SsisTimetableInfo).\
                 filter_by(
                     **ns.kwargs
-                    )
+                    ).all()
 
-        return exist
+            if exist:
+                self.logger.warning("Already exists")
+                return
+            new = SsisTimetableInfo()
+            for key in ns.kwargs:
+                setattr(new, key, getattr(ns, key))
+            new.comment = 'psmdlsyncer'
+            new.active = 1
 
-    def add_timetable_data(self, timetable):
-        exist = self.build_timetable_data()
-        if exist.all():
-            self.logger.warning("Already exists")
-            return
-        new = SsisTimetableInfo()
-        for key in ns.kwargs:
-            setattr(new, key, getattr(ns, key))
-        new.comment = 'psmdlsyncer'
-        new.active = 1
-
-        with DBSession() as session:
             session.add(new)
 
     def set_timetable_data_active(self, timetable):
@@ -524,14 +609,14 @@ class MoodleDBSession(MoodleDBSess):
         with DBSession() as session:
             ns = NS2()
             try:
-                ns.courseid = session.query(Course).filter_by(shortname=timetable.course.idnumber).one().id
-                ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student.idnumber).one().id
-                ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
+                ns.courseid = session.query(Course).filter_by(shortname=timetable.course).one().id
+                ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student).one().id
+                ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher).one().id
             except NoResultFound:
                 self.logger.warning('No results found for timetable object {}'.format(timetable))
                 return
             except MultipleResultsFound:
-                self.logger.warning('Multiple results found for timetable object{}'.format(timetable))
+                self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
                 return
             ns.name = timetable.group.idnumber
             ns.period = timetable.period_info
@@ -566,16 +651,18 @@ if __name__ == "__main__":
     #     print(parent)
     #     print()
 
-    for timetable, student_idnumber in m.get_timetable_table():
-        if timetable.name.startswith('nikolaybukilic'):
-            print(timetable.name)
-            print(student_idnumber)
-            print('---')
+    # for item in m.get_timetable_data():
+    #     input(item)
 
-    # for item in m.get_teaching_learning_courses():
-    #     input()
+
+    # for item in m.get_course_metadata():
     #     print(item)
+    #     input()
+
 
     # m.add_cohort('blahblahALL', 'All Parents')
 
+
+    for item in m.get_online_portfolios():
+        print(item)
 

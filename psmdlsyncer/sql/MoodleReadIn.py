@@ -12,6 +12,9 @@ class MoodleImport(MoodleDBSession):
         self.unique = unique
         super().__init__()
 
+    def content_dist_online_portfolios(self):
+        yield from self.get_online_portfolios()
+
     def content_dist_staffinfo(self):
         for staff in self.users_enrolled_in_these_cohorts(['teachersALL', 'supportstaffALL']):
             schoolid = self.wrap_no_result(self.get_user_schoolid, staff)
@@ -19,6 +22,9 @@ class MoodleImport(MoodleDBSession):
                 schoolid = ''
             lastfirst = staff.lastname + ', ' + staff.firstname
             yield [staff.idnumber, staff.id, lastfirst, staff.email, '', schoolid, '', '']
+
+    def content_dist_course_metadata(self):
+        yield from self.get_course_metadata()
 
     def content_dist_courseinfo(self):
         """ RETURN ALL THE STUFF IN TEACHING & LEARNING TAB """

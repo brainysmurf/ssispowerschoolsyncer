@@ -8,6 +8,7 @@ from psmdlsyncer.utils import NS
 
 class Course(BaseModel):
     kind = "course"
+    grade_sep = ','
 
     def __init__(self, course_id, course_name, grade="", database_id=0):
         """
@@ -24,8 +25,8 @@ class Course(BaseModel):
         self.heads = department_heads.get(self.department)
         self.grade = grade
         self.database_id = database_id
-        if '/' in grade:
-            self.grade = sorted(grade.split('/'))
+        if self.grade_sep in grade:
+            self.grade = sorted(grade.split(self.grade_sep))
         elif self.grade is "":
             # determine it as best we can...
             # which in this case is looking for stuff inside the parenths
@@ -34,9 +35,9 @@ class Course(BaseModel):
             if not match:
                 self.grade = "-100"  # dunno what to put here really
             else:
-                self.grade = match.group(1)
-            if '/' in self.grade:
-                self.grade = sorted(self.grade.split('/'))
+                self.grade = match.group(1).replace('/', ',')
+            if self.grade_sep in self.grade:
+                self.grade = sorted(self.grade.split(self.grade_sep))
             else:
                 self.grade = [self.grade]
         if not self.heads:
@@ -46,6 +47,9 @@ class Course(BaseModel):
         self._students = []
         self._groups = []
         self._parents = []
+
+    def convert_grade(self):
+        return self.grade_sep.join(sorted(self.grade))
 
     def add_teacher(self, teacher):
         if not teacher:
