@@ -1023,6 +1023,8 @@ class PowerSchoolIntegrator():
             ns.homeroom and usebccparentsHOMEROOM[ns.homeroom].extend(student.guardian_emails)
 
             if student.is_elementary:
+                if student.grade == 5:
+                    usebccstudentsGRADE[student.grade].append(student.email)
                 usebccparentsELEM.extend(student.guardian_emails)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
