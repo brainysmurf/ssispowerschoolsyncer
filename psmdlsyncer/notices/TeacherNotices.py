@@ -18,7 +18,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
 
     def __init__(self):
         super().__init__('Teacher Notices Database')
-        self.settings = define_command_line_arguments('group_sec_all',
+        self.settings = define_command_line_arguments('whole_school',
                                                       *self.shared_command_line_args_switches,
                                                       **self.shared_command_line_args_strings)
         self.init()
@@ -64,10 +64,11 @@ if __name__ == "__main__":
     try:
         notices = Teacher_Notices()
         notices.email_editing = True
-        if notices.settings.group_sec_all:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
+        if notices.settings.whole_school:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
             notices.email_editing = False
             notices.agent_map = {
-                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']
+                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary'],
+                'group-elem-all@ssis-suzhou.net':['Whole School', 'Elementary']
             }
         notices.email_to_agents()
     except Nothing:
