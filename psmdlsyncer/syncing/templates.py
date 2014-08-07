@@ -202,15 +202,15 @@ class MoodleTemplate(DefaultTemplate):
             student = item.right
             self.moodlemod.new_student(student)
 
-    def new_teacher(self, item):
-        """
-        """
-        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
-            self.logger.warning("Staff member {} already exists, not creating.".format(item.right))
-        else:
-            super().new_teacher(item)
-            teacher = item.right
-            self.moodlemod.new_teacher(teacher)
+    # def new_teacher(self, item):
+    #     """
+    #     """
+    #     if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
+    #         self.logger.warning("Staff member {} already exists, not creating.".format(item.right))
+    #     else:
+    #         super().new_teacher(item)
+    #         teacher = item.right
+    #         self.moodlemod.new_teacher(teacher)
 
     def new_parent(self, item):
         """
@@ -232,10 +232,10 @@ class MoodleTemplate(DefaultTemplate):
         """
         super().new_group(item)  # output
 
-    def new_course(self, item):
-        super().new_course(item)
-        course = item.right
-        self.moodlemod.create_new_course(course.idnumber, course.name)
+    # def new_course(self, item):
+    #     super().new_course(item)
+    #     course = item.right
+    #     self.moodlemod.create_new_course(course.idnumber, course.name)
 
     def enrol_in_course(self, item):
         course_idnumber = item.param.course
