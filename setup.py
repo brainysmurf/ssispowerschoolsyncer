@@ -2,7 +2,7 @@ from distutils.core import setup
 setup(
     name = "SSIS PowerSchool & Moodle Syncer",
     packages = ['psmdlsyncer', 'psmdlsyncer.utils'],
-    version = "1.5",
+    version = "2.0",
     description = "Comprehensive Syncing Solution for Moodle and PowerSchool",
     author = "Adam Morris",
     author_email = "amorris@mistermorris.com",
