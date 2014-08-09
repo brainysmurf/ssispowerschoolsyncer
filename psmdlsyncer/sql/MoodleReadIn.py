@@ -13,7 +13,8 @@ class MoodleImport(MoodleDBSession):
         super().__init__()
 
     def content_dist_online_portfolios(self):
-        yield from self.get_online_portfolios()
+        for item in self.get_online_portfolios():
+            yield item
 
     def content_dist_staffinfo(self):
         for staff in self.users_enrolled_in_these_cohorts(['teachersALL', 'supportstaffALL']):
@@ -24,11 +25,13 @@ class MoodleImport(MoodleDBSession):
             yield [staff.idnumber, staff.id, lastfirst, staff.email, '', schoolid, '', '']
 
     def content_dist_course_metadata(self):
-        yield from self.get_course_metadata()
+        for item in self.get_course_metadata():
+            yield item
 
     def content_dist_courseinfo(self):
         """ RETURN ALL THE STUFF IN TEACHING & LEARNING TAB """
-        yield from self.get_teaching_learning_courses()
+        for item in self.get_teaching_learning_courses():
+            yield item
 
     def content_elem_courseinfo(self):
         """
@@ -40,7 +43,8 @@ class MoodleImport(MoodleDBSession):
         """
 
         """
-        yield from self.get_parent_student_links()
+        for item in self.get_parent_student_links():
+            yield item
 
     def content_dist_studentinfo(self):
         for student in self.users_enrolled_in_this_cohort('studentsALL'):
@@ -53,10 +57,12 @@ class MoodleImport(MoodleDBSession):
             yield [parent.idnumber, parent.id, None, "", "", "", "", "", "", "", parent.username]
 
     def content_sec_studentschedule(self):
-        yield from self.get_bell_schedule()
+        for item in self.get_bell_schedule():
+            yield item
 
     def content_dist_timetable_table(self):
-        yield from self.get_timetable_table()
+        for item in self.get_timetable_table():
+            yield item
 
     def content_elem_studentschedule(self):
         """
@@ -71,18 +77,22 @@ class MoodleImport(MoodleDBSession):
         """
         for field in self.get_custom_profile_fields():
             yield None, None, field.shortname, None
-        yield from self.get_custom_profile_records()
+        for item in self.get_custom_profile_records():
+            yield item
 
     def content_dist_cohorts(self):
-        yield from self.get_cohorts()
+        for item in self.get_cohorts():
+            yield item
 
     def content_dist_mrbs_editors(self):
-        yield from self.get_mrbs_editors()
+        for item in self.get_mrbs_editors():
+            yield item
 
     def content(self):
         dispatch_to = getattr(self, 'content_{}_{}'.format(self.school, self.unique))
         if dispatch_to:
-            yield from dispatch_to()
+            for item in dispatch_to():
+                yield item
 
     def get_bell_schedule(self):
         """

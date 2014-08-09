@@ -46,7 +46,8 @@ class AutoSendImport:
                     if row[-1] == '1':
                         yield row
             else:
-                yield from csv.reader(f, delimiter='\t')
+                for line in csv.reader(f, delimiter='\t'):
+                    yield csv.reader(f, delimiter='\t')
 
 if __name__ == "__main__":
 

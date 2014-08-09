@@ -227,7 +227,8 @@ class Teacher(BaseModel):
 
     def __sub__(self, other):
 
-        yield from super().__sub__(other)
+        for item in super().__sub__(other):
+            yield item
 
         # Handle cohorts (site-wide groups)
         for to_add in set(other.cohort_idnumbers) - set(self.cohort_idnumbers):

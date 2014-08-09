@@ -188,7 +188,8 @@ class MoodleDBSession(MoodleDBSess):
                         filter(
                             Cohort.idnumber == cohort
                         )
-            yield from all_users.all()
+            for item in all_users.all():
+                yield item
 
     def users_enrolled_in_these_cohorts(self, cohort):
         """
@@ -207,7 +208,8 @@ class MoodleDBSession(MoodleDBSess):
                                 *or_portion
                             ),
                         )
-            yield from all_users.all()
+            for item in all_users.all():
+                yield item
 
     def add_cohort(self, idnumber, name):
         exists = self.get_rows_in_table('cohort', idnumber=idnumber)
@@ -261,7 +263,8 @@ class MoodleDBSession(MoodleDBSess):
                                 User.idnumber != '',
                             )).\
                         order_by(asc(Role.id))   # sort by role.id because it's in the natural order expected (teachers first, then students, then parents)
-            yield from schedule.all()
+            for item in schedule.all():
+                yield item
 
     def get_mrbs_editors(self):
         with DBSession() as session:
@@ -275,7 +278,8 @@ class MoodleDBSession(MoodleDBSess):
                                 not_(User.idnumber.like(''))
                             )
                         )
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def add_mrbs_editor(self, user_idnumber):
         user = self.wrap_no_result(self.get_user_from_idnumber, user_idnumber)
@@ -305,7 +309,8 @@ class MoodleDBSession(MoodleDBSess):
         with DBSession() as session:
             statement = session.query(SsisTimetableInfo, User.idnumber).\
                 join(User, User.id == SsisTimetableInfo.studentuserid)
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def get_course_metadata(self):
         with DBSession() as session:
@@ -317,7 +322,8 @@ class MoodleDBSession(MoodleDBSess):
             filter(CourseSsisMetadatum.field.like('grade%')).\
             order_by(Course.idnumber, CourseSsisMetadatum.value)
 
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def add_course_metadata(self, course_metadata):
         with DBSession() as session:
@@ -381,7 +387,8 @@ class MoodleDBSession(MoodleDBSess):
                 join(sub, Course.id == sub.c.course_id).\
                     order_by(Course.id)
 
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def get_custom_profile_records(self):
         with DBSession() as session:
@@ -390,7 +397,8 @@ class MoodleDBSession(MoodleDBSess):
                     select_from(UserInfoDatum).\
                 join(UserInfoField, UserInfoField.id == UserInfoDatum.fieldid).\
                 join(User, User.id == UserInfoDatum.userid)
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def get_custom_profile_fields(self):
         """
@@ -399,7 +407,8 @@ class MoodleDBSession(MoodleDBSess):
         with DBSession() as session:
             statement = session.\
                 query(UserInfoField)
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def get_parent_student_links(self):
         with DBSession() as session:
@@ -417,7 +426,8 @@ class MoodleDBSession(MoodleDBSess):
                 join(Child, Child.id == Context.instanceid).\
                 filter(Role.shortname == 'parent').\
                 order_by(User.idnumber)
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def set_user_custom_profile(self, user_idnumber, name, value):
         user = self.get_user_from_idnumber(user_idnumber)
@@ -522,7 +532,8 @@ class MoodleDBSession(MoodleDBSess):
                     join(Cohort, Cohort.id == CohortMember.cohortid).\
                     join(User, User.id == CohortMember.userid)
 
-        yield from statement.all()
+        for item in statement.all():
+            yield item
 
     def clear_active_timetable_data(self):
         with DBSession() as session:
