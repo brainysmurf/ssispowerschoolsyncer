@@ -16,10 +16,10 @@ class DetermineChanges:
         self.left.process()
         self.right.process()
 
-        if True:
-            print('Inside DetermineChange __init__')
-            from IPython import embed
-            embed()
+        # if True:
+        #     print('Inside DetermineChange __init__')
+        #     from IPython import embed
+        #     embed()
 
         if not template_klass:
             self.template = DefaultTemplate()
