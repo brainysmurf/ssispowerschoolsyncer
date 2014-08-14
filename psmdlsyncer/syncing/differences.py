@@ -93,10 +93,6 @@ class DetermineChanges:
 
             self.default_logger("Looking for new {}:".format(subbranch))
 
-            if subbranch == 'timetable_datas':   # for debugging
-                from IPython import embed
-                embed()
-
             # Loop through missing stuff and do with it what we must
             for key in right_branch.keys() - left_branch.keys():
                 yield ModificationStatement(
