@@ -10,16 +10,17 @@ class DetermineChanges:
     RIGHT IS "NEED"
     """
     def __init__(self, left, right, template_klass=None, **kwargs):
+
         self.left = left
         self.right = right
 
         self.left.process()
-        self.right.process()
+        self.right.process()	
 
-        # if True:
-        #     print('Inside DetermineChange __init__')
-        #     from IPython import embed
-        #     embed()
+        if False:
+             print('Inside DetermineChange __init__')
+             from IPython import embed
+             embed()
 
         if not template_klass:
             self.template = DefaultTemplate()

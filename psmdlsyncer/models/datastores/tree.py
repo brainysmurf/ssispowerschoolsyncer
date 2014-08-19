@@ -178,7 +178,10 @@ class AbstractTree(metaclass=DataStoreCollection):
 			for schedule in method.content():
 				self.default_logger('Processing {} schedule: {}'.format(school, schedule))
 				course_key, period_info, section_number, teacher_key, student_key = schedule
-				course = self.courses.get(course_key, self.convert_course)
+				course = self.courses.get(course_key, self.convert_course) 
+				if not course:
+					self.logger.warning("No course for this schedule: {}".format(schedule))
+					continue
 				if course.exclude:
 					self.default_logger("Course {} has been excluded!".format(course_key))
 					# And so we should skip this schedule entirely!

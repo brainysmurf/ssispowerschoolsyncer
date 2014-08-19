@@ -196,10 +196,11 @@ class MoodleTemplate(DefaultTemplate):
         """
         """
         if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
-            self.logger.warning("Student already exists, maybe they are not in the studentsALL group?.")
+            self.logger.warning("Student already exists, maybe they are not in the studentsALL group?\n{}".format(item))
         else:
             super().new_student(item)
             student = item.right
+            print('newstudent: {}'.format(student))
             self.moodlemod.new_student(student)
 
     # def new_teacher(self, item):
@@ -301,17 +302,20 @@ class MoodleTemplate(DefaultTemplate):
 
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
-        user = item.right.idnumber
-        cohort = item.param
-        self.moodlemod.add_user_to_cohort(user, cohort)
+        #user = item.right.idnumber
+        #cohort = item.param
+        #self.moodlemod.add_user_to_cohort(user, cohort)
 
     def remove_from_cohort(self, item):
         super().remove_from_cohort(item)
-        user = item.left.idnumber
-        cohort = item.param
-        self.moodlemod.remove_user_from_cohort(user, cohort)
+        #user = item.left.idnumber
+        #cohort = item.param
+        #self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
+        if not item.right.course:
+            self.default_logger("Did NOT add group {} because no course available".format(item.param))
+            return
         course = item.right.course.ID
         group = item.param
         if group in self.groups:
