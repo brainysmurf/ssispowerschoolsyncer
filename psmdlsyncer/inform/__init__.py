@@ -19,7 +19,7 @@ def inform_new_student(student):
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(student_email_templates)
     email.make_subject(sf("New Student in Homeroom {homeroom}, {lastfirst}"))
-    homeroom_teacher = student.get_homeroom_teacher()
+    homeroom_teacher = student.homeroom_teacher()
     if homeroom_teacher:
           email.add_to(homeroom_teacher)
     for family_email in family.emails:
