@@ -301,9 +301,9 @@ class MoodleTemplate(DefaultTemplate):
 
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
-        #user = item.right.idnumber
-        #cohort = item.param
-        #self.moodlemod.add_user_to_cohort(user, cohort)
+        user = item.right.idnumber
+        cohort = item.param
+        self.moodlemod.add_user_to_cohort(user, cohort)
 
     def remove_from_cohort(self, item):
         super().remove_from_cohort(item)
