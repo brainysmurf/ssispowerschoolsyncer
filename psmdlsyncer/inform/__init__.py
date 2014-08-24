@@ -24,9 +24,9 @@ def inform_new_student(student):
           email.add_to(homeroom_teacher.email)
     for guardian_email in student.guardian_emails:
           email.add_to(guardian_email)
+    """
     for class_teacher in student.get_teachers_as_list():
           email.add_to(class_teacher + '@ssis-suzhou.net')
-    """
     if student.grade in [11, 12]:
           email.add_cc('santinagambrill@ssis-suzhou.net')
           email.add_cc('matthewmarshall@ssis-suzhou.net')
