@@ -6,6 +6,7 @@ from psmdlsyncer.php.PHPMoodleLink import CallPHP
 from psmdlsyncer.utils import NS
 from psmdlsyncer.settings import config_get_section_attribute
 import functools
+import inform
 
 class ModUserEnrollments(CallPHP):
     """
@@ -56,6 +57,7 @@ class ModUserEnrollments(CallPHP):
             self.add_user_to_cohort(student.ID, cohort)
         for course, group in student.get_enrollments():
             self.enrol_student_into_course(student.ID, course, group)
+        inform.inform_new_student(student)
 
     def new_teacher(self, teacher):
         self.logger.info('Creating account for {}'.format(teacher))
@@ -73,6 +75,7 @@ class ModUserEnrollments(CallPHP):
             self.add_user_to_cohort(parent.ID, cohort)
         for course, group in parent.get_enrollments():
             self.enrol_parent_into_course(parent.ID, course, group)
+        inform.inform_new_parent(parent)
 
     def add_cohort(self, name):
         pass

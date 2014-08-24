@@ -22,20 +22,21 @@ def inform_new_student(student):
     homeroom_teacher = student.get_homeroom_teacher()
     if homeroom_teacher:
           email.add_to(homeroom_teacher)
-    """
     for family_email in family.emails:
           email.add_to(family_email)
     for class_teacher in student.get_teachers_as_list():
           email.add_to(class_teacher + '@ssis-suzhou.net')
+    """
     if student.grade in [11, 12]:
           email.add_cc('santinagambrill@ssis-suzhou.net')
           email.add_cc('matthewmarshall@ssis-suzhou.net')
     elif student.grade in [6, 7, 8, 9, 10]:
           email.add_cc('aubreycurran@ssis-suzhou.net')
     """
-    email.add_cc(get_head_of_grade(student.grade))
-    email.define_fields(sf)
+    email.add_bcc('sammyadams@ssis-suzhou.net')
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
+    email.define_fields(sf)
+
     email.send()
 
 def inform_new_parent(parent):
@@ -56,6 +57,7 @@ def inform_new_parent(parent):
         if student.is_chinese:
             email.add_language('chi')
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
+    email.add_bcc('sammyadams@ssis-suzhou.net') 
     email.define_field('username', parent.email)
     email.define_field('salutation', 'Dear Parent')
     email.send()

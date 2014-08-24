@@ -200,7 +200,6 @@ class MoodleTemplate(DefaultTemplate):
         else:
             super().new_student(item)
             student = item.right
-            print('newstudent: {}'.format(student))
             self.moodlemod.new_student(student)
 
     # def new_teacher(self, item):
