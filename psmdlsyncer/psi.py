@@ -253,7 +253,7 @@ class PowerSchoolIntegrator():
         for idnumber, comment in results:
             if 'newstudent' == comment:
                 self.logger.info("This student is a new student and their homeroom teacher is getting emailed:\n{}".format(student))
-                inform_new_student(family, student)
+                #inform_new_student(family, student)
 
     def build_families(self):
         """server_information

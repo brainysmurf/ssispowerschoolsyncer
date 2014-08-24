@@ -29,7 +29,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         """
         super().define()
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
-        self.agents = ['adammorris@ssis-suzhou.net']
+        self.agents = ['sammyadams@ssis-suzhou.net']
         self.agent_map = {
             'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
             'nicholaslittle@ssis-suzhou.net':['Whole School', 'Secondary']
@@ -67,7 +67,7 @@ if __name__ == "__main__":
         if notices.settings.group_sec_all:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
             notices.email_editing = False
             notices.agent_map = {
-                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']
+                'Group-Sec-All@ssis-suzhou.net':['Whole School', 'Secondary']
             }
         notices.email_to_agents()
     except Nothing:

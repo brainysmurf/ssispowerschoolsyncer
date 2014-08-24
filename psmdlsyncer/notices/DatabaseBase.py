@@ -23,7 +23,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
     Converts a database on moodle into a useable system that emails users
     """
     #TODO: Make it simple to get the new kid on the block
-    master_username = 'peterfowles'
+    master_username = 'lucyburden'
     shared_command_line_args_switches = ['verbose', 'use_samples', 'no_emails', 'update_date_fields']
     shared_command_line_args_strings = {'passed_date':None}
 
