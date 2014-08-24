@@ -136,6 +136,13 @@ class ServerInfo(MoodleDBConnection):
                         self.logger.debug("Raising NoStudentInMoodle")
                         raise NoStudentInMoodle
 
+            if student.grade >= 5 and self.email_config and self.sync_email:
+                if self.email_config.get('accounts_path'):
+                    if not os.path.exists(self.email_config.get('accounts_path') + '/' + student.username):
+                        if not 'NoEmailAddress' in dontraise:
+                            self.logger.debug("Raising NoEmailAddress")
+                            raise NoEmailAddress
+
         if student.is_secondary:
             # Account-based checks
             if self.moodle_config and self.sync_moodle:

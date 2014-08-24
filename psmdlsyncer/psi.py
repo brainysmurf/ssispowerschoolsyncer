@@ -957,6 +957,8 @@ class PowerSchoolIntegrator():
         usebccparentsELEM = []
         usebccparentsSEC = []
         usebccstudentsSEC = []
+        koreanstudentsSEC = []
+        chinesestudentsSEC = []
         usebccparentsCHINESE = []
         usebccparentsCHINESEELEM = []
         usebccparentsCHINESESEC = []
@@ -1021,6 +1023,8 @@ class PowerSchoolIntegrator():
             ns.homeroom and usebccparentsHOMEROOM[ns.homeroom].extend(student.guardian_emails)
 
             if student.is_elementary:
+                if student.grade == 5:
+                    usebccstudentsGRADE[student.grade].append(student.email)
                 usebccparentsELEM.extend(student.guardian_emails)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
@@ -1040,6 +1044,11 @@ class PowerSchoolIntegrator():
                 for group in student.groups():
                     classes[group].append(student.email)
                     classesPARENTS[group].extend(student.guardian_emails)
+
+                if student.is_korean:
+                    koreanstudentsSEC.append( student.email )
+                if student.is_chinese:
+                    chinesestudentsSEC.append( student.email )
 
             if student.is_chinese and not excluded_from_chinese_list(student):
                 usebccparentsCHINESE.extend( student.guardian_emails )
@@ -1241,12 +1250,18 @@ class PowerSchoolIntegrator():
         with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccstudentsSWA) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}koreanstudentsSEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(koreanstudentsSEC) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}chinesestudentsSEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(chinesestudentsSEC) )
+
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
             for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
                             'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM',
-                            'usebccparentsSWA', 'usebccstudentsSWA', 'usebccparentsNOTSWA', 'usebccparentsNOTGERMAN', 'usebccparentsGERMAN']:
+                            'usebccparentsSWA', 'usebccstudentsSWA', 'usebccparentsNOTSWA', 'usebccparentsNOTGERMAN', 'usebccparentsGERMAN', 'koreanstudentsSEC', 'chinesestudentsSEC']:
                 f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
             for ns.grade in usebccparentsKOREANGRADE:
                 f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
