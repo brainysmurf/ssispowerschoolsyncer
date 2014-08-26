@@ -171,10 +171,10 @@ def map_codes(short, grade, higher_lower):
         'STUDYSWA9': 'STDSKL07',
 		'STUDYSWA9': 'STDSKL9',
         
-		'ENBSWA9': 'ENGBA9',
-		'ENBSWA8': 'ENGBA8',
-		'ENBSWA7': 'ENGBA7',
-		'ENBSWA6': 'ENGBA6',
+		'ENBSWA9': 'ENGBS9',
+		'ENBSWA8': 'ENGBS8',
+		'ENBSWA7': 'ENGBS7',
+		'ENBSWA6': 'ENGBS6',
 		'ENBSWA10': 'ENGBA10',
 
 		'ENGIB6': 'ENGI6',
