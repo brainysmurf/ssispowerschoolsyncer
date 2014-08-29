@@ -6,7 +6,7 @@ from psmdlsyncer.php.PHPMoodleLink import CallPHP
 from psmdlsyncer.utils import NS
 from psmdlsyncer.settings import config_get_section_attribute
 import functools
-import inform
+import psmdlsyncer.inform as inform
 
 class ModUserEnrollments(CallPHP):
     """

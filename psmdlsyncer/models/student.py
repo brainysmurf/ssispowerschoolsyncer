@@ -448,7 +448,7 @@ class Student(BaseModel):
         """
         Called when I don't care about what courses they are in
         """
-        return [item[1] for item in self.teachers().items()]
+        return [item[1] for item in self.teachers]
 
     def get_teacher_names(self):
         """
