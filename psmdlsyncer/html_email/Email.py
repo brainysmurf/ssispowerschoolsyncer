@@ -14,6 +14,7 @@ except ImportError:
     class html2text:
         html2text = lambda html: re.sub(r'<.*?>', '', html)
 import smtplib
+from smtplib import SMTPServerDisconnected
 
 def read_in_templates(path, email_object=None):
     """
@@ -259,10 +260,16 @@ class Email:
             s = smtplib.SMTP(self.domain)
         except smtplib.socket.error:
             #TODO: Email admin when in production
-            print("SMTLib report socket error, did not send email from {} to {} with content:\n{}".format(self.from_who, ",".join([r.email for r in self.recipients]), msg.as_string()))
+            print("Not an email server, did not send email from {} to {} with content:\n{}".format(self.from_who, ",".join([r.email for r in self.recipients]), msg.as_string()))
             self.sent = False
             return
-        s.sendmail(_email.parseaddr(self.from_who)[1], [r.email for r in self.recipients], msg.as_string())
+        try:
+            s.sendmail(_email.parseaddr(self.from_who)[1], [r.email for r in self.recipients], msg.as_string())
+        except SMTPServerDisconnected:
+            print("Not an email server, did not send email from {} to {} with content:\n{}".format(self.from_who, ",".join([r.email for r in self.recipients]), msg.as_string()))
+            self.sent = False
+            return
+
         s.quit()
         self.sent = True
 
