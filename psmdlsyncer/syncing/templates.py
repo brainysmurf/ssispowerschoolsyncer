@@ -157,6 +157,9 @@ class DefaultTemplate:
     def new_online_portfolio(self, item):
         self.default_logger("Creating new online portfolio for student {0.param}".format(item))
 
+    def old_online_portfolio(self, item):
+        self.default_logger("The student {0.param} still has an online portfolio".format(item))
+
     def new_course_metadata(self, item):
         self.default_logger("New course metadata {0.right} ".format(item))
 
