@@ -17,7 +17,7 @@ class DetermineChanges:
         self.left.process()
         self.right.process()	
 
-        if False:
+        if True:
              print('Inside DetermineChange __init__')
              from IPython import embed
              embed()
