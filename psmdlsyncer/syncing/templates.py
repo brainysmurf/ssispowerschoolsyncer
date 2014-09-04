@@ -283,24 +283,17 @@ class MoodleTemplate(DefaultTemplate):
 
     def deenrol_student_from_course(self, item):
         super().deenrol_from_course(item)   # for output
-        user = item.right.idnumber
-        course = item.param.course
-        group = item.param.group
-        self.moodlemod.deenrol_student_from_course(user, course)
-
-    def deenrol_teacher_from_course(self, item):
-        super().deenrol_from_course(item)   # for output
-        user = item.right.idnumber
-        course = item.param.course
-        group = item.param.group
-        self.moodlemod.deenrol_teacher_from_course(user, course)
+        #user = item.right.idnumber
+        #course = item.param.course
+        #group = item.param.group
+        #self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
         super().deenrol_from_course(item)   # for output
-        user = item.right.idnumber
-        course = item.param.course
-        group = item.param.group
-        self.moodlemod.deenrol_parent_from_course(user, course)
+        #user = item.right.idnumber
+        #course = item.param.course
+        #group = item.param.group
+        #self.moodlemod.deenrol_parent_from_course(user, course)
 
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
