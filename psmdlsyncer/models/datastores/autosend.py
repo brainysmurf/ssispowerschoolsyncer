@@ -126,7 +126,7 @@ class AutoSendTree(AbstractTree):
 
         # Set up the user information
 
-        if sys.platform == 'linux2':
+        if 'linux' in sys.platform:
             users = [item[4] for item in pwd.getpwall()]
             # TODO: Use the home in settings.ini
             write_user = lambda x: ["/bin/bash", "/home/lcssisadmin/src/ssispowerschoolsyncer/MakeNewStudentAccount.sh", x.idnumber, x.username, "'{}'".format(x.lastfirst)]
