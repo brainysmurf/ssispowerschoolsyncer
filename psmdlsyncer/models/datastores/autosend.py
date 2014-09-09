@@ -7,8 +7,9 @@ from psmdlsyncer.files import clear_folder
 from collections import defaultdict
 from psmdlsyncer.db import DBSession
 from psmdlsyncer.db.MoodleDB import *
-import re
+import re, os, sys, pwd
 from sqlalchemy import and_, not_, or_
+import subprocess
 
 def excluded_from_chinese_list(student):
     """
@@ -123,10 +124,25 @@ class AutoSendTree(AbstractTree):
 
         self.logger.debug("Setting email lists")
 
+        # Set up the user information
 
+        if sys.platform == 'linux2':
+            users = [item[4] for item in pwd.getpwall()]
+            write_user = lambda x: ["/bin/bash", "/home/lcssisadmin/src/ssispowerschoolsyncer/MakeNewStudentAccount.sh", x.idnumber, x.username, "'{}'".format(x.lastfirst)]
+        else:
+            path_to_users = config_get_section_attribute('DIRECTORIES', 'path_to_users')
+            users = os.listdir(path_to_users)
+            write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
+
+        # Loop through all the students, baby
 
         for student_key in self.students.get_keys():
             student = self.students.get_key(student_key)
+
+            if not check_users(student):
+                self.logger.warning("Making new student email {}".format(student))
+                subprocess.call(write_user(student))
+
             ns.homeroom = student.homeroom
             ns.grade = student.grade
 
@@ -166,8 +182,8 @@ class AutoSendTree(AbstractTree):
                 teacherlink[student.username].extend(student.teacher_emails)
                 hrlink[student.username].append(student.homeroom_teacher_email)
                 for group in student.groups:
-                    classes[group].append(student.email)
-                    classesPARENTS[group].extend(student.guardian_emails)
+                    classes[group.name].append(student.email)
+                    classesPARENTS[group.name].extend(student.guardian_emails)
 
                 if student.is_korean:
                     koreanstudentsSEC.append( student.email )
@@ -423,9 +439,7 @@ class AutoSendTree(AbstractTree):
                 f.write("\n".join(activities_postfix_parents[activity_name]))
 
         # run newaliases command on exit if we're on the server
-        newaliases_path = False
-        if config.has_section('EMAIL'):
-            newaliases_path = self.config['EMAIL'].get('newaliases_path')
+        newaliases_path = config_get_section_attribute('EMAIL', 'newaliases_path')
         if newaliases_path:
             self.logger.info("Running newaliases")
             p = subprocess.Popen(newaliases_path, shell=True)

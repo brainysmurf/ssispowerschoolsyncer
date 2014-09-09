@@ -35,6 +35,7 @@ class Teacher(BaseModel):
             self.username = no_whitespace_all_lower(self.email.split('@')[0])
         else:
             self.username = no_whitespace_all_lower(self.preferred_name)
+        self.grade = None  # Teachers don't have grades, but keep this here for comparison reaasons
         self.title = title
         self._courses = []
         self._students = []
@@ -224,6 +225,10 @@ class Teacher(BaseModel):
 
     def __repr__(self):
         return self.format_string("<Teacher: {username} ({ID})>") #{mid}{courses_str}", first="+ ", mid="\n| ", last="| ", courses_str=", ".join([course.ID for course in self.courses]))
+
+    @property
+    def to_csv(self):
+        return self.format_string(",".join([str(self.grade), self.username, self.idnumber]))
 
     def __sub__(self, other):
 

@@ -330,7 +330,7 @@ class MoodleDBSession(MoodleDBSess):
             try:
                 course = session.query(Course).filter_by(idnumber=course_metadata.course_idnumber).one()
             except NoResultFound:
-                self.logger.warning("No course by idnumber {}".format(course_metadata.course_idnumber))
+                self.default_logger("No course by idnumber when adding metadata {}".format(course_metadata.course_idnumber))
                 return
             except MultipleResultsFound:
                 self.logger.warning("Multiple courses with idnumber {}".format(course_metadata.course_idnumber))
@@ -567,7 +567,9 @@ class MoodleDBSession(MoodleDBSess):
                 ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student.idnumber).one().id
                 ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
             except NoResultFound:
-                self.logger.warning('No results found for timetable object {}'.format(timetable))
+                self.logger.warning('No results found for timetable object when setting to inactive {}'.format(timetable))
+                from IPython import embed
+                embed()
                 return
             except MultipleResultsFound:
                 self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
@@ -585,12 +587,15 @@ class MoodleDBSession(MoodleDBSess):
     def add_timetable_data(self, timetable):
         with DBSession() as session:
             ns = NS2()
+            ns.courseid, ns.studentuserid, ns.teacheruserid = (None, None, None)
             try:
                 ns.courseid = session.query(Course).filter_by(shortname=timetable.course.idnumber).one().id
                 ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student.idnumber).one().id
                 ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
             except NoResultFound:
-                self.logger.warning('No results found for timetable object {}'.format(timetable))
+                if ns.courseid:
+                    self.logger.warning('No results found for timetable object when adding {}'.format(timetable))
+
                 return
             except MultipleResultsFound:
                 self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
@@ -605,7 +610,7 @@ class MoodleDBSession(MoodleDBSess):
                     ).all()
 
             if exist:
-                self.logger.warning("Already exists")
+                self.logger.warning("Found timetable {} already exists".format(timetable))
                 return
             new = SsisTimetableInfo()
             for key in ns.kwargs:
@@ -624,7 +629,7 @@ class MoodleDBSession(MoodleDBSess):
                 ns.studentuserid = session.query(User).filter_by(idnumber=timetable.student).one().id
                 ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher).one().id
             except NoResultFound:
-                self.logger.warning('No results found for timetable object {}'.format(timetable))
+                self.logger.warning('No results found for timetable object when setting to active {}'.format(timetable))
                 return
             except MultipleResultsFound:
                 self.logger.warning('Multiple results found for timetable object {}'.format(timetable))

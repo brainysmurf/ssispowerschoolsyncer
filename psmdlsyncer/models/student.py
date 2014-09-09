@@ -591,6 +591,16 @@ class Student(BaseModel):
                 ns.param = to_remove
                 yield ns
 
+    @property
+    def to_csv(self):
+        # FIXME: Calculate this right without relying on year
+        justnumber = re.sub('[a-z_]', '', self.username)
+        if not justnumber:
+            grade = ""
+        else:
+            grade = str(13 - (int(justnumber) - 14))
+        return self.format_string(",".join([grade, self.username, self.idnumber]))
+
     def __repr__(self):
         ns = NS()
         ns.ID = self.ID

@@ -2,6 +2,9 @@ import logging
 from psmdlsyncer.php import ModUserEnrollments
 from psmdlsyncer.sql.MDB import MoodleDBSession
 log = logging.getLogger(__name__)
+import re, functools
+from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from psmdlsyncer.settings import config_get_section_attribute
 
 class dry_run:
     """
@@ -50,12 +53,17 @@ class DefaultTemplate:
         pass # for now
         self.default_logger("Found student who has now left: {}".format(item.left))
 
+    def old_teacher(self, item):
+        pass # for now
+        self.default_logger("Found student who has now left: {}".format(item.left))
+
     def old_parent(self, item):
+        pass # for now
+        self.default_logger("Found student who has now left: {}".format(item.left))
+
+    def old_parent_link(self, item):
         pass
-
-    def new_student(self, item):
-        self.default_logger("Found new student: {}".format(item.right))
-
+ 
     def homeroom_changed(self, item):
         self.default_logger("Put {0.right} in homeroom: {0.right.homeroom}".format(item))
 
@@ -66,16 +74,13 @@ class DefaultTemplate:
         self.default_logger("Put {0.left} into this cohort: {0.param}".format(item))
 
     def new_teacher(self, item):
-        self.logger.info("Found a new teacher! {0.param}".format(item))
+        self.default_logger("Found a new teacher! {0.param}".format(item))
 
     def new_student(self, item):
-        self.logger.info("Found a new student! {0.param}".format(item))
+        self.default_logger("Found a new student! {0.param}".format(item))
 
     def new_parent(self, item):
-        self.logger.info("Found a new parent! {0.param}".format(item))
-
-    def old_teacher(self, item):
-        self.logger.warning("Found teacher who has now left: {0.param}".format(item))
+        self.default_logger("Found a new parent! {0.param}".format(item))
 
     def add_to_group(self, item):
         course = item.param.course
@@ -112,6 +117,9 @@ class DefaultTemplate:
 
     def old_course(self, item):
         self.default_logger("AN OLD COURSE! {0.param} ".format(item))
+
+    def old_course_metadata(self, item):
+        self.default_logger("AN OLD COURSE METADATA! {0.param} ".format(item))
 
     def new_group(self, item):
         self.default_logger("A NEW GROUP! {0.param} (should be created when someone enrolls...)".format(item))
@@ -199,11 +207,110 @@ class MoodleTemplate(DefaultTemplate):
         """
         """
         if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
-            self.logger.warning("Student already exists, maybe they are not in the studentsALL group?\n{}".format(item))
+            self.logger.warning("Putting existing student {} into the studentsALL group?".format(item.right))
+            self.moodlemod.add_user_to_cohort(item.right.idnumber, 'studentsALL')
         else:
             super().new_student(item)
             student = item.right
             self.moodlemod.new_student(student)
+
+    def check_for_allow_deletions(self):
+        """
+        If there settings.ini file contains specific instructions to delete the accounts, then do so
+        Otherwise assume False
+        """
+        return config_get_section_attribute('MOODLE', 'deletion_mode') == 'hard_delete'
+
+    def check_for_keep_username_startswith(self, user):
+        with_what = config_get_section_attribute('MOODLE', 'keep_username_startswith')
+        if not with_what:
+            return False
+        with_what = with_what.split(',')
+        for this in with_what:
+            if user.username.startswith(this):
+                return True
+        return False
+
+    def remove_user_from_all_groups(self, user):
+        """
+        Used in old_* accounts functions
+        """
+        debug = config_get_section_attribute('DEBUGGING', 'inspect_soft_deletion_groups')
+        if user.groups:
+            print(user.groups)
+            from IPython import embed
+            embed()
+        for group in user.groups:
+            self.logger.warning("Removing old_student {} from group {} ".format(user, group))
+            self.moodlemod.remove_user_from_group(user.idnumber, group.idnumber)
+
+    def old_student(self, item):
+        super().old_student(item)
+        student = item.left
+
+        if self.check_for_keep_username_startswith(student):
+            self.default_logger('I {} am a sacred account, leave me alone!'.format(student))
+            return
+
+        if self.check_for_allow_deletions():
+            # okay, let's go ahead and delete them!
+            self.moodlemod.delete_account(student.idnumber)
+        else:
+            self.logger.warn(student.to_csv)
+
+            try:
+                self.moodle.update_table('user', where={
+                    'idnumber':student.idnumber
+                    },
+                    department='left')
+            except (NoResultFound, MultipleResultsFound):
+                self.logger.warn("Did not update homeroom field for student {}".format(student))
+
+            self.remove_user_from_all_groups(student)
+
+    def old_teacher(self, item):
+        super().old_teacher(item)
+        teacher = item.left
+
+        if self.check_for_keep_username_startswith(teacher):
+            self.default_logger('I {} am a sacred account, leave me alone!'.format(teacher))
+            return
+
+        if self.check_for_allow_deletions():
+            self.moodlemod.delete_account(teacher.idnumber)
+        else:
+            self.logger.warn('Deleting teacher: {}'.format(teacher))
+            try:
+                self.moodle.update_table('user', where={
+                    'idnumber':teacher.idnumber
+                    },
+                    department='delete')
+            except (NoResultFound, MultipleResultsFound):
+                self.logger.warn("Did not update homeroom field for teacher {}".format(teacher))
+
+            self.remove_user_from_all_groups(teacher)
+
+    def old_parent(self, item):
+        super().old_parent(item)
+        parent = item.left
+
+        if self.check_for_keep_username_startswith(parent):
+            self.default_logger('I {} am a sacred account, leave me alone!'.format(parent))
+            return
+
+        if self.check_for_allow_deletions():
+            self.moodlemod.delete_account(parent.idnumber)
+        else:
+            self.logger.warn('Deleting parent: {}'.format(parent))
+            try:
+                self.moodle.update_table('user', where={
+                    'idnumber':parent.idnumber
+                    },
+                    department='delete')
+            except (NoResultFound, MultipleResultsFound):
+                self.logger.warn("Did not update homeroom field for parent {}".format(parent))
+    
+            self.remove_user_from_all_groups(parent)
 
     # def new_teacher(self, item):
     #     """
@@ -218,10 +325,19 @@ class MoodleTemplate(DefaultTemplate):
     def new_parent(self, item):
         """
         """
-        super().new_parent(item)
-        parent = item.right
-        self.moodlemod.new_parent(parent)
-        self.moodlemod.add_user_to_cohort(parent.idnumber, 'parentsALL')
+        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
+            self.logger.warning("Putting parent student {} into the parentsALL group".format(item.right))
+            self.moodlemod.add_user_to_cohort(item.right.idnumber, 'parentsALL')
+        if self.moodle.wrap_no_result(self.moodle.get_user_from_username, item.right.username):
+            self.logger.warning("This parent with guardian email {0} is not linked. Search PS for 'GuardianEmail contains {0}' and email results to Admissions".format(item.right.email))
+        else:
+            from IPython import embed
+            embed()
+            super().new_parent(item)
+            parent = item.right
+            self.moodlemod.new_parent(parent)
+            # Add to the appropriate cohort now to ensure it's working
+            self.moodlemod.add_user_to_cohort(parent.idnumber, 'parentsALL')
 
     def new_group(self, item):
         """
@@ -372,23 +488,29 @@ class MoodleTemplate(DefaultTemplate):
         idnumber = user.idnumber
         from_what = item.left.username
         to_what = item.right.username
+
         if hasattr(user, 'login_method') and user.login_method == 'nologin':
             # Just go ahead and change it automatically, no need to inform anyone or anything
             # because the account isn't active anyway
+            # test for 'login_method' because teachers don't have that TODO: Add that to the model!
             self.moodle.update_table('user', where={
                 'idnumber':idnumber
                 },
                 username=to_what)
             super().username_changed(item)
         else:
-            msg = "Student {} needs his/her username changed manually".format(from_what, to_what)
-            if '_' in from_what:
-                if from_what.replace('_', '') == to_what:
-                    self.default_logger("Student {} with an underscore and whose username has NOT changed to {}.".format(from_what, to_what))
+            justgrade = functools.partial(re.sub, '[a-z_]', '')
+            if justgrade(item.left.username) != justgrade(item.right.username):
+                self.logger.warning("Grade change: Username {} has changed grade, needs username changed to {}".format(from_what, to_what))
+            else:
+                msg = "Username {} needs his/her username changed manually to {} this happens when passport info gets changed".format(from_what, to_what)
+                if '_' in from_what:
+                    if from_what.replace('_', '') == to_what:
+                        self.default_logger("Student {} with an underscore and whose username has NOT changed to {}.".format(from_what, to_what))
+                    else:
+                        self.logger.warning(msg)
                 else:
                     self.logger.warning(msg)
-            else:
-                self.logger.warning(msg)
 
     def custom_profile_value_changed(self, item):
         person = item.left.useridnumber

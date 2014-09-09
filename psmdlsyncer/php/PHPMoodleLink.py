@@ -77,6 +77,10 @@ class CallPHP:
         to_pass = self.sf("{username} '{email}' '{firstname}' '{lastname}' {idnumber} {auth}")
         self.command('create_account', to_pass)
 
+    def delete_account(self, useridnumber):
+        print("Deleteing {}".format(useridnumber))
+        self.command('delete_account', useridnumber)
+
     def create_group_for_course(self, course_id, group_name):
         self.command('create_group_for_course {} {}'.format(course_id, group_name))
 

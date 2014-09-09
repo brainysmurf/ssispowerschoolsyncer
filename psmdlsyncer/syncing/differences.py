@@ -1,7 +1,9 @@
+
 from psmdlsyncer.settings import logging
 from psmdlsyncer.utils.modifications import ModificationStatement
 from psmdlsyncer.utils import NS2
 from psmdlsyncer.syncing.templates import DefaultTemplate
+from psmdlsyncer.settings import config_get_section_attribute
 
 class DetermineChanges:
     """
@@ -17,7 +19,7 @@ class DetermineChanges:
         self.left.process()
         self.right.process()	
 
-        if True:
+        if config_get_section_attribute('DEBUGGING', 'inspect_datastores'):
              print('Inside DetermineChange __init__')
              from IPython import embed
              embed()
@@ -41,6 +43,7 @@ class DetermineChanges:
             self.go()
 
     def go(self, **kwargs):
+        debug = config_get_section_attribute('DEBUGGING', 'print_dispatches')
         for item in self.subtract():
             if self.template and hasattr(item, 'status'):
                 if item.status in ['new_teacher', 'new_student']:
@@ -49,6 +52,7 @@ class DetermineChanges:
             else:
                 dispatch = None
             if dispatch:
+                debug and print(item)
                 dispatch(item)
             else:
                 #TODO: Handle unrecognized statuses here

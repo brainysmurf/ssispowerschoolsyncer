@@ -26,7 +26,7 @@ class Parent(BaseModel):
         result = []
         for child in self.children:
             result.append(child.homeroom)
-        return set( result )
+        return result
 
     @property
     def emails(self):

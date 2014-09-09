@@ -10,6 +10,7 @@ from psmdlsyncer.models.datastores.branch import DataStore, students, teachers, 
 from psmdlsyncer.sql import MoodleImport
 from psmdlsyncer.files import AutoSendImport
 from psmdlsyncer.utils import NS2
+from psmdlsyncer.settings import config_get_section_attribute
 
 def is_immediate_subclass(klass, of_klass):
 	"""
@@ -192,7 +193,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 				# Do some sanity checks
 				if not student:
-					self.logger.warning("Student not found! {}".format(student_key))
+					self.default_logger("Student not found, sometimes happens for some odd reason {}".format(student_key))
 					continue
 				if not course:
 					self.logger.warning("Course not found! {}".format(course_key))
@@ -216,6 +217,11 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 				if student.login_method == 'manual':
 					self.online_portfolios.make(student.idnumber)
+
+				if str(config_get_section_attribute('DEBUGGING', 'inspect_teacher_schedule')) == teacher_key:
+					self.logger.warning('{}\n{}\n{}\n'.format(teacher, group, student))
+					from IPython import embed
+					embed()
 
 	def process_timetable_data(self):
 		pass
@@ -257,10 +263,12 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 	def process(self):
 		# Basically just calls every process_x method we have
+		debug = config_get_section_attribute('DEBUGGING', 'print_process')
 		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules',  'timetable_data', 'custom_profile_fields', 'mrbs_editors', 'online_portfolios']
 		for o in order:
 			method_name = 'process_{}'.format(o)
 			method = getattr(self, method_name)
+			debug and self.logger.warning(method)
 			method()
 
 	def blankify(self):

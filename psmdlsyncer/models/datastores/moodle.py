@@ -5,6 +5,7 @@ from psmdlsyncer.sql import MoodleDBSession
 from psmdlsyncer.models.parent import MoodleParent
 
 from psmdlsyncer.utils import NS2
+from psmdlsyncer.settings import config_get_section_attribute
 
 class MoodleDataStore(DataStore):
     pass
@@ -57,7 +58,9 @@ class MoodleTree(AbstractTree):
         """
         This is different, we just go through each item and add it to the database
         """
-        for course_idnumber, teacher_idnumber, student_idnumber, group_idnumber, period_info in self.timetable_table.get_timetable_data():
+        debug = config_get_section_attribute('DEBUGGING', 'inspect_timetable_data')
+        for raw_data in self.timetable_table.get_timetable_data():
+            course_idnumber, teacher_idnumber, student_idnumber, group_idnumber, period_info = raw_data
             course = self.courses.get_key(course_idnumber)
             teacher = self.teachers.get_key(teacher_idnumber)
             student = self.students.get_key(student_idnumber)
@@ -66,9 +69,19 @@ class MoodleTree(AbstractTree):
             group.idnumber = group_idnumber
 
             if course and teacher and student:
-                self.timetable_datas.make_timetable_datas(course, teacher, group, student, period_info)
+                result = self.timetable_datas.make_timetable_datas(course, teacher, group, student, period_info)
+                debug and self.warning(result)
             else:
-                pass
+                debug and self.logger.warning("Not added")
+                debug and self.logger.warning(course)
+                debug and self.logger.warning(teacher)
+                debug and self.logger.warning(student)
+                debug and self.logger.warning(raw_data)
+                debug and self.logger.warning('-----')
+        if debug:
+            from IPython import embed
+            print(self)
+            embed()
 
     def process_schedules(self):
         """
@@ -166,6 +179,8 @@ class MoodleTree(AbstractTree):
                         continue
                     if not student:
                         self.logger.warning("Student not found! {}".format(student_key))
+                        from IPython import embed
+                        embed()
                         continue
                     if not group:
                         self.logger.warning("Group not found! {}".format(section_number))
@@ -186,12 +201,18 @@ class MoodleTree(AbstractTree):
             self.mrbs_editors.make(teacher.idnumber, teacher.id)
 
     def process_courses(self):
+        debug = config_get_section_attribute('DEBUGGING', 'print_courses')
         for course in self.district_courses.content():
-            self.courses.make_without_conversion(
+            new = self.courses.make_without_conversion(
                 course.idnumber, course.fullname, course.grade, course.database_id
                 )
+            debug and self.logger.warning(new)
         for cmd in self.district_course_meta.content():
-            self.course_metadatas.make_course_metadata(cmd.course_idnumber, cmd.course_grade)
+            new = self.course_metadatas.make_course_metadata(cmd.course_idnumber, cmd.course_grade)
+            debug and self.logger.warning(new)
+        if debug:
+            from IPython import embed
+            embed()
 
     def process_cohorts(self):
         cache = {}

@@ -1,3 +1,4 @@
+
 """
 Implements the command line for anywhere, just use:
 from psmdlsyncer.settings import config
@@ -65,12 +66,15 @@ def config_get_logging_level():
 
 def config_get_section_attribute(section, attribute):
     """ returns None if not present, otherwise returns its value """
-    if not config.has_section(section):
+    try:
+        if not config.has_section(section):
+            return None
+        if section in ['DEFAULTS', 'DEBUGGING']:
+            return config.getboolean(section, attribute)
+        else:
+            return config[section].get(attribute)
+    except configparser.NoOptionError:
         return None
-    if section == 'DEFAULTS':
-        return config.getboolean(section, attribute)
-    else:
-        return config[section].get(attribute)
 
 def requires_setting(section, attribute):
     """ Declare your settings needs this way, opt-in """
@@ -90,14 +94,19 @@ def verbosity(passed):
 
 # setup a few loggers
 import logging
-path_to_logger = config_get_section_attribute('LOGGING', 'path_to_logger')
+path_to_logging = config_get_section_attribute('DIRECTORIES', 'path_to_logging')
+if not path_to_logging:
+    print("You have to add a path_to_logging settings in DIRECTORIES section, which should be a directory")
+    exit()
 #used to keep this in a file, let's just set it up right, shall we?
 log_level = config_get_section_attribute('LOGGING', 'log_level')
 numeric_level = getattr(logging, log_level.upper())
 if numeric_level is None:
     raise ValueError('Invalid log level: {}'.format(loglevel))
 
-logging.basicConfig(filename=path_to_logger, level=numeric_level)
+import datetime
+path_to_logging += str(datetime.datetime.now().timestamp())
+logging.basicConfig(filename=path_to_logging, filemode='a+', level=numeric_level)
 
 if sys.stdout.isatty():
     # running with an attached terminal, automatically

@@ -25,18 +25,20 @@ class AutoSendImport:
         self.school = school
         self.unique = unique
 
+        self.debug = config_get_section_attribute('DEBUGGING', 'print_autosend')
+
         # Dynamically look at the directory and use the latest version
         path = path_to_powerschool + '/' + version_format.format(minor_version='', **locals())
         path = path.split(os.path.sep)[-1]
         candidates = [g for g in [f.split(os.path.sep)[-1] for f in os.listdir(path_to_powerschool)] if path in g]
         candidates = sorted(candidates)
         if not candidates:
-            self.logger.debug("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
+            self.debug and self.logger.warning("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
             self.content = lambda *args, **kwargs: []
             return
         final = candidates[-1]
         self.path = path_to_powerschool + '/' + final
-        self.logger.debug('Autosend: {}_{}\nParsing this file: {}'.format(school, unique, self.path))
+        self.debug and self.logger.warning('Autosend: {}_{}\nParsing this file: {}'.format(school, unique, self.path))
 
     def content(self):
         with open(self.path) as f:

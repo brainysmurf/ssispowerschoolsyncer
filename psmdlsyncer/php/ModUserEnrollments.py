@@ -59,6 +59,9 @@ class ModUserEnrollments(CallPHP):
             self.enrol_student_into_course(student.ID, course, group)
         inform.inform_new_student(student)
 
+    def delete_user(self, user):
+        self.delete_account(user.idnumber)
+
     def new_teacher(self, teacher):
         self.logger.info('Creating account for {}'.format(teacher))
         self.create_account( teacher.username, teacher.email, teacher.first, teacher.last, teacher.num, auth='manual' )
