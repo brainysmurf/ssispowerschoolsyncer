@@ -128,18 +128,21 @@ class AutoSendTree(AbstractTree):
 
         if sys.platform == 'linux2':
             users = [item[4] for item in pwd.getpwall()]
+            # TODO: Use the home in settings.ini
             write_user = lambda x: ["/bin/bash", "/home/lcssisadmin/src/ssispowerschoolsyncer/MakeNewStudentAccount.sh", x.idnumber, x.username, "'{}'".format(x.lastfirst)]
         else:
             path_to_users = config_get_section_attribute('DIRECTORIES', 'path_to_users')
             users = os.listdir(path_to_users)
             write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
 
+        check_users = lambda x: x.idnumber in users
+
         # Loop through all the students, baby
 
         for student_key in self.students.get_keys():
             student = self.students.get_key(student_key)
 
-            if not check_users(student):
+            if student.grade >= 4 and not check_users(student):
                 self.logger.warning("Making new student email {}".format(student))
                 subprocess.call(write_user(student))
 
@@ -163,8 +166,12 @@ class AutoSendTree(AbstractTree):
             ns.homeroom and usebccparentsHOMEROOM[ns.homeroom].extend(student.guardian_emails)
 
             if student.is_elementary:
-                if student.grade == 5:
+                if student.grade >= 4:
                     usebccstudentsGRADE[student.grade].append(student.email)
+                    for group in student.groups:
+                        classes[group.name].append(student.email)
+                        classesPARENTS[group.name].extend(student.guardian_emails)
+
                 usebccparentsELEM.extend(student.guardian_emails)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
