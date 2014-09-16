@@ -253,11 +253,19 @@ class MoodleTemplate(DefaultTemplate):
             return
 
         if self.check_for_allow_deletions():
-            # okay, let's go ahead and delete them!
+            # This is the hard delete mode here
+            # This deletes the account, probably only need this once in a while
+            # Main difference from soft delete is that it unenrols them from all courses, which can delete information
             self.moodlemod.delete_account(student.idnumber)
-        else:
-            self.logger.warn(student.to_csv)
 
+        else:
+            # The following lot item is useful if you want to provide an admin with CSV file of students that
+            # are going to be deleted, in transition from soft to hard delete
+            #self.logger.warn(student.to_csv)
+
+            # Now set the homeroom field to 'left' and remove them from any groups they are in
+            # Doesn't delete the account, and doesn't unenrol them from courses, either
+            # Which makes recovering them a simple matter.
             try:
                 self.moodle.update_table('user', where={
                     'idnumber':student.idnumber
