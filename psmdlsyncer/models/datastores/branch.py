@@ -95,6 +95,18 @@ class DataStore:
 		return None
 
 	@classmethod
+	def get_from_username(cls, value):
+		return get_from_attribute(cls, 'username', value)
+
+	@classmethod
+	def get_all_from_attribute(cls, attr, value):
+		l = []
+		for item in cls.get_objects():
+			if getattr(item, attr) == value:
+				l.append(item)
+		return l
+
+	@classmethod
 	def find_one_with_callback(cls, callback):
 		for item in cls.get_objects():
 			if callback(item):
