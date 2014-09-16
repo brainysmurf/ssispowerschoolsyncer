@@ -201,7 +201,7 @@ class Student(BaseModel):
         if self.grade in range(11, 13):
             self._cohorts.append('studentsDP')
         if self.is_elementary:
-            if self.grade >= 5:
+            if self.grade >= 4:
                 self._cohorts = ['studentsALL', 'studentsELEM', 'students{}'.format(grade), 'students{}'.format(homeroom)]
             else:
                 self._cohorts = ['studentsALL']
