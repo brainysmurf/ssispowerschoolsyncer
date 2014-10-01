@@ -339,8 +339,6 @@ class MoodleTemplate(DefaultTemplate):
         if self.moodle.wrap_no_result(self.moodle.get_user_from_username, item.right.username):
             self.logger.warning("This parent with guardian email {0} is not linked. Search PS for 'GuardianEmail contains {0}' and email results to Admissions".format(item.right.email))
         else:
-            from IPython import embed
-            embed()
             super().new_parent(item)
             parent = item.right
             self.moodlemod.new_parent(parent)
@@ -571,6 +569,14 @@ class MoodleTemplate(DefaultTemplate):
                 )
 
     def new_parent_link(self, item):
+        """
+        Go through all the children and make the association
+        """
+        super().new_parent_link(item)
+        for child_idnumber in item.right.children:
+            self.moodlemod.associate_child_to_parent(item.right.parent_idnumber, child_idnumber)
+
+    def associate_child_to_parent(self, item):
         """
         Go through all the children and make the association
         """
