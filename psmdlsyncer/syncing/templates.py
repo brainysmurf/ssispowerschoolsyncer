@@ -236,10 +236,6 @@ class MoodleTemplate(DefaultTemplate):
         Used in old_* accounts functions
         """
         debug = config_get_section_attribute('DEBUGGING', 'inspect_soft_deletion_groups')
-        if user.groups:
-            print(user.groups)
-            from IPython import embed
-            embed()
         for group in user.groups:
             self.logger.warning("Removing old_student {} from group {} ".format(user, group))
             self.moodlemod.remove_user_from_group(user.idnumber, group.idnumber)
