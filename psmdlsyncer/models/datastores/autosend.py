@@ -7,6 +7,7 @@ from psmdlsyncer.files import clear_folder
 from collections import defaultdict
 from psmdlsyncer.db import DBSession
 from psmdlsyncer.db.MoodleDB import *
+from sqlalchemy.orm.exc import NoResultFound
 import re, os, sys, pwd
 from sqlalchemy import and_, not_, or_
 import subprocess
@@ -126,10 +127,12 @@ class AutoSendTree(AbstractTree):
 
         # Set up the user information
 
-        if 'linux' in sys.platform:
+        production = config_get_section_attribute('DEFAULTS', 'production')
+        if production:
             users = [item[4] for item in pwd.getpwall()]
             # TODO: Use the home in settings.ini
-            write_user = lambda x: ["/bin/bash", "/home/lcssisadmin/src/ssispowerschoolsyncer/MakeNewStudentAccount.sh", x.idnumber, x.username, "'{}'".format(x.lastfirst)]
+            path_to_script = config_get_section_attribute('DIRECTORIES', 'path_to_newstudent_script')
+            write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
         else:
             path_to_users = config_get_section_attribute('DIRECTORIES', 'path_to_users')
             users = os.listdir(path_to_users)
@@ -141,6 +144,18 @@ class AutoSendTree(AbstractTree):
 
         for student_key in self.students.get_keys():
             student = self.students.get_key(student_key)
+
+            # We need to check the dragonnet database for the email address
+            # Because we don't have a way otherwise
+
+            with DBSession() as session:
+                try:
+                    in_dragonnet = session.query(User).filter_by(idnumber=student.idnumber).one()
+                    if in_dragonnet.email != student.email:
+                        student.username = in_dragonnet.username
+                        student.email = in_dragonnet.email
+                except NoResultFound:
+                    pass
 
             if student.grade >= 4 and not check_users(student):
                 self.logger.warning("Making new student email {}".format(student))
@@ -386,6 +401,8 @@ class AutoSendTree(AbstractTree):
 
 
         # Secondary Activities
+        # Gets all the students that are enrolled as self (or meta, why meta, because they use that for enrollments)
+        # That is in the activities category
         with DBSession() as session:
              results = session.query(
                 Course.fullname, User.idnumber
@@ -410,7 +427,7 @@ class AutoSendTree(AbstractTree):
             activity_name, student_key = result
             student = self.students.get_key(student_key)
             if not student:
-                self.logger.warning('This student enrolled into activity, ' + \
+                self.logger.info('This student enrolled into activity, ' + \
                                     'but has left. Ignored. {}'.format(student_key))
                 continue
             activities_postfix[activity_name].append(student.email)
@@ -427,8 +444,11 @@ class AutoSendTree(AbstractTree):
             pass
 
         for activity_name in activities_postfix:
+            
             ns.handle = name_to_email(activity_name)
             ns.full_email = ns('{handle}{SUFFIX}')
+            if ns.handle == ns('{SUFFIX}'):
+                continue
             with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
                 f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
                            '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
@@ -439,6 +459,8 @@ class AutoSendTree(AbstractTree):
         for activity_name in activities_postfix_parents:
             ns.handle = name_to_email(activity_name)
             ns.full_email = ns('{handle}{SUFFIX}')
+            if ns.handle == ns('{SUFFIX}'):
+                continue
             with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
                 f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
                            '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
