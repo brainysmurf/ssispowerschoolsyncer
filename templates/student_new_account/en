@@ -1,16 +1,12 @@
 <html><p>Dear {homeroom} Homeroom Teacher:</p>
 
-<p>You have a new student in your homeroom, Lee, Jung Jae. Here is their DragonNet account information.</p>
+<p>You have a new student in your homeroom, {lastfirst}. Here is their DragonNet and Student Email account information. Note that they have to change their password on DragonNet first before their email account is activated (with that same new password they created)</p>
 
 <blockquote>Username: {username}<br />
 Password: changeme</blockquote>
 
 <p>Here is their email address:<br />
 Email: {email}</p>
-
-<p>Perhaps one of the first things the buddy can do is take him or her through logging into DragonNet and Student Email and changing the passwords.</p>
-
-<p>Reminder: They should be encouraged to use the same password for both accounts. Although the same username is the same, changing the password on DragonNet does not change the Student Email password, and vice versa.</p>
 
 <p>Dear Subject Teachers:</p>
 
