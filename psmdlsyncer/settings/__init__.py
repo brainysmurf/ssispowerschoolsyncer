@@ -105,7 +105,7 @@ if numeric_level is None:
     raise ValueError('Invalid log level: {}'.format(loglevel))
 
 import datetime
-path_to_logging += str(datetime.datetime.now().timestamp())
+path_to_logging += str(datetime.datetime.now().isoformat())
 logging.basicConfig(filename=path_to_logging, filemode='a+', level=numeric_level)
 
 if sys.stdout.isatty():
