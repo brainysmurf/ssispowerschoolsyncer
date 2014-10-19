@@ -12,6 +12,31 @@ import re, os, sys, pwd
 from sqlalchemy import and_, not_, or_
 import subprocess
 
+def put_in_order(what, reverse=False):
+    what = what.upper()
+    result = 1 # elementary don't have LEARN
+    if reverse:
+        trans = {'L':8,'E':7,'A':6,'R':5,'N':4,'S':3,'SWA':2,'JS':1}
+    else:
+        trans = {'L':1,'E':2,'A':3,'R':4,'N':5,'S':6,'SWA':7, 'JS':8}
+    if '6' in what:
+        result = 100 + trans[re.sub('[0-9]', '', what)]
+    elif '7' in what:
+        result =  200 + trans[re.sub('[0-9]', '', what)]
+    elif '8' in what:
+        result =  300 + trans[re.sub('[0-9]', '', what)]
+    elif '9' in what:
+        result =  400 + trans[re.sub('[0-9]', '', what)]
+    elif '10' in what:
+        result = 500 + trans[re.sub('[0-9]', '', what)]
+    elif '11' in what:
+        result = 600 + trans[re.sub('[0-9]', '', what)]
+    elif '12' in what:
+        result = 700 + trans[re.sub('[0-9]', '', what)]
+    elif re.sub('[1..9]', '', what):
+        result = ord(re.sub('[1..9]', '', what)[0])
+    return result
+
 def excluded_from_chinese_list(student):
     """
     Return true if parents explicitely ask us to exclude them
@@ -44,6 +69,15 @@ class AutoSendTree(AbstractTree):
     def process_mrbs_editor(self):
         for teacher in self.teachers.get_objects():
             self.mrbs_editor.make(teacher.ID)
+
+    def output_parent_bulk_emails(self):
+        self.build_automagic_emails()
+        import click
+        the_list = list(self.usebccparentsHOMEROOM.keys())
+        the_list.sort(key=put_in_order)
+
+        for homeroom in the_list:
+            click.echo('<a href="mailto:?bcc=usebccparents{0}@student.ssis-suzhou.net">usebccparents{0}@student.ssis-suzhou.net</a><br />'.format(homeroom))
 
     def build_automagic_emails(self):
         path = config_get_section_attribute('DIRECTORIES', 'path_to_postfix')
@@ -109,12 +143,11 @@ class AutoSendTree(AbstractTree):
         usebccparentsGERMAN = []
         usebccparentsNOTGERMAN = []
         # HR AND GRADE
-        usebccparentsHOMEROOM = defaultdict(list)
         usebccparentsGRADE = defaultdict(list)
-        usebccparentsHOMEROOM = defaultdict(list)
+        self.usebccparentsHOMEROOM = defaultdict(list)
         usebccstudentsELEM = defaultdict(list)
         usebccstudentsGRADE = defaultdict(list)
-        usebccstudentsHOMEROOM = defaultdict(list)
+        self.usebccstudentsHOMEROOM = defaultdict(list)
         parentlink = defaultdict(list)
         teacherlink = defaultdict(list)
         teachersGRADE = defaultdict(list)
@@ -178,7 +211,7 @@ class AutoSendTree(AbstractTree):
 
             usebccparentsALL.extend( student.guardian_emails )
             ns.grade and usebccparentsGRADE[ns.grade].extend(student.guardian_emails)
-            ns.homeroom and usebccparentsHOMEROOM[ns.homeroom].extend(student.guardian_emails)
+            ns.homeroom and self.usebccparentsHOMEROOM[ns.homeroom].extend(student.guardian_emails)
 
             if student.is_elementary:
                 if student.grade >= 4:
@@ -199,7 +232,7 @@ class AutoSendTree(AbstractTree):
                     usebccstudentsGRADE[ns.grade].append(student.email)
                     teachersGRADE[ns.grade].extend(student.teacher_emails)
                 if student.homeroom:
-                    usebccstudentsHOMEROOM[ns.homeroom].append(student.email)
+                    self.usebccstudentsHOMEROOM[ns.homeroom].append(student.email)
                 parentlink[student.username].extend( student.guardian_emails )
                 teacherlink[student.username].extend(student.teacher_emails)
                 hrlink[student.username].append(student.homeroom_teacher_email)
@@ -260,14 +293,14 @@ class AutoSendTree(AbstractTree):
 
         # HOMEROOMS
         directory_write = []
-        for ns.homeroom in usebccparentsHOMEROOM:
+        for ns.homeroom in self.usebccparentsHOMEROOM:
             directory_write.append( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}'), 'w') as f:
-                f.write( '\n'.join(set(usebccparentsHOMEROOM[ns.homeroom])) )
-        for ns.homeroom in usebccstudentsHOMEROOM:
+                f.write( '\n'.join(set(self.usebccparentsHOMEROOM[ns.homeroom])) )
+        for ns.homeroom in self.usebccstudentsHOMEROOM:
             directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}') )
             with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}'), 'w') as f:
-                f.write( '\n'.join(set(usebccstudentsHOMEROOM[ns.homeroom])) )
+                f.write( '\n'.join(set(self.usebccstudentsHOMEROOM[ns.homeroom])) )
         with open( ns('{PATH}{SLASH}homerooms{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 

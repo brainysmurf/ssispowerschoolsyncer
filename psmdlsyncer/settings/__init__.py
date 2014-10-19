@@ -66,6 +66,7 @@ def config_get_logging_level():
 
 def config_get_section_attribute(section, attribute):
     """ returns None if not present, otherwise returns its value """
+    requires_setting(section, attribute)
     try:
         if not config.has_section(section):
             return None
