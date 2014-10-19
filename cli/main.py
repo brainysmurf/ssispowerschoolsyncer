@@ -54,6 +54,26 @@ def output():
     """
     pass
 
+@output.command()
+@click.argument('path_to_output', metavar='PATH_TO_OUTPUT <file>')
+@click.argument('user_id', metavar='USER_ID <int>')
+@click.argument('group_id', metavar='GROUP_ID <int>')
+def student_emails(path_to_output, user_id, group_id):
+    from psmdlsyncer.settings import config, config_get_section_attribute
+    from psmdlsyncer.sql import MoodleDBSession
+
+    path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
+
+    db = MoodleDBSession()
+
+    with open(path_to_output, 'w') as _file:
+        for student in db.users_enrolled_in_this_cohort('studentsALL'):
+            _file.write('{},{},{}\n'.format(student.idnumber, student.username, student.email))
+
+    import os
+    os.chown(path_to_output, int(user_id), int(group_id))
+
+
 @output.group()
 def bulk_emails():
     pass
