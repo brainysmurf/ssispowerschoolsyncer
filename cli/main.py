@@ -45,6 +45,9 @@ def dragonnet_server(obj):
     from psmdlsyncer.syncing.templates import MoodleTemplate
     from psmdlsyncer.syncing.differences import DetermineChanges
 
+    left = MoodleTree()
+    right = AutoSendTree()
+
     DetermineChanges(left, right, MoodleTemplate)
 
 @main.group()

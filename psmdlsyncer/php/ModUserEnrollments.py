@@ -16,8 +16,7 @@ class ModUserEnrollments(CallPHP):
     def __init__(self):
         super().__init__()
         self.default_logger = self.logger.debug
-        self.new_email_cmd = config_get_section_attribute('EMAIL', 'new_student_cmd')
-        path_to_home = config_get_section_attribute('EMAIL', 'path_to_home')
+        self.new_email_cmd = config_get_section_attribute('DIRECTORIES', 'path_to_newstudent_script')
 
     def enrol_student_into_course(self, student_idnumber, course_idnumber, group_name):
         self.enrol_user_into_course( student_idnumber, course_idnumber, group_name, "student" )
