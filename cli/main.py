@@ -31,6 +31,7 @@ def email_server(obj):
     """
     from psmdlsyncer.models.datastores.autosend import AutoSendTree
     autosend = AutoSendTree()
+    autosend.process()
     autosend.build_automagic_emails()
 
 @launch.command()
