@@ -83,11 +83,11 @@ def email_user(path_to_users, username=None, idnumber=None):
 
 
 @inspect.command()
-@click.option('--branch', help="<students> or <teachers> or ...")
+@click.option('--subbranch', help="<students> or <teachers> or ...")
 @click.option('--attribute', help="which attribute of the branch")
 @click.option('--value', help="the value of the key in the branch")
 @click.argument('which', default="both", metavar="<autosend> or <moodle> or <both>")
-def dragonnet_user(which, branch=None, attribute=None, value=None, **kwargs):
+def dragonnet_user(which, subbranch=None, attribute=None, value=None, **kwargs):
     """
     Check out the information that is provided by PowerSchool and compare that to Moodle
     """
@@ -111,15 +111,15 @@ def dragonnet_user(which, branch=None, attribute=None, value=None, **kwargs):
     moodle.process() if moodle else None
     click.echo('...done processing.')
 
-    if not branch:
-        branch = click.prompt("Enter branch are looking for: ", default='students')
+    if not subbranch:
+        subbranch = click.prompt("Enter subbranch are looking for: ", default='students')
     if not attribute:
         attribute = click.prompt("Enter the attribute you are looking for: ", default="idnumber")
     if not value:
         value = click.prompt("Enter the value you are looking for: ")
 
-    autosend_item = getattr(autosend, branch).get_from_attribute(attribute, value) if autosend else None
-    moodle_item = getattr(moodle, branch).get_from_attribute(attribute, value) if moodle else None
+    autosend_item = getattr(autosend, subbranch).get_from_attribute(attribute, value) if autosend else None
+    moodle_item = getattr(moodle, subbranch).get_from_attribute(attribute, value) if moodle else None
     click.echo(autosend_item.output(indent=4, add={'branch':'autosend'})) if autosend_item else None
     click.echo(moodle_item.output(indent=4, add={'branch':'moodle'})) if moodle_item else None
 
