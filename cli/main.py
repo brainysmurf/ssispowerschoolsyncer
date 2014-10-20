@@ -86,7 +86,7 @@ def email_user(path_to_users, username=None, idnumber=None):
 @click.option('--branch', help="<students> or <teachers> or ...")
 @click.option('--attribute', help="which attribute of the branch")
 @click.option('--value', help="the value of the key in the branch")
-@click.argument('which', metavar="<autosend> or <moodle> or <both>")
+@click.argument('which', default="both", metavar="<autosend> or <moodle> or <both>")
 def dragonnet_user(which, branch=None, attribute=None, value=None, **kwargs):
     """
     Check out the information that is provided by PowerSchool and compare that to Moodle
