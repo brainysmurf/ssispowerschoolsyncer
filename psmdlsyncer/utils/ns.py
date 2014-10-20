@@ -1,3 +1,4 @@
+
 class NS2:
     def __init__(self, *args, **kwargs):
         self.COLON = ':'
@@ -45,5 +46,5 @@ class NS2:
         """
         VERY MEAGER WAY TO OUTPUT THIS DATA
         """
-        return str(self.__dict__.items())
+        return str({k: v for k, v in self.__dict__.items() if k!=k.upper() and not k.startswith('_')})
 

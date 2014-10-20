@@ -50,7 +50,8 @@ class MoodleImport(MoodleDBSession):
         for student in self.users_enrolled_in_this_cohort('studentsALL'):
             # note, student.username on the end is an optional parameter
             # TODO: Add bus info here too!
-            yield [student.idnumber, student.id, None, student.department, "", "", "", "", "", "", student.username]
+            lastfirst = "{}, {}".format(student.lastname, student.firstname)
+            yield [student.idnumber, student.id, None, student.department, lastfirst, "", "", "", "", "", student.username]
 
     def content_dist_parentinfo(self):
         for parent in self.users_enrolled_in_this_cohort('parentsALL'):

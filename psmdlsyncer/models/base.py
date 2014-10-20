@@ -1,6 +1,43 @@
 from psmdlsyncer.utils import NS2
+from collections import OrderedDict
+import json
 
 class BaseModel:
+
+    def output(self, **kwargs):
+        """
+        Can send an 'add' kwarg to add metadata to the result
+        """ 
+        d = OrderedDict()
+        if 'add' in kwargs:
+            add = kwargs['add']
+            d.update(add)
+            del kwargs['add']
+        d['data'] = OrderedDict()
+
+        data = d['data']
+        data['name'] = self.lastfirst
+        data['username'] = self.username
+        data['idnumber'] = self.idnumber
+        if hasattr(self, 'grade'):
+            data['grade'] = self.grade
+        if hasattr(self, 'homeroom'):
+            data['homeroom'] = self.homeroom
+
+        if hasattr(self, 'courses'):
+            data['courses'] = []
+            for course in self.courses:
+                data['courses'].append(course.name + ' => ' + course.idnumber)
+
+        if hasattr(self, 'cohorts'):
+            data['cohorts'] = []
+            for cohort in self.cohorts:
+                data['cohorts'].append(cohort)
+
+        return json.dumps(d, **kwargs)
+
+    def to_json(self, **kwargs):
+        return json.dumps(self.__dict__, **kwargs)
 
     def update(self, key, value):
         self.key = value

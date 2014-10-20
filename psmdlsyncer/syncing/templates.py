@@ -4,6 +4,7 @@ from psmdlsyncer.sql.MDB import MoodleDBSession
 log = logging.getLogger(__name__)
 import re, functools
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
+from sqlalchemy.exc import IntegrityError
 from psmdlsyncer.settings import config_get_section_attribute
 
 class dry_run:
@@ -495,10 +496,13 @@ class MoodleTemplate(DefaultTemplate):
             # Just go ahead and change it automatically, no need to inform anyone or anything
             # because the account isn't active anyway
             # test for 'login_method' because teachers don't have that TODO: Add that to the model!
-            self.moodle.update_table('user', where={
-                'idnumber':idnumber
-                },
-                username=to_what)
+            try:
+                self.moodle.update_table('user', where={
+                    'idnumber':idnumber
+                    },
+                    username=to_what)
+            except IntegrityError:
+                self.logger.warning('Got integrity error trying to change user {}\'s username to {}'.format(idnumber, to_what))
             super().username_changed(item)
         else:
             justgrade = functools.partial(re.sub, '[a-z_]', '')
