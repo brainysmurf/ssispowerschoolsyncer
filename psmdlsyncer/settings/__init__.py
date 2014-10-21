@@ -64,9 +64,10 @@ if not email_server:
 def config_get_logging_level():
     return config_get_section_attribute('LOGGING', 'log_level')
 
-def config_get_section_attribute(section, attribute):
+def config_get_section_attribute(section, attribute, required=False):
     """ returns None if not present, otherwise returns its value """
-    requires_setting(section, attribute)
+    if required:
+        requires_setting(section, attribute)
     try:
         if not config.has_section(section):
             return None

@@ -4,6 +4,7 @@ from psmdlsyncer.utils.Dates import custom_strftime, today
 from psmdlsyncer.notices.DatabaseBase import ExtendMoodleDatabaseToAutoEmailer
 from psmdlsyncer.notices.Model import DatabaseObject
 import datetime
+
 class Nothing(Exception): pass
 
 k_record_id = 2
@@ -12,13 +13,10 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     """
     Converts a database on moodle into a useable system that emails users
     """
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.verbose = False
         self.end_of_item = ""
-        super().__init__('Secondary Notices Database')
-        self.settings = define_command_line_arguments('email', 'wordpress',
-                                                      *self.shared_command_line_args_switches,
-                                                      **self.shared_command_line_args_strings)
+        super().__init__('Secondary Notices Database', *args, **kwargs)
         self.init()
         #self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'
 
@@ -28,7 +26,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         """
         super().define()
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
-        self.agents = ['Peter Fowles <peterfowles@ssis-suzhou.net>']
+        self.agents = ['Lucy Burden <lucyburden@ssis-suzhou.net>']
         self.agent_map = {}
 
         self.search_date = "next day"
@@ -37,20 +35,15 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.attachment_field = 'Attached Content'
         self.section_field = 'School Section'
 
-        self.priority_ids = [32]
+        self.priority_usernames = ['lucyburden']
+        self.setup_priorities()
 
     def email_to_agents(self):
         if self.agents:
             self.verbose and print("Sending notices to {}".format(self.agents))
             message_to_staff = """<p>Edit these notices by <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d=5">going here</a>.</p>"""
             self.format_for_email()
-            if self.settings.no_emails:
-                print("NOT sending email... but this is what would have been sent:")
-                self.print_email(self.agents)
-            else:
-                self.verbose and print(self.get_subject())
-                self.verbose and print(self.get_html(first_p_block=message_to_staff))
-                self.email(self.agents)
+            self.email(self.agents)
 
         if self.agent_map:
             raise NotImplemented
@@ -70,7 +63,6 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     def tag_not_found(self, tag):
         """ What to do? """
         pass
-
 
 
 if __name__ == "__main__":

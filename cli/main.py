@@ -17,6 +17,79 @@ def main(ctx):
     ctx.obj = Object()
 
 @main.group()
+def notices(date=None):
+    """
+    Manage and launch the Student and Teacher notices stuff
+    """
+    pass
+
+@notices.group()
+def student():
+    """
+    Commands for maipulating and launching student notices
+    """
+    pass
+
+@student.command()
+@click.option('--date', help="the date that we are pretending to be; default is today")
+@click.option('--date_offset', default='0', help="Adjust accordingly to specific needs; default=0", metavar='<INT>')
+def output(date=None, date_offset=None):
+    import time, datetime
+    if date:
+        # If we are explicitely passed date, then use that
+        time_object = time.strptime(date, "%b %d %Y")
+        date_object = datetime.date(
+            month=time_object.tm_mon,
+            day=time_object.tm_mday,
+            year=time_object.tm_year
+            )
+    else:
+        # Calculate the date we need by date_offset
+        date_object = datetime.date.today() + datetime.timedelta(days=int(date_offset))
+    
+    from psmdlsyncer.notices.StudentNotices import Student_Notices
+    notices = Student_Notices(date_object)
+    notices.format_for_email()
+    notices.print_email([])
+
+@student.command()
+@click.option('--date', help="the date that we are pretending to be; default is today")
+@click.option('--date_offset', default='0', help="Adjust accordingly to specific needs; default=0", metavar='<INT>')
+@click.option('--email/--no_email', default=False, help="Email them or not (requires smtp server of course)")
+@click.option('--edit_email/--no_edit_email', default=False, help="Email to some agent an email with edit links")
+@click.option('--output/--no_output', default=False, help="Output to stdout?")
+@click.option('--update_date_fields/--dont_update_date_fields', default=False, help="Output to stdout?")
+def launch(date=None, date_offset=None, email=False, edit_email=False, output=False, update_date_fields=False):
+    import time, datetime
+    if date:
+        # If we are explicitely passed date, then use that
+        time_object = time.strptime(date, "%b %d %Y")
+        date_object = datetime.date(
+            month=time_object.tm_mon,
+            day=time_object.tm_mday,
+            year=time_object.tm_year
+            )
+    else:
+        # Calculate the date we need by date_offset
+        date_object = datetime.date.today() + datetime.timedelta(days=int(date_offset))
+    
+    from psmdlsyncer.notices.StudentNotices import Student_Notices
+    notices = Student_Notices(date_object)
+
+    if email:
+        notices.email_to_agents()
+
+    if edit_email:
+        notices.email_editing = True
+        notices.email_to_agents()
+
+    if output:
+        notices.print_email([])
+
+    if update_date_fields:
+        notices.update_date_fields()
+
+@main.group()
 def launch():
     """
     Launch syncer stuff

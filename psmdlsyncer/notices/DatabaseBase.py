@@ -1,5 +1,4 @@
-import postgresql
-from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.sql import MoodleDBSession
 from psmdlsyncer.mod.database import FieldObject
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday
 from psmdlsyncer.html_email import Email
@@ -27,7 +26,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
     shared_command_line_args_switches = ['verbose', 'use_samples', 'no_emails', 'update_date_fields']
     shared_command_line_args_strings = {'passed_date':None}
 
-    def __init__(self, database_name, server='dragonnet.ssis-suzhou.net'):
+    def __init__(self, database_name, date):
         """
         Populate self.found with legitimate entries
         Works by looking for target date on the backend, and then finding all entries with matching dates...
@@ -36,15 +35,15 @@ class ExtendMoodleDatabaseToAutoEmailer:
         super().__init__()
         # Setup
         self.database_name = database_name
-        dnet = MoodleDBConnection()
-        self.database_id = dnet.get_unique_row("data", "id", name=self.database_name)
+        self.dnet = MoodleDBSession()
+        self.database_id = self.dnet.get_column_from_row("data", 'id', name=self.database_name)
+        self.setup_date(date)
 
     def init(self):
         # Setup formatting templates for emails, can be overridden if different look required
         # The default below creates a simple list format
         # Need two {{ and }} because it goes through a parser later at another layer
         # Also, since it goes to an email, CSS is avoided
-        self.verbose = self.settings.verbose
         self.start_html_tag    = '<html>'
         self.end_html_tag      = "</html>"
         self.header_pre_tag    = '<h3>'
@@ -65,7 +64,6 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.name = self.__class__.__name__.replace("_", " ")
         # Class-specific settings, which are delegated to sub-classes
         self.define()
-        self.setup_date()
 
         # Initial values
         month = self.date.month
@@ -73,14 +71,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         year  = self.date.year
 
         if self.section_field:
-            if self.settings.use_samples:
-                # Testing/Debugging use
-                self.section_field_object = FieldObject(self.database_name, self.section_field,
-                                        samples=self.section_samples())
-            else:
-                # Production use
-                self.section_field_object = FieldObject(
-                    self.database_name, self.section_field)
+            self.section_field_object = FieldObject(self.database_name, self.section_field)
             self.section_field_default_value = self.section_field_object.default_value()
         else:
             self.section_field_object = None
@@ -90,11 +81,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
         self.end_date_field   = EndDateField(self.database_name, 'End Date')
         self.process()
 
-        if self.settings.update_date_fields:
-            self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
-            self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
-
         self.edit_word = "Edit"
+
+    def update_date_fields(self):
+        self.start_date_field.update_menu_relative_dates( forward_days = (4 * 7) )
+        self.end_date_field.update_menu_relative_dates(   forward_days = (4 * 7) )
 
     def process(self):
         """
@@ -121,36 +112,13 @@ class ExtendMoodleDatabaseToAutoEmailer:
         Returns a generator object that represents the potential rows in the database
         If we are doing a dry-run then return a testing sample
         """
-        if self.settings.use_samples:
-            # Testing / Debugging use
-            return DatabaseObjects(self.database_name, samples=self.samples(), verbose=self.verbose)
-        else:
-            # Production use
-            return DatabaseObjects(self.database_name, verbose=self.verbose)
+        return DatabaseObjects(self.database_name)
 
-    def setup_date(self):
+    def setup_date(self, date):
         """
-        Responsible for setting up date variables, self.date and self.custom_date
         """
-        if self.settings.passed_date:
-            split = self.settings.passed_date.split('-')
-            if not len(split) == 3:
-                raise Exception("Date needs to be in the right format")
-            day = int(split[0])
-            month = int(split[1])
-            year = int(split[2])
-            self.date = datetime.date(year, month, day)
-        elif self.search_date == "same day":
-            self.date = today()
-        elif self.search_date == "next day":
-            self.date = tomorrow()
-        elif self.search_date == "day before":
-            self.date = yesterday()
-        else:
-            raise Nothing
-
+        self.date = date
         self.custom_date = custom_strftime('%A %B {S}, %Y', self.date)
-        self.verbose and print(self.date)
 
     def email(self, email: "List or not", cc=None, bcc=None):
         """
@@ -187,12 +155,17 @@ class ExtendMoodleDatabaseToAutoEmailer:
         except smtplib.SMTPRecipientsRefused:
             self.print_email(email)
             
+    def setup_priorities(self):
+        self.priority_ids = []
+        for username in self.priority_usernames:
+            self.priority_ids.append(self.dnet.get_column_from_row('user', 'id', username=username))
 
     def define(self):
         """
         OVERRIDE IN SUBCLASS
         """
         # priority_ids
+        self.priority_usernames = []
         self.priority_ids = []
         # priority_ids have to be list of id numbers of users whose posts should not "sink" as much as the others
 

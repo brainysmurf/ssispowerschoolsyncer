@@ -5,32 +5,27 @@ SOME CLASSES THAT ARE USEFUL FOR EXTENDING MOODLE'S DATABASE MODULE
 
 """
 
-from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.sql import MoodleDBSession
 
-class FieldObject(MoodleDBConnection):
+class FieldObject(MoodleDBSession):
     """
 
     """
 
-    def __init__(self, database_name, field_name, samples=None):
+    def __init__(self, database_name, field_name):
         super().__init__()
-        self.use_samples = samples
-        if not self.use_samples:
-            self.database_name = database_name
-            self.database_id = self.call_sql("select id from ssismdl_data where name = '{}'".format(self.database_name))[0][0]
-            self.field_name = field_name
+        self.database_name = database_name
+        self.database_id = self.get_column_from_row('data', 'id', name=self.database_name)
+        self.field_name = field_name
 
     def all_values(self):
-        if self.use_samples:
-            return self.use_samples
-        values = self.call_sql("select param1 from ssismdl_data_fields where name = '{}' and dataid = {}".format(self.field_name, self.database_id))[0][0]
-        values = values.split('\r\n')
-        return values
+        sections = self.get_column_from_row('data_fields', 'param1', name=self.field_name, dataid=self.database_id)
+        return sections.split('\r\n')
 
     def default_value(self):
         return self.all_values()[0]
 
-class UpdateField(MoodleDBConnection):
+class UpdateField(MoodleDBSession):
     """
     Class that is used to update a field in a database module
     """
@@ -38,12 +33,21 @@ class UpdateField(MoodleDBConnection):
     def __init__(self, database_name, field_name):
         super().__init__()
         self.field_name = field_name
-        self.target = self.sql(
-            "select ssismdl_data_fields.id from ssismdl_data join ssismdl_data_fields on (ssismdl_data.name = '{}' and ssismdl_data.id = ssismdl_data_fields.dataid and ssismdl_data_fields.name = '{}')"
-            .format(database_name, field_name)
-            )
 
-        self.target_id = self.target()[0][0]
+        with self.DBSession() as session:
+            DataFields = self.table_string_to_class('data_fields')
+            Data = self.table_string_to_class('data')
+
+            statement = session.query(DataFields).select_from(Data).\
+                join(DataFields, self.and_(
+                    Data.name==database_name,
+                    Data.id == DataFields.dataid,
+                    DataFields.name == field_name
+                    )
+                )
+
+        self.target = statement.one()
+        self.target_id = self.target.id
 
     def update_menu(self, value):
         """
@@ -53,14 +57,10 @@ class UpdateField(MoodleDBConnection):
             return
         if isinstance(value, list):
             value = "\r\n".join(value)
-        command = "update ssismdl_data_fields set param1 = '{}' where id = {}".format(value, self.target_id)
-        try:
-            self.call_sql(command)
-        except:
-            print("I was unable to issue the following sql command: {}".format(command))
 
+        self.update_table('data_fields', where=dict(id=self.target_id), param1=value)
 
-class ProfileUpdater(MoodleDBConnection):
+class ProfileUpdater(MoodleDBSession):
 
     def update_profile_fields_for_user(user):
         """
