@@ -15,30 +15,26 @@ class Object(object):
 @click.group()
 @click.pass_context
 def main(ctx):
+    # Doesn't do much now, but leave it as boilerplate for when there are global flags n such
     ctx.obj = Object()
 
 @main.group()
-def notices(date=None):
+@click.argument('which', metavar="<student> or <teacher>")
+@click.option('--date_offset', default='0', help="1 for tomorrow, -1 for yesterday; default=0", metavar='<INT>')
+@click.option('--_date', help="Useful for debugging; today if not passed", metavar="<MM DD YYYY>")
+@click.pass_obj
+def notices(obj, which, _date=None, date_offset=None):
     """
     Manage and launch the Student and Teacher notices stuff
     """
-    pass
+    obj.student_notices = 'student' in which
+    obj.teacher_notices = 'teacher' in which
 
-@notices.group()
-def student():
-    """
-    Commands for maipulating and launching student notices
-    """
-    pass
-
-@student.command()
-@click.option('--date', help="the date that we are pretending to be; default is today")
-@click.option('--date_offset', default='0', help="Adjust accordingly to specific needs; default=0", metavar='<INT>')
-def output(date=None, date_offset=None):
+    # first calc and setup _date stuff
     import time, datetime
-    if date:
+    if _date:
         # If we are explicitely passed date, then use that
-        time_object = time.strptime(date, "%b %d %Y")
+        time_object = time.strptime(_date, "%b %d %Y")
         date_object = datetime.date(
             month=time_object.tm_mon,
             day=time_object.tm_mday,
@@ -47,48 +43,60 @@ def output(date=None, date_offset=None):
     else:
         # Calculate the date we need by date_offset
         date_object = datetime.date.today() + datetime.timedelta(days=int(date_offset))
-    
-    from psmdlsyncer.notices.StudentNotices import Student_Notices
-    notices = Student_Notices(date_object)
-    notices.format_for_email()
-    notices.print_email([])
 
-@student.command()
-@click.option('--date', help="the date that we are pretending to be; default is today")
-@click.option('--date_offset', default='0', help="Adjust accordingly to specific needs; default=0", metavar='<INT>')
+    if obj.student_notices:
+        from psmdlsyncer.notices.StudentNotices import Student_Notices
+        obj.notices = Student_Notices(date_object)
+    elif obj.teacher_notices:
+        from psmdlsyncer.notices.TeacherNotices import Teacher_Notices
+        obj.notices = Teacher_Notices(date_object)
+    else:
+        click.echo('Bad Argument: Pass me either "teacher" or "student"')
+        exit()
+
+@notices.command()
+def output():
+    obj.notices.print_email([])
+
+@notices.command()
 @click.option('--email/--no_email', default=False, help="Email them or not (requires smtp server of course)")
 @click.option('--edit_email/--no_edit_email', default=False, help="Email to some agent an email with edit links")
 @click.option('--output/--no_output', default=False, help="Output to stdout?")
 @click.option('--update_date_fields/--dont_update_date_fields', default=False, help="Output to stdout?")
-def launch(date=None, date_offset=None, email=False, edit_email=False, output=False, update_date_fields=False):
-    import time, datetime
-    if date:
-        # If we are explicitely passed date, then use that
-        time_object = time.strptime(date, "%b %d %Y")
-        date_object = datetime.date(
-            month=time_object.tm_mon,
-            day=time_object.tm_mday,
-            year=time_object.tm_year
-            )
-    else:
-        # Calculate the date we need by date_offset
-        date_object = datetime.date.today() + datetime.timedelta(days=int(date_offset))
-    
-    from psmdlsyncer.notices.StudentNotices import Student_Notices
-    notices = Student_Notices(date_object)
-
+@click.pass_obj
+def launch(obj, email=False, edit_email=False, output=False, update_date_fields=False):
+    """
+    Runs the student notices
+    """
+     
     if email:
-        notices.email_to_agents()
+        obj.notices.email_to_agents()
 
     if edit_email:
-        notices.email_editing = True
-        notices.email_to_agents()
+        obj.notices.email_editing = True
+        obj.notices.email_to_agents()
 
     if output:
-        notices.print_email([])
+        obj.notices.print_email([])
 
     if update_date_fields:
-        notices.update_date_fields()
+        obj.notices.update_date_fields()
+
+@notices.command()
+@click.option('--url', default=None, help="The URL for the WordPress site")
+@click.option('--multisite/--not_multisite', default=True, help="Is the WP blog multisite or not?")
+@click.option('--blog', default=None, help="If --multisite, then requires blog param")
+@click.option('--author', default=None, help="Username of the author to use")
+@click.option('--hour', default='immediately', help="Schedule the blog post this way", metavar='<H:M>')
+@click.pass_obj
+def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hour='immediately'):
+    if hour == 'immediately':
+        raise NotImplemented #TODO
+    else:
+        import time
+        when = time.strptime(hour, '%H:%M')
+
+    obj.notices.post_to_wordpress(blog, when)
 
 @main.group()
 def launch():

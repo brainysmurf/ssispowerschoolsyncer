@@ -14,7 +14,6 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     Converts a database on moodle into a useable system that emails users
     """
     def __init__(self, *args, **kwargs):
-        self.verbose = False
         self.end_of_item = ""
         super().__init__('Secondary Notices Database', *args, **kwargs)
         self.init()
@@ -38,15 +37,14 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.priority_usernames = ['lucyburden']
         self.setup_priorities()
 
-    def email_to_agents(self):
-        if self.agents:
-            self.verbose and print("Sending notices to {}".format(self.agents))
-            message_to_staff = """<p>Edit these notices by <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d=5">going here</a>.</p>"""
-            self.format_for_email()
-            self.email(self.agents)
+    # def email_to_agents(self):
 
-        if self.agent_map:
-            raise NotImplemented
+    #     if self.agents:
+    #         message_to_staff = """<p>Edit these notices by <a href="http://dragonnet.ssis-suzhou.net/mod/data/view.php?d=5">going here</a>.</p>"""
+    #         self.email(self.agents)
+
+    #     if self.agent_map:
+    #         raise NotImplemented
 
     def get_subject(self, just_date=False):
         if just_date:

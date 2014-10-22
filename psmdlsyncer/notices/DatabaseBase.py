@@ -97,15 +97,11 @@ class ExtendMoodleDatabaseToAutoEmailer:
         # DO NOT PASS IT A NAME, WE NEED A BLANK ONE
         self.database_objects = DatabaseObjects()
 
-        self.verbose and print(self.database_objects)
         for item in self.model.items_within_date(self.date):
-            self.verbose and print("Item within date found here:")
             item.determine_priority(self.date, self.priority_ids)
             if self.section_field:
                 item.determine_section(self.section_field, self.section_field_default_value)
             self.database_objects.add(item)
-        self.verbose and print("\n\nDatabase object")
-        self.verbose and print(self.database_objects)
         
     def model_items(self):
         """
@@ -267,7 +263,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
             # no item.user, so just send the content back
             return self.list(content)
 
-    def format_for_email(self, sections=[]):
+    def prepare_formatting(self, sections=[]):
         """
         Responsible for setting up html_output and subject_output
         Default behavior assumes:
@@ -294,19 +290,15 @@ class ExtendMoodleDatabaseToAutoEmailer:
             sections_to_use = [None]
         # Iterate over the sections, if None then it'll get all of them, as indicated above
         for section in sections_to_use:
-            self.verbose and print("In section {}".format(section))
             # Set my header so I can format with it
             self.header = section if section else self.__class__.__name__.replace("_", ' ')
             # Get the right items, depending on what the value of section is
             if section is None:
-                self.verbose and print("Getting all items")
                 items = self.database_objects.get_all_items()
             else:
-                self.verbose and print("Getting section {} items".format(section))
                 items = self.database_objects.get_items_by_section(section)
             # Check and make sure we actually have content in this section (cont ...)
             if not items:
-                self.verbose and print("Nothing found!")
                 self.section_not_found(section)
             else:
                 self.html("{header_pre_tag}{header}{colon}{header_post_tag}")
@@ -334,49 +326,45 @@ class ExtendMoodleDatabaseToAutoEmailer:
                     self.html(attachment)
         self.html("{end_html_tag}")
 
-    def print_email(self, recipient_list):
+    def print_email(self, recipient_list, format=True):
+        if format:
+            self.prepare_formatting()
+
         print("Email from {} to: {}".format(self.sender, recipient_list))
         print(self.get_subject())
         print(self.get_html())
-                
-    def email_to_agents(self):
+
+    def email_to_agents(self, format=True):
         """
         Follows the internal constructs and sends emails with associated tags to the agents
         """
+        if format:
+            self.prepare_formatting()
+
         if self.agents:
-            self.verbose and print("Sending {} to {}".format(self.name, self.agents))
-            self.format_for_email()
-            if self.settings.no_emails:
-                self.print_email(self.agents)
-            else:
-                self.email(self.agents)
+            self.email(self.agents)
 
         if self.agent_map:
             for agent in self.agent_map.keys():
                 sections = self.agent_map[agent]
-                self.format_for_email(sections)
-                self.verbose and print("Sending {} to {}".format(self.name, agent))
-                if self.settings.no_emails:
-                    self.print_email(agent)
-                else:
-                    self.email(agent)
+                self.email(agent)
 
-    def post_to_wordpress(self, blog, hour, date=None):
+    def post_to_wordpress(self, blog, hour, format=True):
         """
         SIMPLISTIC WAY TO GET WHAT COULD BE AN EMAIL ONTO A WORDPRESS BLOG
         REQUIRES wp-cli https://github.com/wp-cli/wp-cli
-        ASSUMING WP INSTALLATION IS MULTISITE, BUT WORKS WITH STANDALONE (BLOG PARAMETER NOT NEEDED)
-        If date IS none THEN USE self.date
         """
-        self.format_for_email()
-                    
-        date_to_use = date if date else self.date            
+        if format:
+            self.prepare_formatting()
+
+        date_as_string = '{}-{}-{} {}:{}:00'.format(self.date.year, self.date.month, self.date.day, hour.tm_hour, hour.tm_min)
+
         replace_apostrophes = "'\\''"
         d = {
             'title': self.get_subject(),   # remove the 'Student Notices for' part
             'author': 35,  # peter fowles
             'content': self.get_html().replace("'", replace_apostrophes).replace('\n', ''),   # escape apostrophes for bash
-            'date': date_to_use.strftime('%Y-%m-%d {}'.format(hour.strftime('%H:%S:%M'))),
+            'date': date_as_string,
             'blog': "sites.ssis-suzhou.net/{}".format(blog)
             }
         command = """/usr/bin/wp post create --path=/var/www/wordpress --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --url={blog}""".format(**d)
