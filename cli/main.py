@@ -83,20 +83,29 @@ def launch(obj, email=False, edit_email=False, output=False, update_date_fields=
         obj.notices.update_date_fields()
 
 @notices.command()
-@click.option('--url', default=None, help="The URL for the WordPress site")
+@click.option('--url', default=None, help="The URL for the WordPress site; default is to use settings.ini")
 @click.option('--multisite/--not_multisite', default=True, help="Is the WP blog multisite or not?")
 @click.option('--blog', default=None, help="If --multisite, then requires blog param")
 @click.option('--author', default=None, help="Username of the author to use")
 @click.option('--hour', default='immediately', help="Schedule the blog post this way", metavar='<H:M>')
 @click.pass_obj
 def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hour='immediately'):
+    if multisite and not blog:
+        click.secho('Multisite requires the blog parameter')
+        exit()
+
     if hour == 'immediately':
-        raise NotImplemented #TODO
+        click.secho('Must have an hour argument', fg='red') #TODO
+        exit()
     else:
         import time
         when = time.strptime(hour, '%H:%M')
 
-    obj.notices.post_to_wordpress(blog, when)
+    if not author:
+        click.secho('Must send author argument', fg='red')
+        exit()
+
+    obj.notices.post_to_wordpress(url, blog, author, when)
 
 @main.group()
 def launch():

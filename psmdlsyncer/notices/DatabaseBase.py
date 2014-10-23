@@ -7,6 +7,8 @@ from psmdlsyncer.notices.Model import DatabaseObjects, DatabaseObject, StartDate
 import re
 import datetime
 import smtplib
+import subprocess
+
 
 class Nothing(Exception): pass
 
@@ -349,26 +351,55 @@ class ExtendMoodleDatabaseToAutoEmailer:
                 sections = self.agent_map[agent]
                 self.email(agent)
 
-    def post_to_wordpress(self, blog, hour, format=True):
+    def post_to_wordpress(self, url, blog, author, hour, format=True):
         """
         SIMPLISTIC WAY TO GET WHAT COULD BE AN EMAIL ONTO A WORDPRESS BLOG
         REQUIRES wp-cli https://github.com/wp-cli/wp-cli
         """
         if format:
             self.prepare_formatting()
+        path_to_wordpress = config_get_section_attribute('SITES', 'path_to_docroot', required=True)
+        path_to_wpcli = config_get_section_attribute('SITES', 'path_to_wpcli', required=True)
+        if not url:
+            wordpress_url = config_get_section_attribute('SITES', 'url', required=True)
+        else:
+            wordpress_url = url
+
+        # Get the user information first
+        command = "{} --path={} user get {} --format=json ".format(path_to_wpcli, path_to_wordpress, author)
+        to_call = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+        result, err = to_call.communicate()
+        import json
+        user = json.loads(result.decode())
+
+        # Now clean up the html, add links if not there and remove errant tags, also clean up for passing on
+        try:
+            from lxml.html.clean import Cleaner
+            from lxml.html.clean import autolink_html
+        except ImportError:
+            click.secho('We need lxml!', fg='red')
+
+        content = self.get_html()
+        cleaner = Cleaner(remove_tags=['p', 'div'])  # Moodle's editor has loads of lonely p and div tags
+        content = cleaner.clean_html(content)
+        content = autolink_html(content)
+        replace_apostrophes = "'\\''"
+        content = content.replace("'", replace_apostrophes).replace('\r', '')   # escape apostrophes for bash
 
         date_as_string = '{}-{}-{} {}:{}:00'.format(self.date.year, self.date.month, self.date.day, hour.tm_hour, hour.tm_min)
 
-        replace_apostrophes = "'\\''"
         d = {
             'title': self.get_subject(),   # remove the 'Student Notices for' part
-            'author': 35,  # peter fowles
-            'content': self.get_html().replace("'", replace_apostrophes).replace('\n', ''),   # escape apostrophes for bash
+            'author': user['ID'],
+            'content': content,
             'date': date_as_string,
-            'blog': "sites.ssis-suzhou.net/{}".format(blog)
+            'blog': blog,
+            'url': wordpress_url,
+            'path_to_wpcli': path_to_wpcli,
+            'path_to_docroot': path_to_wordpress
             }
-        command = """/usr/bin/wp post create --path=/var/www/wordpress --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --url={blog}""".format(**d)
-        import subprocess
+
+        command = """{path_to_wpcli} post create --path={path_to_docroot} --post_type=post --post_title='{title}' --post_content='{content}' --post_author={author} --post_status=future --post_date='{date}' --url={url}/{blog}""".format(**d)
         subprocess.call(command, shell=True)
 
     def get_subject(self, **kwargs):
