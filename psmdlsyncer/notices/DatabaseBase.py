@@ -384,7 +384,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
         content = cleaner.clean_html(content)
         content = autolink_html(content)
         replace_apostrophes = "'\\''"
-        content = content.replace("'", replace_apostrophes).replace('\r', '')   # escape apostrophes for bash
+        content = content.replace("'", replace_apostrophes).replace('\r', ' ')   # escape apostrophes for bash
 
         date_as_string = '{}-{}-{} {}:{}:00'.format(self.date.year, self.date.month, self.date.day, hour.tm_hour, hour.tm_min)
 

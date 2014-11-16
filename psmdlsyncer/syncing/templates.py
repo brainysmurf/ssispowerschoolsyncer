@@ -30,7 +30,7 @@ class DefaultTemplate:
 
     def __init__(self):
         self.logger = logging.getLogger("DefaultTemplate")
-        self.default_logger = self.logger.info
+        self.default_logger = self.logger.warning
 
     def __getattribute__(self, name):
         if '_' in name:
