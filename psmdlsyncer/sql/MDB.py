@@ -62,6 +62,11 @@ class MoodleDBSess:
 
             session.add(instance)
 
+    def delete_table(self, table, **kwargs):
+        with DBSession() as session:
+            table_class = self.table_string_to_class(table)
+            table_class.delete(**kwargs)
+
     def get_rows_in_table(self, table, **kwargs):
         """
         @table string of the table name (without the prefix)
@@ -89,6 +94,17 @@ class MoodleDBSess:
                 ret = session.query(User).filter(User.idnumber == idnumber).one()
             except MultipleResultsFound:
                 self.logger.critical("More than one user with this idnumber: {}".format(idnumber))
+                ret = None
+            except NoResultFound:
+                ret = None
+        return ret
+
+    def get_course_from_idnumber(self, idnumber):
+        with DBSession() as session:
+            try:
+                ret = session.query(Course).filter(Course.shortname == idnumber).one()
+            except MultipleResultsFound:
+                self.logger.critical("More than one course with this idnumber: {}".format(idnumber))
                 ret = None
             except NoResultFound:
                 ret = None
