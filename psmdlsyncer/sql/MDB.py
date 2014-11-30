@@ -25,6 +25,8 @@ class MoodleDBSess:
         ns = NS2()
         self.logger = logging.getLogger('MoodleDBSess')
         self.default_logger = self.logger.info
+        self.DBSession = DBSession
+        self.and_ = and_
 
     def table_string_to_class(self, table):
         """
@@ -584,9 +586,6 @@ class MoodleDBSession(MoodleDBSess):
                 ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
             except NoResultFound:
                 self.logger.warning('No results found for timetable object when setting to inactive {}'.format(timetable))
-                from IPython import embed
-                embed()
-                return
             except MultipleResultsFound:
                 self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
                 return

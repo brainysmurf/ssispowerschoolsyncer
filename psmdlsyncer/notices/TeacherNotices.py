@@ -16,13 +16,13 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
     Converts a database on moodle into a useable system that emails users
     """
 
-    def __init__(self):
-        super().__init__('Teacher Notices Database')
-        self.settings = define_command_line_arguments('group_sec_all',
-                                                      *self.shared_command_line_args_switches,
-                                                      **self.shared_command_line_args_strings)
+    def __init__(self, *args, **kwargs):
+        super().__init__('Teacher Notices Database', *args, **kwargs)
+        # self.settings = define_command_line_arguments('group_sec_all',
+        #                                               *self.shared_command_line_args_switches,
+        #                                               **self.shared_command_line_args_strings)
         self.init()
-        self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/secondarystudentannouncements/">Click here Secondary Student Notices</i></a></p>'
+        # self.start_html_tag = '<html><p><i>Teacher Notices are now published at 7:00 pm the day before. They are edited at 5:00 pm. <a href="http://sites.ssis-suzhou.net/secondarystudentannouncements/">Click here Secondary Student Notices</i></a></p>'
 
     def define(self):
         """
@@ -39,11 +39,13 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.content_field = 'Full Content'
         self.attachment_field = 'Attached Content'
         self.section_field = 'School Section'
-        self.priority_ids      = [32, 14, 48]
 
-    def post_to_wordpress(self):
+        self.priority_usernames = ['lucyburden', 'richardbruford', 'nicholaslittle']
+        self.setup_priorities()
+
+    def post_to_wordpress(self, *args, **kwargs):
         """ Teacher notices doesn't have a wordpress site ...  yet? """
-        pass
+        raise NotImplemented
 
     def get_subject(self, just_date=False):
         if just_date:

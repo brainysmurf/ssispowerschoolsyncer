@@ -1,8 +1,16 @@
-from psmdlsyncer.sql import MoodleDBConnection
+from psmdlsyncer.sql import MoodleDBSession
 from psmdlsyncer.mod.database import RelativeDateFieldUpdater
 from psmdlsyncer.utils.Dates import today, tomorrow, yesterday, day_after_tomorrow, timestamp_to_python_date
 import datetime
-import re
+import re, json
+
+class DateTimeEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            encoded_object = datetime.datetime.strftime(obj, '%b %d, %Y')
+        else:
+            return json.JSONEncoder.default(self, obj)
+        return encoded_object
 
 class NoticesRelativeDateFieldUpdater(RelativeDateFieldUpdater):
     pass
@@ -22,10 +30,10 @@ class DatabaseObject:
     def __init__(self, **kwargs):
         if kwargs:
             self.define(**kwargs)
-        self.months = {}
+        self._months = {}
         for month in range(1, 13):
             month_str = datetime.date(2012, month, 1).strftime('%b').lower()
-            self.months[month_str] = month
+            self._months[month_str] = month
 
     def __repr__(self):
         return "\n     ".join(['{}: {}'.format(key, self.__dict__[key]) for key in self.__dict__.keys()])
@@ -92,7 +100,7 @@ class DatabaseObject:
                 except ValueError:
                     return (None, None)
                 try:
-                    this_month = self.months.get(split[1].lower())
+                    this_month = self._months.get(split[1].lower())
                 except ValueError:
                     return (None, None)
                 if not this_month:
@@ -158,11 +166,15 @@ class DatabaseObject:
     def __str__(self):
         return ", ".join( ["{}: {}".format(key, self.__dict__[key]) for key in self.__dict__ if self.__dict__[key] and not key.startswith('_') ] )
 
-class DatabaseObjects(MoodleDBConnection):
+    @property
+    def output_data(self):
+        return {key: value for key, value in self.__dict__.items() if not key.startswith('_')}
+
+class DatabaseObjects(MoodleDBSession):
     """
     Defines the objects for use by the application
     """
-    def __init__(self, database_name=False, samples=None, verbose=False):
+    def __init__(self, database_name=None):
         """
         database_name is the database we are using
         If defined, it will use custom sql to get the information we need, and then put it into objects the application can use
@@ -172,87 +184,96 @@ class DatabaseObjects(MoodleDBConnection):
         and puts the resulting infomation into python objects. This is a good way to do it.
         """
         super().__init__()
-
-        self.samples = samples
         self.database_name = database_name
-        self.verbose = verbose
         self._db = []
+        if not self.database_name:
+            return
 
-        if self.database_name:
-            # STORE DATABASE ID 
-            self.database_id = self.sql("select id from ssismdl_data where name ='{}'".format(self.database_name))()[0][0]
+        self.database_id = self.get_column_from_row('data', 'id', name=self.database_name)
 
-            # First get the information, samples if that's what is wanted
-            # TODO: Verify database_name
-            if self.samples:
-                sql_result = self.samples
+        # First get the information, samples if that's what is wanted
+        # TODO: Verify database_name
+        # The following sql gets a "flat" list of items:
+        # (recordid, firstname, lastname, institution, field, content)
+        # where each row's field has content are unique but the others all repeat for the same recordid
+        # Since it's "flat", we then have to unpack to put all the items with the same recordid into the same object
+        # I choose to do that with python below rather than the sql itself, which is possible (this is known as making a pivot table)
+        # But doing it in python is better because we don't have to worry about whether it's mysql or postgres or what
+
+        DataRecords = self.table_string_to_class('data_records')
+        DataFields = self.table_string_to_class('data_fields')
+        DataContent = self.table_string_to_class('data_content')
+        User = self.table_string_to_class('user')
+
+        with self.DBSession() as session:
+
+            statement = session.query(DataContent.recordid, User.id, User.firstname, User.lastname, User.institution, 
+                DataRecords.timecreated, DataRecords.timemodified, DataFields.name, DataContent.content).\
+                select_from(DataContent).\
+                    join(DataRecords, self.and_(
+                        DataRecords.id == DataContent.recordid,
+                        DataRecords.dataid == self.database_id
+                        )
+                    ).\
+                    join(User, User.id == DataRecords.userid).\
+                    join(DataFields, DataFields.id == DataContent.fieldid)
+
+            sql_result = statement.all()
+
+        # Unpack the sql results into useable objects.
+        # NOTE: This essentially converts multiple rows into a pivot table
+
+        # SET UP THE dbid FIELD THAT IMPLEMENTS COOL EDIT BUTTON NEXT TO ITEM
+        with self.DBSession() as session:
+            statement = session.query(DataFields).filter_by(name='dbid', dataid=self.database_id)
+            self.dbid_id = statement.one().id
+
+        unique_records = []
+        for row in sql_result:
+            recordid = row[0]
+            if not recordid in unique_records:
+                unique_records.append( recordid )
+        # Now go through each unique record
+        for unique_record in unique_records:
+            # Get all records with single unique ID
+            records = [row for row in sql_result if row[0] == unique_record]
+            if not records or len(records) == 0:
+                continue
+            # Put the shared info into one place for convenience
+            shared_info = records[0][:7]
+            # Got the records with a single unique ID, now pack them in
+            new_object = DatabaseObject()
+            new_object.define(record_id = shared_info[0])
+            new_object.define(user_id = shared_info[1])
+            new_object.define(user_first_name = shared_info[2])
+            new_object.define(user_last_name = shared_info[3])
+            new_object.define(user_preferred = shared_info[4])
+            new_object.define(time_created = timestamp_to_python_date(shared_info[5]))
+            new_object.define(time_modified = timestamp_to_python_date(shared_info[6]))
+            if new_object.user_preferred:
+                new_object.user = new_object.user_preferred
             else:
+                new_object.user = "{} {}".format(new_object.user_first_name, new_object.user_last_name)
+            for row in records:
+                # Put non-unique information in one by one
+                field = row[7]
+                value = row[8]
+                new_object.define(field, value)
 
-                # The following sql gets a "flat" list of items:
-                # (recordid, firstname, lastname, institution, field, content)
-                # where each row's field has content are unique but the others all repeat for the same recordid
-                # Since it's "flat", we then have to unpack to put all the items with the same recordid into the same object
-                # I choose to do that with python below rather than the sql itself, which is possible (this is known as making a pivot table)
-                # But doing it in python is better because we don't have to worry about whether it's mysql or postgres or what
-                sql = """select dc.recordid, usr.id, usr.firstname, usr.lastname, usr.institution, dr.timecreated, dr.timemodified, df.name, dc.content from ssismdl_data_content dc join ssismdl_data_records dr on dr.id = dc.recordid and dr.dataid = {} join ssismdl_user usr on dr.userid = usr.id join ssismdl_data_fields df on dc.fieldid = df.id""".format(self.database_id)
-                sql_result = self.sql(sql)()
-            # Unpack the sql results into useable objects.
-            # NOTE: This essentially converts multiple rows into a pivot table
-            if self.verbose:
-                print("----- SQL results -----")
-                print("Here is the sql result, which might be useful for saving for testing purposes:")
-                print(sql_result)
-                print("------- End SQL -------")
+            # Okay, we got everything, so now place it into our internal object
+            if hasattr(new_object, 'dbid') and not new_object.dbid:
+                self.update_table('data_content', where=dict(
+                        recordid=new_object.record_id,
+                        fieldid=self.dbid_id
+                    ), 
+                    content=new_object.record_id)
 
-            # SET UP THE dbid FIELD THAT IMPLEMENTS COOL EDIT BUTTON NEXT TO ITEM
-            self.dbid_id = self.sql("select id from ssismdl_data_fields where name = 'dbid' and dataid = {}".format(self.database_id))()[0][0]
+                new_object.dbid = recordid
 
-            unique_records = []
-            for row in sql_result:
-                recordid = row[0]
-                if not recordid in unique_records:
-                    unique_records.append( recordid )
-            # Now go through each unique record
-            self.verbose and print("{} unique records: {}".format(unique_records, unique_records))
-            for unique_record in unique_records:
-                # Get all records with single unique ID
-                records = [row for row in sql_result if row[0] == unique_record]
-                if not records or len(records) == 0:
-                    continue
-                # Put the shared info into one place for convenience
-                shared_info = records[0][:7]
-                # Got the records with a single unique ID, now pack them in
-                new_object = DatabaseObject()
-                new_object.define(record_id = shared_info[0])
-                new_object.define(user_id = shared_info[1])
-                new_object.define(user_first_name = shared_info[2])
-                new_object.define(user_last_name = shared_info[3])
-                new_object.define(user_preferred = shared_info[4])
-                new_object.define(time_created = timestamp_to_python_date(shared_info[5]))
-                new_object.define(time_modified = timestamp_to_python_date(shared_info[6]))
-                if new_object.user_preferred:
-                    new_object.user = new_object.user_preferred
-                else:
-                    new_object.user = "{} {}".format(new_object.user_first_name, new_object.user_last_name)
-                for row in records:
-                    # Put non-unique information in one by one
-                    field = row[7]
-                    value = row[8]
-                    new_object.define(field, value)
-                # Okay, we got everything, so now place it into our internal object
-                self.verbose and print(new_object)
-                if hasattr(new_object, 'dbid') and not new_object.dbid:
-                    self.sql("update ssismdl_data_content set content = {} where recordid = {} and fieldid = {}".format(
-                        new_object.record_id, new_object.record_id, self.dbid_id)
-                        )()
-                    new_object.dbid = recordid
-
-                
-                self.add(new_object)
-                
-
+            self.add(new_object)
+            
     def add(self, obj):
-        self.verbose and print("adding object: {}".format(obj))
+        #print(json.dumps(obj.output_data, cls=DateTimeEncoder, indent=4))
         self._db.append(obj)
 
     def items_within_date(self, date):
