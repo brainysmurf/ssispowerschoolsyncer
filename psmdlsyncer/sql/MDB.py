@@ -559,22 +559,26 @@ class MoodleDBSession(MoodleDBSess):
             for row in statement.all():
                 row.active = 0
 
-    def get_timetable_data(self):
+    def get_timetable_data(self, active_only=True):
         with DBSession() as session:
             Teacher = aliased(User)
             Student = aliased(User)
             statement = session.query(
-                Course.idnumber,
-                Teacher.idnumber,
-                Student.idnumber,
+                SsisTimetableInfo.id,
+                Course.idnumber.label('course_idnumber'),
+                Teacher.idnumber.label('teacher_idnumber'),
+                Student.idnumber.label('student_idnumber'),
                 SsisTimetableInfo.name,
-                SsisTimetableInfo.period
+                SsisTimetableInfo.period,
+                SsisTimetableInfo.comment,
+                SsisTimetableInfo.active
                 ).\
             select_from(SsisTimetableInfo).\
                 join(Course, Course.id == SsisTimetableInfo.courseid).\
                 join(Teacher, Teacher.id == SsisTimetableInfo.teacheruserid).\
-                join(Student, Student.id == SsisTimetableInfo.studentuserid).\
-            filter(SsisTimetableInfo.active == 1)
+                join(Student, Student.id == SsisTimetableInfo.studentuserid)
+            if active_only:
+                statement = statement.filter(SsisTimetableInfo.active == 1)
         return statement.all()
 
     def set_timetable_data_inactive(self, timetable):

@@ -60,7 +60,7 @@ class MoodleTree(AbstractTree):
         """
         debug = config_get_section_attribute('DEBUGGING', 'inspect_timetable_data')
         for raw_data in self.timetable_table.get_timetable_data():
-            course_idnumber, teacher_idnumber, student_idnumber, group_idnumber, period_info = raw_data
+            _id, course_idnumber, teacher_idnumber, student_idnumber, group_idnumber, period_info, comment, active = raw_data
             course = self.courses.get_key(course_idnumber)
             teacher = self.teachers.get_key(teacher_idnumber)
             student = self.students.get_key(student_idnumber)
