@@ -29,6 +29,11 @@ class BaseModel:
             for course in self.courses:
                 data['courses'].append(course.name + ' => ' + course.idnumber)
 
+        if hasattr(self, 'groups'):
+            data['groups'] = []
+            for group in self.groups:
+                data['groups'].append(group.name + ' => ' + group.idnumber)
+
         if hasattr(self, 'cohorts'):
             data['cohorts'] = []
             for cohort in self.cohorts:
