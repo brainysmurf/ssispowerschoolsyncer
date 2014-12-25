@@ -75,18 +75,18 @@ class AutoSendTree(AbstractTree):
         dragonnet = MoodleDBSession()
         TimetableInfo = dragonnet.table_string_to_class('ssis_timetable_info')
 
-        # Set the section_maps group info to match that
-        # results = dragonnet.get_timetable_data()  # returns only active ones, is that right?
-        # section_maps = {}
-        # for item in results:
-        #     # Find the section info by looking through step-by-step
-        #     if not item.name in section_maps:
-        #         section_maps[item.comment] = item.name
-        #     else:
-        #         assert section_maps[item.comment] == item.name
+        Set the section_maps group info to match that
+        results = dragonnet.get_timetable_data()  # returns only active ones, is that right?
+        section_maps = {}
+        for item in results:
+            # Find the section info by looking through step-by-step
+            if not item.name in section_maps:
+                section_maps[item.comment] = item.name
+            else:
+                assert section_maps[item.comment] == item.name
 
-        # # This will ensure that sections persist with the same -a, -b nomenclature over time
-        # self.groups.section_maps = section_maps
+        # This will ensure that sections persist with the same -a, -b nomenclature over time
+        self.groups.section_maps = section_maps
 
         super().process()
 
