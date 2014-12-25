@@ -75,64 +75,21 @@ class AutoSendTree(AbstractTree):
         dragonnet = MoodleDBSession()
         TimetableInfo = dragonnet.table_string_to_class('ssis_timetable_info')
 
-        # pattern = '-[a-z]+$'  # a hyphen followed by alphas at the end of the string, removes -a, -b, etc
-        # delete = ''           # used in re.sub to delete the above
+        # Set the section_maps group info to match that
+        # results = dragonnet.get_timetable_data()  # returns only active ones, is that right?
+        # section_maps = {}
+        # for item in results:
+        #     # Find the section info by looking through step-by-step
+        #     if not item.name in section_maps:
+        #         section_maps[item.comment] = item.name
+        #     else:
+        #         assert section_maps[item.comment] == item.name
 
-        # # Connect to the moodle database and get our info
-        # results = dragonnet.get_timetable_data(active_only=False)
-        # for user_idnumber in set([r.student_idnumber for r in results]):
-        #     compilation = []
-        #     already = []
-        #     belong_to_this_user = [r for r in results if r.student_idnumber==user_idnumber]
-        #     for this in belong_to_this_user:
-        #         if not '{}-{}'.format(this.teacher_idnumber, this.course_idnumber) in already:
-        #             already.append('{}-{}'.format(this.teacher_idnumber, this.course_idnumber))
-        #             like_these = [l for l in belong_to_this_user if l.teacher_idnumber == this.teacher_idnumber and l.course_idnumber == this.course_idnumber]
-        #             if len(like_these) == 2 and (like_these[0].active + like_these[1].active == 1):
-        #                 if like_these[0].active == 1:
-        #                     active_one = like_these[0]
-        #                     inactive_one = like_these[1]
-        #                 else:
-        #                     active_one = like_these[1]
-        #                     inactive_one = like_these[0]
-
-        #                 with dragonnet.DBSession() as session:
-        #                     inactive_db_one = session.query(TimetableInfo).filter_by(id=inactive_one.id).one()
-        #                     active_db_one = session.query(TimetableInfo).filter_by(id=active_one.id).one()
-        #                     if inactive_db_one.comment == 'psmdlsyncer':
-        #                         active_db_one.active = 0
-        #                         inactive_db_one.active = 1
-        #                         inactive_db_one.comment = active_one.comment
-        #                         session.delete(active_db_one)  # this is now the inactive one...
-
-        #     if compilation:
-        #         print("User {} has the following:".format(user_idnumber))
-        #         print('\n\t' + "\n\t".join(compilation))
-        #         input('-----')
-
-        # from IPython import embed
-        # embed()
-        # exit()
+        # # This will ensure that sections persist with the same -a, -b nomenclature over time
+        # self.groups.section_maps = section_maps
 
         super().process()
 
-        reverse = {}
-        for key, value in self.groups.section_maps.items():
-            reverse[value] = key
-
-        for item in results:
-            # Find the section info by looking through step-by-step
-            if item.name in reverse:
-                section = reverse[item.name]
-                with dragonnet.DBSession() as session:
-                    # Get the object in the db, change the comment
-                    db_obj = session.query(TimetableInfo).filter_by(id=item.id).one()
-                    db_obj.comment = section
-            else:
-                print('What is going on: {}'.format(item.name))
-                continue
-
-        exit()
 
     def process_mrbs_editor(self):
         for teacher in self.teachers.get_objects():
