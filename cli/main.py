@@ -113,7 +113,7 @@ def launch():
     """
     import socket
     hostname = socket.gethostname()
-    if hostname == 'dragonnet':
+    if hostname == 'dragonnet.ssis-suzhou.net':
         dragonnet_server()
     elif hostname == 'student.ssis-suzhou.net':
         email_server()
