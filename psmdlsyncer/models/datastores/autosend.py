@@ -185,14 +185,14 @@ class AutoSendTree(AbstractTree):
 
         # Set up the user information
 
-        production = config_get_section_attribute('DEFAULTS', 'production')
+        production = config_get_section_attribute('DEFAULTS', 'production', required=True)
         if production:
             users = [item[4] for item in pwd.getpwall()]
             # TODO: Use the home in settings.ini
             path_to_script = config_get_section_attribute('DIRECTORIES', 'path_to_newstudent_script')
             write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
         else:
-            path_to_users = config_get_section_attribute('DIRECTORIES', 'path_to_users')
+            path_to_users = config_get_section_attribute('DIRECTORIES', 'path_to_users', required=True)
             users = os.listdir(path_to_users)
             write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
 
@@ -526,7 +526,7 @@ class AutoSendTree(AbstractTree):
                 f.write("\n".join(activities_postfix_parents[activity_name]))
 
         # run newaliases command on exit if we're on the server
-        newaliases_path = config_get_section_attribute('EMAIL', 'newaliases_path')
+        newaliases_path = config_get_section_attribute('EMAIL', 'newaliases_path', required=True)
         if newaliases_path:
             self.logger.info("Running newaliases")
             p = subprocess.Popen(newaliases_path, shell=True)

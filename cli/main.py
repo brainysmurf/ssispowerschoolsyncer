@@ -19,7 +19,7 @@ def main(ctx):
 
 @main.group()
 @click.argument('which', metavar="<student> or <teacher>")
-@click.option('--date_offset', default='0', help="1 for tomorrow, -1 for yesterday; default=0", metavar='<INT>')
+@click.option('--date_offset', default='0', help="1 for tomorrow, -1 for yesterday; default=1", metavar='<INT>')
 @click.option('--_date', help="Useful for debugging; today if not passed", metavar="<MM DD YYYY>")
 @click.pass_obj
 def notices(obj, which, _date=None, date_offset=None):
