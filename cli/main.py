@@ -61,14 +61,21 @@ def output():
 @click.option('--email/--no_email', default=False, help="Email them or not (requires smtp server of course)")
 @click.option('--edit_email/--no_edit_email', default=False, help="Email to some agent an email with edit links")
 @click.option('--output/--no_output', default=False, help="Output to stdout?")
+@click.option('--group_sec_all/--dont_group_sec_all', default=False, help="Output to stdout?")
 @click.option('--update_date_fields/--dont_update_date_fields', default=False, help="Output to stdout?")
 @click.pass_obj
-def launch(obj, email=False, edit_email=False, output=False, update_date_fields=False):
+def launch(obj, email=False, edit_email=False, output=False, group_sec_all=False, update_date_fields=False):
     """
     Runs the student notices
     """
      
     if email:
+        if group_sec_all:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
+            obj.notices.email_editing = False
+            obj.notices.agent_map = {
+                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']
+            }
+
         obj.notices.email_to_agents()
 
     if edit_email:
