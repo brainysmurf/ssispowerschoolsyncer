@@ -56,11 +56,11 @@ class DefaultTemplate:
 
     def old_teacher(self, item):
         pass # for now
-        self.default_logger("Found student who has now left: {}".format(item.left))
+        self.default_logger("Found teacher who has now left: {}".format(item.left))
 
     def old_parent(self, item):
         pass # for now
-        self.default_logger("Found student who has now left: {}".format(item.left))
+        self.default_logger("Found parent who has now left: {}".format(item.left))
 
     def old_parent_link(self, item):
         pass
@@ -69,7 +69,7 @@ class DefaultTemplate:
         self.default_logger("Put {0.right} in homeroom: {0.right.homeroom}".format(item))
 
     def remove_from_cohort(self, item):
-        self.default_logger("Take {0.right} out of this cohort: {0.param}".format(item))
+        self.logger.debug("Take {0.right} out of this cohort: {0.param}".format(item))
 
     def add_to_cohort(self, item):
         self.default_logger("Put {0.left} into this cohort: {0.param}".format(item))
@@ -114,7 +114,7 @@ class DefaultTemplate:
         self.default_logger("AN OLD COHORT! {0.param} ".format(item))
 
     def new_course(self, item):
-        self.default_logger("A NEW COURSE! {0.param} ".format(item))
+        self.logger.debug("A NEW COURSE! {0.param} ".format(item))
 
     def old_course(self, item):
         self.default_logger("AN OLD COURSE! {0.param} ".format(item))
@@ -158,10 +158,10 @@ class DefaultTemplate:
         self.default_logger("New timetable {0.param} ".format(item))
 
     def new_timetable_data(self, item):
-        self.default_logger("New timetable data {0.param} ".format(item))
+        self.logger.debug("New timetable data {0.param} ".format(item))
 
     def old_timetable_data(self, item):
-        self.default_logger("Old timetable data {0.param} ".format(item))
+        self.logger.debug("Old timetable data {0.param} ".format(item))
 
     def new_online_portfolio(self, item):
         self.default_logger("Creating new online portfolio for student {0.param}".format(item))
@@ -170,7 +170,7 @@ class DefaultTemplate:
         self.default_logger("The student {0.param} still has an online portfolio".format(item))
 
     def new_course_metadata(self, item):
-        self.default_logger("New course metadata {0.right} ".format(item))
+        self.logger.debug("New course metadata {0.right} ".format(item))
 
 class MoodleTemplate(DefaultTemplate):
     """
@@ -317,15 +317,17 @@ class MoodleTemplate(DefaultTemplate):
     
             self.remove_user_from_all_groups(parent)
 
-    # def new_teacher(self, item):
-    #     """
-    #     """
-    #     if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
-    #         self.logger.warning("Staff member {} already exists, not creating.".format(item.right))
-    #     else:
-    #         super().new_teacher(item)
-    #         teacher = item.right
-    #         self.moodlemod.new_teacher(teacher)
+    def new_teacher(self, item):
+        """
+        """
+        if self.moodle.wrap_no_result(self.moodle.get_user_from_username, item.right.username):
+            self.logger.warning("Staff member with username {} already exists, setting PS ID to {}.".format(item.right.username, item.right.idnumber))
+            self.moodle.set_user_idnumber_from_username(item.right.username, item.right.idnumber)
+        else:
+            pass
+            # super().new_teacher(item)
+            # teacher = item.right
+            # self.moodlemod.new_teacher(teacher)
 
     def new_parent(self, item):
         """
@@ -373,7 +375,7 @@ class MoodleTemplate(DefaultTemplate):
         if self.enrol_in_course(item):   # for output and checking
             self.moodlemod.enrol_student_into_course(student, course, group) # just pass the whole schedule object itself
         else:
-            self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+            self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_teacher_into_course(self, item):
         teacher = item.right.idnumber
@@ -382,7 +384,7 @@ class MoodleTemplate(DefaultTemplate):
         if self.enrol_in_course(item):   # for output and checking
             self.moodlemod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
         else:
-            self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+            self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_parent_into_course(self, item):
         parent = item.right.idnumber
@@ -391,7 +393,7 @@ class MoodleTemplate(DefaultTemplate):
         if self.enrol_in_course(item):   # for output and checking
             self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
         else:
-            self.default_logger("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+            self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def deenrol_teacher_from_course(self, item):
         super().deenrol_from_course(item)   # for output
@@ -433,12 +435,12 @@ class MoodleTemplate(DefaultTemplate):
         course = item.right.course.ID
         group = item.param
         if group in self.groups:
-            self.default_logger("Did NOT add group {} because it's already there....".format(group, course))
+            self.logger.debug("Did NOT add group {} because it's already there....".format(group, course))
         elif course in self.courses:
             super().new_group(item)
             self.moodlemod.add_group(group, course)
         else:
-            self.default_logger("Did NOT add group {} because course {} does not exist.".format(group, course))
+            self.logger.debug("Did NOT add group {} because course {} does not exist.".format(group, course))
 
     def new_custom_profile_field(self, item):
         """
@@ -476,7 +478,7 @@ class MoodleTemplate(DefaultTemplate):
             self.moodlemod.add_user_to_group(user, group)
             #self.default_logger("Successfully put user {} into group {}".format(user, group))
         else:
-            self.default_logger("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))
+            self.logger.debug("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))
 
     def remove_from_group(self, item):
         super().remove_from_group(item)

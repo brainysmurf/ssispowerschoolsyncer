@@ -117,6 +117,11 @@ class MoodleDBSess:
             ret = session.query(User).filter(User.username == username).one()
         return ret
 
+    def set_user_idnumber_from_username(self, username, idnumber):
+        with DBSession() as session:
+            ret = session.query(User).filter(User.username == username).one()
+            ret.idnumber = idnumber
+
     def get_column_from_row(self, table, column, **kwargs):
         table_class = self.table_string_to_class(table)
         with DBSession() as session:
@@ -613,8 +618,7 @@ class MoodleDBSession(MoodleDBSess):
                 ns.teacheruserid = session.query(User).filter_by(idnumber=timetable.teacher.idnumber).one().id
             except NoResultFound:
                 if ns.courseid:
-                    self.logger.warning('No results found for timetable object when adding {}'.format(timetable))
-
+                    self.logger.debug('No results found for timetable object when adding {}'.format(timetable))
                 return
             except MultipleResultsFound:
                 self.logger.warning('Multiple results found for timetable object {}'.format(timetable))
@@ -623,21 +627,23 @@ class MoodleDBSession(MoodleDBSess):
             ns.period = timetable.period_info
             ns.grade = timetable.course.convert_grade()
 
-            exist = session.query(SsisTimetableInfo).\
-                filter_by(
-                    **ns.kwargs
-                    ).all()
+            exist = session.query(SsisTimetableInfo).filter_by(**ns.kwargs).one()
 
-            if exist:
-                self.logger.warning("Found timetable {} already exists".format(timetable))
-                return
-            new = SsisTimetableInfo()
-            for key in ns.kwargs:
-                setattr(new, key, getattr(ns, key))
-            new.comment = 'psmdlsyncer'
-            new.active = 1
+            if exist:                
+                if not exist.active:
+                    self.logger.warning('Timetable {} was inactive, setting to active'.format(timetable))
+                    exist.active = 1
+                else:
+                    self.logger.warning("Timetable {} already exists!".format(timetable))
 
-            session.add(new)
+            else:
+                new = SsisTimetableInfo()
+                for key in ns.kwargs:
+                    setattr(new, key, getattr(ns, key))
+                new.comment = timetable.section
+                new.active = 1
+
+                session.add(new)
 
     def set_timetable_data_active(self, timetable):
         # TODO: Figure this out so that I'm not repeating code...

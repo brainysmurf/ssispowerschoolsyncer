@@ -2,11 +2,10 @@ import click
 #from psmdlsyncer.utils.ns import NS2
 
 
-class Object(object):
+class Object:
     def __init__(self):
-        # chance to get setings
         pass
-
+        
     # define common methods here
 
 #
@@ -107,16 +106,21 @@ def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hou
 
     obj.notices.post_to_wordpress(url, blog, author, when)
 
-@main.group()
+@main.command()
 def launch():
     """
     Launch syncer stuff
     """
-    pass
+    import socket
+    hostname = socket.gethostname()
+    if hostname == 'dragonnet':
+        dragonnet_server()
+    else:
+        input('ouch')
 
-@launch.command()
-@click.pass_obj
-def email_server(obj):
+# @launch.command()
+# @click.pass_obj
+def email_server():
     """
     Sets up postfix with bulk email system and student email accounts
     """
@@ -125,9 +129,9 @@ def email_server(obj):
     autosend.process()
     autosend.build_automagic_emails()
 
-@launch.command()
-@click.pass_obj
-def dragonnet_server(obj):
+# @launch.command()
+# @click.pass_obj
+def dragonnet_server():
     """
     Sets up postfix with bulk email system and student email accounts
     """
@@ -280,3 +284,4 @@ def usebccparentsHOMEROOM():
     autosend = AutoSendTree()
     autosend.process()
     autosend.output_parent_bulk_emails()
+
