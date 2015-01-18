@@ -115,8 +115,8 @@ def launch():
     hostname = socket.gethostname()
     if hostname == 'dragonnet':
         dragonnet_server()
-    else:
-        input('ouch')
+    elif hostname == 'student.ssis-suzhou.net':
+        email_server()
 
 # @launch.command()
 # @click.pass_obj
