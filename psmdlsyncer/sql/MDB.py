@@ -627,7 +627,11 @@ class MoodleDBSession(MoodleDBSess):
             ns.period = timetable.period_info
             ns.grade = timetable.course.convert_grade()
 
-            exist = session.query(SsisTimetableInfo).filter_by(**ns.kwargs).one()
+            try:
+                exist = session.query(SsisTimetableInfo).filter_by(**ns.kwargs).one()
+            except NoResultFound:
+                self.logger.warning('No result found for query on table SsisTimetableInfo {}'.format(ns.kwargs))
+                return
 
             if exist:                
                 if not exist.active:
