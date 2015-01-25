@@ -12,12 +12,13 @@ class Group(BaseModel):
     """
     kind = "group"
 
-    def __init__(self, idnumber, course_idnumber):
+    def __init__(self, idnumber, course_idnumber, section):
         self.group_id = self.ID = self.name = self.idnumber = idnumber
         self._students = []
         self._teachers = []
         self._course = None
         self.course_idnumber = course_idnumber
+        self.section = section
 
     @property
     def teachers(self):

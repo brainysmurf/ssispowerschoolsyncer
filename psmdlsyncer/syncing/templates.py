@@ -271,7 +271,17 @@ class MoodleTemplate(DefaultTemplate):
             except (NoResultFound, MultipleResultsFound):
                 self.logger.warn("Did not update homeroom field for student {}".format(student))
 
-            self.remove_user_from_all_groups(student)
+            try:
+                self.moodle.update_table('user', where={
+                    'idnumber':student.idnumber
+                    },
+                    deleted=1)
+            except (NoResultFound, MultipleResultsFound):
+                self.logger.warn("Could not set deleted of student {} to 1".format(student))
+
+            # This might not be necessary now that we have deleted turn on,
+            # So turn it off.
+            #self.remove_user_from_all_groups(student)
 
     def old_teacher(self, item):
         super().old_teacher(item)
@@ -292,6 +302,14 @@ class MoodleTemplate(DefaultTemplate):
                     department='delete')
             except (NoResultFound, MultipleResultsFound):
                 self.logger.warn("Did not update homeroom field for teacher {}".format(teacher))
+            try:
+                self.moodle.update_table('user', where={
+                    'idnumber':teacher.idnumber
+                    },
+                    deleted=1)
+            except (NoResultFound, MultipleResultsFound):
+                self.logger.warn("Could not set deleted of teacher {} to 1".format(teacher))
+
 
             self.remove_user_from_all_groups(teacher)
 

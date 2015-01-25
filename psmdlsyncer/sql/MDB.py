@@ -627,11 +627,11 @@ class MoodleDBSession(MoodleDBSess):
             ns.period = timetable.period_info
             ns.grade = timetable.course.convert_grade()
 
+            exist = False
             try:
                 exist = session.query(SsisTimetableInfo).filter_by(**ns.kwargs).one()
             except NoResultFound:
-                self.logger.warning('No result found for query on table SsisTimetableInfo {}'.format(ns.kwargs))
-                return
+                pass
 
             if exist:                
                 if not exist.active:
@@ -644,7 +644,7 @@ class MoodleDBSession(MoodleDBSess):
                 new = SsisTimetableInfo()
                 for key in ns.kwargs:
                     setattr(new, key, getattr(ns, key))
-                new.comment = timetable.section
+                new.comment = timetable.group.section
                 new.active = 1
 
                 session.add(new)

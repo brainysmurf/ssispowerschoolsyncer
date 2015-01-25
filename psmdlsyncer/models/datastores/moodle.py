@@ -133,12 +133,15 @@ class MoodleTree(AbstractTree):
                             teacher = NS2()
                             teacher.username = teacher_key
 
-                    if section_number:
-                        group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
-                    else:
-                        #self.logger.warning("No section number for group {}!".format(group))
-                        #continue
-                        group = self.groups.make("{}{}".format(teacher.username, course.ID), course.idnumber)
+                    group = self.groups.make_group(course, teacher, section_number)
+
+                    # BEFORE section_maps WAS IMPLEMENTED:  
+                    # if section_number:
+                    #     group = self.groups.make_group("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
+                    # else:
+                    #     #self.logger.warning("No section number for group {}!".format(group))
+                    #     #continue
+                    #     group = self.groups.make_group("{}{}".format(teacher.username, course.ID), course.idnumber)
 
                     # Now put in enrollments manually
                     enrollment = {course.ID: [group.ID]}
@@ -153,12 +156,15 @@ class MoodleTree(AbstractTree):
                     if not course:
                         self.logger.warning("Course not found! {}".format(course_key))
                         continue
-                    if section_number:
-                        group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
-                    else:
-                        self.logger.warning("No section number for group {}!".format(group))
-                        continue
-                        group = self.groups.make("{}{}".format(teacher.username, course.ID), course.idnumber)
+
+                    group = self.groups.make_group(course, teacher, section_number)
+
+                    # if section_number:
+                    #     group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
+                    # else:
+                    #     self.logger.warning("No section number for group {}!".format(group))
+                    #     continue
+                    #     group = self.groups.make("{}{}".format(teacher.username, course.ID), course.idnumber)
 
                     student = self.students.get_key(student_key)
                     if not student:
@@ -179,8 +185,6 @@ class MoodleTree(AbstractTree):
                         continue
                     if not student:
                         self.logger.warning("Student not found! {}".format(student_key))
-                        from IPython import embed
-                        embed()
                         continue
                     if not group:
                         self.logger.warning("Group not found! {}".format(section_number))

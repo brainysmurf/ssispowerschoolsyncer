@@ -249,6 +249,11 @@ class Email:
         msg.attach(part1)
         msg.attach(part2)
 
+        # Check if localhost is specified:
+        if self.domain == 'localhost' or not self.domain:
+            print(plaintext.encode('utf-8'))
+            return
+
         # Send the message via local SMTP server.
     
         # sendmail function takes 3 arguments: sender's address, recipient's address
