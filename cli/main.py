@@ -19,7 +19,7 @@ def main(ctx):
 
 @main.group()
 @click.argument('which', metavar="<student> or <teacher>")
-@click.option('--date_offset', default='0', help="1 for tomorrow, -1 for yesterday; default=1", metavar='<INT>')
+@click.option('--date_offset', default='1', help="1 for tomorrow, -1 for yesterday; default=1", metavar='<INT>')
 @click.option('--_date', help="Useful for debugging; today if not passed", metavar="<MM DD YYYY>")
 @click.pass_obj
 def notices(obj, which, _date=None, date_offset=None):
@@ -73,7 +73,8 @@ def launch(obj, email=False, edit_email=False, output=False, group_sec_all=False
         if group_sec_all:  #TODO: CHANGE em_only TO SOMETHING MORE SENSIBLE
             obj.notices.email_editing = False
             obj.notices.agent_map = {
-                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary']
+                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary'],
+                'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary']
                 }
 
         obj.notices.email_to_agents()
@@ -120,7 +121,7 @@ def launch():
     """
     import socket
     hostname = socket.gethostname()
-    if hostname == 'dragonnet.ssis-suzhou.net':
+    if 'dragonnet' in hostname:
         dragonnet_server()
     elif hostname == 'student.ssis-suzhou.net':
         email_server()
