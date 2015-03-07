@@ -209,7 +209,7 @@ class MoodleDBSession(MoodleDBSess):
                     join(Cohort, Cohort.id == CohortMember.cohortid).\
                     join(User, User.id == CohortMember.userid).\
                         filter(
-                            Cohort.idnumber == cohort
+                            and_(Cohort.idnumber == cohort, User.deleted == 0)
                         )
             for item in all_users.all():
                 yield item
@@ -672,6 +672,11 @@ class MoodleDBSession(MoodleDBSess):
                     ).one()
             this.active = 1
 
+    def undelete_user(self, user):
+        with DBSession() as session:
+            this_user = session.query(User).filter_by(idnumber=user.idnumber).one()
+            this_user.deleted = 0
+
 if __name__ == "__main__":
 
     m = MoodleDBSession()
@@ -682,8 +687,8 @@ if __name__ == "__main__":
     # result = m.wrap_no_result(m.get_user_from_idnumber, 'xxxx')
     # assert(result is None)
 
-    # for item in m.users_enrolled_in_these_cohorts(['supportALL']):
-    #     print(item.idnumber)
+    for item in m.users_enrolled_in_these_cohorts(['studentsALL']):
+        print(item.idnumber)
 
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
@@ -708,6 +713,6 @@ if __name__ == "__main__":
     # m.add_cohort('blahblahALL', 'All Parents')
 
 
-    for item in m.get_online_portfolios():
-        print(item)
+    # for item in m.get_online_portfolios():
+    #     print(item)
 

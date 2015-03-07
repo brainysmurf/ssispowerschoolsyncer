@@ -207,8 +207,11 @@ class MoodleTemplate(DefaultTemplate):
     def new_student(self, item):
         """
         """
-        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
+        user = self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber)
+        if user:
             self.logger.warning("Putting existing student {} into the studentsALL group?".format(item.right))
+            if user.deleted == 1:
+                self.moodle.undelete_user(user)
             self.moodlemod.add_user_to_cohort(item.right.idnumber, 'studentsALL')
         else:
             super().new_student(item)
@@ -271,13 +274,15 @@ class MoodleTemplate(DefaultTemplate):
             except (NoResultFound, MultipleResultsFound):
                 self.logger.warn("Did not update homeroom field for student {}".format(student))
 
-            try:
-                self.moodle.update_table('user', where={
-                    'idnumber':student.idnumber
-                    },
-                    deleted=1)
-            except (NoResultFound, MultipleResultsFound):
-                self.logger.warn("Could not set deleted of student {} to 1".format(student))
+            # TODO: Make this a config item from the command line
+
+            # try:
+            #     self.moodle.update_table('user', where={
+            #         'idnumber':student.idnumber
+            #         },
+            #         deleted=1)
+            # except (NoResultFound, MultipleResultsFound):
+            #     self.logger.warn("Could not set deleted of student {} to 1".format(student))
 
             # This might not be necessary now that we have deleted turn on,
             # So turn it off.
@@ -338,9 +343,12 @@ class MoodleTemplate(DefaultTemplate):
     def new_teacher(self, item):
         """
         """
-        if self.moodle.wrap_no_result(self.moodle.get_user_from_username, item.right.username):
+        user = self.moodle.wrap_no_result(self.moodle.get_user_from_username, item.right.username)
+        if user:
             self.logger.warning("Staff member with username {} already exists, setting PS ID to {}.".format(item.right.username, item.right.idnumber))
             self.moodle.set_user_idnumber_from_username(item.right.username, item.right.idnumber)
+            if user.deleted == 1:
+                self.moodle.undelete_user(user)
         else:
             pass
             # super().new_teacher(item)
@@ -350,7 +358,10 @@ class MoodleTemplate(DefaultTemplate):
     def new_parent(self, item):
         """
         """
-        if self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber):
+        user = self.moodle.wrap_no_result(self.moodle.get_user_from_idnumber, item.right.idnumber)
+        if user:
+            if user.deleted == 1:
+                self.moodle.undelete_user(user)
             self.logger.warning("Putting parent student {} into the parentsALL group".format(item.right))
             self.moodlemod.add_user_to_cohort(item.right.idnumber, 'parentsALL')
         if self.moodle.wrap_no_result(self.moodle.get_user_from_username, item.right.username):
