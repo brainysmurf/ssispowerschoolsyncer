@@ -1,6 +1,5 @@
 import click
-#from psmdlsyncer.utils.ns import NS2
-
+from psmdlsyncer.settings import config
 
 class Object:
     def __init__(self):
@@ -115,43 +114,36 @@ def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hou
     obj.notices.post_to_wordpress(url, blog, author, when)
 
 @main.command()
-def launch():
+@click.option('--inspect/--dont_inspect', default=False, help="True to look at what is generated in the trees")
+@click.pass_obj
+def launch(obj, inspect=False):
     """
     Launch syncer stuff
     """
     import socket
     hostname = socket.gethostname()
     if 'dragonnet' in hostname:
-        dragonnet_server()
-    elif hostname == 'student.ssis-suzhou.net':
-        email_server()
+        from psmdlsyncer.models.datastores.moodle import MoodleTree
+        from psmdlsyncer.models.datastores.autosend import AutoSendTree
+        from psmdlsyncer.syncing.templates import MoodleTemplate
+        from psmdlsyncer.syncing.differences import DetermineChanges
 
-# @launch.command()
-# @click.pass_obj
-def email_server():
-    """
-    Sets up postfix with bulk email system and student email accounts
-    """
-    from psmdlsyncer.models.datastores.autosend import AutoSendTree
-    autosend = AutoSendTree()
-    autosend.process()
-    autosend.build_automagic_emails()
+        left = MoodleTree()
+        right = AutoSendTree()
 
-# @launch.command()
-# @click.pass_obj
-def dragonnet_server():
-    """
-    Sets up postfix with bulk email system and student email accounts
-    """
-    from psmdlsyncer.models.datastores.moodle import MoodleTree
-    from psmdlsyncer.models.datastores.autosend import AutoSendTree
-    from psmdlsyncer.syncing.templates import MoodleTemplate
-    from psmdlsyncer.syncing.differences import DetermineChanges
+        if inspect:
+            config['DEBUGGING']['inspect_datastores'] = str(inspect)
 
-    left = MoodleTree()
-    right = AutoSendTree()
+        DetermineChanges(left, right, MoodleTemplate)
 
-    DetermineChanges(left, right, MoodleTemplate)
+    elif 'student' in hostname:
+        from psmdlsyncer.models.datastores.autosend import AutoSendTree
+        autosend = AutoSendTree()
+        autosend.process()
+        autosend.build_automagic_emails()
+
+    else:
+        print("Can't run, is the hostname wrong?")
 
 @main.group()
 def inspect():
