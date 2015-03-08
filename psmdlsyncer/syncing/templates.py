@@ -51,15 +51,12 @@ class DefaultTemplate:
         return getattr(self, item, default) if hasattr(self, item) else default
 
     def old_student(self, item):
-        pass # for now
         self.default_logger("Found student who has now left: {}".format(item.left))
 
     def old_teacher(self, item):
-        pass # for now
         self.default_logger("Found teacher who has now left: {}".format(item.left))
 
     def old_parent(self, item):
-        pass # for now
         self.default_logger("Found parent who has now left: {}".format(item.left))
 
     def old_parent_link(self, item):
@@ -283,9 +280,8 @@ class MoodleTemplate(DefaultTemplate):
             #         deleted=1)
             # except (NoResultFound, MultipleResultsFound):
             #     self.logger.warn("Could not set deleted of student {} to 1".format(student))
-
-            # This might not be necessary now that we have deleted turn on,
-            # So turn it off.
+            
+            # Remove from all groups as well?
             #self.remove_user_from_all_groups(student)
 
     def old_teacher(self, item):
