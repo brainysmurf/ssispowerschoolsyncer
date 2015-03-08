@@ -70,6 +70,7 @@ class AutoSendTree(AbstractTree):
         """
         Overrides default behavior in order to do some pre-flight stuff
         """ 
+        self._processed = True
         # We need to get stuff from dragonnet
         from psmdlsyncer.sql import MoodleDBSession
         dragonnet = MoodleDBSession()

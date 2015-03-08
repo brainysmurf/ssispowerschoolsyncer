@@ -97,6 +97,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 	convert_course = False   # by default, don't run any conversion on the course shortname
 
 	def __init__(self):
+		self._processed = False
 		self.logger = logging.getLogger('AbstractTree')
 		self.default_logger = self.logger.debug
 		self.student_info = self.klass('dist', 'studentinfo')

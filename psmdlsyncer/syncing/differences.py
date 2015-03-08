@@ -16,8 +16,10 @@ class DetermineChanges:
         self.left = left
         self.right = right
 
-        self.left.process()
-        self.right.process()	
+        if not self.left._processed:
+            self.left.process()
+        if not self.right._processed:
+            self.right.process()
 
         if config_get_section_attribute('DEBUGGING', 'inspect_datastores'):
              print('Inside DetermineChange __init__')

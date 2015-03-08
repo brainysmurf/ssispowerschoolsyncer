@@ -128,8 +128,14 @@ def launch(obj, inspect=False):
         from psmdlsyncer.syncing.templates import MoodleTemplate
         from psmdlsyncer.syncing.differences import DetermineChanges
 
-        left = MoodleTree()
+        # To get the groups right we need to process AutosendTree first and send it over to Moodle
+        # FIXME: groups should be the same!
+
         right = AutoSendTree()
+        right.process()
+        left = MoodleTree()
+        left.groups.section_maps = {v:k for k, v in right.groups.section_maps.items()}  # items become the keys
+        left.process()
 
         if inspect:
             config['DEBUGGING']['inspect_datastores'] = str(inspect)

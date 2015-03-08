@@ -180,7 +180,7 @@ class MoodleImport(MoodleDBSession):
                     else:
                         self.logger.warning("No course for group {}".format(groupname))
                 for teacher in teachers:
-                    yield course, _period, section, teacher, userID
+                    yield course, _period, section, teacher, userID, groupname
 
             else:
                 # non-editing teachers...
@@ -201,7 +201,7 @@ class MoodleImport(MoodleDBSession):
 
             for student in results[group]['students']:
                 for teacher in teachers:
-                    yield course, _period, section, teacher, student
+                    yield course, _period, section, teacher, student, group
 
 if __name__ == "__main__":
 

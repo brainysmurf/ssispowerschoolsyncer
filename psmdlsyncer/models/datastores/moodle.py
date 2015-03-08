@@ -97,7 +97,7 @@ class MoodleTree(AbstractTree):
             method = getattr(self, "{}_schedule".format(school))
             for schedule in method.content():
                 self.default_logger('Processing {} schedule: {}'.format(school, schedule))
-                course_key, period_info, section_number, teacher_key, student_key = schedule
+                course_key, period_info, section_number, teacher_key, student_key, groupName = schedule
 
                 # We should check if we're dealing with a parent account or not
                 # because we have to manually put in enrollments
@@ -133,7 +133,8 @@ class MoodleTree(AbstractTree):
                             teacher = NS2()
                             teacher.username = teacher_key
 
-                    group = self.groups.make_group(course, teacher, section_number)
+                    #group = self.groups.make_group(course, teacher, section_number)
+                    group = self.groups.make_group_from_name(groupName)
 
                     # BEFORE section_maps WAS IMPLEMENTED:  
                     # if section_number:
@@ -157,7 +158,8 @@ class MoodleTree(AbstractTree):
                         self.logger.warning("Course not found! {}".format(course_key))
                         continue
 
-                    group = self.groups.make_group(course, teacher, section_number)
+                    #group = self.groups.make_group(course, teacher, section_number)
+                    group = self.groups.make_group_from_name(groupName)
 
                     # if section_number:
                     #     group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
@@ -181,10 +183,10 @@ class MoodleTree(AbstractTree):
 
                     # Do some sanity checks
                     if not course:
-                        self.logger.warning("Course not found! {}".format(course_key))
+                        self.logger.warning("Course in schedule, but not found! {}".format(course_key))
                         continue
                     if not student:
-                        self.logger.warning("Student not found! {}".format(student_key))
+                        #self.logger.warning("Student in schedule, but not found! {}".format(student_key))
                         continue
                     if not group:
                         self.logger.warning("Group not found! {}".format(section_number))

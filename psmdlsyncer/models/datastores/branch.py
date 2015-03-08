@@ -13,7 +13,7 @@ from psmdlsyncer.models.mrbs import MRBSEditor
 from psmdlsyncer.models.cohorts import Cohort
 from psmdlsyncer.models.online_portfolios import OnlinePortfolio
 from psmdlsyncer.utils.Utilities import convert_short_long
-import logging
+import logging, re
 log = logging.getLogger(__name__)
 from collections import defaultdict
 
@@ -213,6 +213,34 @@ class groups(DataStore):
 			# keep for future reference, and return
 			cls.section_maps[sectional_key] = new_sectional_value
 			return cls.make(new_sectional_value, course.idnumber, sectional_key)
+
+	@classmethod
+	def make_group_from_name(cls, group_name):
+		if not cls.section_maps:
+			if cls.sep in group_name:
+				idnumber, section_key = group_name.split(cls.sep)
+			else:
+				idnumber = group_name
+				section_key = ""
+			course_idnumber = re.sub('[a-z]', '', idnumber)
+			sectional_key = group_name
+			return cls.make(sectional_key, course_idnumber, section_key)
+		else:
+			if cls.sep in group_name:
+				sectional_key = cls.section_maps.get(group_name, "")
+				if cls.sep in sectional_key:
+					idnumber, section = sectional_key.split(cls.sep)
+					course_idnumber = re.sub('[a-z]', '', idnumber)
+					return cls.make(group_name, course_idnumber, section)
+				else:
+					# These may be psmdlsyncer...
+					course_idnumber = sectional_key
+					section = sectional_key
+					return cls.make(group_name, course_idnumber, section)
+			else:
+				course_idnumber = ""
+				section = ""
+				return cls.make(group_name, course_idnumber, section)
 
 class course_metadatas(DataStore):
 	klass = CourseMetaData
