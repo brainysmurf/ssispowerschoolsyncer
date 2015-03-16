@@ -33,6 +33,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.agents = ['adammorris@ssis-suzhou.net']
         self.agent_map = {
             'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
+            'dominicthomas@ssis-suzhou.net':['Whole School', 'Elementary'],
             'nicholaslittle@ssis-suzhou.net':['Whole School', 'Secondary']
             }
         self.search_date = "next day"
