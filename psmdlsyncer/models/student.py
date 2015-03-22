@@ -121,7 +121,7 @@ class Student(BaseModel):
             self.logger.debug("This student {} ({}) has a non-integer grade: '{}'".format(username, self.ID, grade))
             grade = 0
         self.grade = grade
-        if self.grade < 5:
+        if self.grade < 4:
             self.login_method = 'nologin'
         else:
             self.login_method = 'manual'
