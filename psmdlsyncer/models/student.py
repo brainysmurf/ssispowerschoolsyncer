@@ -160,7 +160,7 @@ class Student(BaseModel):
             self.logger.debug("This student doesn't have a homeroom: {}".format(self.ID))
             self.homeroom = 'No HR'
         self.homeroom = homeroom.upper().strip()
-        self.is_SWA = 'SWA' in self.homeroom
+        self.is_SWA = self.department == "SWA"
         self.homeroom_sortable = 0   # TODO: What's the put_in_order thing for then?
 
         self.profile_existing_department = self.homeroom
