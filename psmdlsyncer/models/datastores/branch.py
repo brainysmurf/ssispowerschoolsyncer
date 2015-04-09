@@ -200,6 +200,7 @@ class groups(DataStore):
 		The passed section should be the 'official' section number
 		here we will change it to .a or .b accordingly
 		"""
+
 		idnumber = "{}{}".format(teacher.username.lower(), course.idnumber.upper())
 		sectional_key = "{}{}{}".format(idnumber, cls.sep, section)
 		if sectional_key in cls.section_maps.keys():
@@ -207,9 +208,10 @@ class groups(DataStore):
 			return cls.make(cls.section_maps[sectional_key], course.idnumber, sectional_key)
 		else:
 			# first time running, make a new sectional
-			how_many = len(cls.get_keys_startswith("{}{}".format(idnumber, cls.sep)))
+			how_many = len([key for key in cls.section_maps.keys() if key.startswith(idnumber)])  # cls.get_keys_startswith("{}{}".format(idnumber, cls.sep)))
 			alpha = chr(ord('a') + how_many)
 			new_sectional_value = "{}{}{}".format(idnumber, cls.sep, alpha)
+
 			# keep for future reference, and return
 			cls.section_maps[sectional_key] = new_sectional_value
 			return cls.make(new_sectional_value, course.idnumber, sectional_key)
