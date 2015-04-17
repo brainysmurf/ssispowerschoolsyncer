@@ -22,8 +22,9 @@ def inform_new_student(student):
     homeroom_teacher = student.homeroom_teacher
     if homeroom_teacher:
           email.add_to(homeroom_teacher.email)
-    for guardian_email in student.guardian_emails:
-          email.add_to(guardian_email)
+    # ssis does not want this feature
+    #for guardian_email in student.guardian_emails:
+    #      email.add_to(guardian_email)
     """
     for class_teacher in student.get_teachers_as_list():
           email.add_to(class_teacher + '@ssis-suzhou.net')
