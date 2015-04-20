@@ -182,28 +182,25 @@ class AbstractTree(metaclass=DataStoreCollection):
 				course_key, period_info, section_number, teacher_key, student_key = schedule
 				course = self.courses.get(course_key, self.convert_course) 
 				if not course:
-					self.default_logger("No course for this schedule: {}".format(schedule))
+					self.logger.warning("Course not found! {}".format(course_key))
 					continue
 				if course.exclude:
 					self.default_logger("Course {} has been excluded!".format(course_key))
 					# And so we should skip this schedule entirely!
 					continue
 				teacher = self.teachers.get_key(teacher_key)
+				if not teacher:
+					self.logger.warning("Teacher not found! {}".format(teacher_key))
+					continue
 				group = self.groups.make_group(course, teacher, section_number)
+				if not group:
+					self.logger.warning("Group not found! {}".format(section_number))
+					continue
 				student = self.students.get_key(student_key)
 
 				# Do some sanity checks
 				if not student:
 					self.default_logger("Student not found, sometimes happens for some odd reason {}".format(student_key))
-					continue
-				if not course:
-					self.logger.warning("Course not found! {}".format(course_key))
-					continue
-				if not teacher:
-					self.logger.warning("Teacher not found! {}".format(teacher_key))
-					continue
-				if not group:
-					self.logger.warning("Group not found! {}".format(section_number))
 					continue
 
 				self.associate(course, teacher, group, student)
