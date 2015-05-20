@@ -368,6 +368,12 @@ class AutoSendTree(AbstractTree):
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSEC{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsSEC) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsALL{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsALL) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsSEC) )
+
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsELEM{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsELEM) )
 
