@@ -435,7 +435,7 @@ class AutoSendTree(AbstractTree):
             f.write( '\n'.join(chinesestudentsSEC) )
 
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
-            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
+            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccstudentsALL', 'usebccstudentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
                             'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM',
