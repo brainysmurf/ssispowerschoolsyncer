@@ -215,7 +215,7 @@ class moodlephp
       // this only works properly because in draognnet group names are guaranteed to be unique
       // ( teacher username + course idnumber )
       global $DB;
-      return $DB->get_record('groups', array('name'=>$group_name), '*');
+      return $DB->get_record('groups', array('idnumber'=>$group_name), '*');
     }
 
     private function add_user_to_group($args)
