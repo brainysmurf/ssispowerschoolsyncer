@@ -358,6 +358,7 @@ class AutoSendTree(AbstractTree):
                         f.write( '\n'.join(set(hrlink[ns.student])) )
                     except TypeError:
                       pass
+
         with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
             f.write( '\n'.join(directory_write) )
 
@@ -366,6 +367,12 @@ class AutoSendTree(AbstractTree):
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSEC{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsSEC) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsALL{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsALL) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsSEC) )
 
         with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsELEM{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccparentsELEM) )
@@ -421,6 +428,12 @@ class AutoSendTree(AbstractTree):
         with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
             f.write( '\n'.join(usebccstudentsSWA) )
 
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsALL{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsALL) )
+
+        with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSEC{EXT}'), 'w') as f:
+            f.write( '\n'.join(usebccstudentsSEC) )
+
         with open( ns('{PATH}{SLASH}special{SLASH}koreanstudentsSEC{EXT}'), 'w') as f:
             f.write( '\n'.join(koreanstudentsSEC) )
 
@@ -428,7 +441,7 @@ class AutoSendTree(AbstractTree):
             f.write( '\n'.join(chinesestudentsSEC) )
 
         with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
-            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccparentsELEM',
+            for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccstudentsALL', 'usebccstudentsSEC', 'usebccparentsELEM',
                             'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
                             'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
                             'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM',
