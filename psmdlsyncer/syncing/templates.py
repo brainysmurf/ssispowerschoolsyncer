@@ -507,11 +507,11 @@ class MoodleTemplate(DefaultTemplate):
 
     def remove_from_group(self, item):
         super().remove_from_group(item)
-        #user = item.right.idnumber
-        #group = item.param.group
-        #course = item.param.course
+        user = item.right.idnumber
+        group = item.param.group
+        course = item.param.course
         # We don't actually need the course...
-        #self.moodlemod.remove_user_from_group(user, group)
+        self.moodlemod.remove_user_from_group(user, group)
 
     def username_changed(self, item):
         user = item.left
