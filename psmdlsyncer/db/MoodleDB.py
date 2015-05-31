@@ -5246,14 +5246,14 @@ class User(Base):
     mailformat = Column(SmallInteger, nullable=False, server_default='1')
     maildigest = Column(SmallInteger, nullable=False, server_default='0')
     maildisplay = Column(SmallInteger, nullable=False, server_default='2')
-    htmleditor = Column(SmallInteger, nullable=False, server_default='1')
+    #htmleditor = Column(SmallInteger, nullable=False, server_default='1')
     autosubscribe = Column(SmallInteger, nullable=False, server_default='1')
     trackforums = Column(SmallInteger, nullable=False, server_default='0')
     timecreated = Column(BigInteger, nullable=False, server_default='0')
     timemodified = Column(BigInteger, nullable=False, server_default='0')
     trustbitmask = Column(BigInteger, nullable=False, server_default='0')
     imagealt = Column(String(255))
-    password2 = Column(String(255))
+    #password2 = Column(String(255))
 
 
 class UserActivityBu(Base):
