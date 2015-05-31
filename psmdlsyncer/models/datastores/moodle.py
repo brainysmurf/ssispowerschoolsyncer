@@ -54,34 +54,34 @@ class MoodleTree(AbstractTree):
                 parent.add_child(child)
                 self.parent_links.make_parent_link(parent_idnumber, child_idnumber)
 
-    def process_timetable_data(self):
-        """
-        This is different, we just go through each item and add it to the database
-        """
-        debug = config_get_section_attribute('DEBUGGING', 'inspect_timetable_data')
-        for raw_data in self.timetable_table.get_timetable_data():
-            _id, course_idnumber, teacher_idnumber, student_idnumber, group_idnumber, period_info, comment, active = raw_data
-            course = self.courses.get_key(course_idnumber)
-            teacher = self.teachers.get_key(teacher_idnumber)
-            student = self.students.get_key(student_idnumber)
-            # ensure that we have the group...
-            group = NS2()
-            group.idnumber = group_idnumber
+    # def process_timetable_data(self):
+    #     """
+    #     This is different, we just go through each item and add it to the database
+    #     """
+    #     debug = config_get_section_attribute('DEBUGGING', 'inspect_timetable_data')
+    #     for raw_data in self.timetable_table.get_timetable_data():
+    #         _id, course_idnumber, teacher_idnumber, student_idnumber, group_idnumber, period_info, comment, active = raw_data
+    #         course = self.courses.get_key(course_idnumber)
+    #         teacher = self.teachers.get_key(teacher_idnumber)
+    #         student = self.students.get_key(student_idnumber)
+    #         # ensure that we have the group...
+    #         group = NS2()
+    #         group.idnumber = group_idnumber
 
-            if course and teacher and student:
-                result = self.timetable_datas.make_timetable_datas(course, teacher, group, student, period_info)
-                debug and self.warning(result)
-            else:
-                debug and self.logger.warning("Not added")
-                debug and self.logger.warning(course)
-                debug and self.logger.warning(teacher)
-                debug and self.logger.warning(student)
-                debug and self.logger.warning(raw_data)
-                debug and self.logger.warning('-----')
-        if debug:
-            from IPython import embed
-            print(self)
-            embed()
+    #         if course and teacher and student:
+    #             result = self.timetable_datas.make_timetable_datas(course, teacher, group, student, period_info)
+    #             debug and self.warning(result)
+    #         else:
+    #             debug and self.logger.warning("Not added")
+    #             debug and self.logger.warning(course)
+    #             debug and self.logger.warning(teacher)
+    #             debug and self.logger.warning(student)
+    #             debug and self.logger.warning(raw_data)
+    #             debug and self.logger.warning('-----')
+    #     if debug:
+    #         from IPython import embed
+    #         print(self)
+    #         embed()
 
     def process_schedules(self):
         """

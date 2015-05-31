@@ -221,8 +221,8 @@ class AbstractTree(metaclass=DataStoreCollection):
 					from IPython import embed
 					embed()
 
-	def process_timetable_data(self):
-		pass
+	# def process_timetable_data(self):
+	# 	pass
 
 	def process_parent_links(self):
 		"""
@@ -262,7 +262,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 	def process(self):
 		# Basically just calls every process_x method we have
 		debug = config_get_section_attribute('DEBUGGING', 'print_process')
-		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules',  'timetable_data', 'custom_profile_fields', 'mrbs_editors', 'online_portfolios']
+		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules',  'mrbs_editors', 'online_portfolios']
 		for o in order:
 			method_name = 'process_{}'.format(o)
 			method = getattr(self, method_name)
