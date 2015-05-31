@@ -12,6 +12,9 @@ import re, os, sys, pwd
 from sqlalchemy import and_, not_, or_
 import subprocess
 
+import pickle
+from psmdlsyncer.settings import config_get_section_attribute
+
 def put_in_order(what, reverse=False):
     what = what.upper()
     result = 1 # elementary don't have LEARN
@@ -71,20 +74,10 @@ class AutoSendTree(AbstractTree):
         Overrides default behavior in order to do some pre-flight stuff
         """ 
         self._processed = True
-        # We need to get stuff from dragonnet
-        from psmdlsyncer.sql import MoodleDBSession
-        dragonnet = MoodleDBSession()
-        TimetableInfo = dragonnet.table_string_to_class('ssis_timetable_info')
-
-        #Set the section_maps group info to match that
-        results = dragonnet.get_timetable_data()  # returns only active ones, is that right?
-        section_maps = {}
-        for item in results:
-            # Find the section info by looking through step-by-step
-            if not item.name in section_maps:
-                section_maps[item.comment] = item.name
-            else:
-                assert section_maps[item.comment] == item.name
+        # We need to load up previous section_maps info
+        home = config_get_section_attribute('DIRECTORIES', 'home')
+        with open(os.path.join(home, 'section_maps'), 'rb') as _file:
+            section_maps = pickle.load(_file)
 
         # This will ensure that sections persist with the same -a, -b nomenclature over time
         self.groups.section_maps = section_maps
