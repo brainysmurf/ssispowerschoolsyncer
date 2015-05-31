@@ -1018,7 +1018,7 @@ class Course(Base):
     requested = Column(SmallInteger, nullable=False, server_default='0')
     enablecompletion = Column(SmallInteger, nullable=False, server_default='0')
     completionnotify = Column(SmallInteger, nullable=False, server_default='0')
-    sectioncache = Column(Text)
+    #sectioncache = Column(Text)
 
 
 class CourseCategory(Base):
