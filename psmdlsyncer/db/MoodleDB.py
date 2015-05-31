@@ -999,7 +999,7 @@ class Course(Base):
     summaryformat = Column(SmallInteger, nullable=False, server_default='0')
     format = Column(String(21), nullable=False, server_default="'topics'::character varying")
     showgrades = Column(SmallInteger, nullable=False, server_default='1')
-    modinfo = Column(Text)
+    #modinfo = Column(Text)
     newsitems = Column(Integer, nullable=False, server_default='1')
     startdate = Column(BigInteger, nullable=False, server_default='0')
     marker = Column(BigInteger, nullable=False, server_default='0')
