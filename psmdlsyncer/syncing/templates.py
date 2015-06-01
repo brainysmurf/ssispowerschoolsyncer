@@ -626,11 +626,11 @@ class MoodleTemplate(DefaultTemplate):
 
     def new_timetable_data(self, item):
         super().new_timetable_data(item)
-        self.moodle.add_timetable_data(item.right)
+        #self.moodle.add_timetable_data(item.right)
 
     def old_timetable_data(self, item):
         super().old_timetable_data(item)
-        self.moodle.set_timetable_data_inactive(item.left)
+        #self.moodle.set_timetable_data_inactive(item.left)
 
     def new_course_metadata(self, item):
         super().new_course_metadata(item)
@@ -638,4 +638,4 @@ class MoodleTemplate(DefaultTemplate):
 
     def new_online_portfolio(self, item):
         super().new_online_portfolio(item)
-        self.moodlemod.create_online_portfolio(item.param)
+        #self.moodlemod.create_online_portfolio(item.param)
