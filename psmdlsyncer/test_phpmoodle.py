@@ -1,11 +1,5 @@
-from psmdlsyncer.utils.PHPMoodleLink import PowerSchoolIntegrator
-
+from psmdlsyncer.php.ModUserEnrollments import ModUserEnrollments
 if __name__ == "__main__":
 
-    psi = PowerSchoolIntegrator()
-    #print(psi.create_account("adammorris1996", 'amorris@example.com', "Adam", "Morris", "11"))
-
-
-    #print(psi.enrol_user_in_course('adammorris1996', 'TEST'))
-
-    print(psi.add_user_to_group('32352', 'darkosaboMATST10'))
+    psi = ModUserEnrollments()
+    psi.add_user_to_group('32352', 'darkosaboMATST10')

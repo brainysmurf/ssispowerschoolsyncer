@@ -1,6 +1,6 @@
 <?php
 
-define(CLI_SCRIPT,1);
+define('CLI_SCRIPT',1);
 require_once( '../../config.php');
 require_once('../../cohort/lib.php');
 require_once('../../enrol/locallib.php');
@@ -458,7 +458,7 @@ class moodlephp
    }
 }
 
-str_getcsv('foo bar "so what"', $delimiter=" ");
+#str_getcsv('foo bar "so what"', $delimiter=" ");
 
 $klass = new moodlephp();
 $handle = fopen ("php://stdin","r");
