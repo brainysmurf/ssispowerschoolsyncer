@@ -200,7 +200,6 @@ class groups(DataStore):
 		The passed section should be the 'official' section number
 		here we will change it to .a or .b accordingly
 		"""
-
 		idnumber = "{}{}".format(teacher.username.lower(), course.idnumber.upper())
 		sectional_key = "{}{}{}".format(idnumber, cls.sep, section)
 		if sectional_key in cls.section_maps.keys():
@@ -252,13 +251,13 @@ class course_metadatas(DataStore):
 		idnumber = course_idnumber
 		cls.make(idnumber, course_idnumber, course_grade)
 
-class timetable_datas(DataStore):
-	klass = TimetableDatas
+# class timetable_datas(DataStore):
+# 	klass = TimetableDatas
 
-	@classmethod
-	def make_timetable_datas(cls, course, teacher, group, student, period_info):
-		idnumber = '{}/{}'.format(group.idnumber, student.idnumber)
-		return cls.make(idnumber, course, teacher, group, student, period_info)
+# 	@classmethod
+# 	def make_timetable_datas(cls, course, teacher, group, student, period_info):
+# 		idnumber = '{}/{}'.format(group.idnumber, student.idnumber)
+# 		return cls.make(idnumber, course, teacher, group, student, period_info)
 
 class timetables(DataStore):
 	klass = Timetable

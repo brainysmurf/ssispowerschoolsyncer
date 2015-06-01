@@ -194,11 +194,11 @@ class MoodleTree(AbstractTree):
 
                     self.associate(course, teacher, group, student)
 
-                    timetable = self.timetables.make_timetable(
-                        course, teacher, group, student, section_number, period_info
-                        )
-                    student.add_timetable(timetable)
-                    teacher.add_timetable(timetable)
+                    # timetable = self.timetables.make_timetable(
+                    #     course, teacher, group, student, section_number, period_info
+                    #     )
+                    # student.add_timetable(timetable)
+                    # teacher.add_timetable(timetable)
 
                     #self.timetable_datas.make_timetable_datas(course, teacher, group, student, section_number, period_info)
 
