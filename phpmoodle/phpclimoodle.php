@@ -7,7 +7,7 @@ require_once('../../enrol/locallib.php');
 require_once('../../group/lib.php');
 require_once('../../lib/grouplib.php');
 require_once('../../course/lib.php');
-require_once($CFG->dirroot . '/lib/ssisolp.php');
+#require_once($CFG->dirroot . '/lib/ssisolp.php');
 
 class moodlephp
 {
