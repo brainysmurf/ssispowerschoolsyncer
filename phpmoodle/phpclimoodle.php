@@ -372,6 +372,7 @@ class moodlephp
         $group_data = new stdClass;
         $group_data->courseid = $course->id;
         $group_data->name = $group_name;
+        $group_data->idnumber = $group_name;
 
         if (!(groups_create_group($group_data))) {
           return "-150 Group $group_name does not exist, and cannot create it!";
