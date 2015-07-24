@@ -112,7 +112,7 @@ class BulkEmailName:
 
     def output_aliases(self):
         with open(self.path_to_alias_definitions, 'w') as f:
-            f.write('\n'.join(self.include_statements))
+            f.write('\n'.join([e for e in self.category_emails(category) if e]))
 
         for category in self.categories:
             this_path = self.path_to_category(category)
