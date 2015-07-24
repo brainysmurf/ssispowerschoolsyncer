@@ -77,7 +77,7 @@ class AutoSendTree(AbstractTree):
         """ 
         self._processed = True
         # We need to load up previous section_maps info
-        home = gns.config.directories.path_to_home
+        home = gns.config.directories.home
         with open(os.path.join(home, 'section_maps'), 'rb') as _file:
             section_maps = pickle.load(_file)
 
