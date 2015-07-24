@@ -46,7 +46,7 @@ class BulkEmailManager:
         exclude_db_files = lambda x: x.endswith('.db')
         clear_folder(self.path, exclude=exclude_db_files)
         self.cat = type('names', (), {})
-        self.ad_name('global')
+        self.add_name('global')
         self.cat.global_ = 'global'
         self.add_name('grades')
         self.cat.grades = 'grades'
