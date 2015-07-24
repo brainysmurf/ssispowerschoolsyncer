@@ -195,25 +195,25 @@ class AutoSendTree(AbstractTree):
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESE)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESESEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESEELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsCHINESEGRADE(this_grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESEGRADE(this_grade))
 
             if student.is_korean:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREAN)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANSEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsKOREANGRADE(this_grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANGRADE(this_grade))
 
             if student.is_japanese:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESE)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESESEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESEELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsJAPANESEGRADE(this_grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESEGRADE(this_grade))
 
             if student.is_german:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMAN)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANSEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsGERMANGRADE(this_grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANGRADE(this_grade))
             else:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTGGERMAN)
 
