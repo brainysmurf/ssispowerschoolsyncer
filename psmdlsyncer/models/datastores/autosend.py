@@ -143,24 +143,22 @@ class AutoSendTree(AbstractTree):
                 self.logger.warning("Making new student email {}".format(student))
                 subprocess.call(write_user(student))
 
-            ns.homeroom = student.homeroom
-            ns.grade = student.grade
-
             # TODO: Check for now grade or homeroom and warn
             if student.grade is "" or student.grade is None:
                 self.logger.warn("This student does not have a grade:\n{}".format(student))
             if not student.homeroom:
                 self.logger.warn("This student does not have a homeroom:\n{}".format(student))
 
+            this_grade = student.grade
             # USE ns.grade BECAUSE student.grade IS AN INTEGER
             # TODO: DO WE MAKE student.grade A STRING?
             # OR PUT THIS IN THE OBJECT SOMEWHOW?
-            if ns.grade <= 0:
-                ns.grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(ns.grade, None)
+            if student.grade <= 0:
+                this_grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(this_grade, None)
 
             bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsALL)
-            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGRADE(ns.grade))
-            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsHROOM(ns.homeroom))
+            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGRADE(this_grade))
+            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsHROOM(student.homeroom))
 
             if student.is_elementary:
                 if student.grade >= 4:
@@ -178,12 +176,12 @@ class AutoSendTree(AbstractTree):
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSEC)
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.studentsSEC)
 
-                if ns.grade:
-                    bm.add_email(student.email, bm.cat.grades_, bm.studentsGRADE(student.ns.grade))
-                    bm.add_emails(student.teacher_emails, bm.cat.grades_, bm.teachersGRADE(student.ns.grade))
+                if this_grade:
+                    bm.add_email(student.email, bm.cat.grades_, bm.studentsGRADE(this_grade))
+                    bm.add_emails(student.teacher_emails, bm.cat.grades_, bm.teachersGRADE(this_grade))
 
                 if student.homeroom:
-                    bm.add_email(student.email, bm.cat.homerooms, bm.studentsHOMEROOM(ns.homeroom))
+                    bm.add_email(student.email, bm.cat.homerooms, bm.studentsHOMEROOM(student.homeroom))
 
                 bm.add_email(student.guardian_emails, bm.cat.parentlink, bm.parentlink(student.username))
                 bm.add_emails(student.teacher_emails, bm.cat.teacherlink, bm.teacherlink(student.username))
@@ -197,25 +195,25 @@ class AutoSendTree(AbstractTree):
                 bm.add_emails(student.guardian_emails, bm.cat.global_, parentsCHINESE)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESESEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESEELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsCHINESEGRADE(ns.grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsCHINESEGRADE(this_grade))
 
             if student.is_korean:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, parentsKOREAN)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANSEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsKOREANGRADE(ns.grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsKOREANGRADE(this_grade))
 
             if student.is_japanese:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, parentsKOREAN)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANSEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsKOREANGRADE(ns.grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsKOREANGRADE(this_grade))
 
             if student.is_german:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, parentsGERMAN)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANSEC)
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsGERMANGRADE(ns.grade))
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.usebccparentsGERMANGRADE(this_grade))
             else:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, parentsNOTGGERMAN)
 
