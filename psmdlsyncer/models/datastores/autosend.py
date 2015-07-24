@@ -139,9 +139,9 @@ class AutoSendTree(AbstractTree):
                 except NoResultFound:
                     pass 
 
-            if student.grade >= 4 and not check_users(student):
-                self.logger.warning("Making new student email {}".format(student))
-                subprocess.call(write_user(student))
+            # if student.grade >= 4 and not check_users(student):
+            #     self.logger.warning("Making new student email {}".format(student))
+            #     subprocess.call(write_user(student))
 
             # TODO: Check for now grade or homeroom and warn
             if student.grade is "" or student.grade is None:
