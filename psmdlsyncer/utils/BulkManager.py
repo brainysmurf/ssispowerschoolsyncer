@@ -1,3 +1,4 @@
+import gns
 
 class BulkEmailManager:
     path = gns('{config.directories.path_to_postfix}') or '/tmp/bulkemail/results'
