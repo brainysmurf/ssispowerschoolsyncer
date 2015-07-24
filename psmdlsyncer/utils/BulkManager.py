@@ -71,10 +71,6 @@ class BulkEmailManager:
         self.add_name('activities')
         self.cat.activities = 'activities'
 
-    def to_JSON(self):
-        return json.dumps(self, default=lambda o: o.__dict__, 
-            sort_keys=True, indent=4)
-
     def add_name(self, name):
         self.email_lists[name] = BulkEmailName(self.path, name)
 
@@ -98,9 +94,10 @@ class BulkEmailManager:
             self.email_lists[name].output_aliases()
 
     def output_json(self):
-        input('uh')
         with open('result.json', 'w') as f:
-            return json.dump(self.email_lists, default=lambda o: o.__dict__, sort_keys=True, indent=4)
+
+
+            return json.dumps(self.email_lists, default=lambda o: o.categories, sort_keys=True, indent=4)
 
 class BulkEmailName:
     """
