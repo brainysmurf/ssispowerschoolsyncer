@@ -71,14 +71,15 @@ class AutoSendTree(AbstractTree):
     klass = AutoSendImport
     convert_course = True
 
+    home = gns.config.directories.home
+
     def process(self):
         """
         Overrides default behavior in order to do some pre-flight stuff
         """ 
         self._processed = True
         # We need to load up previous section_maps info
-        home = gns.config.directories.home
-        with open(os.path.join(home, 'section_maps'), 'rb') as _file:
+        with open(os.path.join(self.home, 'section_maps'), 'rb') as _file:
             section_maps = pickle.load(_file)
 
         # This will ensure that sections persist with the same -a, -b nomenclature over time
@@ -102,7 +103,7 @@ class AutoSendTree(AbstractTree):
 
     def build_automagic_emails(self):
 
-        bm = BulkEmailManager(self.path)
+        bm = BulkEmailManager(self.home)
 
         self.logger.debug("Setting email lists")
 
