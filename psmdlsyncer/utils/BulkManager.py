@@ -30,6 +30,8 @@ class BulkEmailManager:
     parentsSWA = 'usebccparentsSWA'
     parentsNOTSWA = 'usebccparentsNOTSWA'
 
+    teachersGRADE = lambda cls, g: 'usebcc' + 'TEACHERS' + str(g)
+
     studentsSEC = 'usebccstudentsSEC'
     studentsGRADE = lambda cls, g: 'usebccstudentsGRADE'+str(g)
     studentsHOMEROOM = lambda cls, hr: 'usebccstudentsHROOM' + hr
