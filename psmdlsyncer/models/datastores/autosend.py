@@ -225,7 +225,7 @@ class AutoSendTree(AbstractTree):
             else:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTSWA)
 
-        bm.output_json()
+        print(bm.output_json())
         exit()
 
         # # GRADES
