@@ -138,6 +138,8 @@ class BulkEmailName:
         self.categories[category] = []
 
     def add_email(self, email, category):
+        if email is None:
+            return
         if not category in self.categories:
             self.add_category(category)
         self.categories[category].append(email)
