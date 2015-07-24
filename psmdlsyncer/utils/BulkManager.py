@@ -1,5 +1,6 @@
-import gns
 from psmdlsyncer.files import clear_folder
+import gns
+import json
 
 class BulkEmailManager:
     path = gns('{config.directories.path_to_postfix}') or '/tmp/bulkemail/results'
@@ -92,6 +93,11 @@ class BulkEmailManager:
         for name in self.email_lists:
             self.email_lists[name].output_aliases()
 
+    def output_json(self):
+        input('uh')
+        with open('result.json', 'w') as f:
+            json.dump(self.email_lists)
+
 class BulkEmailName:
     """
     self.name is the name of the directory in which subcategories appear
@@ -143,4 +149,17 @@ class BulkEmailName:
         if not category in self.categories:
             self.add_category(category)
         self.categories[category].append(email)
+
+
+if __name__ == '__main__':
+
+    bm = BulkEmailManager()
+    
+    bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.global_, bm.parentsELEM)
+    bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.parentlink, bm.parentlink('jiyunpark16'))
+    bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.teacherlink, bm.teacherlink('jiyunpark16'))
+    bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.hrlink, bm.hrlink('jiyunpark16'))
+
+    bm.output_json()
+
 
