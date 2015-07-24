@@ -103,7 +103,7 @@ class AutoSendTree(AbstractTree):
 
     def build_automagic_emails(self):
 
-        bm = BulkEmailManager(self.home)
+        bm = BulkEmailManager()
 
         self.logger.debug("Setting email lists")
 
