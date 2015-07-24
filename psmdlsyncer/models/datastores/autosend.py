@@ -177,8 +177,8 @@ class AutoSendTree(AbstractTree):
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.studentsSEC)
 
                 if this_grade:
-                    bm.add_email(student.email, bm.cat.grades_, bm.studentsGRADE(this_grade))
-                    bm.add_emails(student.teacher_emails, bm.cat.grades_, bm.teachersGRADE(this_grade))
+                    bm.add_email(student.email, bm.cat.grades, bm.studentsGRADE(this_grade))
+                    bm.add_emails(student.teacher_emails, bm.cat.grades, bm.teachersGRADE(this_grade))
 
                 if student.homeroom:
                     bm.add_email(student.email, bm.cat.homerooms, bm.studentsHOMEROOM(student.homeroom))
