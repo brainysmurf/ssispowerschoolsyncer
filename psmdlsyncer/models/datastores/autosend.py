@@ -108,18 +108,18 @@ class AutoSendTree(AbstractTree):
 
         # Set up the user information
 
-        production = gns.config.defaults.production
-        if production:
-            users = [item[4] for item in pwd.getpwall()]
-            # TODO: Use the home in settings.ini
-            path_to_script = gns.config.directories.path_to_newstudent_script
-            write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
-        else:
-            path_to_users = gns.config.directories.path_to_users
-            users = os.listdir(path_to_users)
-            write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
+        # production = gns.config.defaults.production
+        # if production:
+        #     users = [item[4] for item in pwd.getpwall()]
+        #     # TODO: Use the home in settings.ini
+        #     path_to_script = gns.config.directories.path_to_newstudent_script
+        #     write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
+        # else:
+        #     path_to_users = gns.config.directories.path_to_users
+        #     users = os.listdir(path_to_users)
+        #     write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
 
-        check_users = lambda x: x.idnumber in users
+        # check_users = lambda x: x.idnumber in users
 
         # Loop through all the students, baby
 
