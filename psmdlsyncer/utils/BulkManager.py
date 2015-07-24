@@ -71,6 +71,10 @@ class BulkEmailManager:
         self.add_name('activities')
         self.cat.activities = 'activities'
 
+    def to_JSON(self):
+        return json.dumps(self, default=lambda o: o.__dict__, 
+            sort_keys=True, indent=4)
+
     def add_name(self, name):
         self.email_lists[name] = BulkEmailName(self.path, name)
 
@@ -96,7 +100,7 @@ class BulkEmailManager:
     def output_json(self):
         input('uh')
         with open('result.json', 'w') as f:
-            json.dump(self.email_lists)
+            return json.dump(self.email_lists, default=lambda o: o.__dict__, sort_keys=True, indent=4)
 
 class BulkEmailName:
     """
@@ -160,6 +164,6 @@ if __name__ == '__main__':
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.teacherlink, bm.teacherlink('jiyunpark16'))
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.homeroomlink, bm.hrlink('jiyunpark16'))
 
-    bm.output_json()
-
+    result = bm.output_json()
+    print(result)
 
