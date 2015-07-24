@@ -223,7 +223,7 @@ class AutoSendTree(AbstractTree):
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWAELEM)
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWAGRADE(this_grade))
             else:
-                usebccparentsNOTSWA.extend( student.guardian_emails )
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTSWA)
 
         bm.output_all()
         exit()
