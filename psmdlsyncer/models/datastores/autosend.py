@@ -170,7 +170,7 @@ class AutoSendTree(AbstractTree):
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsELEM)
                 bm.add_emails(student.guardian_emails, bm.cat.parentlink, bm.parentlink(student.username))
                 bm.add_emails(student.guardian_emails, bm.cat.teacherlink, bm.teacherlink(student.username))
-                bm.add_emails(student.guardian_emails, bm.cat.hrlink, bm.hrlink(student.username))
+                bm.add_emails(student.guardian_emails, bm.cat.homeroomlink, bm.hrlink(student.username))
 
             if student.is_secondary:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSEC)
