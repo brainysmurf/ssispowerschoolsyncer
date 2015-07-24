@@ -183,13 +183,13 @@ class AutoSendTree(AbstractTree):
                 if student.homeroom:
                     bm.add_email(student.email, bm.cat.homerooms, bm.studentsHOMEROOM(student.homeroom))
 
-                bm.add_email(student.guardian_emails, bm.cat.parentlink, bm.parentlink(student.username))
+                bm.add_emails(student.guardian_emails, bm.cat.parentlink, bm.parentlink(student.username))
                 bm.add_emails(student.teacher_emails, bm.cat.teacherlink, bm.teacherlink(student.username))
                 bm.add_email(student.homeroom_teacher_email, bm.cat.homeroomlink, bm.hrlink(student.username))
 
                 for group in student.groups:
                     bm.add_email(student.email, bm.cat.classes, bm.groups(group.name))
-                    bm.add_email(student.guardian_emails, bm.cat.classes, bm.groupsPARENTS(group.name))
+                    bm.add_emails(student.guardian_emails, bm.cat.classes, bm.groupsPARENTS(group.name))
 
             if student.is_chinese and not excluded_from_chinese_list(student):
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESE)
