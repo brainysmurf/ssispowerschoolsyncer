@@ -95,8 +95,6 @@ class BulkEmailManager:
 
     def output_json(self):
         with open('result.json', 'w') as f:
-
-
             return json.dumps(self.email_lists, default=lambda o: o.categories, sort_keys=True, indent=4)
 
 class BulkEmailName:
