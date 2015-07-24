@@ -215,7 +215,7 @@ class AutoSendTree(AbstractTree):
                 student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANELEM)
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANGRADE(this_grade))
             else:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTGGERMAN)
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTGERMAN)
 
             if student.is_SWA:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWA)
