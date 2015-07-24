@@ -220,6 +220,8 @@ class AutoSendTree(AbstractTree):
             if student.is_SWA:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWA)
                 student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWASEC)
+                student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWAELEM)
+                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWAGRADE(this_grade))
             else:
                 usebccparentsNOTSWA.extend( student.guardian_emails )
 
