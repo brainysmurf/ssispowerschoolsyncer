@@ -1,4 +1,5 @@
 import gns
+from psmdlsyncer.files import clear_folder
 
 class BulkEmailManager:
     path = gns('{config.directories.path_to_postfix}') or '/tmp/bulkemail/results'
