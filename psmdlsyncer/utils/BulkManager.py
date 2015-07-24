@@ -158,7 +158,7 @@ if __name__ == '__main__':
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.global_, bm.parentsELEM)
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.parentlink, bm.parentlink('jiyunpark16'))
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.teacherlink, bm.teacherlink('jiyunpark16'))
-    bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.hrlink, bm.hrlink('jiyunpark16'))
+    bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.homeroomlink, bm.homeroomlink('jiyunpark16'))
 
     bm.output_json()
 
