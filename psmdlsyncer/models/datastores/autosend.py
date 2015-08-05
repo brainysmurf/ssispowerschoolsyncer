@@ -115,26 +115,26 @@ class AutoSendTree(AbstractTree):
     def output_json(self):
         self.bm.output_json()
 
-    def build_automagic_emails(self):
+    def build_automagic_emails(self, make_new_students=False):
 
         self.bm = BulkEmailManager()
 
         self.logger.debug("Setting email lists")
 
         # Set up the user information
+        if make_new_students:
+            production = gns.config.defaults.production
+            if production:
+                users = [item[4] for item in pwd.getpwall()]
+                # TODO: Use the home in settings.ini
+                path_to_script = gns.config.directories.path_to_newstudent_script
+                write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
+            else:
+                path_to_users = gns.config.directories.path_to_users
+                users = os.listdir(path_to_users)
+                write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
 
-        production = gns.config.defaults.production
-        if production:
-            users = [item[4] for item in pwd.getpwall()]
-            # TODO: Use the home in settings.ini
-            path_to_script = gns.config.directories.path_to_newstudent_script
-            write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
-        else:
-            path_to_users = gns.config.directories.path_to_users
-            users = os.listdir(path_to_users)
-            write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
-
-        check_users = lambda x: x.idnumber in users
+            check_users = lambda x: x.idnumber in users
 
         for student_key in self.students.get_keys():
             student = self.students.get_key(student_key)
@@ -151,9 +151,10 @@ class AutoSendTree(AbstractTree):
                 except NoResultFound:
                     pass 
 
-            if student.grade >= 4 and not check_users(student):
-                self.logger.warning("Making new student email {}".format(student))
-                subprocess.call(write_user(student))
+            if make_new_students:
+                if student.grade >= 4 and not check_users(student):
+                    self.logger.warning("Making new student email {}".format(student))
+                    subprocess.call(write_user(student))
 
             # TODO: Check for now grade or homeroom and warn
             if student.grade is "" or student.grade is None:
