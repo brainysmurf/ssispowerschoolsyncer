@@ -113,7 +113,7 @@ class AutoSendTree(AbstractTree):
             self.logger.warn("newaliases not run!")
 
     def output_json(self):
-        self.bm.output_json()
+        self.self.bm.output_json()
 
     def build_automagic_emails(self, make_new_students=False):
 
@@ -169,74 +169,74 @@ class AutoSendTree(AbstractTree):
             if student.grade <= 0:
                 this_grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(this_grade, None)
 
-            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsALL)
-            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGRADE(this_grade))
-            bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsHROOM(student.homeroom))
+            self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsALL)
+            self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsGRADE(this_grade))
+            self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsHROOM(student.homeroom))
 
             if student.is_elementary:
                 if student.grade >= 4:
-                    bm.add_email(student.email, bm.cat.global_, bm.studentsGRADE(student.grade))
+                    self.bm.add_email(student.email, self.bm.cat.global_, self.bm.studentsGRADE(student.grade))
                     for group in student.groups:
-                        bm.add_email(student.email, bm.cat.classes, bm.groups(group.name))
-                        bm.add_email(student.email, bm.cat.classes, bm.groupsPARENTS(group.name))
+                        self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groups(group.name))
+                        self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groupsPARENTS(group.name))
 
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.parentlink, bm.parentlink(student.username))
-                bm.add_emails(student.guardian_emails, bm.cat.teacherlink, bm.teacherlink(student.username))
-                bm.add_emails(student.guardian_emails, bm.cat.homeroomlink, bm.hrlink(student.username))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsELEM)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.parentlink, self.bm.parentlink(student.username))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.teacherlink, self.bm.teacherlink(student.username))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.homeroomlink, self.bm.hrlink(student.username))
 
             if student.is_secondary:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSEC)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.studentsSEC)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsSEC)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.studentsSEC)
 
                 if this_grade:
-                    bm.add_email(student.email, bm.cat.grades, bm.studentsGRADE(this_grade))
-                    bm.add_emails(student.teacher_emails, bm.cat.grades, bm.teachersGRADE(this_grade))
+                    self.bm.add_email(student.email, self.bm.cat.grades, self.bm.studentsGRADE(this_grade))
+                    self.bm.add_emails(student.teacher_emails, self.bm.cat.grades, self.bm.teachersGRADE(this_grade))
 
                 if student.homeroom:
-                    bm.add_email(student.email, bm.cat.homerooms, bm.studentsHOMEROOM(student.homeroom))
+                    self.bm.add_email(student.email, self.bm.cat.homerooms, self.bm.studentsHOMEROOM(student.homeroom))
 
-                bm.add_emails(student.guardian_emails, bm.cat.parentlink, bm.parentlink(student.username))
-                bm.add_emails(student.teacher_emails, bm.cat.teacherlink, bm.teacherlink(student.username))
-                bm.add_email(student.homeroom_teacher_email, bm.cat.homeroomlink, bm.hrlink(student.username))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.parentlink, self.bm.parentlink(student.username))
+                self.bm.add_emails(student.teacher_emails, self.bm.cat.teacherlink, self.bm.teacherlink(student.username))
+                self.bm.add_email(student.homeroom_teacher_email, self.bm.cat.homeroomlink, self.bm.hrlink(student.username))
 
                 for group in student.groups:
-                    bm.add_email(student.email, bm.cat.classes, bm.groups(group.name))
-                    bm.add_emails(student.guardian_emails, bm.cat.classes, bm.groupsPARENTS(group.name))
+                    self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groups(group.name))
+                    self.bm.add_emails(student.guardian_emails, self.bm.cat.classes, self.bm.groupsPARENTS(group.name))
 
             if student.is_chinese and not excluded_from_chinese_list(student):
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESE)
-                student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESESEC)
-                student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESEELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsCHINESEGRADE(this_grade))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsCHINESE)
+                student.is_secondary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsCHINESESEC)
+                student.is_elementary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsCHINESEELEM)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsCHINESEGRADE(this_grade))
 
             if student.is_korean:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREAN)
-                student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANSEC)
-                student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsKOREANGRADE(this_grade))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsKOREAN)
+                student.is_secondary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsKOREANSEC)
+                student.is_elementary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsKOREANELEM)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsKOREANGRADE(this_grade))
 
             if student.is_japanese:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESE)
-                student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESESEC)
-                student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESEELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsJAPANESEGRADE(this_grade))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsJAPANESE)
+                student.is_secondary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsJAPANESESEC)
+                student.is_elementary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsJAPANESEELEM)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsJAPANESEGRADE(this_grade))
 
             if student.is_german:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMAN)
-                student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANSEC)
-                student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsGERMANGRADE(this_grade))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsGERMAN)
+                student.is_secondary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsGERMANSEC)
+                student.is_elementary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsGERMANELEM)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsGERMANGRADE(this_grade))
             else:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTGERMAN)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsNOTGERMAN)
 
             if student.is_SWA:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWA)
-                student.is_secondary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWASEC)
-                student.is_elementary and bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWAELEM)
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsSWAGRADE(this_grade))
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsSWA)
+                student.is_secondary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsSWASEC)
+                student.is_elementary and self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsSWAELEM)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsSWAGRADE(this_grade))
             else:
-                bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTSWA)
+                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsNOTSWA)
 
         # Secondary Activities
         # Gets all the students that are enrolled as self (or meta, why meta, because they use that for enrollments)
@@ -265,8 +265,8 @@ class AutoSendTree(AbstractTree):
                                     'but has left. Ignored. {}'.format(student_key))
                 continue
             normalized_name = name_to_email(activity_name)
-            bm.add_email(student.email, bm.cat.activities, normalized_name)
-            bm.add_emails(student.guardian_emails, bm.cat.activities+"ACT", normalized_name+'ACTPARENTS')
+            self.bm.add_email(student.email, self.bm.cat.activities, normalized_name)
+            self.bm.add_emails(student.guardian_emails, self.bm.cat.activities+"ACT", normalized_name+'ACTPARENTS')
 
 
 
