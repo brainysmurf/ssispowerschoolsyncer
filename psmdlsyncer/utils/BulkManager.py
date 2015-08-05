@@ -90,7 +90,7 @@ class BulkEmailManager:
             self.email_lists[name] = BulkEmailName(self.path, name)
         self.email_lists[name].add_email(email, category)
 
-    def output_all(self):
+    def output_all_aliases(self):
         for name in self.email_lists:
             self.email_lists[name].output_aliases()
 
