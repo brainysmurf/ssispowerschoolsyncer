@@ -133,7 +133,7 @@ class BulkEmailName:
         return "{path}/{category}{ext}".format(path=self.path, ext=self.ext, category=category)
 
     def include_statement(self, category):
-        return gns('{category}{COLON}{SPACE}{include}{path}{category}{ext}', 
+        return gns('{category}{COLON}{SPACE}{include}{path}{SLASH}{category}{ext}', 
                 path=self.path, name=self.name, 
                 category=category, ext=self.ext, include=":include:")
 
