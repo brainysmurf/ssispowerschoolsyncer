@@ -147,6 +147,7 @@ def launch(obj, inspect=False):
         autosend = AutoSendTree()
         autosend.process()
         autosend.build_automagic_emails(make_new_students=True)
+        autosend.output_all_aliases()
         autosend.run_newaliases()
 
     else:
