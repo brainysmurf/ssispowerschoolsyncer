@@ -94,7 +94,11 @@ class Parent(BaseModel):
 
     @property
     def cohorts(self):
-        return self._cohorts
+        ret = self._cohorts
+        for child in self.children:
+            grade = child.grade
+            ret.append('parents{}'.format(grade))
+        return ret
 
     @property
     def cohort_idnumbers(self):
