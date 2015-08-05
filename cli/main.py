@@ -146,7 +146,7 @@ def launch(obj, inspect=False):
         from psmdlsyncer.models.datastores.autosend import AutoSendTree
         autosend = AutoSendTree()
         autosend.process()
-        autosend.build_automagic_emails()
+        autosend.build_automagic_emails(make_new_students=True)
         autosend.run_newaliases()
 
     else:
