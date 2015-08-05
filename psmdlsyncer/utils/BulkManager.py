@@ -132,7 +132,6 @@ class BulkEmailName:
     def path_to_category(self, category):
         return "{path}/{category}{ext}".format(path=self.path, ext=self.ext, category=category)
 
-    @property
     def include_statement(self, category):
         return gns('{category}{COLON}{SPACE}{include}{path}{SLASH}{category}{ext}', 
                 path=self.path, name=self.name, 
