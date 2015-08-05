@@ -115,6 +115,9 @@ class AutoSendTree(AbstractTree):
     def output_json(self):
         self.bm.output_json()
 
+    def output_all_aliases(self):
+        self.bm.output_all_aliases()
+
     def build_automagic_emails(self, make_new_students=False):
 
         self.bm = BulkEmailManager()
