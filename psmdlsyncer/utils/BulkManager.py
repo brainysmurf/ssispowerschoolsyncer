@@ -155,7 +155,6 @@ class BulkEmailName:
             self.add_category(category)
         self.categories[category].append(email)
 
-
 if __name__ == '__main__':
 
     bm = BulkEmailManager()

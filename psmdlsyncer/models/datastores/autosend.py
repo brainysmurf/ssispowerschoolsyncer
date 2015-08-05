@@ -100,9 +100,24 @@ class AutoSendTree(AbstractTree):
         for homeroom in the_list:
             click.echo('<a href="mailto:?bcc=usebccparents{0}@student.ssis-suzhou.net">usebccparents{0}@student.ssis-suzhou.net</a><br />'.format(homeroom))
 
+    def run_newaliases(self):
+        """
+        Runs newaliases
+        """
+        newaliases_path = gns.config.email.newaliases_path
+        if newaliases_path:
+            self.logger.info("Running newaliases")
+            p = subprocess.Popen(newaliases_path, shell=True)
+            self.logger.info(p.communicate())
+        else:
+            self.logger.warn("newaliases not run!")
+
+    def output_json(self):
+        self.bm.output_json()
+
     def build_automagic_emails(self):
 
-        bm = BulkEmailManager()
+        self.bm = BulkEmailManager()
 
         self.logger.debug("Setting email lists")
 
@@ -252,46 +267,6 @@ class AutoSendTree(AbstractTree):
             bm.add_email(student.email, bm.cat.activities, normalized_name)
             bm.add_emails(student.guardian_emails, bm.cat.activities+"ACT", normalized_name+'ACTPARENTS')
 
-        # DO THE ACTIVITY EMAILS
-        # ns.path = gns.config.directories.path_to_postfix
-        # ns.base = 'activities'
-        # ns.SUFFIX = "ACT"
-        # ns.EXT = '.txt'
-        # ns.INCLUDE = ':include:'
-        # ns.activities_path = ns('{path}{SLASH}activities')
-        # with open(ns('{path}{SLASH}{base}{EXT}'), 'w'):
-        #     pass
 
-        # for activity_name in activities_postfix:
-            
-        #     ns.handle = name_to_email(activity_name)
-        #     ns.full_email = ns('{handle}{SUFFIX}')
-        #     if ns.handle == ns('{SUFFIX}'):
-        #         continue
-        #     with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
-        #         f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
-        #                    '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
-        #     with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
-        #         f.write("\n".join(activities_postfix[activity_name]))
 
-        # ns.SUFFIX = "ACTPARENTS"
-        # for activity_name in activities_postfix_parents:
-        #     ns.handle = name_to_email(activity_name)
-        #     ns.full_email = ns('{handle}{SUFFIX}')
-        #     if ns.handle == ns('{SUFFIX}'):
-        #         continue
-        #     with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
-        #         f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
-        #                    '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
-        #     with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
-        #         f.write("\n".join(activities_postfix_parents[activity_name]))
 
-        # run newaliases command on exit if we're on the server
-        newaliases_path = gns.config.email.newaliases_path
-        if newaliases_path:
-            self.logger.info("Running newaliases")
-            p = subprocess.Popen(newaliases_path, shell=True)
-            self.logger.info(p.communicate())
-        else:
-            self.logger.warn("newaliases not run!")
-        #TODO: If received error, should email admin
