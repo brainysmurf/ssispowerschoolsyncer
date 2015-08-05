@@ -113,7 +113,7 @@ class AutoSendTree(AbstractTree):
             self.logger.warn("newaliases not run!")
 
     def output_json(self):
-        self.self.bm.output_json()
+        self.bm.output_json()
 
     def build_automagic_emails(self, make_new_students=False):
 
