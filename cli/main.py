@@ -147,6 +147,7 @@ def launch(obj, inspect=False):
         autosend = AutoSendTree()
         autosend.process()
         autosend.build_automagic_emails()
+        autosend.run_newaliases()
 
     else:
         print("Can't run, is the hostname wrong?")
@@ -261,6 +262,15 @@ def bulk_emails():
     Figure out stuff with bulk email system
     """
     pass
+
+@bulk_emails.command()
+def output_bulk_email_json():
+    from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    autosend = AutoSendTree()
+    autosend.process()
+    autosend.build_automagic_emails()
+    autosend.run_newaliases()
+
 
 @bulk_emails.command()
 @click.argument('username', metavar="<DragonNet Username>")
