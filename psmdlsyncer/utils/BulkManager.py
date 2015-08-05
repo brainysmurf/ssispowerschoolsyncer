@@ -116,9 +116,9 @@ class BulkEmailName:
         clear_folder(self.path)
 
     def output_aliases(self):
-        for category in self.categories:
-            with open(self.path_to_alias_definitions, 'w') as f:
-                f.write('\n'.join([e for e in self.category_emails(category) if e]))
+        with open(self.path_to_alias_definitions, 'w') as f:
+            for category in self.categories:
+                f.write(self.include_statement(category))
 
         for category in self.categories:
             this_path = self.path_to_category(category)
@@ -133,15 +133,10 @@ class BulkEmailName:
         return "{path}/{category}{ext}".format(path=self.path, ext=self.ext, category=category)
 
     @property
-    def include_statements(self):
-        ret = []
-        for category in self.categories:
-            ret.append(
-                gns('{category}{COLON}{SPACE}{include}{path}{SLASH}{category}{ext}', 
+    def include_statement(self, category):
+        return gns('{category}{COLON}{SPACE}{include}{path}{SLASH}{category}{ext}', 
                 path=self.path, name=self.name, 
                 category=category, ext=self.ext, include=":include:")
-            )
-        return ret
 
     def category_emails(self, category):
         return self.categories[category]
@@ -165,5 +160,6 @@ if __name__ == '__main__':
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.teacherlink, bm.teacherlink('jiyunpark16'))
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.homeroomlink, bm.hrlink('jiyunpark16'))
 
+    bm.output_all_aliases()
     bm.output_json()
 
