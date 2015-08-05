@@ -1,6 +1,7 @@
+import os, json
+
 from psmdlsyncer.files import clear_folder
 import gns
-import json
 
 class BulkEmailManager:
     path = gns('{config.directories.path_to_postfix}') or '/tmp/bulkemail/results'
@@ -94,8 +95,11 @@ class BulkEmailManager:
             self.email_lists[name].output_aliases()
 
     def output_json(self):
-        with open('result.json', 'w') as f:
-            return json.dumps(self.email_lists, default=lambda o: o.categories, sort_keys=True, indent=4)
+        bulk_email_folder = gns.config.directories.path_to_bulk_mail_output
+        path = os.join(bulk_email_folder, 'result.json')
+        with open(path, 'w') as f:
+            f.write(json.dumps(self.email_lists, default=lambda o: o.categories, sort_keys=True, indent=4))
+        os.chown(path, int(user_id), int(group_id))
 
 class BulkEmailName:
     """
@@ -159,6 +163,5 @@ if __name__ == '__main__':
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.teacherlink, bm.teacherlink('jiyunpark16'))
     bm.add_emails(['here@example.com', 'there@example.com'], bm.cat.homeroomlink, bm.hrlink('jiyunpark16'))
 
-    result = bm.output_json()
-    print(result)
+    bm.output_json()
 

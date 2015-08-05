@@ -87,7 +87,6 @@ class AutoSendTree(AbstractTree):
 
         super().process()
 
-
     def process_mrbs_editor(self):
         for teacher in self.teachers.get_objects():
             self.mrbs_editor.make(teacher.ID)
@@ -109,20 +108,18 @@ class AutoSendTree(AbstractTree):
 
         # Set up the user information
 
-        # production = gns.config.defaults.production
-        # if production:
-        #     users = [item[4] for item in pwd.getpwall()]
-        #     # TODO: Use the home in settings.ini
-        #     path_to_script = gns.config.directories.path_to_newstudent_script
-        #     write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
-        # else:
-        #     path_to_users = gns.config.directories.path_to_users
-        #     users = os.listdir(path_to_users)
-        #     write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
+        production = gns.config.defaults.production
+        if production:
+            users = [item[4] for item in pwd.getpwall()]
+            # TODO: Use the home in settings.ini
+            path_to_script = gns.config.directories.path_to_newstudent_script
+            write_user = lambda x: ["/bin/bash", path_to_script, x.idnumber, x.username, "'{}'".format(x.lastfirst)]
+        else:
+            path_to_users = gns.config.directories.path_to_users
+            users = os.listdir(path_to_users)
+            write_user = lambda x: ['touch', '{}/{}'.format(path_to_users, x.idnumber)]
 
-        # check_users = lambda x: x.idnumber in users
-
-        # Loop through all the students, baby
+        check_users = lambda x: x.idnumber in users
 
         for student_key in self.students.get_keys():
             student = self.students.get_key(student_key)
@@ -139,9 +136,9 @@ class AutoSendTree(AbstractTree):
                 except NoResultFound:
                     pass 
 
-            # if student.grade >= 4 and not check_users(student):
-            #     self.logger.warning("Making new student email {}".format(student))
-            #     subprocess.call(write_user(student))
+            if student.grade >= 4 and not check_users(student):
+                self.logger.warning("Making new student email {}".format(student))
+                subprocess.call(write_user(student))
 
             # TODO: Check for now grade or homeroom and warn
             if student.grade is "" or student.grade is None:
@@ -225,183 +222,6 @@ class AutoSendTree(AbstractTree):
             else:
                 bm.add_emails(student.guardian_emails, bm.cat.global_, bm.parentsNOTSWA)
 
-        print(bm.output_json())
-        exit()
-
-        # # GRADES
-        # directory_write = []
-        # for ns.grade in usebccparentsGRADE:
-        #     directory_write.append( ns('usebccparents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grades{SLASH}usebccparents{grade}{EXT}') )
-        #     with open( ns('{PATH}{SLASH}grades{SLASH}usebccparents{grade}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(usebccparentsGRADE[ns.grade])) )
-        # for ns.grade in usebccstudentsGRADE:
-        #     directory_write.append( ns('usebccstudents{grade}{COLON}{INCLUDE}{PATH}{SLASH}grades{SLASH}usebccstudents{grade}{EXT}') )
-        #     with open( ns('{PATH}{SLASH}grades{SLASH}usebccstudents{grade}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(usebccstudentsGRADE[ns.grade])) )
-        # for ns.grade in teachersGRADE:
-        #     directory_write.append( ns('teachers{grade}{COLON}{INCLUDE}{PATH}{SLASH}grades{SLASH}teachers{grade}{EXT}') )
-        #     with open( ns('{PATH}{SLASH}grades{SLASH}teachers{grade}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(teachersGRADE[ns.grade])) )
-        # with open( ns('{PATH}{SLASH}grades{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(directory_write) )
-
-        #     #HS
-
-        # # HOMEROOMS
-        # directory_write = []
-        # for ns.homeroom in self.usebccparentsHOMEROOM:
-        #     directory_write.append( ns('usebccparents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}') )
-        #     with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccparents{homeroom}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(self.usebccparentsHOMEROOM[ns.homeroom])) )
-        # for ns.homeroom in self.usebccstudentsHOMEROOM:
-        #     directory_write.append( ns('usebccstudents{homeroom}{COLON}{INCLUDE}{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}') )
-        #     with open( ns('{PATH}{SLASH}homerooms{SLASH}usebccstudents{homeroom}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(self.usebccstudentsHOMEROOM[ns.homeroom])) )
-        # with open( ns('{PATH}{SLASH}homerooms{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(directory_write) )
-
-        # # TEACHERLINK
-        # directory_write = []
-        # for ns.student in teacherlink:
-        #     directory_write.append( ns('{student}TEACHERS{COLON}{INCLUDE}{PATH}{SLASH}teacherlink{SLASH}{student}TEACHERS{EXT}') )
-        #     with open( ns('{PATH}{SLASH}teacherlink{SLASH}{student}TEACHERS{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(teacherlink[ns.student])) )
-        # with open( ns('{PATH}{SLASH}teacherlink{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(directory_write) )
-
-        # # PARENTLINK
-        # directory_write = []
-        # for ns.student in parentlink:
-        #     directory_write.append( ns('{student}PARENTS{COLON}{INCLUDE}{PATH}{SLASH}parentlink{SLASH}{student}PARENTS{EXT}') )
-        #     with open( ns('{PATH}{SLASH}parentlink{SLASH}{student}PARENTS{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(parentlink[ns.student])) )
-        # with open( ns('{PATH}{SLASH}parentlink{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(directory_write) )
-
-        # # HRLINK
-        # directory_write = []
-        # for ns.student in hrlink:
-        #     if hrlink[ns.student]:  # not all kids have a homeroom teacher....
-        #         directory_write.append( ns('{student}HR{COLON}{INCLUDE}{PATH}{SLASH}homeroomlink{SLASH}{student}HR{EXT}') )
-        #         with open( ns('{PATH}{SLASH}homeroomlink{SLASH}{student}HR{EXT}'), 'w') as f:
-        #             try:
-        #                 f.write( '\n'.join(set(hrlink[ns.student])) )
-        #             except TypeError:
-        #               pass
-
-        # with open( ns('{PATH}{SLASH}homeroomlink{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(directory_write) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsALL{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsALL) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsSEC) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsALL{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccstudentsALL) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccstudentsSEC) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsELEM{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsELEM) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsCHINESE) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESESEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsCHINESESEC) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESEELEM{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsCHINESEELEM) )
-
-        # for ns.grade in usebccparentsCHINESEGRADE:
-        #     with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{grade}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(usebccparentsCHINESEGRADE[ns.grade])) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsKOREAN) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREANELEM{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsKOREANSEC) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREANSEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsKOREANSEC) )
-
-        # for ns.grade in usebccparentsKOREANGRADE:
-        #     with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(usebccparentsKOREANGRADE[ns.grade])) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsJAPANESE) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESESEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsJAPANESESEC) )
-
-        # for ns.grade in usebccparentsJAPANESEGRADE:
-        #     with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(usebccparentsJAPANESEGRADE[ns.grade])) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsSWA{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsSWA) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsNOTSWA{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsNOTSWA) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsGERMAN{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsGERMAN) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccparentsNOTGERMAN{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccparentsNOTGERMAN) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSWA{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccstudentsSWA) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsALL{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccstudentsALL) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}usebccstudentsSEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(usebccstudentsSEC) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}koreanstudentsSEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(koreanstudentsSEC) )
-
-        # with open( ns('{PATH}{SLASH}special{SLASH}chinesestudentsSEC{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(chinesestudentsSEC) )
-
-        # with open( ns('{PATH}{SLASH}special{EXT}'), 'w') as f:
-        #     for ns.this in ['usebccparentsALL', 'usebccparentsSEC', 'usebccstudentsALL', 'usebccstudentsSEC', 'usebccparentsELEM',
-        #                     'usebccparentsKOREAN', 'usebccparentsKOREANSEC', 'usebccparentsKOREANELEM',
-        #                     'usebccparentsCHINESE', 'usebccparentsCHINESESEC', 'usebccparentsCHINESEELEM',
-        #                     'usebccparentsJAPANESE', 'usebccparentsJAPANESESEC', 'usebccparentsJAPANESEELEM',
-        #                     'usebccparentsSWA', 'usebccstudentsSWA', 'usebccparentsNOTSWA', 'usebccparentsNOTGERMAN', 'usebccparentsGERMAN', 'koreanstudentsSEC', 'chinesestudentsSEC']:
-        #         f.write( ns('{this}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}{this}{EXT}{NEWLINE}') )
-        #     for ns.grade in usebccparentsKOREANGRADE:
-        #         f.write( ns('usebccparentsKOREAN{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsKOREAN{grade}{EXT}{NEWLINE}') )
-        #     for ns.grade in usebccparentsCHINESEGRADE:
-        #         f.write( ns('usebccparentsCHINESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsCHINESE{grade}{EXT}{NEWLINE}') )
-        #     for ns.grade in usebccparentsJAPANESEGRADE:
-        #         f.write( ns('usebccparentsJAPANESE{grade}{COLON}{INCLUDE}{PATH}{SLASH}special{SLASH}usebccparentsJAPANESE{grade}{EXT}{NEWLINE}') )
-
-        # # CLASSES
-        # directory_write = []
-        # for ns.klass in classes:
-        #     directory_write.append( ns('{klass}{COLON}{INCLUDE}{PATH}{SLASH}classes{SLASH}{klass}{EXT}') )
-        # for ns.klass in classesPARENTS:
-        #     directory_write.append( ns('{klass}PARENTS{COLON}{INCLUDE}{PATH}{SLASH}classes{SLASH}{klass}PARENTS{EXT}') )
-        # with open( ns('{PATH}{SLASH}classes{EXT}'), 'w') as f:
-        #     f.write( '\n'.join(directory_write) )
-
-        # for ns.klass in classes:
-        #     with open( ns('{PATH}{SLASH}classes{SLASH}{klass}{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(classes[ns.klass])) )
-
-        # for ns.klass in classesPARENTS:
-        #     with open( ns('{PATH}{SLASH}classes{SLASH}{klass}PARENTS{EXT}'), 'w') as f:
-        #         f.write( '\n'.join(set(classesPARENTS[ns.klass])) )
-
-
         # Secondary Activities
         # Gets all the students that are enrolled as self (or meta, why meta, because they use that for enrollments)
         # That is in the activities category
@@ -421,10 +241,6 @@ class AutoSendTree(AbstractTree):
                         )
                 )).all()
 
-        ns = NS2()
-        ns.domain = 'student.ssis-suzhou.net'
-        activities_postfix = defaultdict(list)
-        activities_postfix_parents = defaultdict(list)
         for result in results:
             activity_name, student_key = result
             student = self.students.get_key(student_key)
@@ -432,42 +248,43 @@ class AutoSendTree(AbstractTree):
                 self.logger.info('This student enrolled into activity, ' + \
                                     'but has left. Ignored. {}'.format(student_key))
                 continue
-            activities_postfix[activity_name].append(student.email)
-            activities_postfix_parents[activity_name].append(student.parent_link_email)
+            normalized_name = name_to_email(activity_name)
+            bm.add_email(student.email, bm.cat.activities, normalized_name)
+            bm.add_emails(student.guardian_emails, bm.cat.activities+"ACT", normalized_name+'ACTPARENTS')
 
         # DO THE ACTIVITY EMAILS
-        ns.path = gns.config.directories.path_to_postfix
-        ns.base = 'activities'
-        ns.SUFFIX = "ACT"
-        ns.EXT = '.txt'
-        ns.INCLUDE = ':include:'
-        ns.activities_path = ns('{path}{SLASH}activities')
-        with open(ns('{path}{SLASH}{base}{EXT}'), 'w'):
-            pass
+        # ns.path = gns.config.directories.path_to_postfix
+        # ns.base = 'activities'
+        # ns.SUFFIX = "ACT"
+        # ns.EXT = '.txt'
+        # ns.INCLUDE = ':include:'
+        # ns.activities_path = ns('{path}{SLASH}activities')
+        # with open(ns('{path}{SLASH}{base}{EXT}'), 'w'):
+        #     pass
 
-        for activity_name in activities_postfix:
+        # for activity_name in activities_postfix:
             
-            ns.handle = name_to_email(activity_name)
-            ns.full_email = ns('{handle}{SUFFIX}')
-            if ns.handle == ns('{SUFFIX}'):
-                continue
-            with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
-                f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
-                           '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
-            with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
-                f.write("\n".join(activities_postfix[activity_name]))
+        #     ns.handle = name_to_email(activity_name)
+        #     ns.full_email = ns('{handle}{SUFFIX}')
+        #     if ns.handle == ns('{SUFFIX}'):
+        #         continue
+        #     with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
+        #         f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
+        #                    '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
+        #     with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
+        #         f.write("\n".join(activities_postfix[activity_name]))
 
-        ns.SUFFIX = "ACTPARENTS"
-        for activity_name in activities_postfix_parents:
-            ns.handle = name_to_email(activity_name)
-            ns.full_email = ns('{handle}{SUFFIX}')
-            if ns.handle == ns('{SUFFIX}'):
-                continue
-            with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
-                f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
-                           '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
-            with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
-                f.write("\n".join(activities_postfix_parents[activity_name]))
+        # ns.SUFFIX = "ACTPARENTS"
+        # for activity_name in activities_postfix_parents:
+        #     ns.handle = name_to_email(activity_name)
+        #     ns.full_email = ns('{handle}{SUFFIX}')
+        #     if ns.handle == ns('{SUFFIX}'):
+        #         continue
+        #     with open(ns('{path}{SLASH}{base}{EXT}'), 'a') as f:
+        #         f.write(ns('{full_email}{COLON}{SPACE}{INCLUDE}' + \
+        #                    '{activities_path}{SLASH}{full_email}{EXT}{NEWLINE}'))
+        #     with open(ns('{activities_path}{SLASH}{full_email}{EXT}'), 'a') as f:
+        #         f.write("\n".join(activities_postfix_parents[activity_name]))
 
         # run newaliases command on exit if we're on the server
         newaliases_path = gns.config.email.newaliases_path
