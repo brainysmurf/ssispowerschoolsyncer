@@ -118,7 +118,7 @@ class BulkEmailName:
     def output_aliases(self):
         with open(self.path_to_alias_definitions, 'w') as f:
             for category in self.categories:
-                f.write(self.include_statement(category))
+                f.write(self.include_statement(category)+'\n')
 
         for category in self.categories:
             this_path = self.path_to_category(category)
@@ -133,7 +133,7 @@ class BulkEmailName:
         return "{path}/{category}{ext}".format(path=self.path, ext=self.ext, category=category)
 
     def include_statement(self, category):
-        return gns('{category}{COLON}{SPACE}{include}{path}{SLASH}{category}{ext}', 
+        return gns('{category}{COLON}{SPACE}{include}{path}{category}{ext}', 
                 path=self.path, name=self.name, 
                 category=category, ext=self.ext, include=":include:")
 

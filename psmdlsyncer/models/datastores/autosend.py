@@ -268,8 +268,8 @@ class AutoSendTree(AbstractTree):
                                     'but has left. Ignored. {}'.format(student_key))
                 continue
             normalized_name = name_to_email(activity_name)
-            self.bm.add_email(student.email, self.bm.cat.activities, normalized_name)
-            self.bm.add_emails(student.guardian_emails, self.bm.cat.activities+"ACT", normalized_name+'ACTPARENTS')
+            self.bm.add_email(student.email, self.bm.cat.activities, normalized_name+'ACT')
+            self.bm.add_emails(student.guardian_emails, self.bm.cat.activities, normalized_name+'ACTPARENTS')
 
 
 
