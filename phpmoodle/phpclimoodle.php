@@ -358,12 +358,8 @@ class moodlephp
           return "-200 Cannot find plugin, used enrolid $enrolid";
         }
 
-    	  $today = time();
-
-    	  $today = make_timestamp(date('Y', $today), date('m', $today), date('d', $today), 0, 0, 0);
-    	  $timestart = $today;
+        $timestart = time();
     	  $timeend = 0;
-
     	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
     	}
 
