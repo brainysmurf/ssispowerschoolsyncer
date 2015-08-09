@@ -60,7 +60,7 @@ def output():
 @click.option('--email/--no_email', default=False, help="Email them or not (requires smtp server of course)")
 @click.option('--edit_email/--no_edit_email', default=False, help="Email to some agent an email with edit links")
 @click.option('--output/--no_output', default=False, help="Output to stdout?")
-@click.option('--group_sec_all/--dont_group_sec_all', default=False, help="Output to stdout?")
+@click.option('--publish/--dont_publish', default=False, help="Goes to group-sec-all and elem-sec-all")
 @click.option('--update_date_fields/--dont_update_date_fields', default=False, help="Output to stdout?")
 @click.pass_obj
 def launch(obj, email=False, edit_email=False, output=False, publish=False, update_date_fields=False):
