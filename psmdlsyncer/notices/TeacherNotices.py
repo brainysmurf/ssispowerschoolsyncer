@@ -41,7 +41,7 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.attachment_field = 'Attached Content'
         self.section_field = 'School Section'
 
-        self.priority_usernames = ['lucyburden', 'richardbruford', 'nicholaslittle']
+        self.priority_usernames = ['lucyburden', 'dominicthomas', 'rebeccalouiseclentwo', 'richardbruford', 'nicholaslittle']
         self.setup_priorities()
 
     def post_to_wordpress(self, *args, **kwargs):
