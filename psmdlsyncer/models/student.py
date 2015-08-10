@@ -1,7 +1,8 @@
+import logging
+
 from psmdlsyncer.models.base import BaseModel
 from psmdlsyncer.utils.Dates import get_year_of_graduation, get_years_since_enrolled, get_academic_start_date
 from psmdlsyncer.utils.Utilities import no_whitespace_all_lower
-from psmdlsyncer.settings import logging
 from psmdlsyncer.utils import NS, weak_reference
 from collections import defaultdict
 import re
@@ -80,8 +81,8 @@ class Student(BaseModel):
     kind = 'student'
     excluded_courses = ['XSTUDYSH1112']  #TODO: Make this a setting
 
-    def __init__(self, num, stuid, grade, homeroom, lastfirst, dob, parent_emails,
-        entry_date, department, nationality,
+    def __init__(self, num, stuid="", grade="", homeroom="", lastfirst=",", dob="", parent_emails="",
+        entry_date="", department="", nationality="",
         username=None):
         """
         @param grade Pass None to derive from homeroom

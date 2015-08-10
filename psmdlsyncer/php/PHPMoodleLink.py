@@ -2,9 +2,9 @@
 Exposes native Moodle functions to python
 Uses pexpect utility
 """
-
+import logging
 from psmdlsyncer.utils import NS
-from psmdlsyncer.settings import config_get_section_attribute, logging
+from psmdlsyncer.settings import config_get_section_attribute
 import pexpect, sys, os
 
 class CallPHP:

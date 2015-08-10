@@ -37,7 +37,7 @@ class MoodleTree(AbstractTree):
         Go through the students and make parents based on that data
         """
         for idnumber, parent_id, _, _, _, _, _, _, _, _, username in self.parent_info.content():
-            self.parents.make_parent(idnumber, parent_id, _, _, _, _, _, _, _, _, username=username)
+            self.parents.make_parent(idnumber, parent_id, username=username)
 
     def process_online_portfolios(self):
         for key in self.district_online_portfolios.content():
@@ -97,7 +97,7 @@ class MoodleTree(AbstractTree):
             method = getattr(self, "{}_schedule".format(school))
             for schedule in method.content():
                 self.default_logger('Processing {} schedule: {}'.format(school, schedule))
-                course_key, period_info, section_number, teacher_key, student_key, groupName = schedule
+                course_key, period_info, section_number, teacher_key, student_key, groupId, groupName = schedule
 
                 # We should check if we're dealing with a parent account or not
                 # because we have to manually put in enrollments
@@ -133,16 +133,7 @@ class MoodleTree(AbstractTree):
                             teacher = NS2()
                             teacher.username = teacher_key
 
-                    #group = self.groups.make_group(course, teacher, section_number)
-                    group = self.groups.make_group_from_name(groupName)
-
-                    # BEFORE section_maps WAS IMPLEMENTED:  
-                    # if section_number:
-                    #     group = self.groups.make_group("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
-                    # else:
-                    #     #self.logger.warning("No section number for group {}!".format(group))
-                    #     #continue
-                    #     group = self.groups.make_group("{}{}".format(teacher.username, course.ID), course.idnumber)
+                    group = self.groups.make_group_from_id(groupId, groupName)
 
                     # Now put in enrollments manually
                     enrollment = {course.ID: [group.ID]}
@@ -158,15 +149,7 @@ class MoodleTree(AbstractTree):
                         self.logger.warning("Course not found! {}".format(course_key))
                         continue
 
-                    #group = self.groups.make_group(course, teacher, section_number)
-                    group = self.groups.make_group_from_name(groupName)
-
-                    # if section_number:
-                    #     group = self.groups.make("{}{}-{}".format(teacher.username, course.ID, section_number), course.idnumber)
-                    # else:
-                    #     self.logger.warning("No section number for group {}!".format(group))
-                    #     continue
-                    #     group = self.groups.make("{}{}".format(teacher.username, course.ID), course.idnumber)
+                    group = self.groups.make_group_from_id(groupId, groupName)
 
                     student = self.students.get_key(student_key)
                     if not student:

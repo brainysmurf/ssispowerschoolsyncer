@@ -10,7 +10,7 @@ class Course(BaseModel):
     kind = "course"
     grade_sep = ','
 
-    def __init__(self, course_id, course_name, grade="", database_id=0):
+    def __init__(self, course_id, course_name="", grade="", database_id=0):
         """
         @param grade has to be a string by default
         @param database_id has to be an integer

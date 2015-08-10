@@ -84,6 +84,7 @@ class AutoSendTree(AbstractTree):
 
         # This will ensure that sections persist with the same -a, -b nomenclature over time
         self.groups.section_maps = section_maps
+        self.groups.period_info = {}
 
         super().process()
 

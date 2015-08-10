@@ -192,7 +192,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 				if not teacher:
 					self.logger.warning("Teacher not found! {}".format(teacher_key))
 					continue
-				group = self.groups.make_group(course, teacher, section_number)
+				group = self.groups.make_group(course, teacher, section_number, period_info)
 				if not group:
 					self.logger.warning("Group not found! {}".format(section_number))
 					continue

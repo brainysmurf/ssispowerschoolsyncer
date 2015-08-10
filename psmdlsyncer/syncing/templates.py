@@ -61,7 +61,7 @@ class DefaultTemplate:
 
     def old_parent_link(self, item):
         pass
- 
+
     def homeroom_changed(self, item):
         self.default_logger("Put {0.right} in homeroom: {0.right.homeroom}".format(item))
 
@@ -267,7 +267,8 @@ class MoodleTemplate(DefaultTemplate):
                 self.moodle.update_table('user', where={
                     'idnumber':student.idnumber
                     },
-                    department='left')
+                    deleted=1)
+
             except (NoResultFound, MultipleResultsFound):
                 self.logger.warn("Did not update homeroom field for student {}".format(student))
 
@@ -300,17 +301,9 @@ class MoodleTemplate(DefaultTemplate):
                 self.moodle.update_table('user', where={
                     'idnumber':teacher.idnumber
                     },
-                    department='delete')
-            except (NoResultFound, MultipleResultsFound):
-                self.logger.warn("Did not update homeroom field for teacher {}".format(teacher))
-            try:
-                self.moodle.update_table('user', where={
-                    'idnumber':teacher.idnumber
-                    },
                     deleted=1)
             except (NoResultFound, MultipleResultsFound):
                 self.logger.warn("Could not set deleted of teacher {} to 1".format(teacher))
-
 
             self.remove_user_from_all_groups(teacher)
 
@@ -330,9 +323,11 @@ class MoodleTemplate(DefaultTemplate):
                 self.moodle.update_table('user', where={
                     'idnumber':parent.idnumber
                     },
-                    department='delete')
-            except (NoResultFound, MultipleResultsFound):
-                self.logger.warn("Did not update homeroom field for parent {}".format(parent))
+                    deleted=1)
+            except NoResultFound:
+                self.logger.warn("Could not delete parent {}".format(parent))
+            except MultipleResultsFound:
+                self.logger.warn('Multiple parent accounts for {}'.format(parent.idnumber))
     
             self.remove_user_from_all_groups(parent)
 
@@ -422,17 +417,19 @@ class MoodleTemplate(DefaultTemplate):
 
     def deenrol_teacher_from_course(self, item):
         super().deenrol_from_course(item)   # for output
-        #user = item.right.idnumber
-        #course = item.param.course
-        #group = item.param.group
-        #self.moodlemod.deenrol_teacher_from_course(user, course)
+        user = item.right.idnumber
+        course = item.param.course
+        group = item.param.group
+        self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
+        user = item.right.idnumber
+        course = item.param.course
+        group = item.param.group
+        if hasattr(user, 'grade') and user.grade == 12:
+            return
         super().deenrol_from_course(item)   # for output
-        #user = item.right.idnumber
-        #course = item.param.course
-        #group = item.param.group
-        #self.moodlemod.deenrol_student_from_course(user, course)
+        self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
         #super().deenrol_from_course(item)   # for output
@@ -449,9 +446,9 @@ class MoodleTemplate(DefaultTemplate):
 
     def remove_from_cohort(self, item):
         super().remove_from_cohort(item)
-        #user = item.left.idnumber
-        #cohort = item.param
-        #self.moodlemod.remove_user_from_cohort(user, cohort)
+        user = item.left.idnumber
+        cohort = item.param
+        self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
         if not item.right.course:
@@ -530,6 +527,8 @@ class MoodleTemplate(DefaultTemplate):
                     username=to_what)
             except IntegrityError:
                 self.logger.warning('Got integrity error trying to change user {}\'s username to {}'.format(idnumber, to_what))
+            except NoResultFound:
+                self.default_logger('Cannot change username for {} as not found in moodle: {}'.format(idnumber, item))    
             super().username_changed(item)
         else:
             justgrade = functools.partial(re.sub, '[a-z_]', '')
@@ -559,17 +558,17 @@ class MoodleTemplate(DefaultTemplate):
         self.moodle.add_user_custom_profile(person, field, value)
 
     def homeroom_changed(self, item):
-        super().homeroom_changed(item)
         student = item.left
         from_what = item.left.homeroom
         homeroom = item.param
-        self.moodle.update_table('user', where={
-            'idnumber':student.idnumber
-            },
-            department=homeroom)
-        #self.default_logger("Successfully changed user {}'s homeroom from {} to {}".format(
-        #    idnumber, from_what, to_what
-        #    ))
+        try:
+            self.moodle.update_table('user', where={
+                'idnumber':student.idnumber
+                },
+                department=homeroom)
+            super().homeroom_changed(item)
+        except NoResultFound:
+            self.default_logger('Could not change homeroom for {} as not found in moodle'.format(item))
 
     def course_grade_changed(self, item):
         for i in range(len(item.param)):

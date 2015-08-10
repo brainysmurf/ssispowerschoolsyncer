@@ -1,4 +1,4 @@
-from psmdlsyncer.settings import logging
+import logging
 import re
 import os
 import csv

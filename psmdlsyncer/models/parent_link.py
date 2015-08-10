@@ -8,7 +8,7 @@ from psmdlsyncer.utils import NS, weak_reference
 from psmdlsyncer.models.base import BaseModel
 
 class ParentLink(BaseModel):
-    def __init__(self, parent_idnumber, child_idnumber):
+    def __init__(self, parent_idnumber, child_idnumber=None):
         self.parent_idnumber = self.ID = self.idnumber = parent_idnumber
         self.children = []
 

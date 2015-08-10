@@ -97,6 +97,7 @@ class Parent(BaseModel):
         ret = self._cohorts
         for child in self.children:
             grade = child.grade
+            #substituted_grade = {-1: 'K', -2: ''}
             ret.append('parents{}'.format(grade))
         return ret
 
@@ -239,7 +240,7 @@ class Parent(BaseModel):
 
 class MoodleParent(Parent):
 
-    def __init__(self, idnumber, database_id, dunno, *args, username):
+    def __init__(self, idnumber, database_id="", dunno="", username=""):
         super().__init__(idnumber)
         self.idnumber = idnumber
         self._username = username

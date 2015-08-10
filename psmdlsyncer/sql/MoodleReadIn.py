@@ -100,13 +100,13 @@ class MoodleImport(MoodleDBSession):
         Makes a generator that outputs basically outputs SSIS' bell schedule
         First does an SQL statement to get the raw data, and then processes it in python
         to get the expected output.
-        (Getting it done in pure sql with nested seelcts was just a bit too tedius)
+        (Getting it done in pure sql with nested selects was just a bit too tedius)
         """
         results = defaultdict(lambda : defaultdict(list))
         for row in self.bell_schedule():
             _period = ''
-            courseID, userID, username, roleName, groupname = row
-            if not groupname:
+            courseID, userID, username, roleName, groupId, groupName = row
+            if not groupId:
                 continue
 
             # Do different things based on the role
@@ -114,9 +114,9 @@ class MoodleImport(MoodleDBSession):
 
             if roleName == "editingteacher":
                 # TODO: Can be deleted, right?
-                # if not groupname:
-                #     groupname = username + courseID
-                results[groupname]['course'] = courseID
+                # if not groupId:
+                #     groupId = username + courseID
+                results[groupId]['course'] = courseID
 
                 # Most probably, there will only be one teacher in this group
                 # But hard-coding it as one object seems wrong, so use a list
@@ -125,7 +125,7 @@ class MoodleImport(MoodleDBSession):
                 #        There isn't any reason for them to do that
                 #        But we should probably close that off
                 #        (Maybe look at the username before adding here?)
-                results[groupname]['teachers'].append(userID)
+                results[groupId]['teachers'].append(userID)
 
             elif roleName == "manager":
                 # what do we do in this case?
@@ -137,50 +137,50 @@ class MoodleImport(MoodleDBSession):
                     # TODO: Unenrol them?
                     continue
 
-                if not groupname:
+                if not groupId:
                     #TODO: Figure out why the SQL query returns so many blank groups
                     continue
 
-                if not userID in results[groupname]['students']:
-                    results[groupname]['students'].append(userID)
+                if not userID in results[groupId]['students']:
+                    results[groupId]['students'].append(userID)
 
             elif roleName == "parent":
                 # The below will work okay because we sorted the query by name
                 # and Teacher comes before Parent
                 # a bit of a workaround, but it should work okay
-                if not groupname:
+                if not groupId:
                     #TODO: Figure out why the SQL query returns so many blank groups
                     continue
 
-                if '-' in groupname:
-                    section = groupname.split('-')[1]
+                if '-' in groupId:
+                    section = groupId.split('-')[1]
                 else:
                     section = ''
-                    #self.logger.warning("Found when processing parent, moodle group {} does not have a section number attached, so much be illigitmate".format(groupname))
+                    #self.logger.warning("Found when processing parent, moodle group {} does not have a section number attached, so much be illigitmate".format(groupId))
                     # TODO: we should indicate the enrollment by yielding what we can
                     #continue
 
-                teachers = results[groupname]['teachers']
-                course = results[groupname]['course']
+                teachers = results[groupId]['teachers']
+                course = results[groupId]['course']
                 if not teachers:
-                    if groupname[-2] == '-':
-                        groupname = groupname[:-2]
+                    if groupId[-2] == '-':
+                        groupId = groupId[:-2]
                     # first do a heuristic to see if we can't get the teacher username from the group name
-                    derived_teacher = re.sub('[^a-z]', '', groupname)
+                    derived_teacher = re.sub('[^a-z]', '', groupId)
                     if derived_teacher:
                         teachers = [derived_teacher]
                     else:
-                        self.logger.warning("Group with no teacher info: {}!".format(groupname))
+                        self.logger.warning("Group with no teacher info: {}!".format(groupId))
                 if not course:
-                    if groupname[-2] == '-':
-                        groupname = groupname[:-2]
-                    derived_course = re.sub('[a-z]', '', groupname)
+                    if groupId[-2] == '-':
+                        groupId = groupId[:-2]
+                    derived_course = re.sub('[a-z]', '', groupId)
                     if derived_course:
                         course = derived_course
                     else:
-                        self.logger.warning("No course for group {}".format(groupname))
+                        self.logger.warning("No course for group {}".format(groupId))
                 for teacher in teachers:
-                    yield course, _period, section, teacher, userID, groupname
+                    yield course, _period, section, teacher, userID, groupId, groupName
 
             else:
                 # non-editing teachers...
@@ -195,13 +195,16 @@ class MoodleImport(MoodleDBSession):
                 # continue
             teachers = results[group]['teachers']
             course = results[group]['course']
-            if not course or not teachers:
+            if course and not teachers:
                 self.logger.warning("Group with no teacher info: {}!".format(group))
+                continue
+            elif not course:
+                self.logger.warning("Empty course {} that has a group?: {}!".format(str(course), group))
                 continue
 
             for student in results[group]['students']:
                 for teacher in teachers:
-                    yield course, _period, section, teacher, student, group
+                    yield course, _period, section, teacher, student, groupId, groupName
 
 if __name__ == "__main__":
 

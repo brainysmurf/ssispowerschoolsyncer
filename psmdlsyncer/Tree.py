@@ -2,6 +2,7 @@
 Holds all information about a particular student
 Reads in from Powerschool file
 """
+import logging
 
 from psmdlsyncer.files import AutoSendFile, SimpleReader
 from psmdlsyncer.exceptions import BasicException, NoSuchStudent
@@ -12,7 +13,7 @@ from psmdlsyncer.utils import NS
 import datetime
 from psmdlsyncer.files import clear_folder
 
-from psmdlsyncer.settings import define_command_line_arguments, config_get_section_attribute, logging
+from psmdlsyncer.settings import define_command_line_arguments, config_get_section_attribute
 
 import re
 from collections import defaultdict

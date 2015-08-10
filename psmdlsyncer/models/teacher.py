@@ -13,7 +13,7 @@ NOSCHOOLID = 0
 class Teacher(BaseModel):
     kind = "teacher"
 
-    def __init__(self, num, database_id, lastfirst, email, title, schoolid, staffstatus, status, **kwargs):
+    def __init__(self, num, database_id=0, lastfirst=",", email="", title="", schoolid="", staffstatus="", status="", **kwargs):
         self.num = num
         self.ID = num
         self.powerschool_id = num

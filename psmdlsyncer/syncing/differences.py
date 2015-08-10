@@ -1,5 +1,4 @@
-
-from psmdlsyncer.settings import logging
+import logging
 from psmdlsyncer.utils.modifications import ModificationStatement
 from psmdlsyncer.utils import NS2
 from psmdlsyncer.syncing.templates import DefaultTemplate
@@ -38,12 +37,12 @@ class DetermineChanges:
         self.default_logger("Right: {}".format(self.right))
         self._re_process = False
         self.go()
-        if self._re_process: #self._re_process:
-            self.logger.info('REPROCESSING')
-            self.left.re_process()
-            # You don't need to re_process self.right
-            # because that's the stuff you "need", and that hasn't changed
-            self.go()
+        # if self._re_process: #self._re_process:
+        #     self.logger.info('REPROCESSING')
+        #     self.left.re_process()
+        #     # You don't need to re_process self.right
+        #     # because that's the stuff you "need", and that hasn't changed
+        #     self.go()
 
     def go(self, **kwargs):
         debug = config_get_section_attribute('DEBUGGING', 'print_dispatches')
@@ -60,6 +59,9 @@ class DetermineChanges:
             else:
                 #TODO: Handle unrecognized statuses here
                 self.logger.warning("This item wasn't handled, because a handler ({}) wasn't defined!".format(item.status))
+
+            #input('::')
+
 
     def get_subbranch(self, tree, subbranch):
         """
@@ -86,9 +88,11 @@ class DetermineChanges:
 
         assert(len(self.left.get_subbranches()) == len(self.right.get_subbranches()))
 
+        # NOTE, removed custom_profile_fields and timetable_datas
+
         subbranches = [
-        'cohorts', 'course_metadatas', 'courses', 'teachers', 'students',
-        'groups', 'parents', 'parent_links', 'timetable_datas', 'custom_profile_fields', 'online_portfolios'
+        'cohorts', 'courses', 'teachers', 'students',
+        'groups', 'parents', 'parent_links', 'online_portfolios'
         ] # self.left.get_subbranches()
 
         for subbranch in subbranches:
@@ -111,15 +115,21 @@ class DetermineChanges:
                     )
 
         # Now go through the model and inspect the individual items
+        # We have to go through each key on the left side, and on the right
+
         for subbranch in subbranches:
             self.default_logger("Individual items: {}".format(subbranch))
             left_branch = self.get_subbranch(self.left, subbranch)
             right_branch = self.get_subbranch(self.right, subbranch)
 
+            # Left side:
             for item_key in left_branch:
                 item_left = left_branch.get(item_key)
                 item_right = right_branch.get(item_key)
                 if item_left and item_right:
+
+                    # The model itself defines how to look at each item with __sub__
+                    # And we just yield that result
                     for left_minus_right in item_left - item_right:
                         yield ModificationStatement(
                             left = left_minus_right.left,
@@ -127,6 +137,38 @@ class DetermineChanges:
                             status = left_minus_right.status,
                             param = left_minus_right.param
                             )
+
+            # short circuit out of this
+
+            if subbranch in ["parent_links", "online_portfolios"]:
+                # not compatible with the below, especially with make, because it wants the child
+                continue
+
+            # Right side:
+            for item_key in right_branch:
+                item_left = left_branch.get(item_key)
+                item_right = right_branch.get(item_key)
+
+                # Same principal as with the left side, but
+                # there is a special case where, there is something on the right
+                # but nothing on the left
+                # The modification statement for "new_" will be spit out by the above
+                # so we can just make a proxy object in order to manufacture the yield statements
+                if item_right and not item_left and item_right.idnumber:
+
+                    # Makes an empty, default one
+                    fake = getattr(self.left, subbranch).\
+                            make(item_right.idnumber)
+
+                    # Notice fake - item_right
+                    for right_minus_left in fake - item_right:
+                        yield ModificationStatement(
+                            left = right_minus_left.left,
+                            right = right_minus_left.right,
+                            status = right_minus_left.status,
+                            param = right_minus_left.param
+                            )
+
 
         for subbranch in subbranches:
             self.default_logger("Looking for old {}".format(subbranch))
@@ -140,6 +182,8 @@ class DetermineChanges:
                     status = NS2.string("old_{term}", term=subbranch[:-1]),
                     param = key
                     )
+
+
 
 
 

@@ -94,29 +94,29 @@ def verbosity(passed):
     else:
         return False
 
-# setup a few loggers
-import logging
-path_to_logging = config_get_section_attribute('DIRECTORIES', 'path_to_logging')
-if not path_to_logging:
-    print("You have to add a path_to_logging settings in DIRECTORIES section, which should be a directory")
-    exit()
-#used to keep this in a file, let's just set it up right, shall we?
-log_level = config_get_section_attribute('LOGGING', 'log_level')
-numeric_level = getattr(logging, log_level.upper())
-if numeric_level is None:
-    raise ValueError('Invalid log level: {}'.format(loglevel))
+# # setup a few loggers
+# import logging
+# path_to_logging = config_get_section_attribute('DIRECTORIES', 'path_to_logging')
+# #if not path_to_logging:
+#     print("You have to add a path_to_logging settings in DIRECTORIES section, which should be a directory")
+#     exit()
+# #used to keep this in a file, let's just set it up right, shall we?
+# log_level = config_get_section_attribute('LOGGING', 'log_level')
+# numeric_level = getattr(logging, log_level.upper())
+# if numeric_level is None:
+#     raise ValueError('Invalid log level: {}'.format(loglevel))
 
-import datetime
-path_to_logging += str(datetime.datetime.now().isoformat())
-logging.basicConfig(filename=path_to_logging, filemode='a+', level=numeric_level)
+# import datetime
+# path_to_logging += str(datetime.datetime.now().isoformat())
+# logging.basicConfig(filename=path_to_logging, filemode='a+', level=numeric_level)
 
-if sys.stdout.isatty():
-    # running with an attached terminal, automatically
-    # set stdout debugging to full verbosity
-    root = logging.getLogger()
-    stdout_level = logging.DEBUG
-    stdout_handler = logging.StreamHandler(sys.stdout)
-    stdout_handler.setLevel(logging.INFO)
-    root.addHandler(stdout_handler)
+# if sys.stdout.isatty():
+#     # running with an attached terminal, automatically
+#     # set stdout debugging to full verbosity
+#     root = logging.getLogger()
+#     stdout_level = logging.DEBUG
+#     stdout_handler = logging.StreamHandler(sys.stdout)
+#     stdout_handler.setLevel(logging.INFO)
+#     root.addHandler(stdout_handler)
 
-__all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments, logging]
+__all__ = [verbose, verbosity, dry_run, email_server, config, requires_setting, define_command_line_arguments]

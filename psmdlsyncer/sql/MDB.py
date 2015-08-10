@@ -265,7 +265,7 @@ class MoodleDBSession(MoodleDBSess):
 
         with DBSession() as session:
             schedule = session.query(
-                    Course.idnumber.label("courseID"), User.idnumber.label("userID"), User.username.label('username'), Role.shortname.label('rolename'), Group.idnumber.label('groupName')
+                    Course.idnumber.label("courseID"), User.idnumber.label("userID"), User.username.label('username'), Role.shortname.label('rolename'), Group.idnumber.label('groupIdNumber'), Group.name.label('groupName')
                     ).select_from(Course).\
                         join(CourseCategory, CourseCategory.id == Course.category).\
                         join(Context, Course.id == Context.instanceid).\
@@ -284,6 +284,7 @@ class MoodleDBSession(MoodleDBSess):
                                 Group.name != None,
                                 Course.idnumber != '',
                                 User.idnumber != '',
+                                User.deleted == 0
                             )).\
                         order_by(asc(Role.id))   # sort by role.id because it's in the natural order expected (teachers first, then students, then parents)
             for item in schedule.all():
@@ -687,8 +688,12 @@ if __name__ == "__main__":
     # result = m.wrap_no_result(m.get_user_from_idnumber, 'xxxx')
     # assert(result is None)
 
-    for item in m.users_enrolled_in_these_cohorts(['studentsALL']):
-        print(item.idnumber)
+    #for item in m.users_enrolled_in_these_cohorts(['studentsALL']):
+    #    print(item.idnumber)
+    for item in m.bell_schedule():
+        course, student_num, teacher_name, role, group_name = item
+        if role == 'editingteacher':
+            print(item)
 
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
