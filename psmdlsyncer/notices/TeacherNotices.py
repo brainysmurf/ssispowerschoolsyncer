@@ -33,15 +33,17 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.agents = ['adammorris@ssis-suzhou.net']
         self.agent_map = {
             'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'dominicthomas@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'nicholaslittle@ssis-suzhou.net':['Whole School', 'Secondary']
+            'yoonahlee@ssis-suzhou.net':['Whole School', 'Elementary'],
+            'carmenmurray@ssis-suzhou.net':['Whole School', 'Elementary'],
+            'neilmarshallinns@ssis-suzhou.net':['Whole School', 'Elementary'],
+            'nicholaslittle@ssis-suzhou.net':['Whole School', 'Secondary'],
             }
         self.search_date = "next day"
         self.content_field = 'Full Content'
         self.attachment_field = 'Attached Content'
         self.section_field = 'School Section'
 
-        self.priority_usernames = ['lucyburden', 'dominicthomas', 'rebeccalouiseclentwo', 'richardbruford', 'nicholaslittle']
+        self.priority_usernames = ['lucyburden', 'dominicthomas', 'rebeccalouiseclentwo', 'richardbruford', 'nicholaslittle', 'yoonahlee', 'carmenmurray', 'neilmarshallinns']
         self.setup_priorities()
 
     def post_to_wordpress(self, *args, **kwargs):
