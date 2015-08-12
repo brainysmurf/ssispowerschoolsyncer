@@ -59,7 +59,7 @@ def name_to_email(long_name):
     try:
         where = long_name.index(')')
     except ValueError:
-        where = -1
+        return None
     where += 1
     long_name = long_name[where:].strip().lower()
     return re.sub('[^a-z0-9]', '', long_name)
@@ -205,8 +205,8 @@ class AutoSendTree(AbstractTree):
                 self.bm.add_email(student.homeroom_teacher_email, self.bm.cat.homeroomlink, self.bm.hrlink(student.username))
 
                 for group in student.groups:
-                    self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groups(group.name))
-                    self.bm.add_emails(student.guardian_emails, self.bm.cat.classes, self.bm.groupsPARENTS(group.name))
+                    self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groups(group.idnumber))
+                    self.bm.add_emails(student.guardian_emails, self.bm.cat.classes, self.bm.groupsPARENTS(group.idnumber))
 
             if student.is_chinese and not excluded_from_chinese_list(student):
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsCHINESE)
@@ -269,6 +269,8 @@ class AutoSendTree(AbstractTree):
                                     'but has left. Ignored. {}'.format(student_key))
                 continue
             normalized_name = name_to_email(activity_name)
+            if not normalized_name:
+                continue
             self.bm.add_email(student.email, self.bm.cat.activities, normalized_name+'ACT')
             self.bm.add_emails(student.guardian_emails, self.bm.cat.activities, normalized_name+'ACTPARENTS')
 
