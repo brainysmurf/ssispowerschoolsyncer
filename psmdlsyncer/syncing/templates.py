@@ -446,9 +446,9 @@ class MoodleTemplate(DefaultTemplate):
 
     def remove_from_cohort(self, item):
         super().remove_from_cohort(item)
-        user = item.left.idnumber
-        cohort = item.param
-        self.moodlemod.remove_user_from_cohort(user, cohort)
+        #user = item.left.idnumber
+        #cohort = item.param
+        #self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
         if not item.right.course:
