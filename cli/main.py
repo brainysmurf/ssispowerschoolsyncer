@@ -73,7 +73,7 @@ def launch(obj, email=False, edit_email=False, output=False, publish=False, upda
             obj.notices.email_editing = False
             obj.notices.agent_map = {
                 'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary', 'Elementary'],
-                'group-elem-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
+                'group-es-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
                 }
 
         obj.notices.email_to_agents()
