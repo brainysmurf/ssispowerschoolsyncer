@@ -86,6 +86,7 @@ class DefaultTemplate:
         self.default_logger("Add {0.left} to group {2} in course {1}".format(item, course, group))
 
     def remove_from_group(self, item):
+        return  # no
         course = item.param.course
         group = item.param.group
         self.default_logger("Remove {0.left} from group {2} in course {1}".format(item, course, group))
@@ -242,6 +243,7 @@ class MoodleTemplate(DefaultTemplate):
             self.moodlemod.remove_user_from_group(user.idnumber, group.idnumber)
 
     def old_student(self, item):
+        return 
         super().old_student(item)
         student = item.left
 
@@ -286,6 +288,7 @@ class MoodleTemplate(DefaultTemplate):
             #self.remove_user_from_all_groups(student)
 
     def old_teacher(self, item):
+        return
         super().old_teacher(item)
         teacher = item.left
 
@@ -308,6 +311,7 @@ class MoodleTemplate(DefaultTemplate):
             self.remove_user_from_all_groups(teacher)
 
     def old_parent(self, item):
+        return
         super().old_parent(item)
         parent = item.left
 
@@ -416,6 +420,7 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def deenrol_teacher_from_course(self, item):
+        return
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
@@ -423,6 +428,7 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
+        return
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -432,6 +438,7 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
+        return
         #super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
@@ -445,10 +452,11 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.add_user_to_cohort(user, cohort)
 
     def remove_from_cohort(self, item):
+        return
         super().remove_from_cohort(item)
-        #user = item.left.idnumber
-        #cohort = item.param
-        #self.moodlemod.remove_user_from_cohort(user, cohort)
+        user = item.left.idnumber
+        cohort = item.param
+        self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
         if not item.right.course:
@@ -503,6 +511,7 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))
 
     def remove_from_group(self, item):
+        return
         super().remove_from_group(item)
         user = item.right.idnumber
         group = item.param.group
@@ -611,6 +620,7 @@ class MoodleTemplate(DefaultTemplate):
             self.moodlemod.associate_child_to_parent(item.right.parent_idnumber, child_idnumber)
 
     def deassociate_child_from_parent(self, item):
+        return
         super().deassociate_child_from_parent(item)
 
     def new_mrbs_editor(self, item):
