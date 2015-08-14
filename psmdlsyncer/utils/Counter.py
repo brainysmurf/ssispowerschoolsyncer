@@ -23,7 +23,10 @@ class Counter:
         Returns a list of the highest-frequency items
         in the order in which they were added
         """
-        maximum = max(self._ordered.values())
+        if self._ordered.values():
+            maximum = max(self._ordered.values())
+        else:
+            return []
         r = []
         for item in self._ordered:
             if self._ordered[item] == maximum and item not in r:
