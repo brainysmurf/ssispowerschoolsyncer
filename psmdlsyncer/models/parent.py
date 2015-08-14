@@ -51,8 +51,10 @@ class Parent(BaseModel):
         # TODO: do a check here with common
         if len(common) == 1:
             return common[0]
-        else:
+        elif len(common) > 1:
             return common[1]
+        else:
+            return "<no username?>"
 
     @property
     def email(self):
