@@ -174,6 +174,9 @@ class moodlephp
           if (!$user) {
             return "-104 Could not create account for $username because ".$e->getMessage()." Tried to recover deleted record, nothing";
           }
+          if (substr($user->idnumber, 0, 4) != substr($idnumber, 0, 4)) {
+            return "-105 Could not create account for $username because there is a deleted account that already has that username. Needs to be fixed manually";
+          }
       }
 
       $user->deleted = 0;
