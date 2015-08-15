@@ -168,9 +168,15 @@ class moodlephp
       }
 
       catch( Exception $e ) {
-          return "-104 Could not create account for $username because ".$e->getMessage()." This can happen if the user was defined twice, with two different powerschool ids";
+
+          // Probably what happened is that there is a record already with the given username. 
+          $user = $DB->get_record_select( 'user' , 'username = ?', array($username) );
+          if (!$user) {
+            return "-104 Could not create account for $username because ".$e->getMessage()." Tried to recover deleted record, nothing";
+          }
       }
 
+      $user->deleted = 0;
       $user->email = trim($email);
       $user->firstname = trim($firstname);
       $user->lastname = trim($lastname);

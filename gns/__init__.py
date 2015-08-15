@@ -49,7 +49,7 @@ class GNS(object):
                 value = settings.get(SECTION, OPTION)
                 setattr(getattr(self.config, section), option, self.pythonize(value))
 
-        path_to_logging = self('{config.directories.path_to_logging}/{date}', date=datetime.datetime.now().strftime('%x--%X').replace('/', '-'))
+        path_to_logging = self('{config.directories.path_to_logging}/{date}', date=datetime.datetime.now().strftime('%Y/%m/%d--%X').replace('/', '-'))
         #used to keep this in a file, let's just set it up right, shall we?
         log_level = self.config.logging.log_level
         numeric_level = getattr(logging, log_level.upper())

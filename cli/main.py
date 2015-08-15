@@ -114,9 +114,10 @@ def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hou
     obj.notices.post_to_wordpress(url, blog, author, when)
 
 @main.command()
-@click.option('--inspect/--dont_inspect', default=False, help="True to look at what is generated in the trees")
+@click.option('--inspect/--dont_inspect', default=False, help="Reads in and debug prompt")
+@click.option('--output', type=click.File(mode='w'), default=None, help="Output differences to text file")
 @click.pass_obj
-def launch(obj, inspect=False):
+def launch(obj, inspect=False, output=None):
     """
     Launch syncer stuff
     """
@@ -137,10 +138,18 @@ def launch(obj, inspect=False):
         left.groups.section_maps = {v:k for k, v in right.groups.section_maps.items()}  # items become the keys
         left.process()
 
-        if inspect:
-            config['DEBUGGING']['inspect_datastores'] = str(inspect)
+        d = DetermineChanges(left, right, MoodleTemplate)
 
-        DetermineChanges(left, right, MoodleTemplate)
+        if output:
+            for item in d.subtract():
+                output.write(str(item))
+                output.write('\n')
+            exit()
+        if inspect:
+            from IPython import embed
+            embed()
+            exit()
+        d.go()
 
     elif 'student' in hostname:
         from psmdlsyncer.models.datastores.autosend import AutoSendTree

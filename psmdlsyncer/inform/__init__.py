@@ -34,7 +34,6 @@ def inform_new_student(student):
     elif student.grade in [6, 7, 8, 9, 10]:
           email.add_cc('aubreycurran@ssis-suzhou.net')
     """
-    email.add_bcc('sammyadams@ssis-suzhou.net')
     email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
     email.define_fields(sf)
 

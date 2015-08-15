@@ -20,12 +20,6 @@ class DetermineChanges:
         if not self.right._processed:
             self.right.process()
 
-        if config_get_section_attribute('DEBUGGING', 'inspect_datastores'):
-             print('Inside DetermineChange __init__')
-             from IPython import embed
-             embed()
-             exit()
-
         if not template_klass:
             self.template = DefaultTemplate()
         else:
@@ -36,13 +30,6 @@ class DetermineChanges:
         self.default_logger("Left: {}".format(self.left))
         self.default_logger("Right: {}".format(self.right))
         self._re_process = False
-        self.go()
-        # if self._re_process: #self._re_process:
-        #     self.logger.info('REPROCESSING')
-        #     self.left.re_process()
-        #     # You don't need to re_process self.right
-        #     # because that's the stuff you "need", and that hasn't changed
-        #     self.go()
 
     def go(self, **kwargs):
         debug = config_get_section_attribute('DEBUGGING', 'print_dispatches')
