@@ -738,59 +738,39 @@ class Capability(Base):
     component = Column(String(100), nullable=False, server_default="''::character varying")
     riskbitmask = Column(BigInteger, nullable=False, server_default='0')
 
-class CategorySsisMetadatum(Base):
-    __tablename__ = 'ssismdl_category_ssis_metadata'
+# class BlockHomework(Base):
+#     __tablename__ = 'ssismdl_block_homework'
 
-    categoryid = Column(Integer, primary_key=True, nullable=False)
-    field = Column(String(255), primary_key=True, nullable=False)
-    value = Column(String(255))
+#     id = Column(BigInteger, primary_key=True, server_default="nextval('ssismdl_block_homework_id_seq'::regclass)")
+#     approved = Column(SmallInteger, nullable=False, index=True, server_default="0")
+#     userid = Column(BigInteger, index=True)
+#     courseid = Column(BigInteger, index=True)
+#     groupid = Column(BigInteger, index=True)
+#     added = Column(BigInteger)
+#     description = Column(Text)
+#     startdate = Column(Text)
+#     duedate = Column(Text)
+#     duration = Column(Text)
+#     private = Column(SmallInteger, nullable=False, index=True, server_default="0")
+#     title = Column(Text)
 
-class SsisTimetableInfo(Base):
-    __tablename__ = 'ssismdl_ssis_timetable_info'
+# class BlockHomeworkAssignDate(Base):
+#     __tablename__ = 'ssismdl_block_homework_assign_dates'
 
-    id = Column(BigInteger, primary_key=True)
-    studentuserid = Column(BigInteger, nullable=False, server_default='0')
-    courseid = Column(BigInteger, nullable=False, server_default='0')
-    teacheruserid = Column(BigInteger, nullable=False, server_default='0')
-    grade = Column(String(100), nullable=False, server_default = "''::character varying")
-    period = Column(String(100), nullable=False, server_default = "''::character varying")
-    name = Column(String(255), nullable=False, server_default = "''::character varying")
-    comment = Column(String(255), nullable=False, server_default = "''::character varying")
-    active = Column(SmallInteger, nullable=False, server_default='0')
+#     id = Column(BigInteger, primary_key=True, server_default="nextval('ssismdl_block_homework_assign_dates_id_seq'::regclass)")
+#     homeworkid = Column(BigInteger, nullable=False, index=True, server_default="0")
+#     date = Column(Text, nullable=False)
 
-class BlockHomework(Base):
-    __tablename__ = 'ssismdl_block_homework'
+# class BlockHomeworkNote(Base):
+#     __tablename__ = 'ssismdl_block_homework_notes'
+#     __table_args__ = (
+#         Index('ssismdl_blochomenote_homu2_uix', 'homeworkid', 'userid', unique=True),
+#     )
 
-    id = Column(BigInteger, primary_key=True, server_default="nextval('ssismdl_block_homework_id_seq'::regclass)")
-    approved = Column(SmallInteger, nullable=False, index=True, server_default="0")
-    userid = Column(BigInteger, index=True)
-    courseid = Column(BigInteger, index=True)
-    groupid = Column(BigInteger, index=True)
-    added = Column(BigInteger)
-    description = Column(Text)
-    startdate = Column(Text)
-    duedate = Column(Text)
-    duration = Column(Text)
-    private = Column(SmallInteger, nullable=False, index=True, server_default="0")
-    title = Column(Text)
-
-class BlockHomeworkAssignDate(Base):
-    __tablename__ = 'ssismdl_block_homework_assign_dates'
-
-    id = Column(BigInteger, primary_key=True, server_default="nextval('ssismdl_block_homework_assign_dates_id_seq'::regclass)")
-    homeworkid = Column(BigInteger, nullable=False, index=True, server_default="0")
-    date = Column(Text, nullable=False)
-
-class BlockHomeworkNote(Base):
-    __tablename__ = 'ssismdl_block_homework_notes'
-    __table_args__ = (
-        Index('ssismdl_blochomenote_homu2_uix', 'homeworkid', 'userid', unique=True),
-    )
-
-    id = Column(BigInteger, primary_key=True, server_default="nextval('ssismdl_block_homework_notes_id_seq'::regclass)")
-    homeworkid = Column(BigInteger, nullable=False, index=True)
-    userid = Column(BigInteger, nullable=False, index=True)
-    notes = Column(Text)
+#     id = Column(BigInteger, primary_key=True, server_default="nextval('ssismdl_block_homework_notes_id_seq'::regclass)")
+#     homeworkid = Column(BigInteger, nullable=False, index=True)
+#     userid = Column(BigInteger, nullable=False, index=True)
+#     notes = Column(Text)
 
 class Chat(Base):
     __tablename__ = 'ssismdl_chat'

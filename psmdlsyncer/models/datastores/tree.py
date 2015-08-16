@@ -166,8 +166,6 @@ class AbstractTree(metaclass=DataStoreCollection):
 			else:
 				course = self.courses.make_without_conversion(*course_info)
 
-			self.course_metadatas.make_course_metadata(course.idnumber, course.grade)
-
 
 	def process_schedules(self):
 		"""
@@ -205,14 +203,6 @@ class AbstractTree(metaclass=DataStoreCollection):
 
 				self.associate(course, teacher, group, student)
 
-				# timetable = self.timetables.make_timetable(
-				# 	course, teacher, group, student, section_number, period_info
-				# 	)
-				# student.add_timetable(timetable)
-				# teacher.add_timetable(timetable)
-
-				# self.timetable_datas.make_timetable_datas(course, teacher, group, student, period_info)
-
 				if student.login_method == 'manual':
 					self.online_portfolios.make(student.idnumber)
 
@@ -220,9 +210,6 @@ class AbstractTree(metaclass=DataStoreCollection):
 					self.logger.warning('{}\n{}\n{}\n'.format(teacher, group, student))
 					from IPython import embed
 					embed()
-
-	# def process_timetable_data(self):
-	# 	pass
 
 	def process_parent_links(self):
 		"""

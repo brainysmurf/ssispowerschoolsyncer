@@ -393,12 +393,6 @@ class MoodleDBSession(MoodleDBSess):
                 func.string_agg(CourseSsisMetadatum.value, ',').label('grade')).\
                 select_from(Course).\
                     join(CourseCategory, CourseCategory.id == Course.category).\
-                    join(CourseSsisMetadatum,
-                        and_(
-                            CourseSsisMetadatum.courseid == Course.id,
-                            CourseSsisMetadatum.field.like('grade%')
-                        )
-                    ).\
                     filter(and_(
                         not_(Course.idnumber == ''),
                         #CourseCategory.path == '/{}'.format(self.TEACHING_LEARNING_CATEGORY_ID)
@@ -690,10 +684,13 @@ if __name__ == "__main__":
 
     #for item in m.users_enrolled_in_these_cohorts(['studentsALL']):
     #    print(item.idnumber)
-    for item in m.bell_schedule():
-        course, student_num, teacher_name, role, group_name = item
-        if role == 'editingteacher':
-            print(item)
+    # for item in m.bell_schedule():
+    #     course, student_num, teacher_name, role, group_name = item
+    #     if role == 'editingteacher':
+    #         print(item)
+
+    for item in m.get_teaching_learning_courses():
+        print(item)
 
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
