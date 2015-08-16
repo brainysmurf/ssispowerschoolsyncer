@@ -148,7 +148,8 @@ class BulkEmailName:
             return
         if not category in self.categories:
             self.add_category(category)
-        self.categories[category].append(email)
+        if not email in self.categories[category]:
+            self.categories[category].append(email)
 
 if __name__ == '__main__':
 
