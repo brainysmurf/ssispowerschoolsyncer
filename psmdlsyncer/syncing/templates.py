@@ -459,6 +459,7 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
+        return   # create it as found...
         if not item.right.course:
             self.default_logger("Did NOT add group {} because no course available".format(item.param))
             return

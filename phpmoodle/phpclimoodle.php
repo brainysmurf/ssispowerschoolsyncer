@@ -1,6 +1,7 @@
 <?php
-
 define('CLI_SCRIPT',1);
+
+
 require_once( '../../config.php');
 require_once('../../cohort/lib.php');
 require_once('../../enrol/locallib.php');
@@ -24,6 +25,8 @@ class moodlephp
       $this->PARENT_ROLE_ID = $s->id;
       $s = $DB->get_record_select( 'role', 'archetype = ?', array('editingteacher') );
       $this->TEACHER_ROLE_ID = $s->id;
+
+      $this->debug('Constructed');
     }
 
     public function call($args) {
@@ -34,6 +37,10 @@ class moodlephp
       } else {
         return "-1 We don't have this command: ".$which_function;
       }
+    }
+
+    private function debug($data) {
+      file_put_contents('/tmp/phpoutput.txt', $data, FILE_APPEND);
     }
 
     private function add_user_to_cohort($args)
@@ -272,7 +279,7 @@ class moodlephp
       $group_name = $args[1];
 
       if ( !$group = $this->get_group_from_name($group_name) ) {
-        return "-1 Cannot get group, may because course does not exist?... ".$course_idnumber;
+        return "-1 Cannot get group, maybe because course does not exist?... ".$course_idnumber;
       }
 
       if (groups_delete_group($group)) {
@@ -286,26 +293,33 @@ class moodlephp
     {
       $course_idnumber = $args[0];
       $group_name = $args[1];
+      $this->debug("Creating group $group_name");
       global $DB;
 
       if ( !$course = $DB->get_record('course', array('idnumber'=>$course_idnumber), '*') ) {
+        $this->debug("-113 Group $group_name already there!");
         return "-112 Course does not exist!... ".$course_idnumber;
       }
 
       // check to see if there's one already there
       if ( $group = $this->get_group_from_name($group_name)) {
+        $this->debug("-113 Group $group_name already there!");
         return "-113 Group $group_name already there!";
       }
 
       $group_data = new stdClass;
       $group_data->courseid = $course->id;
+      $group_data->idnumber = $group_name;
       $group_data->name = $group_name;
 
       if (groups_create_group($group_data)) {
-        return "+".$group_name;
+        $this->debug("+ $group_name ");
+        return "+ ".$group_name;
       } else {
-        return "-114 Cannot create group, OH NO!";
+        $this->debug("-114 Cannot create group $group_name, OH NO!");
+        return "-114 Cannot create group $group_name, OH NO!";
       }
+    $this->debug('Done');
     }
 
     private function enrol_user_in_course($args)
@@ -313,6 +327,7 @@ class moodlephp
       $useridnumber = $args[0];
       $course_idnumber = $args[1];
       $group_name = $args[2];
+      $this->debug("Enrol user $group_name");
       $role = $args[3];
 
       switch (strtolower($role)) {
@@ -379,10 +394,12 @@ class moodlephp
         $group_data->name = $group_name;
         $group_data->idnumber = $group_name;
 
+        $this->debug("Creating group $group_name for course $course_idnumber....");
+
         if (!(groups_create_group($group_data))) {
           return "-150 Group $group_name does not exist, and cannot create it!";
         }
-
+        $this->debug("done. ");
         // it should definitely be there now!
         $group = $this->get_group_from_name($group_name);
 
