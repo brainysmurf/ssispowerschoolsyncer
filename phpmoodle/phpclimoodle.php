@@ -25,8 +25,6 @@ class moodlephp
       $this->PARENT_ROLE_ID = $s->id;
       $s = $DB->get_record_select( 'role', 'archetype = ?', array('editingteacher') );
       $this->TEACHER_ROLE_ID = $s->id;
-
-      $this->debug('Constructed');
     }
 
     public function call($args) {
@@ -293,17 +291,14 @@ class moodlephp
     {
       $course_idnumber = $args[0];
       $group_name = $args[1];
-      $this->debug("Creating group $group_name");
       global $DB;
 
       if ( !$course = $DB->get_record('course', array('idnumber'=>$course_idnumber), '*') ) {
-        $this->debug("-113 Group $group_name already there!");
         return "-112 Course does not exist!... ".$course_idnumber;
       }
 
       // check to see if there's one already there
       if ( $group = $this->get_group_from_name($group_name)) {
-        $this->debug("-113 Group $group_name already there!");
         return "-113 Group $group_name already there!";
       }
 
@@ -313,13 +308,10 @@ class moodlephp
       $group_data->name = $group_name;
 
       if (groups_create_group($group_data)) {
-        $this->debug("+ $group_name ");
         return "+ ".$group_name;
       } else {
-        $this->debug("-114 Cannot create group $group_name, OH NO!");
         return "-114 Cannot create group $group_name, OH NO!";
       }
-    $this->debug('Done');
     }
 
     private function enrol_user_in_course($args)
@@ -327,7 +319,6 @@ class moodlephp
       $useridnumber = $args[0];
       $course_idnumber = $args[1];
       $group_name = $args[2];
-      $this->debug("Enrol user $group_name");
       $role = $args[3];
 
       switch (strtolower($role)) {
@@ -394,12 +385,9 @@ class moodlephp
         $group_data->name = $group_name;
         $group_data->idnumber = $group_name;
 
-        $this->debug("Creating group $group_name for course $course_idnumber....");
-
         if (!(groups_create_group($group_data))) {
           return "-150 Group $group_name does not exist, and cannot create it!";
         }
-        $this->debug("done. ");
         // it should definitely be there now!
         $group = $this->get_group_from_name($group_name);
 
