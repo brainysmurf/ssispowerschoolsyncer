@@ -11,7 +11,7 @@ class BulkEmailManager:
     parentsELEM = 'usebccparentsELEM'
     parentsSEC = 'usebccparentsSEC'
     parentsGRADE = lambda cls, g: 'usebccparentsGRADE'+str(g)
-    parentsHROOM = lambda cls, hr: 'usebccparentsHR'+str(hr)
+    parentsHROOM = lambda cls, hr: 'usebccparentsHROOM'+str(hr)
     parentsCHINESE = 'usebccparentsCHINESE'
     parentsCHINESESEC = 'usebccparentsCHINESESEC'
     parentsCHINESEELEM = 'usebccparentsCHINESEELEM'
