@@ -186,12 +186,12 @@ class AutoSendTree(AbstractTree):
 
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsELEM)
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.parentlink, self.bm.parentlink(student.username))
-                self.bm.add_emails(student.guardian_emails, self.bm.cat.teacherlink, self.bm.teacherlink(student.username))
-                self.bm.add_emails(student.guardian_emails, self.bm.cat.homeroomlink, self.bm.hrlink(student.username))
+                self.bm.add_emails(student.teacher_emails, self.bm.cat.teacherlink, self.bm.teacherlink(student.username))
+                self.bm.add_email(student.homeroom_teacher_email, self.bm.cat.homeroomlink, self.bm.hrlink(student.username))
 
             if student.is_secondary:
+                self.bm.add_email(student.email, self.bm.cat.global_, self.bm.studentsSEC)
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsSEC)
-                self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.studentsSEC)
 
                 if this_grade:
                     self.bm.add_email(student.email, self.bm.cat.grades, self.bm.studentsGRADE(this_grade))
