@@ -181,8 +181,8 @@ class AutoSendTree(AbstractTree):
                 if student.grade >= 4:
                     self.bm.add_email(student.email, self.bm.cat.global_, self.bm.studentsGRADE(student.grade))
                     for group in student.groups:
-                        self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groups(group.name))
-                        self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groupsPARENTS(group.name))
+                        self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groups(group.idnumber))
+                        self.bm.add_email(student.email, self.bm.cat.classes, self.bm.groupsPARENTS(group.idnumber))
 
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsELEM)
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.parentlink, self.bm.parentlink(student.username))
