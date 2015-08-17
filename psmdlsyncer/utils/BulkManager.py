@@ -94,11 +94,10 @@ class BulkEmailManager:
         for name in self.email_lists:
             self.email_lists[name].output_aliases()
 
-    def output_json(self):
-        bulk_email_folder = gns.config.directories.path_to_bulk_mail_output
+    def output_json(self, path):
+        path = gns.config.directories.path_to_bulk_mail_output
         user_id = gns.config.email.wwwdatauserid
         group_id = gns.config.email.wwwdatagroupid
-        path = os.path.join(bulk_email_folder, 'result.json')
         with open(path, 'w') as f:
             f.write(json.dumps(self.email_lists, default=lambda o: o.categories, sort_keys=True, indent=4))
         os.chown(path, int(user_id), int(group_id))
