@@ -94,7 +94,7 @@ class BulkEmailManager:
         for name in self.email_lists:
             self.email_lists[name].output_aliases()
 
-    def output_json(self, path):
+    def output_json(self):
         path = gns.config.directories.path_to_bulk_mail_output
         user_id = gns.config.email.wwwdatauserid
         group_id = gns.config.email.wwwdatagroupid
