@@ -67,30 +67,30 @@ class moodlephp
       return "+";
     }
 
-    private function remove_user_from_cohort($args) {
-      $idnumber = $args[0];
-      $cohortidnumber = $args[1];
+    // private function remove_user_from_cohort($args) {
+    //   $idnumber = $args[0];
+    //   $cohortidnumber = $args[1];
 
-      global $DB;
-      if( !$user = $this->getUserByIDNumber($idnumber) ) {
-    	  return "-102 Could not find user $idnumber while removing cohort $cohortidnumber";
-      }
+    //   global $DB;
+    //   if( !$user = $this->getUserByIDNumber($idnumber) ) {
+    // 	  return "-102 Could not find user $idnumber while removing cohort $cohortidnumber";
+    //   }
 
-      if ( $cohort = $DB->get_record_select( 'cohort', 'idnumber = ?', array($cohortidnumber) )) {
-        $cohortID= $cohort->id;
-        $userID = $user->id;
-        // workaround, instead of using cohort_existing_selector, due to bug
-        $cohort_membership = $DB->get_record_select('cohort_members', 'cohortid = ? and userid = ?', array('cohortid'=>$cohortID,'userid'=>$userID));
-        if ( !($cohort_membership) ) {
-          return "+101 $idnumber  is not a member of the cohort $cohortidnumber";
-        }
-      } else {
-        return "-103 Could not find cohort $cohortidnumber";
-    }
+    //   if ( $cohort = $DB->get_record_select( 'cohort', 'idnumber = ?', array($cohortidnumber) )) {
+    //     $cohortID= $cohort->id;
+    //     $userID = $user->id;
+    //     // workaround, instead of using cohort_existing_selector, due to bug
+    //     $cohort_membership = $DB->get_record_select('cohort_members', 'cohortid = ? and userid = ?', array('cohortid'=>$cohortID,'userid'=>$userID));
+    //     if ( !($cohort_membership) ) {
+    //       return "+101 $idnumber  is not a member of the cohort $cohortidnumber";
+    //     }
+    //   } else {
+    //     return "-103 Could not find cohort $cohortidnumber";
+    // }
 
-      $r = cohort_remove_member($cohortID, $userID);
-      return "+";
-    }
+    //   $r = cohort_remove_member($cohortID, $userID);
+    //   return "+";
+    // }
 
     private function create_online_portfolio( $args )
     {
@@ -252,26 +252,26 @@ class moodlephp
       return "+";
     }
 
-    private function remove_user_from_group($args) {
-      $user_idnum = $args[0];
-      $group_name = $args[1];
+    // private function remove_user_from_group($args) {
+    //   $user_idnum = $args[0];
+    //   $group_name = $args[1];
 
-      global $DB;
+    //   global $DB;
 
-      $user = $this->getUserByIDNumber($user_idnum);
-      $group = $this->get_group_from_name($group_name);
+    //   $user = $this->getUserByIDNumber($user_idnum);
+    //   $group = $this->get_group_from_name($group_name);
 
-      if (!$group) {
-        return "-109 Group $group_name does not exist! Cannot remove user $user_idnum";
-      }
+    //   if (!$group) {
+    //     return "-109 Group $group_name does not exist! Cannot remove user $user_idnum";
+    //   }
 
-      if (!$user) {
-        return "-110 User $user_idnum does not exist! Cannot remove him to group $group_name";
-      }
+    //   if (!$user) {
+    //     return "-110 User $user_idnum does not exist! Cannot remove him to group $group_name";
+    //   }
 
-      groups_remove_member($group, $user);
-      return "+";
-    }
+    //   groups_remove_member($group, $user);
+    //   return "+";
+    // }
 
     // private function delete_group_for_course($args) {
     //   $group_name = $args[1];
@@ -404,47 +404,47 @@ class moodlephp
       }
     }
 
-    private function deenrol_user_from_course($args) {
-      $useridnumber = $args[0];
-      $course_idnumber = $args[1];
+    // private function deenrol_user_from_course($args) {
+    //   $useridnumber = $args[0];
+    //   $course_idnumber = $args[1];
 
-      global $DB, $PAGE;
+    //   global $DB, $PAGE;
 
-      if( !$user = $this->getUserByIDnumber($useridnumber) ) {
-        return "-122 Could not find user $useridnumber when deenrolling from course $course_idnumber";
-      }
+    //   if( !$user = $this->getUserByIDnumber($useridnumber) ) {
+    //     return "-122 Could not find user $useridnumber when deenrolling from course $course_idnumber";
+    //   }
 
-      if( !$course = $DB->get_record('course', array('idnumber'=>$course_idnumber), '*') ) {
-	       return "-123 Course does not exist!... $course_idnumber";
-      }
+    //   if( !$course = $DB->get_record('course', array('idnumber'=>$course_idnumber), '*') ) {
+	   //     return "-123 Course does not exist!... $course_idnumber";
+    //   }
 
-      if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
-	       return "-124 Could not get context for course $course_idnumber with ID $course->id";
-      }
+    //   if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
+	   //     return "-124 Could not get context for course $course_idnumber with ID $course->id";
+    //   }
 
-      $manager = new course_enrolment_manager($PAGE, $course);
+    //   $manager = new course_enrolment_manager($PAGE, $course);
 
-      if( !is_enrolled($context, $user->id) ) {
-    	  return "-125 Already not enrolled";
-	    }
+    //   if( !is_enrolled($context, $user->id) ) {
+    // 	  return "-125 Already not enrolled";
+	   //  }
 
-      $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
-      $enrolid = $enrolMethod->id;
+    //   $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
+    //   $enrolid = $enrolMethod->id;
 
-      $instances = $manager->get_enrolment_instances();
-      $plugins = $manager->get_enrolment_plugins();
+    //   $instances = $manager->get_enrolment_instances();
+    //   $plugins = $manager->get_enrolment_plugins();
 
-      if (!array_key_exists($enrolid, $instances)) {
-	      return "-119 Invalid enrol instance";
-      }
+    //   if (!array_key_exists($enrolid, $instances)) {
+	   //    return "-119 Invalid enrol instance";
+    //   }
 
-      $instance = $instances[$enrolid];
-      $plugin = $plugins[$instance->enrol];
+    //   $instance = $instances[$enrolid];
+    //   $plugin = $plugins[$instance->enrol];
 
-      $plugin->unenrol_user($instance, $user->id);
+    //   $plugin->unenrol_user($instance, $user->id);
 
-      return "+";
-    }
+    //   return "+";
+    // }
 
     private function change_username($args)
     {
