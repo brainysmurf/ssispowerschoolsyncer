@@ -273,19 +273,19 @@ class moodlephp
       return "+";
     }
 
-    private function delete_group_for_course($args) {
-      $group_name = $args[1];
+    // private function delete_group_for_course($args) {
+    //   $group_name = $args[1];
 
-      if ( !$group = $this->get_group_from_name($group_name) ) {
-        return "-1 Cannot get group, maybe because course does not exist?... ".$course_idnumber;
-      }
+    //   if ( !$group = $this->get_group_from_name($group_name) ) {
+    //     return "-1 Cannot get group, maybe because course does not exist?... ".$course_idnumber;
+    //   }
 
-      if (groups_delete_group($group)) {
-        return "+";
-      } else {
-        return "-111 Cannot delete group... ";
-      }
-    }
+    //   if (groups_delete_group($group)) {
+    //     return "+";
+    //   } else {
+    //     return "-111 Cannot delete group... ";
+    //   }
+    // }
 
     private function create_group_for_course($args)
     {
@@ -378,19 +378,23 @@ class moodlephp
     	  $plugin->enrol_user($instance, $user->id, $roleid, $timestart, $timeend);
     	}
 
-      if ( !($group = $this->get_group_from_name($group_name)) ) {
+      $group = $this->get_group_from_name($group_name);
+      if (!$group) {
+
         //create the group first
         $group_data = new stdClass;
         $group_data->courseid = $course->id;
         $group_data->name = $group_name;
         $group_data->idnumber = $group_name;
 
-        if (!(groups_create_group($group_data))) {
-          return "-150 Group $group_name does not exist, and cannot create it!";
+        try {
+          $result = groups_create_group($group_data);
+        } catch (Exception $e) {
+          return "-151 We are probably trying to create a group that already shares the name " . $group_name;
         }
+
         // it should definitely be there now!
         $group = $this->get_group_from_name($group_name);
-
       }
 
       if (groups_add_member($group, $user)) {

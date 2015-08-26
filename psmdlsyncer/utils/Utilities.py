@@ -171,7 +171,7 @@ def map_codes(short, grade, higher_lower):
         'STUDYSWA9': 'STDSKL07',
 		'STUDYSWA9': 'STDSKL9',
         
-		'ENBSWA9': 'ENGBA9',
+		'ENBSWA9': 'ENGBS9',
 		'ENBSWA8': 'ENGBS8',
 		'ENBSWA7': 'ENGBS7',
 		'ENBSWA6': 'ENGBS6',
@@ -207,8 +207,11 @@ def map_codes(short, grade, higher_lower):
 		'HONTEDSH1112': 'TEDESSH1112', # Design Technology
 		'CNBHONSH1112': 'LBCHISH1112', # Chinese
 		
-		
-		'BIOHONSH1112': 'SCBIOSH1112'   # Biology honors
+		'BIOHONSH1112': 'SCBIOSH1112',   # Biology honors
+
+		'SSPSYS12': 'SSPSYS12',
+		'PSYHON12': 'SSPSYS12',
+		'PEHEAHS1': 'PEHEASH1112'
 
 						 #'DESIG9': 'GRAPHICDESIGN9',
 						 #'DESIG10': 'GRAPHICDESIGN10'   TECOM10, TECOM9 deleted, TECOMSH1112 becomes TECOM1112CLARK, TEFOO9 TEFOO10 have been killed, TEMAT10 & 9 have been killed, TEFOOHS1 has been killed (and probably never ran)

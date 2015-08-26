@@ -474,7 +474,7 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT add group {} because course {} does not exist.".format(group, course))
 
     def new_custom_profile_field(self, item):
-            """
+        """
         """
         right = item.right
         name = right.idnumber
