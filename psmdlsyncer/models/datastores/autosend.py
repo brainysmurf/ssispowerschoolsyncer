@@ -252,14 +252,19 @@ class AutoSendTree(AbstractTree):
              select_from(Enrol).\
              join(UserEnrolment, UserEnrolment.enrolid == Enrol.id).\
              join(Course, Enrol.courseid == Course.id).\
+             join(CourseCategory, CourseCategory.id == Course.category).\
              join(User, UserEnrolment.userid == User.id).filter(
                 and_(
+                    CourseCategory.path.like('/1/%'),
                     not_(User.idnumber.like('%P')),
                     or_(
-                        Enrol.enrol == 'self',
+                        Enrol.enrol == 'self_parents',
                         Enrol.enrol == 'meta'
                         )
                 )).all()
+
+        from IPython import embed
+        embed()
 
         for result in results:
             activity_name, student_key = result

@@ -94,6 +94,12 @@ class Student(BaseModel):
         self.ID = self.num
         self.powerschoolID = self.ID
         self.database_id = stuid
+
+        if self.idnumber == '48273':
+            self.username = 'corbyn24'
+        else:
+            self.username = username
+
         try:
             self.entry_date = datetime.datetime.strptime(entry_date, '%m/%d/%Y')
         except ValueError:
@@ -170,11 +176,10 @@ class Student(BaseModel):
         #self.profile_existing_phone2 = self.bus_afternoon
 
         self.parent_emails = [p.lower() for p in re.split('[;,]', parent_emails) if p.strip()]
-        if username is None:
+        if self.username is None:
             self.determine_username_email()
         else:
-            self.username = username
-            self.email = username + '@student.ssis-suzhou.net'
+            self.email = self.username + '@student.ssis-suzhou.net'
         self.parent_link_email = self.username + 'PARENTS' + '@student.ssis-suzhou.net'
         self.email = self.email.lower()
         self.email_address = self.email

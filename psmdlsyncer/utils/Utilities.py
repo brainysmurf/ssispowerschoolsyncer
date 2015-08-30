@@ -197,7 +197,6 @@ def map_codes(short, grade, higher_lower):
 		'SPBHONSH1112': 'LBSPASH1112',  # Spanish
 		'SPIHONSH1112': 'LBSPAASH1112', # spanish ab initio
 
-		'PSYHONSH1112': 'SSPSYSH1112', # Psychology
 		'ECOHONSH1112': 'SSECOSH1112', # Economics
 		'BAMHONSH1112': 'SSBAMSH1112', # Business & Management
 
@@ -209,8 +208,8 @@ def map_codes(short, grade, higher_lower):
 		
 		'BIOHONSH1112': 'SCBIOSH1112',   # Biology honors
 
-		'SSPSYS12': 'SSPSYS12',
-		'PSYHON12': 'SSPSYS12',
+		'SSPSYSH1112': 'SSPSYS'+grade,
+		'PSYHON1112': 'SSPSYS'+ grade,
 		'PEHEAHS1': 'PEHEASH1112'
 
 						 #'DESIG9': 'GRAPHICDESIGN9',
