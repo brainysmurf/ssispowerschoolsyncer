@@ -263,9 +263,6 @@ class AutoSendTree(AbstractTree):
                         )
                 )).all()
 
-        from IPython import embed
-        embed()
-
         for result in results:
             activity_name, student_key = result
             student = self.students.get_key(student_key)

@@ -142,9 +142,7 @@ def map_codes(short, grade, higher_lower):
 	This routine meets those needs
 	"""
 	grade = str(grade)
-	higher_lower = str(higher_lower)
-	if higher_lower == "H" and short.startswith('H'):
-		input(higher_lower)
+	higher_lower = str(higher_lower).upper()
 	result = {
 		# MATHS DEPT needs certain things at the IB level
 		# From head of department:
@@ -208,8 +206,8 @@ def map_codes(short, grade, higher_lower):
 		
 		'BIOHONSH1112': 'SCBIOSH1112',   # Biology honors
 
-		'SSPSYSH1112': 'SSPSYS'+grade,
-		'PSYHON1112': 'SSPSYS'+ grade,
+		'PSYHON1112': 'SSPSYS12' if grade == '12' else 'SSPSYSH1112',
+		'SSPSYSH1112': 'SSPSYS12' if higher_lower == 'S' and grade == '12' else 'SSPSYSH1112',
 		'PEHEAHS1': 'PEHEASH1112'
 
 						 #'DESIG9': 'GRAPHICDESIGN9',
