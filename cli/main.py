@@ -261,7 +261,8 @@ def student_emails(path_to_output, user_id, group_id):
     with open(path_to_output, 'w') as _file:
         for student in db.users_enrolled_in_this_cohort('studentsALL'):
             if student.idnumber and student.username and student.email:
-                _file.write('{},{},{}\n'.format(student.idnumber, student.username, student.email))
+                if student.idnumber != '99999':
+                    _file.write('{},{},{}\n'.format(student.idnumber, student.username, student.email))
 
     import os
     os.chown(path_to_output, int(user_id), int(group_id))
