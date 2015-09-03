@@ -242,6 +242,14 @@ class AutoSendTree(AbstractTree):
             else:
                 self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsNOTSWA)
 
+        # Manually add them ... Boo
+        kor_president = 'greenmarch11@naver.com'
+        self.bm.add_email(kor_president, self.bm.cat.global_, self.bm.parentsELEM)
+        self.bm.add_email(kor_president, self.bm.cat.global_, self.bm.parentsKOREAN)
+        self.bm.add_email(kor_president, self.bm.cat.global_, self.bm.parentsKOREANSEC)
+        self.bm.add_email(kor_president, self.bm.cat.global_, self.bm.parentsKOREANELEM)
+
+
         # Secondary Activities
         # Gets all the students that are enrolled as self (or meta, why meta, because they use that for enrollments)
         # That is in the activities category
