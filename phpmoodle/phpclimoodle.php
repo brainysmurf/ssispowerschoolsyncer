@@ -252,40 +252,40 @@ class moodlephp
       return "+";
     }
 
-    // private function remove_user_from_group($args) {
-    //   $user_idnum = $args[0];
-    //   $group_name = $args[1];
+    private function remove_user_from_group($args) {
+      $user_idnum = $args[0];
+      $group_name = $args[1];
 
-    //   global $DB;
+      global $DB;
 
-    //   $user = $this->getUserByIDNumber($user_idnum);
-    //   $group = $this->get_group_from_name($group_name);
+      $user = $this->getUserByIDNumber($user_idnum);
+      $group = $this->get_group_from_name($group_name);
 
-    //   if (!$group) {
-    //     return "-109 Group $group_name does not exist! Cannot remove user $user_idnum";
-    //   }
+      if (!$group) {
+        return "-109 Group $group_name does not exist! Cannot remove user $user_idnum";
+      }
 
-    //   if (!$user) {
-    //     return "-110 User $user_idnum does not exist! Cannot remove him to group $group_name";
-    //   }
+      if (!$user) {
+        return "-110 User $user_idnum does not exist! Cannot remove him to group $group_name";
+      }
 
-    //   groups_remove_member($group, $user);
-    //   return "+";
-    // }
+      groups_remove_member($group, $user);
+      return "+";
+    }
 
-    // private function delete_group_for_course($args) {
-    //   $group_name = $args[1];
+    private function delete_group_for_course($args) {
+      $group_name = $args[1];
 
-    //   if ( !$group = $this->get_group_from_name($group_name) ) {
-    //     return "-1 Cannot get group, maybe because course does not exist?... ".$course_idnumber;
-    //   }
+      if ( !$group = $this->get_group_from_name($group_name) ) {
+        return "-1 Cannot get group, maybe because course does not exist?... ".$course_idnumber;
+      }
 
-    //   if (groups_delete_group($group)) {
-    //     return "+";
-    //   } else {
-    //     return "-111 Cannot delete group... ";
-    //   }
-    // }
+      if (groups_delete_group($group)) {
+        return "+";
+      } else {
+        return "-111 Cannot delete group... ";
+      }
+    }
 
     private function create_group_for_course($args)
     {

@@ -86,7 +86,6 @@ class DefaultTemplate:
         self.default_logger("Add {0.left} to group {2} in course {1}".format(item, course, group))
 
     def remove_from_group(self, item):
-        return  # no
         course = item.param.course
         group = item.param.group
         self.default_logger("Remove {0.left} from group {2} in course {1}".format(item, course, group))

@@ -106,6 +106,7 @@ class MoodleImport(MoodleDBSession):
         for row in self.bell_schedule():
             _period = ''
             courseID, userID, username, roleName, groupId, groupName = row
+
             if not groupId:
                 continue
 
@@ -203,11 +204,11 @@ class MoodleImport(MoodleDBSession):
                 continue
 
             for student in results[group]['students']:
-                for teacher in teachers:
-                    yield course, _period, section, teacher, student, groupId, groupName
+                for teacher in teachers:  # note: there will only be one teacher...
+                    yield course, _period, section, teacher, student, group, ''
 
 if __name__ == "__main__":
 
     m = MoodleImport('', '')
     for info in m.get_bell_schedule():
-        print(info)
+        pass
