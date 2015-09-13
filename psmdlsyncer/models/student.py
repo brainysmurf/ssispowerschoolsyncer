@@ -611,6 +611,7 @@ class Student(BaseModel):
         ns = NS()
         ns.ID = self.ID
         ns.username = self.username
+        ns.homeroom = self.homeroom
         #ns.firstrow = "+ "
         #ns.midrow = "\n| "
         #ns.lastrow="\n| "
@@ -621,5 +622,5 @@ class Student(BaseModel):
         #ns.courses = ", ".join(self.course_names)
         #ns.groups = ", ".join(self.group_names)
         #ns.cohorts = ", ".join(self.cohorts)
-        return ns("<Student {ID}: {username}>") #, {homeroom}{midrow}{lastfirst}") # \
+        return ns("<Student {ID}/{homeroom}: {username}>") #, {homeroom}{midrow}{lastfirst}") # \
         #"{lastrow}{midrow}{teachers}{midrow}{courses}{midrow}{groups}{midrow}{cohorts}\n")
