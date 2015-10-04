@@ -166,7 +166,7 @@ class Parent(BaseModel):
             yield ns
 
         # Other things
-        attrs = []
+        attrs = ['username', 'email']
         for attr in attrs:
             if not getattr(self, attr) == getattr(other, attr):
                 ns = NS()
@@ -251,7 +251,7 @@ class MoodleParent(Parent):
 
     @property
     def username(self):
-        return self._username
+        return self._username.strip()
 
     @property
     def enrollments(self):

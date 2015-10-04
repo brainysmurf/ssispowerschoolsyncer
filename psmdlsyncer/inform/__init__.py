@@ -62,3 +62,28 @@ def inform_new_parent(parent):
 
     email.send()
 
+def inform_parent_username_changed(parent, password):
+    """
+    parent is object
+    """
+    path_to_templates = config_get_section_attribute('DIRECTORIES', 'path_to_templates')
+    parent_email_templates = read_in_templates(path_to_templates + '/parent_username_changed')
+    email = Email(config_get_section_attribute('EMAIL', 'domain'))
+    email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
+    email.use_templates(parent_email_templates)
+    email.make_subject("Notification of updated SSIS DragonNet username")
+    for parent_email in parent.emails:
+        email.add_to(parent_email)
+    for student in parent.children:
+        if student.is_korean:
+            email.add_language('kor')
+        if student.is_chinese:
+            email.add_language('chi')
+    email.add_bcc('lcssisadmin@student.ssis-suzhou.net')
+    email.add_bcc('jacobusgubbels@ssis-suzhou.net')
+    email.define_field('username', parent.email)
+    email.define_field('salutation', 'Dear SSIS Parent')
+    email.define_field('password', password)
+
+    email.send()
+

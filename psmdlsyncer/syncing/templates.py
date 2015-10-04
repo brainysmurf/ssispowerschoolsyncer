@@ -7,6 +7,9 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 from sqlalchemy.exc import IntegrityError
 from psmdlsyncer.settings import config_get_section_attribute
 
+import random # needed for parent resets
+import psmdlsyncer.inform as inform
+
 class dry_run:
     """
     Easy way to enable/disable debugging with a decorator
@@ -524,9 +527,25 @@ class MoodleTemplate(DefaultTemplate):
         user = item.left
         idnumber = user.idnumber
         from_what = item.left.username
-        to_what = item.right.username
+        to_what = item.right.username.strip()
 
-        if hasattr(user, 'login_method') and user.login_method == 'nologin':
+        if user.idnumber.endswith('P'):
+
+            # If two students do not have the same family ID, but contain the same guardian information
+            # Then an error would result if we tried to change the username here
+            # Because we cannot have two users with the same username
+
+            if self.moodle.wrap_no_result(self.moodle.get_user_from_username, to_what):
+                self.logger.critical("- Cannot change parent username for {} because username {} is already taken".format(user, to_what))
+                return
+
+            # It's a parent, so we need to change the username and email, and inform them
+            newpassword = str(random.randint(111111, 999999))  # generates pseudo-random 6 digit number
+            self.moodlemod.change_parent_username(user.idnumber, to_what, newpassword)
+            inform.inform_parent_username_changed(user, newpassword)
+            self.logger.warning('Parent {} username changed from {} to {} and password is {}'.format(user, from_what, to_what, newpassword))
+
+        elif hasattr(user, 'login_method') and user.login_method == 'nologin':
             # Just go ahead and change it automatically, no need to inform anyone or anything
             # because the account isn't active anyway
             # test for 'login_method' because teachers don't have that TODO: Add that to the model!
@@ -540,10 +559,11 @@ class MoodleTemplate(DefaultTemplate):
             except NoResultFound:
                 self.default_logger('Cannot change username for {} as not found in moodle: {}'.format(idnumber, item))    
             super().username_changed(item)
+
         else:
             justgrade = functools.partial(re.sub, '[a-z_]', '')
             if justgrade(item.left.username) != justgrade(item.right.username):
-                self.logger.warning("Grade change: Username {} has changed grade, needs username changed to {}".format(from_what, to_what))
+                self.logger.critical("Grade change: Username {} has changed grade, needs username changed to {}".format(from_what, to_what))
             else:
                 msg = "Username {} needs his/her username changed manually to {} this happens when passport info gets changed".format(from_what, to_what)
                 if '_' in from_what:

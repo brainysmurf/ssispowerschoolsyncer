@@ -111,6 +111,7 @@ class MoodleTree(AbstractTree):
                 else:
                     course = self.courses.get(course_key, self.convert_course)
                     teacher = self.teachers.get_key(teacher_key)
+
                     if not teacher:
                         self.logger.warning("Teacher not found! {}".format(teacher_key))
                         continue

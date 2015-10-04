@@ -139,6 +139,9 @@ class CallPHP:
     def change_username(self, idnumber, new_name):
         self.command('change_username', "{} {}".format(idnumber, new_name))
 
+    def change_parent_username(self, idnumber, new_username, password):
+        self.command('change_parent_username', "{} {} {}".format(idnumber, new_username, password))
+
     def associate_child_to_parent(self, idnumber, child_idnumber):
         self.command('associate_child_to_parent', "{} {}".format(idnumber, child_idnumber))
 
