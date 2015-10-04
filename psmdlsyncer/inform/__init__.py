@@ -72,8 +72,7 @@ def inform_parent_username_changed(parent, password):
     email.define_sender('lcssisadmin@student.ssis-suzhou.net', "DragonNet Admin")
     email.use_templates(parent_email_templates)
     email.make_subject("Notification of updated SSIS DragonNet username")
-    for parent_email in parent.emails:
-        email.add_to(parent_email)
+    email.add_to(parent.email)
     for student in parent.children:
         if student.is_korean:
             email.add_language('kor')

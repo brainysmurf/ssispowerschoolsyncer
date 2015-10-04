@@ -542,7 +542,10 @@ class MoodleTemplate(DefaultTemplate):
             # It's a parent, so we need to change the username and email, and inform them
             newpassword = str(random.randint(111111, 999999))  # generates pseudo-random 6 digit number
             self.moodlemod.change_parent_username(user.idnumber, to_what, newpassword)
-            inform.inform_parent_username_changed(user, newpassword)
+
+            # Send username change with item.right in order to provide the right info
+            inform.inform_parent_username_changed(item.right, newpassword)
+
             self.logger.warning('Parent {} username changed from {} to {} and password is {}'.format(user, from_what, to_what, newpassword))
 
         elif hasattr(user, 'login_method') and user.login_method == 'nologin':

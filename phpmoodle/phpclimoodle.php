@@ -33,7 +33,7 @@ class moodlephp
       if (method_exists($this, $which_function)) {
         return $this->$which_function($args);
       } else {
-        return "-1 We don't have this command: ".$which_function;
+          return "-1 We don't have this command: ".$which_function;
       }
     }
 
@@ -455,7 +455,30 @@ class moodlephp
       $user = $this->getUserByIDNumber($idnumber);
       $user->username = $new_username;
 
-      $DB->update_record($user);
+      $DB->update_record('user', $user);
+      return "+";
+    }
+
+    private function change_parent_username($args)
+    {
+      $idnumber = $args[0];
+      $new_username = $args[1];
+      $password = $args[2];
+      global $DB;
+
+      $user = $this->getUserByIDNumber($idnumber);
+      $user->username = $new_username;
+      $user->email = $new_username;
+      if ($user->firstname == 'Parent') 
+      {
+        $user->lastname = $new_username;
+      }
+
+      set_user_preference('auth_forcepasswordchange', 1, $user);
+      update_internal_user_password($user, $password);
+
+      $DB->update_record('user', $user);
+      return "+";
     }
 
     private function getUserByIDNumber($idnumber)
