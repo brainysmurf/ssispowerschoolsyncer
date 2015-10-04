@@ -1,0 +1,13 @@
+<p>{salutation}</p>
+
+<p><i>This is an automated message. No reply necessary.</i></p>
+
+<p>Recently your email address has been changed in the SSIS systems. This change has had an effect on your DragonNet account data. From now on you can login to DragonNet with the following credentials:</p>
+
+<p>Your new username is: <b>{username}</b><br />
+Your password is: <b>{password}</b></p>
+
+<p>You will need to change your password after logging in. Please note that your new password requires at least one non-alphanumeric c$
+
+<p>Thank you and kind regards,<br/>
+SSIS DragonNet Admin Team</p>
