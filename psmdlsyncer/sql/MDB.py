@@ -684,13 +684,13 @@ if __name__ == "__main__":
 
     #for item in m.users_enrolled_in_these_cohorts(['studentsALL']):
     #    print(item.idnumber)
-    # for item in m.bell_schedule():
-    #     course, student_num, teacher_name, role, group_name = item
-    #     if role == 'editingteacher':
-    #         print(item)
+    for item in m.bell_schedule():
+        course, student_num, teacher_name, role, group_id, group_name = item
+        if 'Ms Parratt' in group_name:
+            print(item)
 
-    for item in m.get_teaching_learning_courses():
-        print(item)
+    # for item in m.bell_schedule():
+    #     print(item)
 
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
