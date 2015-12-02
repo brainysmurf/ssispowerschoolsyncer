@@ -55,7 +55,7 @@ class MoodleImport(MoodleDBSession):
 
     def content_dist_parentinfo(self):
         for parent in self.users_enrolled_in_this_cohort('parentsALL'):
-            yield [parent.idnumber, parent.id, None, "", "", "", "", "", "", "", parent.username]
+            yield [parent.idnumber, parent.id, None, parent.department, "", "", "", "", "", "", parent.username]
 
     def content_sec_studentschedule(self):
         for item in self.get_bell_schedule():

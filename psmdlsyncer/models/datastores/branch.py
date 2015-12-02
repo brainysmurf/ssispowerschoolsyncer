@@ -96,7 +96,7 @@ class DataStore:
 
 	@classmethod
 	def get_from_username(cls, value):
-		return get_from_attribute(cls, 'username', value)
+		return cls.get_from_attribute(cls, 'username', value)
 
 	@classmethod
 	def get_all_from_attribute(cls, attr, value):

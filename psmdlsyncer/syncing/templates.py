@@ -591,12 +591,20 @@ class MoodleTemplate(DefaultTemplate):
         self.moodle.add_user_custom_profile(person, field, value)
 
     def homeroom_changed(self, item):
-        student = item.left
+        user = item.left
         from_what = item.left.homeroom
-        homeroom = item.param
+        if user.kind == 'student':
+            homeroom = item.param
+        elif user.kind == 'parent':
+            homeroom = ','.join(item.param)
+        # if user.idnumber == '4340P':
+        #     from IPython import embed;
+        #     print('4340P')
+        #     embed()
+        #     exit()
         try:
             self.moodle.update_table('user', where={
-                'idnumber':student.idnumber
+                'idnumber':user.idnumber
                 },
                 department=homeroom)
             super().homeroom_changed(item)

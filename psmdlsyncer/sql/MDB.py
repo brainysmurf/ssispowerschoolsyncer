@@ -85,7 +85,11 @@ class MoodleDBSess:
         """
         table_class = self.table_string_to_class(table)
         with DBSession() as session:
-            instance = session.query(table_class).filter_by(**where).one()
+            try:
+                instance = session.query(table_class).filter_by(**where).one()
+            except MultipleResultsFound:
+                input(where)
+                return
             for key in kwargs.keys():
                 setattr(instance, key, kwargs[key])
             session.add(instance)

@@ -34,8 +34,8 @@ class MoodleTree(AbstractTree):
         """
         Go through the students and make parents based on that data
         """
-        for idnumber, parent_id, _, _, _, _, _, _, _, _, username in self.parent_info.content():
-            self.parents.make_parent(idnumber, parent_id, username=username)
+        for idnumber, parent_id, _, homeroom, _, _, _, _, _, _, username in self.parent_info.content():
+            self.parents.make_parent(idnumber, parent_id, homeroom=homeroom, username=username)
 
     def process_online_portfolios(self):
         for key in self.district_online_portfolios.content():

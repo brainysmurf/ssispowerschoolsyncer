@@ -22,7 +22,7 @@ class Parent(BaseModel):
         return [child.grade for child in self.children]
 
     @property
-    def homerooms(self):
+    def homeroom(self):
         result = []
         for child in self.children:
             result.append(child.homeroom)
@@ -166,7 +166,7 @@ class Parent(BaseModel):
             yield ns
 
         # Other things
-        attrs = ['username', 'email']
+        attrs = ['username', 'email', 'homeroom']
         for attr in attrs:
             if not getattr(self, attr) == getattr(other, attr):
                 ns = NS()
@@ -230,24 +230,29 @@ class Parent(BaseModel):
 
     def __repr__(self):
         ns = NS()
-        ns.homerooms = " ".join(self.homerooms)
+        ns.homerooms = " ".join(self.homeroom)
         ns.emails = ", ".join(self.emails)
         ns.parents_of = "Parents of " + ", ".join(self.children_ids)
         ns.family_id = self.family_id
         ns.ID = self.ID
-        ns.homerooms = "(" + ", ".join(self.homerooms) + ")"
+        ns.homerooms = "(" + ", ".join(self.homeroom) + ")"
         ns.courses = "{} courses".format(len(self.courses))
         ns.groups = "{} groups".format(len(self.groups))
         return ns("<Parent {ID}: {parents_of} {homerooms}>")
 
 class MoodleParent(Parent):
 
-    def __init__(self, idnumber, database_id="", dunno="", username=""):
+    def __init__(self, idnumber, database_id="", dunno="", username="", homeroom=""):
         super().__init__(idnumber)
         self.idnumber = idnumber
         self._username = username
+        self._homeroom = homeroom
         self.database_id = database_id
         self._enrollments = {}
+
+    @property
+    def homeroom(self):
+        return self._homeroom
 
     @property
     def username(self):
@@ -281,7 +286,7 @@ class MoodleParent(Parent):
         ns = NS()
         ns.emails = ", ".join(self.emails)
         ns.parents_of = "Parents of " + ", ".join(self.children_ids)
-        ns.homerooms = "(" + ", ".join(self.homerooms) + ")"
+        ns.homerooms = "(" + ", ".join(self.homeroom) + ")"
         ns.family_id = self.family_id
         ns.ID = self.ID
         return ns("<MoodleParent {ID}: {parents_of} {homerooms}>")
