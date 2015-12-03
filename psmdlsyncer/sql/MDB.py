@@ -88,7 +88,7 @@ class MoodleDBSess:
             try:
                 instance = session.query(table_class).filter_by(**where).one()
             except MultipleResultsFound:
-                input(where)
+                self.logger.critical("Cannot update {} with this idnumber: {} because multiple results found".format(table_class, where))
                 return
             for key in kwargs.keys():
                 setattr(instance, key, kwargs[key])
