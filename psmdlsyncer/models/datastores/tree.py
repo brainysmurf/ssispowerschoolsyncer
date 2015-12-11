@@ -180,7 +180,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 				course_key, period_info, section_number, teacher_key, student_key = schedule
 				course = self.courses.get(course_key, self.convert_course) 
 				if not course:
-					self.logger.warning("Course not found! {}".format(course_key))
+					self.logger.debug("Course not found! {}".format(course_key))
 					continue
 				if course.exclude:
 					self.default_logger("Course {} has been excluded!".format(course_key))
