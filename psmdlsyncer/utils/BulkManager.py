@@ -3,6 +3,8 @@ import os, json
 from psmdlsyncer.files import clear_folder
 import gns
 
+grade_map = grade_map
+
 class BulkEmailManager:
     path = gns('{config.directories.path_to_postfix}') or '/tmp/bulkemail/results'
     email_lists = {}
@@ -10,35 +12,35 @@ class BulkEmailManager:
     parentsALL = 'usebccparentsALL'
     parentsELEM = 'usebccparentsELEM'
     parentsSEC = 'usebccparentsSEC'
-    parentsGRADE = lambda cls, g: 'usebccparentsGRADE'+{0:'K',-1:'PK', -2:'N', -3:'PN'}.get(g, str(g))
+    parentsGRADE = lambda cls, g: 'usebccparentsGRADE'+ grade_map.get(g, str(g))
     parentsHROOM = lambda cls, hr: 'usebccparentsHROOM'+str(hr)
     parentsCHINESE = 'usebccparentsCHINESE'
     parentsCHINESESEC = 'usebccparentsCHINESESEC'
     parentsCHINESEELEM = 'usebccparentsCHINESEELEM'
-    parentsCHINESEGRADE = lambda cls, g: 'usebccparentsCHINESEGRADE' + str(g)
+    parentsCHINESEGRADE = lambda cls, g: 'usebccparentsCHINESEGRADE' + grade_map.get(g, str(g))
     parentsKOREAN = 'usebccparentsKOREAN'
     parentsKOREANSEC = 'usebccparentsKOREANSEC'
     parentsKOREANELEM = 'usebccparentsKOREANELEM'
-    parentsKOREANGRADE = lambda cls, g: 'usebccparentsKOREANGRADE' + str(g)
+    parentsKOREANGRADE = lambda cls, g: 'usebccparentsKOREANGRADE' + grade_map.get(g, str(g))
     parentsJAPANESE = 'usebccparentsJAPANESE'
     parentsJAPANESESEC = 'usebccparentsJAPANESESEC'
     parentsJAPANESEELEM = 'usebccparentsJAPANESEELEM'
-    parentsJAPANESEGRADE = lambda cls, g: 'usebccparentsJAPANESEGRADE' + str(g)
+    parentsJAPANESEGRADE = lambda cls, g: 'usebccparentsJAPANESEGRADE' + grade_map.get(g, str(g))
     parentsGERMAN = 'usebccparentsGERMAN'
     parentsGERMANSEC = 'usebccparentsGERMANSEC'
     parentsGERMANELEM = 'usebccparentsGERMANELEM'
-    parentsGERMANGRADE = lambda cls, g: 'usebccparentsGERMANGRADE' + str(g)
+    parentsGERMANGRADE = lambda cls, g: 'usebccparentsGERMANGRADE' + grade_map.get(g, str(g))
     parentsNOTGERMAN = 'usebccparentsNOTGERMAN'
     parentsSWA = 'usebccparentsSWA'
     parentsSWASEC = 'usebccparentsSWASEC'
     parentsSWAELEM = 'usebccparentsSWAELEM'
-    parentsSWAGRADE = lambda cls, g: 'usebccparentsSWAGRADE' + str(g)
+    parentsSWAGRADE = lambda cls, g: 'usebccparentsSWAGRADE' + grade_map.get(g, str(g))
     parentsNOTSWA = 'usebccparentsNOTSWA'
 
-    teachersGRADE = lambda cls, g: 'usebccteachers' + str(g)
+    teachersGRADE = lambda cls, g: 'usebccteachers' + grade_map.get(g, str(g))
 
     studentsSEC = 'usebccstudentsSEC'
-    studentsGRADE = lambda cls, g: 'usebccstudentsGRADE'+str(g)
+    studentsGRADE = lambda cls, g: 'usebccstudentsGRADE'+ grade_map.get(g, str(g))
     studentsHOMEROOM = lambda cls, hr: 'usebccstudentsHROOM' + hr
 
     groups = lambda cls, g: 'usebcc' + g
