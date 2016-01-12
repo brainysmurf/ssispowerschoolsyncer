@@ -171,7 +171,7 @@ class AutoSendTree(AbstractTree):
             # TODO: DO WE MAKE student.grade A STRING?
             # OR PUT THIS IN THE OBJECT SOMEWHOW?
             if student.grade <= 0:
-                this_grade = {0: 'K', -1: 'R', -2: 'G', -3:'PK', -4:'N'}.get(this_grade, None)
+                this_grade = {0: 'K', -1: 'PK', -2: 'N', -3:'PN'}.get(this_grade, 'None')
 
             self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsALL)
             self.bm.add_emails(student.guardian_emails, self.bm.cat.global_, self.bm.parentsGRADE(this_grade))
