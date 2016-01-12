@@ -10,7 +10,7 @@ class BulkEmailManager:
     parentsALL = 'usebccparentsALL'
     parentsELEM = 'usebccparentsELEM'
     parentsSEC = 'usebccparentsSEC'
-    parentsGRADE = lambda cls, g: 'usebccparentsGRADE'+str(g)
+    parentsGRADE = lambda cls, g: 'usebccparentsGRADE'+{-1:'PK', -2:'N', -3:'PN'}.get(g, str(g))
     parentsHROOM = lambda cls, hr: 'usebccparentsHROOM'+str(hr)
     parentsCHINESE = 'usebccparentsCHINESE'
     parentsCHINESESEC = 'usebccparentsCHINESESEC'
