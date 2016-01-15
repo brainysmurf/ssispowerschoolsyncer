@@ -7,7 +7,7 @@ from psmdlsyncer.files import clear_folder
 from collections import defaultdict
 from psmdlsyncer.db import DBSession
 from psmdlsyncer.db.MoodleDB import *
-from sqlalchemy.orm.exc import NoResultFound
+from sqlalchemy.orm.exc import NoResultFound,MultipleResultsFound
 import re, os, sys, pwd
 from sqlalchemy import and_, not_, or_
 import subprocess
@@ -152,7 +152,7 @@ class AutoSendTree(AbstractTree):
                     if in_dragonnet.email != student.email:
                         student.username = in_dragonnet.username
                         student.email = in_dragonnet.email
-                except NoResultFound:
+                except NoResultFound, MultipleResultsFound:
                     pass 
 
             if make_new_students:
