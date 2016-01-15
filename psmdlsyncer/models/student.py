@@ -232,6 +232,12 @@ class Student(BaseModel):
         else:
             return None
 
+    @property
+    def grade_string(self):
+        if self.grade in range(1,13):
+            return str(self.grade)
+        return {0:'KINDERGARTEN', -1: 'NURSERY', -2:'PRENURSURY'}
+
     def determine_username_email(self):
         """
         DETERMINES THIS USERNAME TAKING INTO ACCOUNT EXISTING USERNAMES
