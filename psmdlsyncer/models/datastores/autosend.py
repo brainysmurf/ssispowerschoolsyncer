@@ -153,9 +153,9 @@ class AutoSendTree(AbstractTree):
                         student.username = in_dragonnet.username
                         student.email = in_dragonnet.email
                 except NoResultFound:
-                    pass
+                    continue
                 except MultipleResultsFound:
-                    pass 
+                    continue
 
             if make_new_students:
                 if student.grade >= 4 and not check_users(student):
