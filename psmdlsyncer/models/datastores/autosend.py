@@ -152,7 +152,9 @@ class AutoSendTree(AbstractTree):
                     if in_dragonnet.email != student.email:
                         student.username = in_dragonnet.username
                         student.email = in_dragonnet.email
-                except NoResultFound, MultipleResultsFound:
+                except NoResultFound:
+                    pass
+                except MultipleResultsFound:
                     pass 
 
             if make_new_students:
