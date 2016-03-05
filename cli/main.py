@@ -255,7 +255,7 @@ def launch(obj, inspect=False, output=None, analyze=False):
             exit()
         if analyze:
             keys = list(left.groups.get_keys())
-            ss = [k for k in keys if keys[k].endswith('S')]
+            ss = [k for k in keys if left.groups[k].endswith('S')]
             for s in ss:
                 swa = s + 'WA'
                 swas = [k for k in keys if swa in keys[k]]
