@@ -257,9 +257,12 @@ def launch(obj, inspect=False, output=None, analyze=False):
             keys = list(left.groups.get_keys())
             ss = [k for k in keys if left.groups.get_key(k).idnumber.endswith('S')]
             for s in ss:
-                swa = s + 'WA'
-                swas = [k for k in keys if swa in keys[k]]
-                print(swas)
+                swa = s + 'WA1'
+                swas1 = [k for k in keys if swa in keys[k]]
+                print(swas1)
+                swa = s + 'WA2'
+                swas2 = [k for k in keys if swa in keys[k]]
+                print(swas2)
             exit()
         d.go()
 
