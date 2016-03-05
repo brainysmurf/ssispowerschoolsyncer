@@ -222,7 +222,7 @@ def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hou
 @click.option('--output', type=click.File(mode='w'), default=None, help="Output differences to text file")
 @click.option('--analyze/--dont_analyze', default=False, help="Does some group processing")
 @click.pass_obj
-def launch(obj, inspect=False, output=None):
+def launch(obj, inspect=False, output=None, analyze=False):
     """
     Launch syncer stuff
     """
