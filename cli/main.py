@@ -254,7 +254,7 @@ def launch(obj, inspect=False, output=None, analyze=False):
             embed()
             exit()
         if analyze:
-            keys = left.groups.get_keys()
+            keys = list(left.groups.get_keys())
             ss = [k for k in keys if keys[k].endswith('S')]
             for s in ss:
                 swa = s + 'WA'
