@@ -258,7 +258,7 @@ def launch(obj, inspect=False, output=None):
             ss = [k for k in keys if keys[k].endswith('S')]
             for s in ss:
                 swa = s + 'WA'
-                swas = [k for k in keys if swa keys[k]]
+                swas = [k for k in keys if swa in keys[k]]
                 print(swas)
             exit()
         d.go()
