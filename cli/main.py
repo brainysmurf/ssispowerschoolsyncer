@@ -255,6 +255,8 @@ def launch(obj, inspect=False, output=None, analyze=False):
             exit()
         if analyze:
             keys = list(left.groups.get_keys())
+            print(keys)
+            from IPython import embed;embed()
             ss = [k for k in keys if left.groups.get_key(k).idnumber.endswith('S')]
             for s in ss:
                 swa = s + 'WA1'
