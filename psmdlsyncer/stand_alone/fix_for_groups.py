@@ -26,6 +26,8 @@ if __name__ == "__main__":
     Enrol = db.table_string_to_class('user_enrolments')
     php = CallPHP()
 
+    renames = defaultdict(list)
+
     for student in moodle.students.get_objects():
         other = autosend.students.get_key(student.idnumber)
         if not other:
@@ -60,12 +62,35 @@ if __name__ == "__main__":
                     group2time = datetime.datetime.fromtimestamp(this_group.timeadded)
 
                     # Find the one to remove from
-                    winner = second_group if group1time < group2time else first_group
+                    newest = second_group if group1time < group2time else first_group
+                    orig = second_group if group1time > group2time else first_group
 
-                    print('Removing {} from {}'.format(student, winner))
-                    php.remove_user_from_group(student.idnumber, winner.group_id)
+                    #print('Should remove {} from {}'.format(student, newest))
+                    to_remove = [newest.group_id]
+
+                    as_group = autosend.groups.get_key(orig.idnumber)
+                    if not as_group:
+                        #print("Remove student from {} because not in autosend".format(orig.idnumber))
+                        to_remove.append(orig.idnumber)
+
+                    if as_group:
+                        sec = as_group.section.split('-')[1]
+                        section_name = "{0} ({1})".format(orig.idnumber, sec)
+                        #print('Rename group {0} {1}'.format(orig.idnumber, section_name))
+                        renames[orig.idnumber].append(section_name)
+
+                    #for group_tbr in to_remove:
+                        #php.remove_user_from_group(student.idnumber, group_tbr)
 
             elif len(counter[group_name]) > 2:
                 print("more than 2:")
                 print(counter[group_name])
                 input('------------')
+
+    for orig_idnumber in renames:
+
+        sections = renames[orig_idnumber]
+        if len(set(sections)) > 1:
+            input(sections)
+        else:
+            print("{} -> {} ({})".format(orig_idnumber, sections[0], len(sections)))
