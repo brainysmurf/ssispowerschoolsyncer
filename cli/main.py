@@ -16,6 +16,35 @@ def main(ctx):
     # Doesn't do much now, but leave it as boilerplate for when there are global flags n such
     ctx.obj = Object()
 
+@main.command()
+@click.pass_obj
+def manually_add_to_group(obj):
+    """
+    Adds...
+    """
+    from psmdlsyncer.php.ModUserEnrollments import ModUserEnrollments
+    psi = ModUserEnrollments()
+
+    group_id = input("Group ID: ")
+    student_ids = input("Student IDs (comma sep)\n:")
+    student_ids = student_ids.split(',')
+    student_ids = [s.strip() for s in student_ids]
+
+    from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    right = AutoSendTree()
+    right.process()
+
+    for stu in student_ids:
+        print("Looking up student {}".format(stu))
+        student = right.students.get_key(stu)
+        if student:
+            print("Adding {} to group {}".format(student, group_id))
+            psi.add_user_to_group(student.idnumber, group_id)
+            print("Adding parents of {} to group {}".format(student, group_id))
+            psi.add_user_to_group(student.family_id, group_id)
+        else:
+            from IPython import embed;embed()
+
 # ---------- BEGIN NOTICES2
 
 @main.group()
@@ -254,7 +283,7 @@ def launch(obj, inspect=False, output=None, analyze=False):
             embed()
             exit()
         if analyze:
-            keys = list(left.groups.get_keys())
+            keys = list(left.groups.section_maps.keys)
             print(keys)
             from IPython import embed;embed()
             ss = [k for k in keys if left.groups.get_key(k).idnumber.endswith('S')]
@@ -428,4 +457,6 @@ def usebccparentsHOMEROOM():
     autosend = AutoSendTree()
     autosend.process()
     autosend.output_parent_bulk_emails()
+
+
 
