@@ -430,7 +430,6 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
-        return
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -440,7 +439,6 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
-        return
         #super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
@@ -461,7 +459,6 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.remove_user_from_cohort(user, cohort)
 
     def new_group(self, item):
-        return   # create it as found...
         if not item.right.course:
             self.default_logger("Did NOT add group {} because no course available".format(item.param))
             return
@@ -515,13 +512,16 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))
 
     def remove_from_group(self, item):
-        return
-        super().remove_from_group(item)
         user = item.right.idnumber
         group = item.param.group
         course = item.param.course
         # We don't actually need the course...
-        self.moodlemod.remove_user_from_group(user, group)
+        if len(group.split('-')) == 3:
+            super().remove_from_group(item)
+            self.moodlemod.remove_user_from_group(user, group)
+        else:
+            # do nothing, dont report either
+            pass
 
     def username_changed(self, item):
         user = item.left
