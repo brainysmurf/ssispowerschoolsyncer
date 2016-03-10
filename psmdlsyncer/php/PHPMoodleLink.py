@@ -53,18 +53,18 @@ class CallPHP:
         # and a negative if not, handle accordingly
         success_string = '\+.*'
         error_string = '-\d+ .*'
-        which = self.process.expect([success_string, error_string])
+        try:
+            which = self.process.expect([success_string, error_string])
+        except:
+            self.logger.critical(self.process.before)
 
         if which == 0:
             pass
         elif which == 1:
-            str = self.process.after.decode('utf-8')
-            where = str.find('\r\n?: ')
-            if not where:
-                self.logger.critical(str)
-            self.logger.warning(str[:where])   # make sure this is a warning
+            the_string = self.process.before.decode('utf-8')
+            self.logger.warning(the_string)   # make sure this is a warning
         else:
-            self.logger.critical(self.process.after.decode('utf-8'))   # This will probably be something essential
+            self.logger.critical(self.process.before.decode('utf-8'))   # This will probably be something essential
 
     def create_new_course(self, idnumber, fullname):
         self.command('create_new_course', "{} '{}'".format(idnumber, fullname))
@@ -127,8 +127,8 @@ class CallPHP:
         self.command('remove_user_from_group', to_pass)
 
     def add_group(self, group_id, group_name, course_id):
-        self.sf.define(group_id=group_id, group_name=group_name, course=course_id)
-        to_pass = self.sf("{course} '{group_id}' '{group_name}'")
+        self.sf.define(group_id=group_id, group_name=group_name, course_id=course_id)
+        to_pass = self.sf("{course_id} '{group_id}' '{group_name}'")
         self.command('create_group_for_course', to_pass)
 
     def delete_group(self, group, course):

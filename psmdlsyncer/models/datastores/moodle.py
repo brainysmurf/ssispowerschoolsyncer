@@ -101,7 +101,7 @@ class MoodleTree(AbstractTree):
                         if not teacher:
                             teacher = NS2()
                             teacher.username = teacher_key
-
+                            
                     group = self.groups.make_group_from_id(groupId, groupName)
 
                     # Now put in enrollments manually

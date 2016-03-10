@@ -123,7 +123,7 @@ class DefaultTemplate:
         self.default_logger("AN OLD COURSE METADATA! {0.param} ".format(item))
 
     def new_group(self, item):
-        self.default_logger("A NEW GROUP! {0.param} (should be created when someone enrolls...)".format(item))
+        self.default_logger("A NEW GROUP! {0.param}".format(item))
 
     def old_group(self, item):
         self.default_logger("AN OLD GROUP! {0.param} ".format(item))
@@ -462,15 +462,15 @@ class MoodleTemplate(DefaultTemplate):
         if not item.right.course:
             self.default_logger("Did NOT add group {} because no course available".format(item.param))
             return
-        course = item.right.course.ID
-        group = item.param
+        course = item.right.course
+        group = item.right
         if group in self.groups:
-            self.logger.debug("Did NOT add group {} because it's already there....".format(group, course))
-        elif course in self.courses:
+            self.logger.debug("Did NOT add group {} because it's already there....".format(group, course_idnumber))
+        elif course.idnumber in self.courses:
             super().new_group(item)
-            self.moodlemod.add_group(group, course)
+            self.moodlemod.add_group(group.idnumber, group.name, course.idnumber)
         else:
-            self.logger.debug("Did NOT add group {} because course {} does not exist.".format(group, course))
+            self.logger.debug("Did NOT add group {} because course {} does not exist.".format(group, course.idnumber))
 
     def new_custom_profile_field(self, item):
         """

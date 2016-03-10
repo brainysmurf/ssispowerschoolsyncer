@@ -569,8 +569,9 @@ class Student(BaseModel):
         # Go through each course that they share, and check that
         # they have the same groups, if not, do what's right
         for course in set(self.enrollments.keys()) and set(other.enrollments.keys()):
-            self_groups = self.enrollments[course]
-            other_groups = other.enrollments[course]
+            #TODO: Check that parents are being put into courses as well as the groups
+            self_groups = self.enrollments.get(course, [])
+            other_groups = other.enrollments.get(course, [])
             for group in other_groups:
                 if not group in self_groups:
                     ns = NS()

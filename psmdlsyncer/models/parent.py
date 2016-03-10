@@ -65,7 +65,7 @@ class Parent(BaseModel):
         result = []
         for child in self.children:
             result.extend(child.courses)
-        return set(result)
+        return result
 
     def add_cohort(self, cohort):
         if not cohort in self._cohorts:
@@ -188,9 +188,8 @@ class Parent(BaseModel):
                 ns.param = to_add
                 yield ns
 
-        # Go through each course that they share, and check that
-        # they have the same groups, if not, do what's right
         for course in set(self.enrollments.keys()) and set(other.enrollments.keys()):
+            #TODO: Check that parents are being put into courses as well as the groups
             self_groups = self.enrollments.get(course, [])
             other_groups = other.enrollments.get(course, [])
             for group in other_groups:
@@ -217,7 +216,7 @@ class Parent(BaseModel):
                     yield ns
 
         for course in set(self.enrollments.keys()) - set(other.enrollments.keys()):
-            for group in self.enrollments[course]:
+            for group in self.enrollments.get(course, []):
                 ns = NS()
                 ns.status = 'deenrol_parent_from_course'
                 ns.left = self
@@ -286,7 +285,7 @@ class MoodleParent(Parent):
         ns = NS()
         ns.emails = ", ".join(self.emails)
         ns.parents_of = "Parents of " + ", ".join(self.children_ids)
-        ns.homerooms = "(" + ", ".join(self.homeroom) + ")"
+        ns.homerooms = "(" + self._homeroom + ")"
         ns.family_id = self.family_id
         ns.ID = self.ID
         return ns("<MoodleParent {ID}: {parents_of} {homerooms}>")

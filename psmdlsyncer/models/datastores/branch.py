@@ -202,7 +202,8 @@ class groups(DataStore):
 		here we will change it to .a or .b accordingly
 		"""
 		idnumber = "{}-{}-{}".format(teacher.username.lower(), course.idnumber.lower(), section.lower())
-		return cls.make(idnumber, name="", course_idnumber=course.idnumber, section=section, period_info=period_info)
+		name = "{} {} {}".format(teacher.fullname, course.idnumber.upper(), section.upper())
+		return cls.make(idnumber, name=name, course_idnumber=course.idnumber, section=section, period_info=period_info)
 
 	@classmethod
 	def make_group_from_id(cls, group_name, name):
