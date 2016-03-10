@@ -123,7 +123,10 @@ class Student(BaseModel):
                 homeroom = "00"
                 grade = 0
             else:
-                grade = re.sub('[^0-9]', '', homeroom)
+                grade = re.sub('[^0-9]+[0-9]{1}$', '', homeroom)
+            self.hr_letter = re.sub('^[0-9]+', '', homeroom)
+        else:
+            self.hr_letter = ''
         try:
             grade = int(grade)
         except ValueError:
@@ -276,10 +279,8 @@ class Student(BaseModel):
         self._schedule.append( schedule )
 
     def add_enrollment(self, course, group):
-        if self.login_method != 'nologin':
-            if (self.is_elementary and 'HROOM' in course.ID) or (self.is_secondary):
-                if not group.ID in self.enrollments[course.ID]:
-                    self.enrollments[course.ID].append( group.ID )
+        if not group.ID in self.enrollments[course.ID]:
+            self.enrollments[course.ID].append( group.ID )
 
     def add_course(self, course):
         if course.idnumber in self.excluded_courses:
