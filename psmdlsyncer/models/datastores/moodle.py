@@ -146,6 +146,7 @@ class MoodleTree(AbstractTree):
                         continue
 
                     self.associate(course, teacher, group, student)
+                    student.add_enrollment(course, group)
 
     def process_mrbs_editors(self):
         for teacher in self.mrbs_editor_info.content():
