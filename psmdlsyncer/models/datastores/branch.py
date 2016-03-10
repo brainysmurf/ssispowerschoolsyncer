@@ -201,49 +201,31 @@ class groups(DataStore):
 		The passed section should be the 'official' section number
 		here we will change it to .a or .b accordingly
 		"""
-		idnumber = "{}{}".format(teacher.username.lower(), course.idnumber.upper())
-		sectional_key = "{}{}{}".format(idnumber, cls.sep, section)
-		if sectional_key in cls.section_maps.keys():
-			# Already have it, so use that then
-			return cls.make(cls.section_maps[sectional_key], name="", course_idnumber=course.idnumber, section=sectional_key, period_info=period_info)
-		else:
-			# first time running, make a new sectional
-			how_many = len([key for key in cls.section_maps.keys() if key.startswith(idnumber)])  # cls.get_keys_startswith("{}{}".format(idnumber, cls.sep)))
-			alpha = chr(ord('a') + how_many)
-			new_sectional_value = "{}{}{}".format(idnumber, cls.sep, alpha)
-
-			# keep for future reference, and return
-			cls.section_maps[sectional_key] = new_sectional_value
-
-			return cls.make(new_sectional_value, name="", course_idnumber=course.idnumber, section=sectional_key, period_info=period_info)
+		idnumber = "{}-{}-{}".format(teacher.username.lower(), course.idnumber.lower(), section.lower())
+		return cls.make(idnumber, name="", course_idnumber=course.idnumber, section=section, period_info=period_info)
 
 	@classmethod
 	def make_group_from_id(cls, group_name, name):
-		if not cls.section_maps:
-			if cls.sep in group_name:
-				idnumber, section_key = group_name.split(cls.sep)
+		"""
+		group_name is actually the idnumber
+		"""
+		if cls.sep in group_name:
+			sep = group_name.split(cls.sep)
+			if len(sep) == 3:			
+				teach, course, section = sep
 			else:
-				idnumber = group_name
-				section_key = ""
-			course_idnumber = re.sub('[a-z]', '', idnumber)
-			sectional_key = group_name
-			return cls.make(sectional_key, name=name, course_idnumber=course_idnumber, section=sectional_key)
-		else:
-			if cls.sep in group_name:
-				sectional_key = cls.section_maps.get(group_name, "")
-				if cls.sep in sectional_key:
-					idnumber, section = sectional_key.split(cls.sep)
-					course_idnumber = re.sub('[a-z]', '', idnumber)
-					return cls.make(group_name, name=name, course_idnumber=course_idnumber, section=section)
+				if len(sep) == 2:
+					teach, section = sep
+					course = re.sub('^[^A-Z]+', '', teach)
 				else:
-					# These may be psmdlsyncer...
-					course_idnumber = sectional_key
-					section = sectional_key
-					return cls.make(group_name, name=name, course_idnumber=course_idnumber, section=section)
-			else:
-				course_idnumber = ""
-				section = ""
-				return cls.make(group_name, name=name, course_idnumber=course_idnumber, section=section)
+					teach, course, section = ("", "", "")
+			name = "{} {} {}".format(teach, course.upper(), section.upper())
+			return cls.make(group_name, name=name, course_idnumber=course, section=section)
+		else:
+			# defaults
+			course_idnumber = ""
+			section = ""
+			return cls.make(group_name, name=name, course_idnumber=course_idnumber, section=section)
 
 class course_metadatas(DataStore):
 	klass = CourseMetaData
