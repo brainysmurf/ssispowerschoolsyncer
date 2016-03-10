@@ -94,9 +94,9 @@ class CallPHP:
         to_pass = self.sf("{username} {email} '{firstname}' '{lastname}' {idnumber} nologin")
         self.command('create_account', to_pass)
 
-    def enrol_user_into_course(self, idnumber, shortname, group, role="Student"):
-        self.sf.define(idnumber=idnumber, shortname=shortname, group=group, role=role)
-        to_pass = self.sf("{idnumber} {shortname} {group} {role}")
+    def enrol_user_into_course(self, idnumber, shortname, group_id, group_name, role="Student"):
+        self.sf.define(idnumber=idnumber, shortname=shortname, group=group_id, group_name=group_name, role=role)
+        to_pass = self.sf("{idnumber} {shortname} {group_id} '{group_name}' {role}")
         self.command('enrol_user_in_course', to_pass)
 
     def unenrol_user_from_course(self, idnumber, course):
@@ -116,9 +116,9 @@ class CallPHP:
     def new_cohort(self, cohortidnumber, cohortname):
         self.command("create_cohort {} '{}'".format(cohortidnumber, cohortname))
 
-    def add_user_to_group(self, userid, group_name):
-        self.sf.define(userid=userid, group_name=group_name)
-        to_pass = self.sf("{userid} '{group_name}'")
+    def add_user_to_group(self, userid, group_id):
+        self.sf.define(userid=userid, group_id=group_id)
+        to_pass = self.sf("{userid} '{group_id}'")
         self.command('add_user_to_group', to_pass)
 
     def remove_user_from_group(self, userid, group_name):
@@ -126,9 +126,9 @@ class CallPHP:
         to_pass = self.sf("{userid} '{group_name}'")
         self.command('remove_user_from_group', to_pass)
 
-    def add_group(self, group, course):
-        self.sf.define(group=group, course=course)
-        to_pass = self.sf("{course} '{group}'")
+    def add_group(self, group_id, group_name, course_id):
+        self.sf.define(group_id=group_id, group_name=group_name, course=course_id)
+        to_pass = self.sf("{course} '{group_id}' '{group_name}'")
         self.command('create_group_for_course', to_pass)
 
     def delete_group(self, group, course):
