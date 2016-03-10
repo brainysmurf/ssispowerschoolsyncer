@@ -84,6 +84,10 @@ class BaseModel:
         return setattr(self, 'custom_profile_'+name, value)
 
     def __sub__(self, other):
+        """
+        Custom profile fields disabled
+        """
+        return  # disabled
 
         for to_add in set(other.get_custom_field_keys()) - set(self.get_custom_field_keys()):
             ns = NS2()
