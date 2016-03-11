@@ -95,7 +95,7 @@ class CallPHP:
         self.command('create_account', to_pass)
 
     def enrol_user_into_course(self, idnumber, shortname, group_id, group_name, role="Student"):
-        self.sf.define(idnumber=idnumber, shortname=shortname, group=group_id, group_name=group_name, role=role)
+        self.sf.define(idnumber=idnumber, shortname=shortname, group_id=group_id, group_name=group_name, role=role)
         to_pass = self.sf("{idnumber} {shortname} {group_id} '{group_name}' {role}")
         self.command('enrol_user_in_course', to_pass)
 
