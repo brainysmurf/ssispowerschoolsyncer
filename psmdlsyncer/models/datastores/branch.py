@@ -201,8 +201,8 @@ class groups(DataStore):
 		The passed section should be the 'official' section number
 		here we will change it to .a or .b accordingly
 		"""
-		idnumber = "{}-{}-{}".format(teacher.username.lower(), course.idnumber.lower(), section.lower())
-		name = "{} {} {}".format(teacher.fullname, course.idnumber.upper(), section.upper())
+		idnumber = "{}-{}-{}".format(teacher.last.lower(), course.idnumber.lower(), section.lower())
+		name = "{} {} {}".format(teacher.last, course.idnumber.upper(), section.upper())
 		return cls.make(idnumber, name=name, course_idnumber=course.idnumber, section=section, period_info=period_info)
 
 	@classmethod
