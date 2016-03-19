@@ -255,6 +255,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 			method = getattr(self, method_name)
 			debug and self.logger.warning(method)
 			method()
+		self._processed = True
 
 	def blankify(self):
 		for branch in self.get_store_keys():

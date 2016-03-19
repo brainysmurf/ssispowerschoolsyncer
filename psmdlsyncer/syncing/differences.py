@@ -29,7 +29,6 @@ class DetermineChanges:
         self.default_logger("Inside FindDifferences")
         self.default_logger("Left: {}".format(self.left))
         self.default_logger("Right: {}".format(self.right))
-        self._re_process = False
 
     def go(self, **kwargs):
         debug = config_get_section_attribute('DEBUGGING', 'print_dispatches')

@@ -268,7 +268,7 @@ def launch(obj, inspect=False, output=None, analyze=False):
         right = AutoSendTree()
         right.process()
         left = MoodleTree()
-        left.groups.section_maps = {v:k for k, v in right.groups.section_maps.items()}  # items become the keys
+        #left.groups.section_maps = {v:k for k, v in right.groups.section_maps.items()}  # items become the keys
         left.process()
 
         d = DetermineChanges(left, right, MoodleTemplate)
