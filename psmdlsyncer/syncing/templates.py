@@ -548,11 +548,11 @@ class MoodleTemplate(DefaultTemplate):
 
             self.logger.warning('Parent {} username changed from {} to {} and password is {}'.format(user, from_what, to_what, newpassword))
 
-        elif hasattr(user, 'login_method') and user.login_method == 'nologin':
+        elif hasattr(item.right, 'login_method') and item.right.login_method == 'nologin':
             # Just go ahead and change it automatically, no need to inform anyone or anything
             # because the account isn't active anyway
             # test for 'login_method' because teachers don't have that TODO: Add that to the model!
-            self.default_logger("Username needs a-changing! {0.username} with login method: {0.login_method} what about this user {1.username} with login method {1.login_method}".format(user, item.right))
+            super().username_changed(item)
             return
 
             # Just in case
