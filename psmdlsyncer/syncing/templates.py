@@ -552,16 +552,22 @@ class MoodleTemplate(DefaultTemplate):
             # Just go ahead and change it automatically, no need to inform anyone or anything
             # because the account isn't active anyway
             # test for 'login_method' because teachers don't have that TODO: Add that to the model!
-            try:
-                self.moodle.update_table('user', where={
-                    'idnumber':idnumber
-                    },
-                    username=to_what)
-            except IntegrityError:
-                self.logger.warning('Got integrity error trying to change user {}\'s username to {}'.format(idnumber, to_what))
-            except NoResultFound:
-                self.default_logger('Cannot change username for {} as not found in moodle: {}'.format(idnumber, item))    
+
             super().username_changed(item)
+            return
+
+            # Just in case
+            # TODO: Also update email field!
+            #try:
+            #    self.moodle.update_table('user', where={
+            #        'idnumber':idnumber
+            #        },
+            #        username=to_what)
+            #except IntegrityError:
+            #    self.logger.warning('Got integrity error trying to change user {}\'s username to {}'.format(idnumber, to_what))
+            #except NoResultFound:
+            #    self.default_logger('Cannot change username for {} as not found in moodle: {}'.format(idnumber, item))    
+            #super().username_changed(item)
 
         else:
             justgrade = functools.partial(re.sub, '[a-z_]', '')
