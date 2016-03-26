@@ -99,6 +99,8 @@ class Student(BaseModel):
             self.username = 'corbyn24'
         elif self.idnumber == '31543':
             self.username = 'gustavoramirez20'
+        elif self.idnumber == '46572':
+            self.username = 's.hatzopoulos18'
         else:
             self.username = username
 
