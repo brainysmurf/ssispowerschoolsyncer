@@ -195,7 +195,7 @@ class Teacher(BaseModel):
 
     def add_enrollment(self, course, group):
         if not group.ID in self.enrollments[course.ID]:
-            self.enrollments[course.ID].append( group.ID )
+            self.enrollments[course.ID].append( group )
 
     def add_timetable(self, timetable_dict):
         """

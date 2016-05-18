@@ -516,9 +516,9 @@ class MoodleTemplate(DefaultTemplate):
         group = item.param.group
         course = item.param.course
         # We don't actually need the course...
-        if len(group.split('-')) == 3:
+        if len(group.idnumber.split('-')) == 3:
             super().remove_from_group(item)
-            self.moodlemod.remove_user_from_group(user, group)
+            self.moodlemod.remove_user_from_group(user, group.idnumber)
         else:
             # do nothing, dont report either
             pass

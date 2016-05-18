@@ -33,11 +33,11 @@ class ModUserEnrollments(CallPHP):
     def deenrol_parent_from_course(self, parent_idnumber, course_idnumber):
         self.unenrol_user_from_course( parent_idnumber, course_idnumber )
 
-    def enrol_parent_into_course(self, parent_idnumber, course_idnumber, group_name):
-        self.enrol_user_into_course( parent_idnumber, course_idnumber, group_name, "parent" )
+    def enrol_parent_into_course(self, parent_idnumber, course_idnumber, group):
+        self.enrol_user_into_course( parent_idnumber, course_idnumber, group.name, group.idnumber, "parent" )
 
-    def enrol_teacher_into_course(self, teacher_idnumber, course_idnumber, group_name):
-        self.enrol_user_into_course( teacher_idnumber, course_idnumber, group_name, "teacher" )
+    def enrol_teacher_into_course(self, teacher_idnumber, course_idnumber, group):
+        self.enrol_user_into_course( teacher_idnumber, course_idnumber, group.name, group.idnumber, "teacher" )
 
     def new_student(self, student):
         try:

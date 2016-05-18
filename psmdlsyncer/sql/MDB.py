@@ -412,6 +412,39 @@ class MoodleDBSession(MoodleDBSess):
         for item in statement.all():
             yield item
 
+    def report_teaching_learning_courses(self):
+        """
+        Returns course information for any course that is within the Teaching & Learning menu
+        Including the grade info stored in course_ssis_metadata
+        Grade info is a string, if there are more than two then is in 11,12 format
+        TODO: Sometimes it formats as 12/11, make it sort (but if you sort you have to put in group_by)
+              Workaround: the model just sorts it for us
+        """
+
+        with DBSession() as session:
+            sub = session.query(
+                Course.id.label('course_id'),
+                CourseCategory.id.label('cat_id'),
+                CourseCategory.name.label('cat_name'),
+                CourseCategory.path.label('cat_path')
+                ).\
+                select_from(Course).\
+                    join(CourseCategory, CourseCategory.id == Course.category).\
+                    filter(and_(
+                        not_(Course.idnumber == ''),
+                        #CourseCategory.path == '/{}'.format(self.TEACHING_LEARNING_CATEGORY_ID)
+                        CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID))
+                        )).\
+                    group_by(Course.id, CourseCategory.id).\
+                    subquery()
+
+            statement = session.query(Course.idnumber, Course.fullname, sub.c.cat_name, sub.c.cat_path, Course.id.label('database_id')).\
+                join(sub, Course.id == sub.c.course_id).\
+                    order_by(Course.id)
+
+        for item in statement.all():
+            yield item
+
     def get_custom_profile_records(self):
         with DBSession() as session:
             statement = session.\
