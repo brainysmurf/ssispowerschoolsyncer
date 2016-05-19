@@ -23,8 +23,8 @@ if __name__ == "__main__":
 	for enrollment in enrollments:
 		if enrollment.rolename == 'student' and enrollment.userID in not_students:
 			count = count + 1
-			dry_run and print(enrollment)
 			role = "parent" if enrollment.userID.endswith('P') else "teacher"
+			dry_run and print(enrollment) #print("userId: {}; role {}".format(enrollment.userID, role))
 			not dry_run and mod.unenrol_user_from_course(enrollment.userID, enrollment.courseID)
 			not dry_run and mod.enrol_user_into_course(enrollment.userID, enrollment.courseID, enrollment.groupName, enrollment.groupIdNumber, role)
 
