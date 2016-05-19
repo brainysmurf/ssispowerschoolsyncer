@@ -432,47 +432,51 @@ class moodlephp
         }
     }
 
-    // private function deenrol_user_from_course($args) {
-    //   $useridnumber = $args[0];
-    //   $course_idnumber = $args[1];
+    private function deenrol_user_from_course($args) {
+      $useridnumber = $args[0];
+      $course_idnumber = $args[1];
 
-    //   global $DB, $PAGE;
+      global $DB, $PAGE;
 
-    //   if( !$user = $this->getUserByIDnumber($useridnumber) ) {
-    //     return "-122 Could not find user $useridnumber when deenrolling from course $course_idnumber";
-    //   }
+      if( !$user = $this->getUserByIDnumber($useridnumber) ) {
+        return "-122 Could not find user $useridnumber when deenrolling from course $course_idnumber";
+      }
 
-    //   if( !$course = $DB->get_record('course', array('idnumber'=>$course_idnumber), '*') ) {
-    //     return "-123 Course does not exist!... $course_idnumber";
-    //   }
+      if( !$course = $DB->get_record('course', array('idnumber'=>$course_idnumber), '*') ) {
+        return "-123 Course does not exist!... $course_idnumber";
+      }
 
-    //   if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
-    //     return "-124 Could not get context for course $course_idnumber with ID $course->id";
-    //   }
+      if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
+        return "-124 Could not get context for course $course_idnumber with ID $course->id";
+      }
 
-    //   $manager = new course_enrolment_manager($PAGE, $course);
+      $manager = new course_enrolment_manager($PAGE, $course);
 
-    //   if( !is_enrolled($context, $user->id) ) {
-    //    return "-125 Already not enrolled";
-    //  }
+      if( !is_enrolled($context, $user->id) ) {
+       return "-125 Already not enrolled";
+     }
 
-    //   $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
-    //   $enrolid = $enrolMethod->id;
+      $enrolMethod = $DB->get_record('enrol', array('enrol'=>'manual', 'courseid'=>$course->id), '*', MUST_EXIST);
+      $enrolid = $enrolMethod->id;
 
-    //   $instances = $manager->get_enrolment_instances();
-    //   $plugins = $manager->get_enrolment_plugins();
+      $instances = $manager->get_enrolment_instances();
+      $plugins = $manager->get_enrolment_plugins();
 
-    //   if (!array_key_exists($enrolid, $instances)) {
-    //    return "-119 Invalid enrol instance";
-    //   }
+      if (!array_key_exists($enrolid, $instances)) {
+       return "-119 Invalid enrol instance";
+      }
 
-    //   $instance = $instances[$enrolid];
-    //   $plugin = $plugins[$instance->enrol];
+      $instance = $instances[$enrolid];
+      $plugin = $plugins[$instance->enrol];
 
-    //   $plugin->unenrol_user($instance, $user->id);
+      $result = $plugin->unenrol_user($instance, $user->id);
 
-    //   return "+";
-    // }
+      if ($result) {
+        return "+";
+      } else {
+        return "- Enrollment not successful";
+      }
+    }
 
     private function change_username($args)
     {
