@@ -427,7 +427,7 @@ class MoodleTemplate(DefaultTemplate):
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        self.moodlemod.deenrol_teacher_from_course(user, course)
+        #self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
         user = item.right.idnumber
@@ -436,14 +436,14 @@ class MoodleTemplate(DefaultTemplate):
         if hasattr(user, 'grade') and user.grade == 12:
             return
         super().deenrol_from_course(item)   # for output
-        self.moodlemod.deenrol_student_from_course(user, course)
+        #self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
         #super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        self.moodlemod.deenrol_parent_from_course(user, course)
+        #self.moodlemod.deenrol_parent_from_course(user, course)
 
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
