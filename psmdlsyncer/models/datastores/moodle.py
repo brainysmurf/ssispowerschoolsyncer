@@ -65,7 +65,6 @@ class MoodleTree(AbstractTree):
             # calls both secondary_schedule.content, elementary_schedule.content
             method = getattr(self, "{}_schedule".format(school))
             for schedule in method.content():
-                self.default_logger('Processing {} schedule: {}'.format(school, schedule))
                 course_key, period_info, section_number, teacher_key, student_key, groupId, groupName = schedule
 
                 # We should check if we're dealing with a parent account or not

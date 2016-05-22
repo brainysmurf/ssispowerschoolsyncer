@@ -10,10 +10,12 @@ class DetermineChanges:
     LEFT IS "HAVE"
     RIGHT IS "NEED"
     """
-    def __init__(self, left, right, template_klass=None, **kwargs):
+    def __init__(self, left, right, template_klass=None, teachersonly=False, studentsonly=False, **kwargs):
 
         self.left = left
         self.right = right
+        self.teachersonly = teachersonly
+        self.studentsonly = studentsonly
 
         if not self.left._processed:
             self.left.process()
@@ -41,7 +43,14 @@ class DetermineChanges:
                 dispatch = None
             if dispatch:
                 debug and print(item)
-                dispatch(item)
+                if self.teachersonly:
+                    if item.right and hasattr(item.right, 'idnumber') and self.right.teachers.get_key(item.right.idnumber):
+                        dispatch(item)
+                elif self.studentsonly:
+                    if item.right and hasattr(item.right, 'idnumber') and self.right.students.get_key(item.right.idnumber):
+                        dispatch(item)
+                else:
+                    dispatch(item)
             else:
                 #TODO: Handle unrecognized statuses here
                 self.logger.warning("This item wasn't handled, because a handler ({}) wasn't defined!".format(item.status))

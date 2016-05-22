@@ -106,7 +106,6 @@ class MoodleImport(MoodleDBSession):
         for row in self.bell_schedule():
             _period = ''
             courseID, userID, username, roleName, groupId, groupName = row
-
             if not groupId:
                 continue
 
@@ -167,7 +166,7 @@ class MoodleImport(MoodleDBSession):
                     if groupId[-2] == '-':
                         groupId = groupId[:-2]
                     # first do a heuristic to see if we can't get the teacher username from the group name
-                    derived_teacher = re.sub('[^a-z]', '', groupId)
+                    derived_teacher = re.sub('[a-z]', '', groupId)
                     if derived_teacher:
                         teachers = [derived_teacher]
                     else:
@@ -211,4 +210,5 @@ if __name__ == "__main__":
 
     m = MoodleImport('', '')
     for info in m.get_bell_schedule():
-        pass
+        print(info)
+

@@ -85,17 +85,17 @@ class DefaultTemplate:
 
     def add_to_group(self, item):
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         self.default_logger("Add {0.left} to group {2} in course {1}".format(item, course, group))
 
     def remove_from_group(self, item):
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         self.default_logger("Remove {0.left} from group {2} in course {1}".format(item, course, group))
 
     def enrol_in_course(self, item):
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         self.default_logger("Enrol {0.left} into course {1} in group {2}".format(item, course, group))
 
     def deenrol_from_course(self, item):
@@ -415,7 +415,7 @@ class MoodleTemplate(DefaultTemplate):
     def enrol_parent_into_course(self, item):
         parent = item.right.idnumber
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         if self.enrol_in_course(item):   # for output and checking
             self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
         else:
@@ -426,13 +426,13 @@ class MoodleTemplate(DefaultTemplate):
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         #self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
         user = item.right.idnumber
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         if hasattr(user, 'grade') and user.grade == 12:
             return
         super().deenrol_from_course(item)   # for output
@@ -442,7 +442,7 @@ class MoodleTemplate(DefaultTemplate):
         #super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
-        group = item.param.group
+        group = item.param.group.idnumber
         #self.moodlemod.deenrol_parent_from_course(user, course)
 
     def add_to_cohort(self, item):
@@ -500,7 +500,7 @@ class MoodleTemplate(DefaultTemplate):
 
     def add_to_group(self, item):
         user = item.right.idnumber
-        group = item.param.group
+        group = item.param.group.idnumber
         course = item.param.course
         if course in self.courses:
             super().add_to_group(item)

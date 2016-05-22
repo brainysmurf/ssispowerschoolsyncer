@@ -723,8 +723,6 @@ if __name__ == "__main__":
     #    print(item.idnumber)
     for item in m.bell_schedule():
         course, student_num, teacher_name, role, group_id, group_name = item
-        if 'Ms Parratt' in group_name:
-            print(item)
 
     # for item in m.bell_schedule():
     #     print(item)

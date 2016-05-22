@@ -250,8 +250,10 @@ def post_to_wordpress(obj, url=None, multisite=True, blog=None, author=None, hou
 @click.option('--inspect/--dont_inspect', default=False, help="Reads in and debug prompt")
 @click.option('--output', type=click.File(mode='w'), default=None, help="Output differences to text file")
 @click.option('--analyze/--dont_analyze', default=False, help="Does some group processing")
+@click.option('--teachersonly/--notteachersonly', default=False, help="Only process teachers")
+@click.option('--studentsonly/--notstudentsonly', default=False, help="Only process teachers")
 @click.pass_obj
-def launch(obj, inspect=False, output=None, analyze=False):
+def launch(obj, inspect=False, output=None, analyze=False, teachersonly=False, studentsonly=False):
     """
     Launch syncer stuff
     """
@@ -271,7 +273,7 @@ def launch(obj, inspect=False, output=None, analyze=False):
         #left.groups.section_maps = {v:k for k, v in right.groups.section_maps.items()}  # items become the keys
         left.process()
 
-        d = DetermineChanges(left, right, MoodleTemplate)
+        d = DetermineChanges(left, right, MoodleTemplate, teachersonly, studentsonly)
 
         if output:
             for item in d.subtract():
