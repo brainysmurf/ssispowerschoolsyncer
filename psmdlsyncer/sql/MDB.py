@@ -11,7 +11,7 @@ from sqlalchemy import func, case, Integer, String
 from sqlalchemy.dialects.postgres import ARRAY
 from sqlalchemy.orm import aliased
 from collections import defaultdict
-from sqlalchemy.sql.expression import cast
+from sqlalchemy.sql.expression import cast, delete
 
 import logging
 import re
@@ -721,8 +721,8 @@ if __name__ == "__main__":
 
     #for item in m.users_enrolled_in_these_cohorts(['studentsALL']):
     #    print(item.idnumber)
-    for item in m.bell_schedule():
-        course, student_num, teacher_name, role, group_id, group_name = item
+    #for item in m.bell_schedule():
+    #    course, student_num, teacher_name, role, group_id, group_name = item
 
     # for item in m.bell_schedule():
     #     print(item)
@@ -730,9 +730,17 @@ if __name__ == "__main__":
     # assert( m.parse_user('38110') in list(m.mrbs_editors()) )
     # assert(m.get_user_schoolid('38110') == '112')
 
-    # for user in m.mrbs_editors():
-    #     print(user)
+    count = 0
+    for user in m.get_mrbs_editors():
+        ra_class = m.table_string_to_class('role_assignments')
+        if not ('@ssis-suzhou' in user.email):
+            with DBSession() as session:
+                which = session.query(ra_class).filter_by(contextid=m.SYSTEM_CONTEXT,roleid=m.MRBS_EDITOR_ROLE,userid=user.id).one()
+                #session.delete(which)
+            print('deleted: {} component: <{}>'.format(user.username, which.component))
+            count = count + 1
 
+    print("total: {}".format(count))
     # for student, parent in m.get_parent_student_links():
     #     print(student)
     #     print(parent)
