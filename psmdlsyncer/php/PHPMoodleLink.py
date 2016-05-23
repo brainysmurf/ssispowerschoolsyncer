@@ -62,7 +62,7 @@ class CallPHP:
         if which == 0:
             pass
         elif which == 1:
-            the_string = self.process.before.decode('utf-8')
+            the_string = self.process.after.decode('utf-8').strip('\n')
             self.logger.warning(the_string)   # make sure this is a warning
         else:
             self.logger.critical(self.process.before.decode('utf-8'))   # This will probably be something essential

@@ -22,10 +22,10 @@ class ModUserEnrollments(CallPHP):
         self.enrol_user_into_course( student_idnumber, course_idnumber, group.idnumber, group.name, "student" )
 
     def enrol_teacher_into_course(self, teacher_idnumber, course_idnumber, group):
-        self.enrol_user_into_course( teacher_idnumber, course_idnumber, group.name, group.idnumber, "teacher" )
+        self.enrol_user_into_course( teacher_idnumber, course_idnumber, group.idnumber, group.name, "teacher" )
 
     def enrol_parent_into_course(self, parent_idnumber, course_idnumber, group):
-        self.enrol_user_into_course( parent_idnumber, course_idnumber, group.name, group.idnumber, "parent" )
+        self.enrol_user_into_course( parent_idnumber, course_idnumber, group.idnumber, group.name, "parent" )
 
     def deenrol_student_from_course(self, student_idnumber, course_idnumber):
         self.unenrol_user_from_course( student_idnumber, course_idnumber )
