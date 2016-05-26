@@ -162,25 +162,26 @@ class MoodleImport(MoodleDBSession):
 
                 teachers = results[groupId]['teachers']
                 course = results[groupId]['course']
-                if not teachers:
-                    if groupId[-2] == '-':
-                        groupId = groupId[:-2]
-                    # first do a heuristic to see if we can't get the teacher username from the group name
-                    derived_teacher = re.sub('[a-z]', '', groupId)
-                    if derived_teacher:
-                        teachers = [derived_teacher]
-                    else:
-                        self.logger.warning("Group with no teacher info: {}!".format(groupId))
-                if not course:
-                    if groupId[-2] == '-':
-                        groupId = groupId[:-2]
-                    derived_course = re.sub('[a-z]', '', groupId)
-                    if derived_course:
-                        course = derived_course
-                    else:
-                        self.logger.warning("No course for group {}".format(groupId))
-                for teacher in teachers:
-                    yield course, _period, section, teacher, userID, groupId, groupName
+                if teachers and course:
+                #     if groupId[-2] == '-':
+                #         groupId = groupId[:-2]
+                #     # first do a heuristic to see if we can't get the teacher username from the group name
+                #     derived_teacher = re.sub('[a-z]', '', groupId)
+                #     if derived_teacher:
+                #         teachers = [derived_teacher]
+                #     else:
+                #         self.logger.warning("Group with no teacher info: {}!".format(groupId))
+                #     from IPython import embed;embed();exit()
+                # if not course:
+                #     if groupId[-2] == '-':
+                #         groupId = groupId[:-2]
+                #     derived_course = re.sub('[a-z]', '', groupId)
+                #     if derived_course:
+                #         course = derived_course
+                #     else:
+                #         self.logger.warning("No course for group {}".format(groupId))
+                    for teacher in teachers:
+                        yield course, _period, section, teacher, userID, groupId, groupName
 
             else:
                 # non-editing teachers...
@@ -199,7 +200,7 @@ class MoodleImport(MoodleDBSession):
                 self.logger.warning("Group with no teacher info: {}!".format(group))
                 continue
             elif not course:
-                self.logger.warning("Empty course {} that has a group?: {}!".format(str(course), group))
+                self.logger.warning("No course {} in group?: {}!".format(str(course), group))
                 continue
 
             for student in results[group]['students']:
@@ -209,6 +210,6 @@ class MoodleImport(MoodleDBSession):
 if __name__ == "__main__":
 
     m = MoodleImport('', '')
-    for info in m.get_bell_schedule():
+    for info in m.bell_schedule():
         print(info)
 

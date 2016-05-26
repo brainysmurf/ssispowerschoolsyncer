@@ -575,7 +575,7 @@ class Student(BaseModel):
             self_groups = self.enrollments.get(course, [])
             other_groups = other.enrollments.get(course, [])
             for group in other_groups:
-                if not group in self_groups:
+                if not group.idnumber in [g.idnumber for g in self_groups]:
                     ns = NS()
                     ns.status = 'add_to_group'
                     ns.left = self
@@ -586,7 +586,7 @@ class Student(BaseModel):
                     ns.param = to_add
                     yield ns
             for group in self_groups:
-                if not group in other_groups:
+                if not group.idnumber in [g.idnumber for g in other_groups]:
                     ns = NS()
                     ns.status = 'remove_from_group'
                     ns.left = self

@@ -85,18 +85,18 @@ class DefaultTemplate:
 
     def add_to_group(self, item):
         course = item.param.course
-        group = item.param.group.idnumber
-        self.default_logger("Add {0.left} to group {2} in course {1}".format(item, course, group))
+        group = item.param.group
+        self.default_logger("Add {0.left} to group {2.idnumber} in course {1}".format(item, course, group))
 
     def remove_from_group(self, item):
         course = item.param.course
-        group = item.param.group.idnumber
-        self.default_logger("Remove {0.left} from group {2} in course {1}".format(item, course, group))
+        group = item.param.group
+        self.default_logger("Remove {0.left} from group {2.idnumber} in course {1}".format(item, course, group))
 
     def enrol_in_course(self, item):
         course = item.param.course
-        group = item.param.group.idnumber
-        self.default_logger("Enrol {0.left} into course {1} in group {2}".format(item, course, group))
+        group = item.param.group
+        self.default_logger("Enrol {0.left} into course {1} in group {2.idnumber}".format(item, course, group))
 
     def deenrol_from_course(self, item):
         self.default_logger("De-enrol {0.left} from course {0.param.course}".format(item))
@@ -415,7 +415,7 @@ class MoodleTemplate(DefaultTemplate):
     def enrol_parent_into_course(self, item):
         parent = item.right.idnumber
         course = item.param.course
-        group = item.param.group.idnumber
+        group = item.param.group
         if self.enrol_in_course(item):   # for output and checking
             self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
         else:
@@ -499,14 +499,15 @@ class MoodleTemplate(DefaultTemplate):
             self.moodlemod.delete_group(group.idnumber, course_idnumber)
 
     def add_to_group(self, item):
-        user = item.right.idnumber
-        group = item.param.group.idnumber
+        user = item.right
+        group = item.param.group
         course = item.param.course
         if course in self.courses:
             super().add_to_group(item)
             # We don't actually need the course...
 
-            self.moodlemod.add_user_to_group(user, group)
+            self.moodlemod.add_user_to_group(user.idnumber, group.idnumber)
+
             #self.default_logger("Successfully put user {} into group {}".format(user, group))
         else:
             self.logger.debug("Did NOT put {} in group {} because course {} does not exist.".format(user, group, course))

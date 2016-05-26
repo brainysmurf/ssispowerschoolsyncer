@@ -193,7 +193,7 @@ class Parent(BaseModel):
             self_groups = self.enrollments.get(course, [])
             other_groups = other.enrollments.get(course, [])
             for group in other_groups:
-                if not group in self_groups:
+                if not group.idnumber in [g.idnumber for g in self_groups]:
                     ns = NS()
                     ns.status = 'add_to_group'
                     ns.left = self
@@ -204,7 +204,7 @@ class Parent(BaseModel):
                     ns.param = to_add
                     yield ns
             for group in self_groups:
-                if not group in other_groups:
+                if not group.idnumber in [g.idnumber for g in other_groups]:
                     ns = NS()
                     ns.status = 'remove_from_group'
                     ns.left = self
@@ -268,7 +268,7 @@ class MoodleParent(Parent):
     def add_enrollment(self, enrollment):
         # Method that allows a controller to manually put in the enrollments
         # needed since default behavior is to take on enrollments from child
-        # what is wrong for moodle, should come from the database
+        # what is wrong with moodle, should come from the database
         not_in_self = enrollment.keys() - self._enrollments.keys()
         already_in_self = [key for key in enrollment.keys() if not key in not_in_self]
 

@@ -268,8 +268,12 @@ class MoodleDBSession(MoodleDBSess):
         """
 
         with DBSession() as session:
-            schedule = session.query(
-                    Course.idnumber.label("courseID"), User.idnumber.label("userID"), User.username.label('username'), Role.shortname.label('rolename'), Group.idnumber.label('groupIdNumber'), Group.name.label('groupName')
+            schedule = session.query(Course.idnumber.label("courseID"), 
+                        User.idnumber.label("userID"), 
+                        User.username.label('username'), 
+                        Role.shortname.label('rolename'), 
+                        Group.idnumber.label('groupIdNumber'), 
+                        Group.name.label('groupName')
                     ).select_from(Course).\
                         join(CourseCategory, CourseCategory.id == Course.category).\
                         join(Context, Course.id == Context.instanceid).\

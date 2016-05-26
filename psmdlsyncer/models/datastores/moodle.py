@@ -104,7 +104,7 @@ class MoodleTree(AbstractTree):
                     group = self.groups.make_group_from_id(groupId, groupName)
 
                     # Now put in enrollments manually
-                    enrollment = {course.ID: [group.ID]}
+                    enrollment = {course.ID: [group]}
                     parent.add_enrollment(enrollment)
 
                 else:
