@@ -100,7 +100,9 @@ class Parent(BaseModel):
         for child in self.children:
             grade = child.grade
             #substituted_grade = {-1: 'K', -2: ''}
-            ret.append('parents{}'.format(grade))
+            c = 'parents{}'.format(grade)
+            if not c in ret:
+                ret.append(c)
         return ret
 
     @property
@@ -264,6 +266,10 @@ class MoodleParent(Parent):
         which is to return the union of childrens' enrollments
         """
         return self._enrollments
+
+    @property
+    def cohorts(self):
+        return []
 
     def add_enrollment(self, enrollment):
         # Method that allows a controller to manually put in the enrollments
