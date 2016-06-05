@@ -123,16 +123,16 @@ class ExtendMoodleDatabaseToAutoEmailer:
 
         # DO NOT PASS IT A NAME, WE NEED A BLANK ONE
         self.database_objects = DatabaseObjects()
-        stripper = TagKeeper(['a', 'b', 'i'])
+        stripper = TagKeeper(['a', 'b', 'i', 'ol', 'ul', 'li'])
         for item in self.model.items_within_date(self.date):
+            stripper.clear_text()
             stripper.feed(item.full_content)
             item.full_content = stripper.get_data()
             item.determine_priority(self.date, self.priority_ids)
             if self.section_field:
                 item.determine_section(self.section_field, self.section_field_default_value)
-            print(item)
             self.database_objects.add(item)
-        
+
     def model_items(self):
         """
         Returns a generator object that represents the potential rows in the database

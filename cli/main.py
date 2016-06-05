@@ -215,7 +215,7 @@ def launch(obj, email=False, edit_email=False, output=False, publish=False, upda
                 #     'group-sec-all@ssis-suzhou.net':['Senior School only', 'Junior School only', 'All Secondary'],
                 #     'group-es-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
                 #     }
-                obj.notices.agents = 'usebccstudentsSEC@ssis-suzhou.net'
+                obj.notices.agents = 'usebccstudentsSEC@student.ssis-suzhou.net'
             else:
                 print("WRONG WHICH")
 
