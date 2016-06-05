@@ -123,7 +123,7 @@ class ExtendMoodleDatabaseToAutoEmailer:
 
         # DO NOT PASS IT A NAME, WE NEED A BLANK ONE
         self.database_objects = DatabaseObjects()
-        stripper = TagKeeper(['a'])
+        stripper = TagKeeper(['a', 'b', 'i'])
         for item in self.model.items_within_date(self.date):
             stripper.feed(item.full_content)
             item.full_content = stripper.get_data()
