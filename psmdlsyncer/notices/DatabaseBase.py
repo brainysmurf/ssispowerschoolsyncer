@@ -9,6 +9,31 @@ import datetime
 import smtplib
 import subprocess
 
+from html.parser import HTMLParser
+
+class TagKeeper(HTMLParser):
+    def __init__(self, tags_to_keep, *args, **kwargs):
+        HTMLParser.__init__(self, *args, **kwargs)
+        self._text = []
+        self._tags_to_keep = set(tags_to_keep)
+        self.starttag = None
+    def clear_text(self):
+        self._text = []
+    def handle_starttag(self, tag, attrs):
+        self.starttag = tag
+        if tag in self._tags_to_keep:
+            self._text.append(self.get_starttag_text())
+        else:
+            self._text.append('')
+    def handle_endtag(self, tag):
+        if tag in self._tags_to_keep:
+            self._text[-1] += "</{}>".format(tag)
+        else:
+            pass
+    def handle_data(self, data):
+        self._text[-1] += data
+    def get_data(self):
+        return ' '.join(self._text)
 
 class Nothing(Exception): pass
 
@@ -98,11 +123,14 @@ class ExtendMoodleDatabaseToAutoEmailer:
 
         # DO NOT PASS IT A NAME, WE NEED A BLANK ONE
         self.database_objects = DatabaseObjects()
-
+        stripper = TagKeeper(['a'])
         for item in self.model.items_within_date(self.date):
+            stripper.feed(item.full_content)
+            item.full_content = stripper.get_data()
             item.determine_priority(self.date, self.priority_ids)
             if self.section_field:
                 item.determine_section(self.section_field, self.section_field_default_value)
+            print(item)
             self.database_objects.add(item)
         
     def model_items(self):
@@ -414,3 +442,8 @@ class ExtendMoodleDatabaseToAutoEmailer:
         """
         return "{}{}{}".format(self.begin_list_tag, s.strip('\n'), self.end_list_tag)
 
+if __name__ == "__main__":
+
+    s = TagKeeper(['a'])
+    s.feed('<p class="hi"><ol><li><a href="slkfjsdk">Thisfdsjkfd</a> </li><li>ddd</li></ol></p>')
+    print(s.get_data())

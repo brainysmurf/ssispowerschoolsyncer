@@ -15,6 +15,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
     """
     def __init__(self, *args, **kwargs):
         self.end_of_item = ""
+        print("initing")
         super().__init__('Secondary Notices Database', *args, **kwargs)
         self.init()
         #self.start_html_tag = '<html><p><i>Translations available: <a href="http://sites.ssis-suzhou.net/ssakorean/">Korean</a></i></p>'

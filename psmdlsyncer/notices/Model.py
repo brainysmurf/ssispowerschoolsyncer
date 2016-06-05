@@ -280,7 +280,7 @@ class DatabaseObjects(MoodleDBSession):
         return (item for item in self._db if item.date_within(date))
 
     def time_created_happened_between(self, start, end):
-        return (item for item in self._db if item.time_created_within_start_end(start, end))
+        yield from (item for item in self._db if item.time_created_within_start_end(start, end))
 
     def sort(self, lst):
         try:
