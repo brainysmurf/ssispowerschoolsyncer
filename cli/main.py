@@ -203,11 +203,21 @@ def launch(obj, email=False, edit_email=False, output=False, publish=False, upda
      
     if email:
         if publish:
-            obj.notices.email_editing = False
-            obj.notices.agent_map = {
-                'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary', 'Elementary'],
-                'group-es-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
-                }
+            if obj.notices.which == 'teacher':
+                obj.notices.email_editing = False
+                obj.notices.agent_map = {
+                    'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary', 'Elementary'],
+                    'group-es-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
+                    }
+            elif obj.notices.which == 'student':
+                obj.notices.email_editing = False
+                # obj.notices.agent_map = {
+                #     'group-sec-all@ssis-suzhou.net':['Senior School only', 'Junior School only', 'All Secondary'],
+                #     'group-es-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
+                #     }
+                obj.notices.agents = 'usebccstudentsSEC@ssis-suzhou.net'
+            else:
+                print("WRONG WHICH")
 
         obj.notices.email_to_agents()
 
