@@ -32,11 +32,8 @@ class Teacher_Notices(ExtendMoodleDatabaseToAutoEmailer):
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
         self.agents = ['adammorris@ssis-suzhou.net']
         self.agent_map = {
-            'rebeccalouiseclentwo@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'yoonahlee@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'carmenmurray@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'neilmarshallinns@ssis-suzhou.net':['Whole School', 'Elementary'],
-            'nicholaslittle@ssis-suzhou.net':['Whole School', 'Secondary'],
+            'group-sec-all@ssis-suzhou.net': ['Whole School', 'Secondary', 'Elementary'],
+            'group-es-all@ssis-suzhou.net': ['Whole School', 'Elementary', 'Secondary'],
             }
         self.search_date = "next day"
         self.content_field = 'Full Content'
