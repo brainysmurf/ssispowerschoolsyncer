@@ -12,7 +12,8 @@ if __name__ == '__main__':
     mod = ModUserEnrollments()
 
     for idnumber,cohort in m.get_cohorts():
-        if idnumber in moodle.teachers.get_keys():
-            print(idnumber, cohort)
+        if idnumber and cohort:
+            if idnumber in moodle.teachers.get_keys():
+                print(idnumber, cohort)
 
     from IPython import embed;embed()
