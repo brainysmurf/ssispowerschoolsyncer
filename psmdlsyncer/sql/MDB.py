@@ -594,6 +594,17 @@ class MoodleDBSession(MoodleDBSess):
         for item in statement.all():
             yield item
 
+    def get_cohorts_with_username(self):
+        with DBSession() as session:
+            statement = session.query(User.idnumber, User.username, Cohort.idnumber).\
+                select_from(CohortMember).\
+                    join(Cohort, Cohort.id == CohortMember.cohortid).\
+                    join(User, User.id == CohortMember.userid)
+
+        for item in statement.all():
+            yield item
+
+
     def clear_active_timetable_data(self):
         with DBSession() as session:
             statement = session.query(SsisTimetableInfo)

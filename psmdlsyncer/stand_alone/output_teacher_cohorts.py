@@ -11,9 +11,9 @@ if __name__ == '__main__':
     m = MoodleDBSession()
     mod = ModUserEnrollments()
 
-    for idnumber,cohort in m.get_cohorts():
-        if idnumber and cohort:
-            if idnumber in moodle.teachers.get_keys():
-                print(idnumber, cohort)
+    for idnumber, username, cohort in m.get_cohorts_with_username():
+        if cohort:
+            if moodle.teachers.get_from_attribute('username', username):
+                print(idnumber, username, cohort)
 
     from IPython import embed;embed()
