@@ -208,7 +208,7 @@ class Teacher(BaseModel):
 
     def derive_cohorts(self):
         """ Returns cohorts, dynamically created """
-        l = self.get_departments()
+        l = []
         if self.is_secondary:
             l.append('teachersSEC')
         if self.is_primary:
@@ -244,13 +244,13 @@ class Teacher(BaseModel):
             ns.param = to_add
             yield ns
 
-        for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
-            ns = NS()
-            ns.status = 'remove_from_cohort'
-            ns.left = self
-            ns.right = other
-            ns.param = to_remove
-            yield ns
+        # for to_remove in set(self.cohort_idnumbers) - set(other.cohort_idnumbers):
+        #     ns = NS()
+        #     ns.status = 'remove_from_cohort'
+        #     ns.left = self
+        #     ns.right = other
+        #     ns.param = to_remove
+        #     yield ns
 
         # Other things
         attrs = ['username']
