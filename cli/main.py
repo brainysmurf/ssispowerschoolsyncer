@@ -203,13 +203,13 @@ def launch(obj, email=False, edit_email=False, output=False, publish=False, upda
      
     if email:
         if publish:
-            if obj.notices.which == 'teacher':
+            if obj.teacher_notices:
                 obj.notices.email_editing = False
                 obj.notices.agent_map = {
                     'group-sec-all@ssis-suzhou.net':['Whole School', 'Secondary', 'Elementary'],
                     'group-es-all@ssis-suzhou.net':['Whole School', 'Elementary', 'Secondary']
                     }
-            elif obj.notices.which == 'student':
+            elif obj.student_notices:
                 obj.notices.email_editing = False
                 # obj.notices.agent_map = {
                 #     'group-sec-all@ssis-suzhou.net':['Senior School only', 'Junior School only', 'All Secondary'],
