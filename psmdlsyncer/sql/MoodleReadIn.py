@@ -203,9 +203,8 @@ class MoodleImport(MoodleDBSession):
             course = results[group]['course']
             if course and not teachers:
                 self.logger.warning("Group with no teacher info: {}!".format(group))
-                continue
+                teachers = ['38110'] # terrible, no good hack
             elif not course:
-                from IPython import embed;embed();exit()
                 self.logger.warning("No course {} in group?: {}!".format(str(course), group))
                 continue
 

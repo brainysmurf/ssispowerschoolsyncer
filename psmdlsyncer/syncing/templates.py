@@ -409,6 +409,7 @@ class MoodleTemplate(DefaultTemplate):
     #     self.moodlemod.create_new_course(course.idnumber, course.name)
 
     def enrol_in_course(self, item):
+        return
         course_idnumber = item.param.course
         yes_no = course_idnumber in self.courses
         if yes_no:
@@ -416,6 +417,7 @@ class MoodleTemplate(DefaultTemplate):
         return yes_no
 
     def enrol_student_into_course(self, item):
+        return
         student = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -425,6 +427,7 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_teacher_into_course(self, item):
+        return
         teacher = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -434,6 +437,7 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_parent_into_course(self, item):
+        return
         parent = item.right.idnumber
         course = item.param.course
         group = item.param.group
