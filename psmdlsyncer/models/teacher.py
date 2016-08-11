@@ -291,7 +291,7 @@ class Teacher(BaseModel):
         #             to_add.group = group
         #             ns.param = to_add
         #             yield ns
-?
+
         # for course in set(self.enrollments.keys()) - set(other.enrollments.keys()):
         #     for group in self.enrollments[course]:
         #         ns = NS()
