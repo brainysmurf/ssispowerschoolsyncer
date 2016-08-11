@@ -394,12 +394,55 @@ def dragonnet_user(which, subbranch=None, attribute=None, value=None, **kwargs):
 
     #click.confirm("Continue?", abort=True)
 
+@main.command('batch')
+@click.argument('path', type=click.File(mode='r'), default=None)
+@click.pass_obj
+def input_batch(obj, path):
+    from psmdlsyncer.php.PHPMoodleLink import CallPHP
+
+    php = CallPHP(verbose=True)
+
+    for line in path:
+        routine, *rest = line.strip("\n").split(' ')
+        php.command(routine, " ".join(rest))        
+
 @main.group()
 def output():
     """
     Writes various data that is useful for debugging purposes
     """
     pass
+
+@output.command('cohorts')
+@click.argument('format_string')
+@click.option('--path', type=click.File(mode='w'), default=None, help="Save to disk")
+@click.pass_obj
+def output_cohorts_info(obj, format_string, path):
+    from psmdlsyncer.sql import MoodleDBSession
+    from psmdlsyncer.php import ModUserEnrollments
+    from psmdlsyncer.sql import MoodleDBSession
+
+    from psmdlsyncer.models.datastores.moodle import MoodleTree
+
+    moodle = MoodleTree()
+    moodle.process()
+
+    m = MoodleDBSession()
+    mod = ModUserEnrollments()
+
+    if path is None:
+        import sys
+        output_func = sys.stdout.write
+    else:
+        output_func = path.write
+
+    format_string += '\n'
+
+    for idnumber, username, cohort in m.get_cohorts_with_username():
+        if cohort:
+            if moodle.teachers.get_from_attribute('username', username):
+                output_func(format_string.format(idnumber=idnumber, cohort=cohort, username=username))
+
 
 @output.command()
 @click.argument('path_to_output', metavar='PATH_TO_OUTPUT <file>')
@@ -469,6 +512,4 @@ def usebccparentsHOMEROOM():
     autosend = AutoSendTree()
     autosend.process()
     autosend.output_parent_bulk_emails()
-
-
 

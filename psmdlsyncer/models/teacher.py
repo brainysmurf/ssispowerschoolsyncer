@@ -303,17 +303,17 @@ class Teacher(BaseModel):
                     ns.param = to_remove
                     yield ns
 
-        for course in set(self.enrollments.keys()) - set(other.enrollments.keys()):
-            for group in self.enrollments[course]:
-                ns = NS()
-                ns.status = 'deenrol_teacher_from_course'
-                ns.left = self
-                ns.right = other
-                to_remove = NS()
-                to_remove.course = course
-                to_remove.group = group
-                ns.param = to_remove
-                yield ns
+        # for course in set(self.enrollments.keys()) - set(other.enrollments.keys()):
+        #     for group in self.enrollments[course]:
+        #         ns = NS()
+        #         ns.status = 'deenrol_teacher_from_course'
+        #         ns.left = self
+        #         ns.right = other
+        #         to_remove = NS()
+        #         to_remove.course = course
+        #         to_remove.group = group
+        #         ns.param = to_remove
+        #         yield ns
 
     # def post_differences(self, other):
     #     return ()

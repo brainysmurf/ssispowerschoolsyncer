@@ -11,8 +11,9 @@ class CallPHP:
     """
     Interfaces with php file phpclimoodle.php
     """
-    def __init__(self):
+    def __init__(self, verbose=False):
         #TODO: Get this info from standard settings and config
+        self.verbose = verbose
         self.logger = logging.getLogger(self.__class__.__name__)
         self.default_logger = self.logger.debug
         self.sf = NS()
@@ -39,6 +40,7 @@ class CallPHP:
         """
         Interfaces with pexpect
         """
+        self.verbose and print('sending {} {}'.format(routine, cmd))
         try:
             self.process.sendline(routine + ' ' + cmd)
         except OSError:
@@ -58,6 +60,7 @@ class CallPHP:
         except:
             which = 0
             self.logger.critical(self.process.before)
+        self.verbose and print("which {}".format(which))
 
         if which == 0:
             pass
