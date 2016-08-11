@@ -514,7 +514,7 @@ class MoodleTemplate(DefaultTemplate):
         group = item.left
         course_idnumber = group.course_idnumber
         if course_idnumber not in self.courses:
-            self.default_logger("Did NOT delete group {} in {} because the correspoding course {} does not exist.".format(group, course_idnumber))
+            self.default_logger("Did NOT delete group {} because the correspoding course {} does not exist.".format(group, course_idnumber))
         elif re.search('-[a-z]{1}$', group.idnumber):
             self.moodlemod.delete_group(group.idnumber, course_idnumber)
         else:
