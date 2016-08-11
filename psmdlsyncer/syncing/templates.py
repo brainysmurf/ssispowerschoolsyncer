@@ -252,7 +252,6 @@ class MoodleTemplate(DefaultTemplate):
         return False
 
     def remove_user_from_all_courses(self, user):
-        return
         for course in user.courses:
             self.moodlemod.deenrol_student_from_course(user.idnumber, course.idnumber)
 
@@ -409,7 +408,6 @@ class MoodleTemplate(DefaultTemplate):
     #     self.moodlemod.create_new_course(course.idnumber, course.name)
 
     def enrol_in_course(self, item):
-        return
         course_idnumber = item.param.course
         yes_no = course_idnumber in self.courses
         if yes_no:
@@ -417,7 +415,6 @@ class MoodleTemplate(DefaultTemplate):
         return yes_no
 
     def enrol_student_into_course(self, item):
-        return
         student = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -427,7 +424,6 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_teacher_into_course(self, item):
-        return
         teacher = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -437,7 +433,6 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_parent_into_course(self, item):
-        return
         parent = item.right.idnumber
         course = item.param.course
         group = item.param.group
@@ -447,7 +442,6 @@ class MoodleTemplate(DefaultTemplate):
             self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def deenrol_teacher_from_course(self, item):
-        return
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
@@ -455,7 +449,6 @@ class MoodleTemplate(DefaultTemplate):
         #self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
-        return
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group.idnumber
@@ -465,7 +458,6 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
-        return
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
