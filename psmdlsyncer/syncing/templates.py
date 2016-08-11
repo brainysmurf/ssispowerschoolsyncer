@@ -252,6 +252,7 @@ class MoodleTemplate(DefaultTemplate):
         return False
 
     def remove_user_from_all_courses(self, user):
+        return
         for course in user.courses:
             self.moodlemod.deenrol_student_from_course(user.idnumber, course.idnumber)
 
@@ -320,14 +321,14 @@ class MoodleTemplate(DefaultTemplate):
         if self.check_for_allow_deletions():
             self.moodlemod.delete_account(teacher.idnumber)
         else:
-            self.logger.warn('Deleting teacher: {}'.format(teacher))
-            try:
-                self.moodle.update_table('user', where={
-                    'idnumber':teacher.idnumber
-                    },
-                    deleted=1)
-            except (NoResultFound, MultipleResultsFound):
-                self.logger.warn("Could not set deleted of teacher {} to 1".format(teacher))
+            # self.logger.warn('Deleting teacher: {}'.format(teacher))
+            # try:
+            #     self.moodle.update_table('user', where={
+            #         'idnumber':teacher.idnumber
+            #         },
+            #         deleted=1)
+            # except (NoResultFound, MultipleResultsFound):
+            #     self.logger.warn("Could not set deleted of teacher {} to 1".format(teacher))
 
             self.remove_user_from_all_groups(teacher)
             self.remove_user_from_all_courses(teacher)
@@ -450,6 +451,7 @@ class MoodleTemplate(DefaultTemplate):
         #self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
+        return
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group.idnumber
@@ -459,6 +461,7 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
+        return
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course

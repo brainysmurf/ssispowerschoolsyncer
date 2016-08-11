@@ -112,6 +112,11 @@ class MoodleImport(MoodleDBSession):
             # Do different things based on the role
             # For teachers, we have to see if they are the owner of the group
 
+            if 'course' in results[groupId]:
+                assert results[groupId]['course'] == courseID
+            else:
+                results[groupId]['course'] = courseID
+
             if roleName == "editingteacher":
                 # TODO: Can be deleted, right?
                 # if not groupId:
@@ -200,6 +205,7 @@ class MoodleImport(MoodleDBSession):
                 self.logger.warning("Group with no teacher info: {}!".format(group))
                 continue
             elif not course:
+                from IPython import embed;embed();exit()
                 self.logger.warning("No course {} in group?: {}!".format(str(course), group))
                 continue
 
