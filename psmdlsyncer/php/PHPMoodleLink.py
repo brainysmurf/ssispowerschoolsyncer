@@ -11,7 +11,7 @@ class CallPHP:
     """
     Interfaces with php file phpclimoodle.php
     """
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=True):
         #TODO: Get this info from standard settings and config
         self.verbose = verbose
         self.logger = logging.getLogger(self.__class__.__name__)

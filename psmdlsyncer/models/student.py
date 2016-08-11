@@ -125,20 +125,20 @@ class Student(BaseModel):
                 homeroom = "00"
                 grade = 0
             else:
-                grade = re.sub('[^0-9]+[0-9]{1}$', '', homeroom)
-            self.hr_letter = re.sub('^[0-9]+', '', homeroom)
+                match = re.match('([0-9]+).*', homeroom)
+                if match is None:
+                    grade = {'GD3':-3,'GD1':-3,'GD2':-3,'GD4':-3, 'PKB':-2, 'PKA':-2, 'KCA':-1, 'KGD':-1,'KGA':-1,'KGC':-1, 'KGB':-1, 'NA':-4,'NB':-4, 'PNA':-4}.get(homeroom)
+                else:
+                    grade = int(match.group(1))
         else:
-            self.hr_letter = ''
-        try:
             grade = int(grade)
-        except ValueError:
-            self.logger.debug("This student {} ({}) has a non-integer grade: '{}'".format(username, self.ID, grade))
-            grade = 0
+
         self.grade = grade
         if self.grade < 4:
             self.login_method = 'nologin'
         else:
             self.login_method = 'manual'
+
         self.custom_profile_isstudent = True
         self.is_secondary = grade >= 6
         self.custom_profile_issecstudent = self.is_secondary
@@ -546,7 +546,7 @@ class Student(BaseModel):
             yield ns
 
         # Other things
-        attrs = ['homeroom', 'username']
+        attrs = ['homeroom', 'username', 'login_method']
         for attr in attrs:
             if not getattr(self, attr) == getattr(other, attr):
                 ns = NS()

@@ -218,6 +218,22 @@ class MoodleTemplate(DefaultTemplate):
             student = item.right
             self.moodlemod.new_student(student)
 
+    def login_method_changed(self, item):
+        """
+
+        """
+        user = item.right
+        try:
+            self.moodle.update_table('user', where={
+                'idnumber':user.idnumber
+                },
+                login_method=user.login_method)
+            self.default_logger("Changed {} login method to {}".format(item.right, item.param))
+
+        except (NoResultFound, MultipleResultsFound):
+            self.logger.warn("Could not update login_method field for user {}".format(user))
+
+
     def check_for_allow_deletions(self):
         """
         If there settings.ini file contains specific instructions to delete the accounts, then do so
@@ -235,6 +251,10 @@ class MoodleTemplate(DefaultTemplate):
                 return True
         return False
 
+    def remove_user_from_all_courses(self, user):
+        for course in user.courses:
+            self.moodlemod.deenrol_student_from_course(user.idnumber, course.idnumber)
+
     def remove_user_from_all_groups(self, user):
         """
         Used in old_* accounts functions
@@ -245,7 +265,6 @@ class MoodleTemplate(DefaultTemplate):
             self.moodlemod.remove_user_from_group(user.idnumber, group.idnumber)
 
     def old_student(self, item):
-        return 
         super().old_student(item)
         student = item.left
 
@@ -267,14 +286,14 @@ class MoodleTemplate(DefaultTemplate):
             # Now set the homeroom field to 'left' and remove them from any groups they are in
             # Doesn't delete the account, and doesn't unenrol them from courses, either
             # Which makes recovering them a simple matter.
-            try:
-                self.moodle.update_table('user', where={
-                    'idnumber':student.idnumber
-                    },
-                    deleted=1)
+            # try:
+            #     self.moodle.update_table('user', where={
+            #         'idnumber':student.idnumber
+            #         },
+            #         deleted=1)
 
-            except (NoResultFound, MultipleResultsFound):
-                self.logger.warn("Did not update homeroom field for student {}".format(student))
+            # except (NoResultFound, MultipleResultsFound):
+            #     self.logger.warn("Did not update homeroom field for student {}".format(student))
 
             # TODO: Make this a config item from the command line
 
@@ -287,10 +306,10 @@ class MoodleTemplate(DefaultTemplate):
             #     self.logger.warn("Could not set deleted of student {} to 1".format(student))
             
             # Remove from all groups as well?
-            #self.remove_user_from_all_groups(student)
+            self.remove_user_from_all_groups(student)
+            self.remove_user_from_all_courses(student)
 
     def old_teacher(self, item):
-        return
         super().old_teacher(item)
         teacher = item.left
 
@@ -311,9 +330,9 @@ class MoodleTemplate(DefaultTemplate):
                 self.logger.warn("Could not set deleted of teacher {} to 1".format(teacher))
 
             self.remove_user_from_all_groups(teacher)
+            self.remove_user_from_all_courses(teacher)
 
     def old_parent(self, item):
-        return
         super().old_parent(item)
         parent = item.left
 
@@ -324,18 +343,19 @@ class MoodleTemplate(DefaultTemplate):
         if self.check_for_allow_deletions():
             self.moodlemod.delete_account(parent.idnumber)
         else:
-            self.logger.warn('Deleting parent: {}'.format(parent))
-            try:
-                self.moodle.update_table('user', where={
-                    'idnumber':parent.idnumber
-                    },
-                    deleted=1)
-            except NoResultFound:
-                self.logger.warn("Could not delete parent {}".format(parent))
-            except MultipleResultsFound:
-                self.logger.warn('Multiple parent accounts for {}'.format(parent.idnumber))
+            # self.logger.warn('Deleting parent: {}'.format(parent))
+            # try:
+            #     self.moodle.update_table('user', where={
+            #         'idnumber':parent.idnumber
+            #         },
+            #         deleted=1)
+            # except NoResultFound:
+            #     self.logger.warn("Could not delete parent {}".format(parent))
+            # except MultipleResultsFound:
+            #     self.logger.warn('Multiple parent accounts for {}'.format(parent.idnumber))
     
             self.remove_user_from_all_groups(parent)
+            self.remove_user_from_all_courses(parent)
 
     def new_teacher(self, item):
         """
@@ -436,14 +456,14 @@ class MoodleTemplate(DefaultTemplate):
         if hasattr(user, 'grade') and user.grade == 12:
             return
         super().deenrol_from_course(item)   # for output
-        #self.moodlemod.deenrol_student_from_course(user, course)
+        self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
-        #super().deenrol_from_course(item)   # for output
+        super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group.idnumber
-        #self.moodlemod.deenrol_parent_from_course(user, course)
+        self.moodlemod.deenrol_parent_from_course(user, course)
 
     def add_to_cohort(self, item):
         super().add_to_cohort(item)
@@ -452,7 +472,6 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.add_user_to_cohort(user, cohort)
 
     def remove_from_cohort(self, item):
-        return
         super().remove_from_cohort(item)
         user = item.left.idnumber
         cohort = item.param
@@ -489,14 +508,14 @@ class MoodleTemplate(DefaultTemplate):
         # not sure what to do yet
 
     def old_group(self, item):
-        return
         group = item.left
         course_idnumber = group.course_idnumber
         if course_idnumber not in self.courses:
-            self.default_logger("Did NOT delete group {} because the correspoding course {} does not exist.".format(group, course_idnumber))
-        else:
-            super().old_group(item)
+            self.default_logger("Did NOT delete group {} in {} because the correspoding course {} does not exist.".format(group, course_idnumber))
+        elif re.search('-[a-z]{1}$', group.idnumber):
             self.moodlemod.delete_group(group.idnumber, course_idnumber)
+        else:
+            self.default_logger("Did NOT delete group {} in {} because it looks like a one manually maintained.".format(group, course_idnumber))
 
     def add_to_group(self, item):
         user = item.right
@@ -521,8 +540,9 @@ class MoodleTemplate(DefaultTemplate):
             super().remove_from_group(item)
             self.moodlemod.remove_user_from_group(user, group.idnumber)
         else:
-            # do nothing, dont report either
-            pass
+            # Take them out for now, this may need to change
+            super().remove_from_group(item)
+            self.moodlemod.remove_user_from_group(user, group.idnumber)
 
     def username_changed(self, item):
         user = item.left
