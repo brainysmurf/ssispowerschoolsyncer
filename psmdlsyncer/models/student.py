@@ -131,6 +131,9 @@ class Student(BaseModel):
                 else:
                     grade = int(match.group(1))
         else:
+            if grade is "":
+                grade = -10
+                self.logger.warning("No grade provided for {}".format(self.idnumber))
             grade = int(grade)
 
         self.grade = grade

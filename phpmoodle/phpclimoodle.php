@@ -469,13 +469,10 @@ class moodlephp
       $instance = $instances[$enrolid];
       $plugin = $plugins[$instance->enrol];
 
+      // if problem, it throws an exception
       $result = $plugin->unenrol_user($instance, $user->id);
 
-      if ($result) {
-        return "+";
-      } else {
-        return "- Enrollment not successful";
-      }
+      return "+";
     }
 
     private function change_username($args)
