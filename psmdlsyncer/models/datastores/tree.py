@@ -178,7 +178,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 			for schedule in method.content():
 				self.default_logger('Processing {} schedule: {}'.format(school, schedule))
 				course_key, period_info, section_number, teacher_key, student_key = schedule
-				course = self.courses.get(course_key, self.convert_course) 
+				course = self.courses.get(course_key, self.convert_course)
 				if not course:
 					self.logger.debug("Course not found! {}".format(course_key))
 					continue
@@ -249,7 +249,7 @@ class AbstractTree(metaclass=DataStoreCollection):
 	def process(self):
 		# Basically just calls every process_x method we have
 		debug = config_get_section_attribute('DEBUGGING', 'print_process')
-		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules',  'mrbs_editors', 'online_portfolios']
+		order = ['students', 'teachers', 'parents', 'parent_links', 'cohorts', 'courses', 'schedules',  'mrbs_editors']
 		for o in order:
 			method_name = 'process_{}'.format(o)
 			method = getattr(self, method_name)
