@@ -277,20 +277,20 @@ class Teacher(BaseModel):
 
         # Go through each course that they share, and check that
         # they have the same groups, if not, do what's right
-        # for course in set(self.enrollments.keys()) and set(other.enrollments.keys()):
-        #     self_groups = self.enrollments[course]
-        #     other_groups = other.enrollments[course]
-        #     for group in other_groups:
-        #         if not group.idnumber in [g.idnumber for g in self_groups]:
-        #             ns = NS()
-        #             ns.status = 'add_to_group'
-        #             ns.left = self
-        #             ns.right = other
-        #             to_add = NS()
-        #             to_add.course = course
-        #             to_add.group = group
-        #             ns.param = to_add
-        #             yield ns
+        for course in set(self.enrollments.keys()) and set(other.enrollments.keys()):
+            self_groups = self.enrollments[course]
+            other_groups = other.enrollments[course]
+            for group in other_groups:
+                if not group.idnumber in [g.idnumber for g in self_groups]:
+                    ns = NS()
+                    ns.status = 'add_to_group'
+                    ns.left = self
+                    ns.right = other
+                    to_add = NS()
+                    to_add.course = course
+                    to_add.group = group
+                    ns.param = to_add
+                    yield ns
 
         # for course in set(self.enrollments.keys()) - set(other.enrollments.keys()):
         #     for group in self.enrollments[course]:
