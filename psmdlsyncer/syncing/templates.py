@@ -418,28 +418,31 @@ class MoodleTemplate(DefaultTemplate):
         student = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        if self.enrol_in_course(item):   # for output and checking
-            self.moodlemod.enrol_student_into_course(student, course, group) # just pass the whole schedule object itself
-        else:
-            self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+        self.moodlemod.enrol_student_into_course(student, course, group) # just pass the whole schedule object itself
+        # if self.enrol_in_course(item):   # for output and checking
+        #     self.moodlemod.enrol_student_into_course(student, course, group) # just pass the whole schedule object itself
+        # else:
+        #     self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_teacher_into_course(self, item):
         teacher = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        if self.enrol_in_course(item):   # for output and checking
-            self.moodlemod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
-        else:
-            self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+        self.moodlemod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
+        # if self.enrol_in_course(item):   # for output and checking
+        #     self.moodlemod.enrol_teacher_into_course(teacher, course, group) # just pass the whole schedule object itself
+        # else:
+        #     self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def enrol_parent_into_course(self, item):
         parent = item.right.idnumber
         course = item.param.course
         group = item.param.group
-        if self.enrol_in_course(item):   # for output and checking
-            self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
-        else:
-            self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
+        self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
+        # if self.enrol_in_course(item):   # for output and checking
+        #     self.moodlemod.enrol_parent_into_course(parent, course, group) # just pass the whole schedule object itself
+        # else:
+        #     self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def deenrol_teacher_from_course(self, item):
         super().deenrol_from_course(item)   # for output

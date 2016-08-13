@@ -134,6 +134,15 @@ def derive_departments(courses):
 		d[x] = 1
 	return list(d.keys())
 
+def straight_converts(short, long_):
+	new_short = {
+		'MATHSD11': 'MATHSD',
+		'MATHSD12': 'MATHSD',
+	}.get(short)
+	if new_short:
+		return new_short, long_
+	else:
+		return None
 
 
 def map_codes(short, grade, higher_lower):
@@ -161,6 +170,7 @@ def map_codes(short, grade, higher_lower):
 		'MASTUSH1112':  'MASTU'+higher_lower+grade,
 
 		'MAHIGH1112': 'MAHIGH'+grade,
+
 
 		# SWA Study Skills are really just learning support stuff
 		'STUDYSWA10': 'STDSKL10',
@@ -239,7 +249,12 @@ def map_codes_names(short):
 		}.get(short)
 
 def convert_short_long(short, long):
-	# First do blanket conversions
+	# First do any defined straight conversions
+	short_circuit = straight_converts(short, long)
+	if short_circuit is not None:
+		return short_circuit
+
+	# Second do blanket conversions
 	short = re.sub(r'[^a-zA-Z0-9]', '', short)    # take out nonalpha
 	short = re.sub(r'0([1-9]+)$', '\\1', short)   # take out leading zeroes
 	grade = re.sub(r'[^0-9]+', '', short)         # get the grade

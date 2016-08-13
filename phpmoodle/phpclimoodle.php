@@ -225,7 +225,7 @@ class moodlephp
                     $child_idnumber
                 )
             ) {
-                $context = get_context_instance(CONTEXT_USER, $child->id);
+                $context = context_user::instance($child->id);
                 role_assign($this->PARENT_ROLE_ID, $parent->id, $context->id);
             } else {
                 return "-105 Either could not find parent $parent_idnumber or couldn't find child $child_idnumber";
@@ -368,7 +368,7 @@ class moodlephp
             return "-117 Course does not exist!... $course_idnumber";
         }
 
-        if (!$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST)) {
+        if (!$context = context_course::instance($course->id) ) {
             return "-118 Could not get context for course $course_idnumber with ID $course->id";
         }
 
@@ -446,7 +446,7 @@ class moodlephp
         return "-123 Course does not exist!... $course_idnumber";
       }
 
-      if( !$context = get_context_instance(CONTEXT_COURSE, $course->id, MUST_EXIST) ) {
+      if( !$context = context_course::instance($course->id) ) ) {
         return "-124 Could not get context for course $course_idnumber with ID $course->id";
       }
 
