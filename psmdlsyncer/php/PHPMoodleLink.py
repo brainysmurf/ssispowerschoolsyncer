@@ -40,6 +40,10 @@ class CallPHP:
         """
         Interfaces with pexpect
         """
+        # if routine.startswith('enrol'):
+        #     self.verbose = True
+        # else:
+        #     self.verbose = False
         self.verbose and print('sending {} {}'.format(routine, cmd))
         try:
             self.process.sendline(routine + ' ' + cmd)
@@ -58,17 +62,18 @@ class CallPHP:
         try:
             which = self.process.expect([success_string, error_string])
         except:
-            which = 0
-            self.logger.critical(self.process.before)
+            which = 1
+            self.logger.critical(self.process.after)
         self.verbose and print("which {}".format(which))
 
         if which == 0:
             pass
         elif which == 1:
-            the_string = self.process.after.decode('utf-8').strip('\n')
+            the_string = self.process.after.decode('utf-8')[:-5]
             self.logger.warning(the_string)   # make sure this is a warning
         else:
-            self.logger.critical(self.process.before.decode('utf-8'))   # This will probably be something essential
+            self.logger.critical(self.process.after.decode('utf-8'))   # This will probably be something essential
+        self.verbose and input()
 
     def create_new_course(self, idnumber, fullname):
         self.command('create_new_course', "{} '{}'".format(idnumber, fullname))
@@ -100,7 +105,7 @@ class CallPHP:
 
     def enrol_user_into_course(self, idnumber, shortname, group_id, group_name, role):
         self.sf.define(idnumber=idnumber, shortname=shortname, group_id=group_id, group_name=group_name, role=role)
-        to_pass = self.sf("{idnumber} {shortname} {group_id} '{group_name}' {role}")
+        to_pass = self.sf("{idnumber} '{shortname}' '{group_id}' '{group_name}' {role}")
         self.command('enrol_user_in_course', to_pass)
 
     def unenrol_user_from_course(self, idnumber, course):
