@@ -138,6 +138,17 @@ def straight_converts(short, long_):
 	new_short = {
 		'MATHSD11': 'MATHSD',
 		'MATHSD12': 'MATHSD',
+		'JAPA_07': 'JAPA8',
+		'FREB_06': 'FRELA67_PH2',
+		'FREB_07': 'FRELA67_PH2',
+		'FREB_09': 'FRELA910',
+		'HSDMAT10': 'MATST10',
+		'PHYHON11': 'SSPHYSH1112',
+		'PHYHON12': 'SSPHYSH1112',
+		'HSDPSY12': 'SSPSYSH1112',
+		'HSDPSY11': 'SSPSYSH1112',
+		'LIBRA_10': 'STDSKL10',
+		'LIBRA_09': 'STDSKL9',
 	}.get(short)
 	if new_short:
 		return new_short, long_
