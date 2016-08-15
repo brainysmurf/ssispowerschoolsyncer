@@ -149,6 +149,9 @@ def straight_converts(short, long_):
 		'HSDPSY11': 'SSPSYSH1112',
 		'LIBRA_10': 'STDSKL10',
 		'LIBRA_09': 'STDSKL9',
+		'HONSPSCI11': 'SEHS11',
+		'SPSCIS11': 'SEHS11',
+
 	}.get(short)
 	if new_short:
 		return new_short, long_
