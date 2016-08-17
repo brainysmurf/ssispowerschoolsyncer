@@ -151,7 +151,14 @@ def straight_converts(short, long_):
 		'LIBRA_09': 'STDSKL9',
 		'HONSPSCI11': 'SEHS11',
 		'SPSCIS11': 'SEHS11',
-
+		'JAP_A_07': 'JAP78',
+		'JAP_A_08': 'JAP78',
+		'SPANISH5': 'SPA5',
+		'SPA_B_06': 'SPALA',
+		'SPA_B_07': 'SPALA',
+		'SPA_B_08': 'SPALA',
+		'SPA_B_09': 'SPALA',
+		'SPA_B_10': 'SPALA'
 	}.get(short)
 	if new_short:
 		return new_short, long_
