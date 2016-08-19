@@ -160,6 +160,7 @@ def straight_converts(short, long_):
 		'SPA_B_09': 'SPALA',
 		'SPA_B_10': 'SPALA',
 		'MAHIGH11': 'MAHIGH11',
+		'ENBSWA9': 'ENGBA9'
 	}.get(short)
 	if new_short:
 		return new_short, long_
