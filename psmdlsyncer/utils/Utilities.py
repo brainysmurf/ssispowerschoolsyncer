@@ -160,7 +160,14 @@ def straight_converts(short, long_):
 		'SPA_B_09': 'SPALA',
 		'SPA_B_10': 'SPALA',
 		'MAHIGH11': 'MAHIGH11',
-		'ENBSWA9': 'ENGBA9'
+		'ENBSWA9': 'ENGBA9',
+		'ENGLIL12': 'ENGLISH1112',
+		'ENGLLL11': 'ENGLLSH1112',
+		'ENLIHON12': 'ENLIHON12',
+		'ENGHON12': 'LBENGSH1112',
+		'ENGHON11': 'LBENGSH1112',
+		'LBENGS11': 'LBENGSH1112',
+		'LBENGH12': 'LBENGSH1112',
 	}.get(short)
 	if new_short:
 		return new_short, long_
