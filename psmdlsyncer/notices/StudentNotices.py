@@ -25,7 +25,7 @@ class Student_Notices(ExtendMoodleDatabaseToAutoEmailer):
         """
         super().define()
         self.sender = 'DragonNet Admin <lcssisadmin@student.ssis-suzhou.net>'
-        self.agents = ['usebccstudentsSEC@student.ssis-suzhou.net']
+        self.agents = ['usebccstudentsSEC@student.ssis-suzhou.net', 'group-sec-all@ssis-suzhou.net']
         self.agent_map = {}
 
         self.search_date = "next day"

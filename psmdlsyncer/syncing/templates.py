@@ -310,6 +310,7 @@ class MoodleTemplate(DefaultTemplate):
             self.remove_user_from_all_courses(student)
 
     def old_teacher(self, item):
+        return
         super().old_teacher(item)
         teacher = item.left
 
