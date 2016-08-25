@@ -264,6 +264,8 @@ class courses(DataStore):
 	@classmethod
 	def exclude(cls, idnumber, name):
 		# TODO: Make this a setting
+		if idnumber.startswith('ENGBSL'):
+			return False
 		return "Lab" in name
 
 	@classmethod
