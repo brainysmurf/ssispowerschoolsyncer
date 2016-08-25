@@ -168,11 +168,12 @@ def straight_converts(short, long_):
 		'ENGHON11': 'LBENGSH1112',
 		'LBENGS11': 'LBENGSH1112',
 		'LBENGH12': 'LBENGSH1112',
-		'ENGBSL06': 'ENGLAB'
-		'ENGBSL07': 'ENGLAB'
-		'ENGBSL08': 'ENGLAB'
-		'ENGBSL09': 'ENGLAB'
-		'ENGBSL10': 'ENGLAB'
+		'ENGBSL06': 'ENGLAB',
+		'ENGBSL07': 'ENGLAB',
+		'ENGBSL08': 'ENGLAB',
+		'ENGBSL09': 'ENGLAB',
+		'ENGBSL10': 'ENGLAB',
+		'HSDENG11': 'ENGLLSH1112',
 	}.get(short)
 	if new_short:
 		return new_short, long_
