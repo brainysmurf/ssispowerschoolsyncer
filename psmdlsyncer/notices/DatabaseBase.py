@@ -13,26 +13,34 @@ from html.parser import HTMLParser
 
 class TagKeeper(HTMLParser):
     def __init__(self, tags_to_keep, *args, **kwargs):
+        self.verbose = False
         HTMLParser.__init__(self, *args, **kwargs)
         self._text = []
         self._tags_to_keep = set(tags_to_keep)
         self.starttag = None
     def clear_text(self):
-        self._text = []
+        self.verbose and print('...clearing...')
+        self._text = ['']
     def handle_starttag(self, tag, attrs):
         self.starttag = tag
         if tag in self._tags_to_keep:
+            self.verbose and print("appending: {}".format(self.get_starttag_text()))
             self._text.append(self.get_starttag_text())
         else:
+            self.verbose and print("appending: <empty>")
             self._text.append('')
     def handle_endtag(self, tag):
         if tag in self._tags_to_keep:
+            self.verbose and print("Concating: </{}>".format(tag))
             self._text[-1] += "</{}>".format(tag)
         else:
-            pass
+            self._text.append('')
+
     def handle_data(self, data):
+        self.verbose and print("Concating: {}".format(data))
         self._text[-1] += data
     def get_data(self):
+        print(' '.join(self._text))
         return ' '.join(self._text)
 
 class Nothing(Exception): pass
