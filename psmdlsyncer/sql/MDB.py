@@ -289,7 +289,6 @@ class MoodleDBSession(MoodleDBSess):
                             and_(
                                 #CourseCategory.path == ('/{}'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
                                 CourseCategory.path.like('/{}/%'.format(self.TEACHING_LEARNING_CATEGORY_ID)),   # TODO: get roleid on __init__
-                                Group.name != None,
                                 Course.idnumber != '',
                                 User.idnumber != '',
                                 User.deleted == 0

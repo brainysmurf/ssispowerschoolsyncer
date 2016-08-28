@@ -33,7 +33,7 @@ class AutoSendImport:
         candidates = [g for g in [f.split(os.path.sep)[-1] for f in os.listdir(path_to_powerschool)] if path in g]
         candidates = sorted(candidates)
         if not candidates:
-            self.debug and self.logger.debug("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
+            self.debug and self.logger.warning("Autosend file not present for {} {}\ncontent method set to yield nothing".format(self.school, self.unique))
             self.content = lambda *args, **kwargs: []
             return
         final = candidates[-1]

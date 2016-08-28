@@ -76,7 +76,7 @@ class AutoSendTree(AbstractTree):
     def process(self):
         """
         Overrides default behavior in order to do some pre-flight stuff
-        """ 
+        """
         self._processed = True
         # We need to load up previous section_maps info
         with open(os.path.join(self.home, 'section_maps'), 'rb') as _file:
@@ -269,7 +269,7 @@ class AutoSendTree(AbstractTree):
                     not_(User.idnumber.like('%P')),
                     or_(
                         Enrol.enrol == 'self_parents',
-                        Enrol.enrol == 'meta'
+                        Enrol.enrol == 'meta',
                         )
                 )).all()
 

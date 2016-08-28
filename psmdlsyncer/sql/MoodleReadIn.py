@@ -7,6 +7,7 @@ class MoodleImport(MoodleDBSession):
     """
     Class used to import information about students
     """
+    
     def __init__(self, school, unique):
         self.school = school
         self.unique = unique

@@ -195,33 +195,36 @@ class groups(DataStore):
 	period_maps = {}
 
 	@classmethod
-	def make_group(cls, course, teacher, section, period_info):
+	def make_group(cls, student, course, teacher, section, period_info):
 		"""
 		Makes a group and parses the section as well
 		The passed section should be the 'official' section number
 		here we will change it to .a or .b accordingly
 		"""
-		idnumber = "{}-{}-{}".format(teacher.last.replace(' ', '').lower(), course.idnumber.lower(), section.lower())
-		name = "{} {} {}".format(teacher.last, course.idnumber.upper(), section.upper())
+		idnumber = "{}-{}-{}-{}".format(teacher.last.replace(' ', '').lower(), course.idnumber.lower(), student.grade, section.lower())
+		name = "{} course{} sec{}.{}".format(teacher.last, course.idnumber.upper(), student.grade, section.upper())
 		return cls.make(idnumber, name=name, course_idnumber=course.idnumber, section=section, period_info=period_info)
 
 	@classmethod
-	def make_group_from_id(cls, group_name, name):
+	def make_group_from_id(cls, group_idnumber, name):
 		"""
-		group_name is actually the idnumber
 		"""
-		if cls.sep in group_name:
-			sep = group_name.split(cls.sep)
+		if cls.sep in group_idnumber:
+			sep = group_idnumber.split(cls.sep)
 			if len(sep) == 3:			
 				teach, course, section = sep
+				grade = ''
+			elif len(sep) == 4:
+				teach, course, grade, section = sep
 			else:
 				if len(sep) == 2:
 					teach, section = sep
 					course = re.sub('^[^A-Z]+', '', teach)
 				else:
 					teach, course, section = ("", "", "")
-			name = "{} {} {}".format(teach, course.upper(), section.upper())
-			return cls.make(group_name, name=name, course_idnumber=course, section=section)
+				grade = ''
+			name = "{} {} {} {}".format(teach, course.upper(), grade, section.upper())
+			return cls.make(group_idnumber, name=name, course_idnumber=course, section=section)
 		else:
 			# defaults
 			course_idnumber = ""

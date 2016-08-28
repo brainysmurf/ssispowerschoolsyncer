@@ -40,10 +40,6 @@ class CallPHP:
         """
         Interfaces with pexpect
         """
-        # if routine.startswith('enrol'):
-        #     self.verbose = True
-        # else:
-        #     self.verbose = False
         self.verbose and print('sending {} {}'.format(routine, cmd))
         try:
             self.process.sendline(routine + ' ' + cmd)
@@ -61,9 +57,10 @@ class CallPHP:
         error_string = '-\d+ .*'
         try:
             which = self.process.expect([success_string, error_string])
-        except:
+        except Exception as e:
             which = 1
             self.logger.critical(self.process.after)
+            raise e
         self.verbose and print("which {}".format(which))
 
         if which == 0:
@@ -73,6 +70,7 @@ class CallPHP:
             self.logger.warning(the_string)   # make sure this is a warning
         else:
             self.logger.critical(self.process.after.decode('utf-8'))   # This will probably be something essential
+            exit()
         self.verbose and input()
 
     def create_new_course(self, idnumber, fullname):

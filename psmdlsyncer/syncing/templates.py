@@ -303,7 +303,7 @@ class MoodleTemplate(DefaultTemplate):
             #         },
             #         deleted=1)
             # except (NoResultFound, MultipleResultsFound):
-            #     self.logger.warn("Could not set deleted of student {} to 1".format(student))
+            #     self.logger.warn("Coudefld not set deleted of student {} to 1".format(student))
             
             # Remove from all groups as well?
             self.remove_user_from_all_groups(student)
@@ -539,11 +539,15 @@ class MoodleTemplate(DefaultTemplate):
         group = item.param.group
         course = item.param.course
         # We don't actually need the course...
-        if len(group.idnumber.split('-')) == 3:
+        if not '-' in group.idnumber:
+            # Must be a manual one, leave it alone
+            return
+        if group.idnumber.split('-') == 3:
             super().remove_from_group(item)
             self.moodlemod.remove_user_from_group(user, group.idnumber)
         else:
             # Take them out for now, this may need to change
+            return
             super().remove_from_group(item)
             self.moodlemod.remove_user_from_group(user, group.idnumber)
 

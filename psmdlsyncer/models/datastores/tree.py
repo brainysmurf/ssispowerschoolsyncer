@@ -166,19 +166,24 @@ class AbstractTree(metaclass=DataStoreCollection):
 			else:
 				course = self.courses.make_without_conversion(*course_info)
 
-
 	def process_schedules(self):
 		"""
 		Schedule should just have the keys for student and teachers
 		"""
 		for school in ['elementary', 'secondary']:
-			self.default_logger('{} processing {} schedule'.format(self.__class__.__name__, school))
+			self.logger.warning('{} processing {} schedule'.format(self.__class__.__name__, school))
 			# calls both secondary_schedule.content, elementary_schedule.content
 			method = getattr(self, "{}_schedule".format(school))
 			for schedule in method.content():
 				self.default_logger('Processing {} schedule: {}'.format(school, schedule))
 				course_key, period_info, section_number, teacher_key, student_key = schedule
 				course = self.courses.get(course_key, self.convert_course)
+				student = self.students.get_key(student_key)
+				# Do some sanity checks
+				if not student:
+					self.default_logger("Student not found, sometimes happens for some odd reason {}".format(student_key))
+					continue
+
 				if not course:
 					self.logger.debug("Course not found! {}".format(course_key))
 					continue
@@ -190,16 +195,11 @@ class AbstractTree(metaclass=DataStoreCollection):
 				if not teacher:
 					self.logger.warning("Teacher not found! {}".format(teacher_key))
 					continue
-				group = self.groups.make_group(course, teacher, section_number, period_info)
+				group = self.groups.make_group(student, course, teacher, section_number, period_info)
 				if not group:
 					self.logger.warning("Group not found! {}".format(section_number))
 					continue
-				student = self.students.get_key(student_key)
 
-				# Do some sanity checks
-				if not student:
-					self.default_logger("Student not found, sometimes happens for some odd reason {}".format(student_key))
-					continue
 
 				self.associate(course, teacher, group, student)
 
