@@ -465,7 +465,7 @@ def update_portfolios(obj, file_):
             item.email = student.homeroom_teacher.email
             item.slug = f + item.student_id
 
-            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} option update blogname '{0.firstname}'\n".format(item))
+            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} option update blogname '{0.firstname} {0.homeroom}'\n".format(item))
 
 @output.command('cohorts')
 @click.argument('format_string')
