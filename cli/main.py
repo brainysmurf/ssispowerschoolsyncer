@@ -413,6 +413,35 @@ def output():
     """
     pass
 
+@output.command('porfolios')
+@click.argument('file_', type=click.File(mode='w'))
+@click.pass_obj
+def output_portfolios(obj, file_):
+    from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    import re
+    from cli.portfolio_commands import portfolio_commands
+    autosend = AutoSendTree()
+    autosend.process()
+
+    #   firstname  student_id  homeroom  email
+    #import_list = [ ('Adam',      '99999',    '5UK',  'mattives@ssis-suzhou.net') ]
+
+    for student_key in autosend.students.get_keys():
+        student = autosend.students.get_key(student_key)
+        if student.grade in [4, 5]:
+            item = type("Student", (), {})
+            f = re.sub('[^a-z]', '', student.first.lower())
+            item.firstname = f
+            item.student_id = student.idnumber
+            item.homeroom = student.homeroom
+            item.email = student.homeroom_teacher.email
+            item.slug = f + item.student_id
+
+            file_.write('# {}:\n'.format(item.slug))
+            for command in portfolio_commands.split('\n'):
+                file_.write(command.format(item) + '\n')
+
+
 @output.command('cohorts')
 @click.argument('format_string')
 @click.option('--path', type=click.File(mode='w'), default=None, help="Save to disk")
