@@ -413,7 +413,7 @@ def output():
     """
     pass
 
-@output.command('porfolios')
+@output.command('portfolios')
 @click.argument('file_', type=click.File(mode='w'))
 @click.pass_obj
 def output_portfolios(obj, file_):
@@ -431,7 +431,7 @@ def output_portfolios(obj, file_):
         if student.grade in [4, 5]:
             item = type("Student", (), {})
             f = re.sub('[^a-z]', '', student.first.lower())
-            item.firstname = f
+            item.firstname = student.first
             item.student_id = student.idnumber
             item.homeroom = student.homeroom
             item.email = student.homeroom_teacher.email
@@ -441,6 +441,31 @@ def output_portfolios(obj, file_):
             for command in portfolio_commands.split('\n'):
                 file_.write(command.format(item) + '\n')
 
+@output.command('update_portfolios')
+@click.argument('file_', type=click.File(mode='w'))
+@click.pass_obj
+def update_portfolios(obj, file_):
+    from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    import re
+    from cli.portfolio_commands import portfolio_commands
+    autosend = AutoSendTree()
+    autosend.process()
+
+    #   firstname  student_id  homeroom  email
+    #import_list = [ ('Adam',      '99999',    '5UK',  'mattives@ssis-suzhou.net') ]
+
+    for student_key in autosend.students.get_keys():
+        student = autosend.students.get_key(student_key)
+        if student.grade in [4, 5]:
+            item = type("Student", (), {})
+            f = re.sub('[^a-z]', '', student.first.lower())
+            item.firstname = student.first
+            item.student_id = student.idnumber
+            item.homeroom = student.homeroom
+            item.email = student.homeroom_teacher.email
+            item.slug = f + item.student_id
+
+            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} option update blogname '{0.firstname}'\n".format(item))
 
 @output.command('cohorts')
 @click.argument('format_string')
