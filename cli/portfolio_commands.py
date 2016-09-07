@@ -1,7 +1,7 @@
-portfolio_commands = """wp --path=/var/www/portfolios blog create --slug='{0.slug}' --title='{0.firstname} {0.homeroom}' --email='{0.email}'
+portfolio_commands = """wp --path=/var/www/portfolios blog create --slug='{0.slug}' --title='{0.firstname} {0.homeroom}' --email='{0.teacher_email}'
 wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} option update blogdescription "My Learning"
-wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role lcssisadmin@student.ssis-suzhou.net author
-wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} post create --user=mattives@ssis-suzhou.net --post_title='Portfolio blog post instructions' --post_status=publish first_post.txt 
+wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} author
+wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} post create --user={0.teacher_email} --post_title='Portfolio blog post instructions' --post_status=publish first_post.txt 
 wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} post delete 2 --force
 wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} post delete 1 --force
 wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} theme activate twentytwelve
