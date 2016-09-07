@@ -434,7 +434,8 @@ def output_portfolios(obj, file_):
             item.firstname = student.first
             item.student_id = student.idnumber
             item.homeroom = student.homeroom
-            item.email = student.homeroom_teacher.email
+            item.teacher_email = student.homeroom_teacher.email
+            item.student_email = student.email
             item.slug = f + item.student_id
 
             file_.write('# {}:\n'.format(item.slug))
@@ -466,6 +467,7 @@ def update_portfolios(obj, file_):
             item.student_email = student.email
             item.slug = f + item.student_id
 
+            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} admin\n".format(item))
             file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} author\n".format(item))
             file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net author\n".format(item))
 
