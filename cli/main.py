@@ -467,9 +467,9 @@ def update_portfolios(obj, file_):
             item.student_email = student.email
             item.slug = f + item.student_id
 
-            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} administrator\n".format(item))
-            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} author\n".format(item))
-            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net author --yes\n".format(item))
+            #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} administrator\n".format(item))
+            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} editor\n".format(item))
+            #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net --yes\n".format(item))
 
 @output.command('cohorts')
 @click.argument('format_string')
