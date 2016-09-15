@@ -418,23 +418,30 @@ def output():
 @click.pass_obj
 def output_portfolios(obj, file_):
     from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    from psmdlsyncer.models.datastores.moodle import MoodleTree
     import re
     from cli.portfolio_commands import portfolio_commands
     autosend = AutoSendTree()
+    moodle = MoodleTree()
     autosend.process()
+    moodle.process()
 
     #   firstname  student_id  homeroom  email
     #import_list = [ ('Adam',      '99999',    '5UK',  'mattives@ssis-suzhou.net') ]
 
     for student_key in autosend.students.get_keys():
-        student = autosend.students.get_key(student_key)
-        if student.grade in [4, 5]:
+        # Use moodle's info
+        student = moodle.students.get_key(student_key)
+        if not student:
+            pass
+        #if student.grade in [4, 5]:
+        if student.homeroom == "1DB":
             item = type("Student", (), {})
             f = re.sub('[^a-z]', '', student.first.lower())
             item.firstname = student.first
             item.student_id = student.idnumber
             item.homeroom = student.homeroom
-            item.teacher_email = student.homeroom_teacher.email
+            item.teacher_email = 'donitabell@ssis-suzhou.net'
             item.student_email = student.email
             item.slug = f + item.student_id
 
@@ -447,29 +454,34 @@ def output_portfolios(obj, file_):
 @click.pass_obj
 def update_portfolios(obj, file_):
     from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    from psmdlsyncer.models.datastores.moodle import MoodleTree
     import re
     from cli.portfolio_commands import portfolio_commands
     autosend = AutoSendTree()
+    moodle = MoodleTree()
     autosend.process()
+    moodle.process()
 
     #   firstname  student_id  homeroom  email
     #import_list = [ ('Adam',      '99999',    '5UK',  'mattives@ssis-suzhou.net') ]
 
     for student_key in autosend.students.get_keys():
         student = autosend.students.get_key(student_key)
-        if student.grade in [4, 5]:
-            item = type("Student", (), {})
-            f = re.sub('[^a-z]', '', student.first.lower())
-            item.firstname = student.first
-            item.student_id = student.idnumber
-            item.homeroom = student.homeroom
-            item.teacher_email = student.homeroom_teacher.email
-            item.student_email = student.email
-            item.slug = f + item.student_id
+        m_student = moodle.students.get_key(student_key)
+        if m_student and student.email != m_student.email:
+            if student.homeroom == "1DB":
+                item = type("Student", (), {})
+                f = re.sub('[^a-z]', '', student.first.lower())
+                item.firstname = student.first
+                item.student_id = student.idnumber
+                item.homeroom = student.homeroom
+                item.teacher_email = student.homeroom_teacher.email
+                item.student_email = student.email
+                item.slug = f + item.student_id
 
-            #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} administrator\n".format(item))
-            file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} editor\n".format(item))
-            #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net --yes\n".format(item))
+                #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} administrator\n".format(item))
+                file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} editor\n".format(item))
+                #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net --yes\n".format(item))
 
 @output.command('cohorts')
 @click.argument('format_string')
