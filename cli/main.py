@@ -433,7 +433,7 @@ def output_portfolios(obj, file_):
         # Use moodle's info
         student = moodle.students.get_key(student_key)
         if not student:
-            pass
+            continue
         #if student.grade in [4, 5]:
         if student.homeroom == "1DB":
             item = type("Student", (), {})
