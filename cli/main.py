@@ -466,7 +466,7 @@ def portfolios_by_class(obj, file_):
     for student_key in autosend.students.get_keys():
         student = autosend.students.get_key(student_key)
         m_student = moodle.students.get_key(student_key)
-        if student.homeroom == "1DB" or student.grade in ["4", "5"]:
+        if student.homeroom == "1DB" or student.grade in [4, 5]:
             item = type("Student", (), {})
             f = re.sub('[^a-z]', '', student.first.lower())
             item.firstname = student.first
