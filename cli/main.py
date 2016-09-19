@@ -449,6 +449,42 @@ def output_portfolios(obj, file_):
             for command in portfolio_commands.split('\n'):
                 file_.write(command.format(item) + '\n')
 
+@output.command('portfolios_by_class')
+@click.argument('file_', type=click.File(mode='w'))
+@click.pass_obj
+def portfolios_by_class(obj, file_):
+    output_list = []
+    from psmdlsyncer.models.datastores.autosend import AutoSendTree
+    from psmdlsyncer.models.datastores.moodle import MoodleTree
+    import re
+    autosend = AutoSendTree()
+    moodle = MoodleTree()
+    autosend.process()
+    moodle.process()
+
+
+    for student_key in autosend.students.get_keys():
+        student = autosend.students.get_key(student_key)
+        m_student = moodle.students.get_key(student_key)
+        if student.homeroom == "1DB" or student.grade in ["4", "5"]:
+            item = type("Student", (), {})
+            f = re.sub('[^a-z]', '', student.first.lower())
+            item.firstname = student.first
+            item.student_id = student.idnumber
+            item.name = student.first + ' ' + student.last
+            item.homeroom = student.homeroom
+            item.teacher_email = student.homeroom_teacher.email
+            item.student_email = student.email
+            item.slug = f + item.student_id
+            item.blog_url = 'http://portfolios.ssis-suzhou.net/' + item.slug
+
+            output_list.append([item.name, item.homeroom, item.blog_url])
+
+    output_list.sort(key=lambda x: x[1])
+    for line in output_list:
+        file_.write("\t".join(line) + '\n')
+
+
 @output.command('update_portfolios')
 @click.argument('file_', type=click.File(mode='w'))
 @click.pass_obj
@@ -468,9 +504,8 @@ def update_portfolios(obj, file_):
     for student_key in autosend.students.get_keys():
         student = autosend.students.get_key(student_key)
         m_student = moodle.students.get_key(student_key)
-        if m_student and student.email != m_student.email:
-            if student.homeroom == "1DB" or student.grade in ["4", "5"]:
-                file_.write('wp --path=/var/www/portfolios user update {0.username} --display_name=\'{0.first}\'\n'.format(student))
+        if student.homeroom == "1DB" or student.grade in ["4", "5"]:
+            file_.write('wp --path=/var/www/portfolios user update {0.email} --display_name=\'{0.first}\'\n'.format(student))
             # if student.homeroom == "1DB":
             #     item = type("Student", (), {})
             #     f = re.sub('[^a-z]', '', student.first.lower())
