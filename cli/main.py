@@ -469,19 +469,20 @@ def update_portfolios(obj, file_):
         student = autosend.students.get_key(student_key)
         m_student = moodle.students.get_key(student_key)
         if m_student and student.email != m_student.email:
-            if student.homeroom == "1DB":
-                item = type("Student", (), {})
-                f = re.sub('[^a-z]', '', student.first.lower())
-                item.firstname = student.first
-                item.student_id = student.idnumber
-                item.homeroom = student.homeroom
-                item.teacher_email = student.homeroom_teacher.email
-                item.student_email = student.email
-                item.slug = f + item.student_id
+            file_.write('wp --path=/var/www/portfolios user update {0.username} --display_name=\'{0.firstname}\''.format(student))
+            # if student.homeroom == "1DB":
+            #     item = type("Student", (), {})
+            #     f = re.sub('[^a-z]', '', student.first.lower())
+            #     item.firstname = student.first
+            #     item.student_id = student.idnumber
+            #     item.homeroom = student.homeroom
+            #     item.teacher_email = student.homeroom_teacher.email
+            #     item.student_email = student.email
+            #     item.slug = f + item.student_id
 
-                #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} administrator\n".format(item))
-                file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} editor\n".format(item))
-                #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net --yes\n".format(item))
+            #     #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.teacher_email} administrator\n".format(item))
+            #     file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user set-role {0.student_email} editor\n".format(item))
+            #     #file_.write("wp --path=/var/www/portfolios --url=http://portfolios.ssis-suzhou.net/{0.slug} user delete lcssisadmin@student.ssis-suzhou.net --yes\n".format(item))
 
 @output.command('cohorts')
 @click.argument('format_string')
