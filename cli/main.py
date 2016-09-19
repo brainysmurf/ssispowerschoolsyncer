@@ -469,7 +469,8 @@ def update_portfolios(obj, file_):
         student = autosend.students.get_key(student_key)
         m_student = moodle.students.get_key(student_key)
         if m_student and student.email != m_student.email:
-            file_.write('wp --path=/var/www/portfolios user update {0.username} --display_name=\'{0.firstname}\''.format(student))
+            if student.homeroom == "1DB" or student.grade in ["4", "5"]:
+                file_.write('wp --path=/var/www/portfolios user update {0.username} --display_name=\'{0.first}\'\n'.format(student))
             # if student.homeroom == "1DB":
             #     item = type("Student", (), {})
             #     f = re.sub('[^a-z]', '', student.first.lower())
