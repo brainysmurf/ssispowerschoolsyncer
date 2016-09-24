@@ -470,6 +470,7 @@ def portfolios_by_class(obj, file_):
             item = type("Student", (), {})
             f = re.sub('[^a-z]', '', student.first.lower())
             item.firstname = student.first
+            item.lastname = student.last
             item.student_id = student.idnumber
             item.name = student.first + ' ' + student.last
             item.homeroom = student.homeroom
@@ -505,7 +506,7 @@ def update_portfolios(obj, file_):
         student = autosend.students.get_key(student_key)
         m_student = moodle.students.get_key(student_key)
         if student.homeroom == "1DB" or student.grade in ["4", "5"]:
-            file_.write('wp --path=/var/www/portfolios user update {0.email} --display_name=\'{0.first}\'\n'.format(student))
+            file_.write('wp --path=/var/www/portfolios user update {0.email} --first_name=\'{0.first}\' --last_name=\'{0.last}\' --display_name=\'{0.first}\'\n'.format(student))
             # if student.homeroom == "1DB":
             #     item = type("Student", (), {})
             #     f = re.sub('[^a-z]', '', student.first.lower())
