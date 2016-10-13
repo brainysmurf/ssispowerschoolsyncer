@@ -177,6 +177,8 @@ def straight_converts(short, long_):
 		'ENGBSL10': 'ENGLAB',
 		'HSDENG11': 'ENGLLSH1112',
 		'CHEHON11': 'SCCHESH1112',
+		'PSYHON11': 'SSPSYSH1112',
+		'HSDMUS11': 'ARMUSSH1112',
 	}.get(short)
 	if new_short:
 		return new_short, long_
