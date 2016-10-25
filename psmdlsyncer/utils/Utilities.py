@@ -179,6 +179,10 @@ def straight_converts(short, long_):
 		'CHEHON11': 'SCCHESH1112',
 		'PSYHON11': 'SSPSYSH1112',
 		'HSDMUS11': 'ARMUSSH1112',
+		'HSDCHE12': 'SCCHESH1112',
+		'MADHON12': 'MATHSD',
+		'HSDLIT12': 'ENGLISH1112',
+		'HSDBUS12': 'SSBAMSH1112',
 	}.get(short)
 	if new_short:
 		return new_short, long_
