@@ -42,7 +42,7 @@ class Course(BaseModel):
                 self.grade = [self.grade]
         if not self.heads:
             pass
-        self.exclude = False
+        self.exclude = self.ID.startswith("X")
         self._teachers = []
         self._students = []
         self._groups = []
