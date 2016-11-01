@@ -183,6 +183,8 @@ def straight_converts(short, long_):
 		'MADHON12': 'MATHSD',
 		'HSDLIT12': 'ENGLISH1112',
 		'HSDBUS12': 'SSBAMSH1112',
+		'HSDBIO12': 'SCBIOSH1112',
+		'MADHON12': 'MADHON12',
 	}.get(short)
 	if new_short:
 		return new_short, long_
