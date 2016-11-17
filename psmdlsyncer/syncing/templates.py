@@ -99,6 +99,7 @@ class DefaultTemplate:
         self.default_logger("Enrol {0.left} into course {1} in group {2.idnumber}".format(item, course, group))
 
     def deenrol_from_course(self, item):
+        return
         self.default_logger("De-enrol {0.left} from course {0.param.course}".format(item))
 
     def new_schedule(self, item):
@@ -446,6 +447,7 @@ class MoodleTemplate(DefaultTemplate):
         #     self.logger.debug("Did NOT enrol {} into course {}, because it does not exist in Moodle".format(item.right, course))
 
     def deenrol_teacher_from_course(self, item):
+        return
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
@@ -453,6 +455,7 @@ class MoodleTemplate(DefaultTemplate):
         #self.moodlemod.deenrol_teacher_from_course(user, course)
 
     def deenrol_student_from_course(self, item):
+        return
         user = item.right.idnumber
         course = item.param.course
         group = item.param.group.idnumber
@@ -462,6 +465,7 @@ class MoodleTemplate(DefaultTemplate):
         self.moodlemod.deenrol_student_from_course(user, course)
 
     def deenrol_parent_from_course(self, item):
+        return
         super().deenrol_from_course(item)   # for output
         user = item.right.idnumber
         course = item.param.course
