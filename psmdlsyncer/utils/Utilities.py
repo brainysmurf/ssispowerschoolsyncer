@@ -185,6 +185,8 @@ def straight_converts(short, long_):
 		'HSDBUS12': 'SSBAMSH1112',
 		'HSDBIO12': 'SCBIOSH1112',
 		'MADHON12': 'MADHON12',
+		'HSDMAT10': 'HSDMAT10',
+		'HSDSCI10': 'HSDMAT10'
 	}.get(short)
 	if new_short:
 		return new_short, long_
