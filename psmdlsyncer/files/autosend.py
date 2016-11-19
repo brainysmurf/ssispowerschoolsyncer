@@ -3,6 +3,7 @@ import re
 import os
 import csv
 from psmdlsyncer.settings import config_get_section_attribute
+from html.parser import HTMLParser
 
 # This is the version of the autosend files
 # With each increase of number in the version, means that something about the fields have changed from within autosend
@@ -10,12 +11,14 @@ major_version = 4
 prefix = config_get_section_attribute('AUTOSEND', 'prefix')
 version_format = "{prefix}_{{school}}_{{unique}}_v{major_version}.{{minor_version}}".format(prefix=prefix, major_version=major_version)
 
+
 class AutoSendImport:
 
     def __init__(self, school, unique):
         """
         Main task here is to set self.path
         """
+
         self.logger = logging.getLogger(self.__class__.__name__)
 
         path_to_powerschool = config_get_section_attribute('DIRECTORIES', 'path_to_powerschool_dump')
@@ -24,6 +27,7 @@ class AutoSendImport:
 
         self.school = school
         self.unique = unique
+        self.convert_entities = HTMLParser().unescape
 
         self.debug = config_get_section_attribute('DEBUGGING', 'print_autosend')
 
@@ -46,14 +50,14 @@ class AutoSendImport:
             if self.school == 'dist' and self.unique == 'staffinfo':
                 for row in csv.reader(f, delimiter='\t'):
                     if row[-1] == '1':
-                        yield row
+                        yield [self.convert_entities(r) for r in row]
             else:
-                for line in csv.reader(f, delimiter='\t'):
-                    yield line
+                for row in csv.reader(f, delimiter='\t'):
+                    yield [self.convert_entities(r) for r in row]
 
 if __name__ == "__main__":
 
-    f = File('sec', 'studentschedule')
+    f = AutoSendImport('sec', 'courseinfo')
     for line in f.content():
         print(line)
 
