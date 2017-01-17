@@ -134,6 +134,7 @@ def derive_departments(courses):
 		d[x] = 1
 	return list(d.keys())
 
+
 def straight_converts(short, long_):
 	new_short = {
 		'MATHSD11': 'MATHSD',
@@ -188,7 +189,9 @@ def straight_converts(short, long_):
 		'HSDMAT10': 'HSDMAT10',
 		'HSDSCI10': 'HSDMAT10',
 		'MASTUS12': 'MATHSD',
-		'MADHON12': 'MATHSD'
+		'MADHON12': 'MATHSD',
+		'HSDVA_11': 'HSDVASH1112',
+		'HSDVA_12': 'HSDVASH1112',
 	}.get(short)
 	if new_short:
 		return new_short, long_
