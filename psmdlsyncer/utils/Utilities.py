@@ -190,8 +190,14 @@ def straight_converts(short, long_):
 		'HSDSCI10': 'HSDMAT10',
 		'MASTUS12': 'MATHSD',
 		'MADHON12': 'MATHSD',
-		'HSDVA_11': 'HSDVASH1112',
-		'HSDVA_12': 'HSDVASH1112',
+		'HSDLIT12': 'ENGLISH1112',
+		'HSDBUS12': 'SSBAMSH1112',
+		'HSDBIO12': 'SCBIOSH1112',
+		'MADHON12': 'MADHON12',
+		'HSDMAT10': 'HSDMAT10',
+		'HSDSCI10': 'HSDMAT10',
+		'MASTUS12': 'MATHSD',
+		'MADHON12': 'MATHSD',
 	}.get(short)
 	if new_short:
 		return new_short, long_
